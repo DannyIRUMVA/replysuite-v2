@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300..700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-white font-sans antialiased selection:bg-primary/30;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary hover:bg-primary/90 transition-all px-6 py-3 rounded-full font-semibold text-white shadow-lg shadow-primary/20;
+  }
+  
+  .btn-gradient {
+    @apply bg-gradient-to-r from-primary to-primary-accent hover:opacity-90 transition-all px-6 py-3 rounded-full font-semibold text-black shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  .glass-card {
+    @apply bg-white/[0.01] border border-white/5 backdrop-blur-md rounded-24;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-primary via-primary-accent to-[#F9F6EE] font-bold;
+  }
+
+  .badge-gradient {
+    @apply px-3 py-1 rounded-full bg-primary/5 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest;
+  }
+}

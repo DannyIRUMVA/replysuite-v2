@@ -1,0 +1,74 @@
+<script setup lang="ts">
+const user = useSupabaseUser()
+const supabase = useSupabaseClient()
+const route = useRoute()
+
+// Harden query: Ensure user ID is present and watch for changes
+const { data: profile } = await useAsyncData('header-user-profile', async () => {
+  if (!user.value?.id) return null
+  const { data } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.value.id)
+    .single()
+  return data
+}, {
+  watch: [user],
+  immediate: true
+})
+
+// Dynamic Header Content
+const pageContext = computed(() => {
+  const path = route.path
+  if (path === '/dashboard') return { title: 'executive hub', subtitle: "checking your ai workforce's pulse." }
+  if (path === '/dashboard/settings') return { title: 'elite settings', subtitle: 'refining your identity and operations.' }
+  if (path.includes('/instagram')) return { title: 'social pulse', subtitle: 'managing instagram automation flow.' }
+  if (path.includes('/chatbots')) return { title: 'agent forge', subtitle: 'crafting intelligent conversation rules.' }
+  if (path.includes('/analytics')) return { title: 'insight engine', subtitle: 'visualizing your data performance.' }
+  return { title: 'dashboard', subtitle: 'welcome back to replysuite.' }
+})
+
+const greeting = computed(() => {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good Morning'
+  if (hour < 17) return 'Good Afternoon'
+  return 'Good Evening'
+})
+</script>
+
+<template>
+  <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+    <div class="animate-in fade-in slide-in-from-left-4 duration-500">
+      <div class="flex items-center gap-2 mb-1">
+         <span class="text-[10px] font-bold tracking-widest text-primary">{{ greeting }}</span>
+         <div class="h-[1px] w-4 bg-primary/30"></div>
+      </div>
+      <h1 class="text-2xl md:text-3xl font-black tracking-tighter text-white leading-tight">
+        {{ pageContext.title }}
+      </h1>
+      <p class="text-gray-500 text-sm font-medium mt-1">{{ pageContext.subtitle }}</p>
+    </div>
+    
+    <div class="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 border-white/5 pt-6 md:pt-0">
+      <div class="relative hidden sm:block">
+         <NuxtLink to="/pricing" class="relative flex items-center gap-4 py-2.5 px-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-primary/30 transition-all group">
+            <span class="text-[10px] font-bold tracking-widest text-gray-500 group-hover:text-primary transition-colors">upgrade</span>
+            <div class="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover:bg-primary transition-all"></div>
+         </NuxtLink>
+      </div>
+
+      <NuxtLink to="/dashboard/settings" class="flex items-center gap-3 glass-card !p-1.5 !rounded-full border-white/10 hover:border-primary/20 transition-all cursor-pointer group">
+         <div class="w-10 h-10 rounded-full overflow-hidden bg-primary/20 border border-white/10 p-0.5">
+            <img 
+              :src="profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'expert'}`" 
+              class="w-full h-full rounded-full object-cover group-hover:scale-110 transition-transform" 
+            />
+         </div>
+         <div class="pr-5 hidden lg:block">
+            <p class="text-[10px] font-bold tracking-widest text-gray-500 leading-none mb-1">logged in as</p>
+            <p class="text-xs font-bold text-white leading-none">{{ profile?.full_name || user?.email?.split('@')[0] || 'Member' }}</p>
+         </div>
+      </NuxtLink>
+    </div>
+  </header>
+</template>
