@@ -23,16 +23,16 @@ const pageContext = computed(() => {
   if (path === '/dashboard') return { title: 'executive hub', subtitle: "checking your ai workforce's pulse." }
   if (path === '/dashboard/settings') return { title: 'elite settings', subtitle: 'refining your identity and operations.' }
   if (path.includes('/instagram')) return { title: 'social pulse', subtitle: 'managing instagram automation flow.' }
-  if (path.includes('/chatbots')) return { title: 'agent forge', subtitle: 'crafting intelligent conversation rules.' }
+  if (path.includes('/agents')) return { title: 'agent forge', subtitle: 'crafting intelligent conversation rules.' }
   if (path.includes('/analytics')) return { title: 'insight engine', subtitle: 'visualizing your data performance.' }
   return { title: 'dashboard', subtitle: 'welcome back to replysuite.' }
 })
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
-  if (hour < 12) return 'Good Morning'
-  if (hour < 17) return 'Good Afternoon'
-  return 'Good Evening'
+  if (hour < 12) return 'good morning'
+  if (hour < 17) return 'good afternoon'
+  return 'good evening'
 })
 </script>
 
@@ -66,7 +66,7 @@ const greeting = computed(() => {
          </div>
          <div class="pr-5 hidden lg:block">
             <p class="text-[10px] font-bold tracking-widest text-gray-500 leading-none mb-1">logged in as</p>
-            <p class="text-xs font-bold text-white leading-none">{{ profile?.full_name || user?.email?.split('@')[0] || 'Member' }}</p>
+            <p class="text-xs font-bold text-white leading-none">{{ (profile?.full_name || user?.email?.split('@')[0] || 'member').toLowerCase() }}</p>
          </div>
       </NuxtLink>
     </div>

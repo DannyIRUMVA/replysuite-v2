@@ -18,23 +18,24 @@ const handleSignup = async () => {
     errorMsg.value = ''
     successMsg.value = ''
     
-    const { error } = await supabase.auth.signUp({
-      email: email.value,
-      password: password.value,
-      options: {
-        emailRedirectTo: `${window.location.origin}/confirm`,
+    const response = await $fetch('/api/auth/signup', {
+      method: 'POST',
+      body: {
+        email: email.value,
+        password: password.value
       }
     })
     
-    if (error) throw error
-    
-    successMsg.value = 'Success! Please check your email inbox to verify your account.'
+    if (response.success) {
+      successMsg.value = 'Success! Please check your email inbox to verify your account.'
+    }
   } catch (err: any) {
-    errorMsg.value = err.message
+    errorMsg.value = err.data?.statusMessage || err.message || 'Signup failed'
   } finally {
     loading.value = false
   }
 }
+
 
 const signInWithGoogle = async () => {
   try {

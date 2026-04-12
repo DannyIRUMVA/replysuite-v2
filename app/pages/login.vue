@@ -11,22 +11,31 @@ const password = ref('')
 const loading = ref(false)
 const errorMsg = ref('')
 
+const { track } = useActivity()
+
 const handleLogin = async () => {
   try {
     loading.value = true
     errorMsg.value = ''
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: email.value,
       password: password.value,
     })
     if (error) throw error
+    
+    // Track successful login
+    await track('LOGIN_SUCCESS', { email: email.value })
+    
     navigateTo('/dashboard') 
   } catch (err: any) {
     errorMsg.value = err.message
+    // Track failed login
+    await track('LOGIN_FAILED', { email: email.value, error: err.message })
   } finally {
     loading.value = false
   }
 }
+
 
 const signInWithGoogle = async () => {
   try {

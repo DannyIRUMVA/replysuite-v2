@@ -15,6 +15,8 @@ const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 const profile = ref<any>(null)
 const loading = ref(true)
+const { track } = useActivity()
+
 
 // Verification logic is partially handled by the layout, but we may need profile data here too.
 onMounted(async () => {
@@ -36,8 +38,12 @@ onMounted(async () => {
     }
     
     loading.value = false
+    
+    // Track dashboard visit
+    track('DASHBOARD_VISIT')
   }
 })
+
 
 const isVerified = computed(() => {
   if (!user.value) return false

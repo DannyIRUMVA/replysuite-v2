@@ -95,11 +95,11 @@ onMounted(() => {
             {{ link.name }}
           </NuxtLink>
           <NuxtLink v-if="user" to="/dashboard" @click="isMenuOpen = false" class="text-lg font-medium text-gray-400 hover:text-primary transition-colors">
-            Dashboard
+            dashboard
           </NuxtLink>
           <hr class="border-white/5 my-2" />
-          <NuxtLink :to="user ? '/dashboard' : '/login'" @click="isMenuOpen = false" class="btn-gradient w-full text-center py-4">
-            {{ user ? 'Go to Dashboard' : 'Get Started' }}
+          <NuxtLink :to="user ? '/dashboard' : '/login'" @click="isMenuOpen = false" class="btn-gradient w-full text-center py-4 text-sm font-bold tracking-widest uppercase">
+            {{ user ? 'go to dashboard' : 'get started' }}
           </NuxtLink>
         </div>
       </div>

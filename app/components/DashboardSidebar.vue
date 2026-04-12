@@ -59,11 +59,11 @@ const daysLeft = computed(() => {
 })
 
 const navLinks = computed(() => [
-  { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Instagram', href: '/dashboard/instagram', icon: Instagram, disabled: !isVerified.value },
-  { name: 'AI Agents', href: '/dashboard/chatbots', icon: MessageSquare, disabled: !isVerified.value },
-  { name: 'Analytics', href: '/dashboard/analytics', icon: TrendingUp, disabled: !isVerified.value },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { name: 'overview', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'instagram', href: '/dashboard/instagram', icon: Instagram, disabled: !isVerified.value },
+  { name: 'ai agents', href: '/dashboard/agents', icon: MessageSquare, disabled: !isVerified.value },
+  { name: 'analytics', href: '/dashboard/analytics', icon: TrendingUp, disabled: !isVerified.value },
+  { name: 'settings', href: '/dashboard/settings', icon: Settings },
 ])
 
 const handleLogout = async () => {
@@ -79,7 +79,7 @@ const handleLogout = async () => {
       <div class="w-10 h-10 bg-gradient-to-tr from-primary to-primary-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
         <Zap class="text-black w-6 h-6 fill-current" />
       </div>
-      <span class="text-xl font-bold tracking-tight">ReplySuite</span>
+      <span class="text-xl font-bold tracking-tight">replysuite</span>
     </div>
 
     <!-- Navigation -->
@@ -109,19 +109,19 @@ const handleLogout = async () => {
         
         <div class="relative z-10">
           <div class="flex items-center justify-between mb-3">
-             <span class="text-[10px] font-bold tracking-widest text-primary">{{ membership.plans?.name }} plan</span>
+             <span class="text-[10px] font-bold tracking-widest text-primary">{{ membership.plans?.name?.toLowerCase() }} plan</span>
              <Zap class="w-3 h-3 text-primary fill-current" />
           </div>
           
           <h4 class="font-bold text-sm mb-1">
-            {{ membership.plans?.name === 'Trial' ? 'Free Month Trial' : membership.plans?.display_name }}
+            {{ membership.plans?.name === 'Trial' ? 'free month trial' : membership.plans?.display_name?.toLowerCase() }}
           </h4>
           <p class="text-[11px] text-gray-500 mb-4">
             {{ daysLeft }} days remaining
           </p>
 
           <NuxtLink to="/pricing" class="block w-full py-2.5 bg-primary text-black text-[11px] font-bold rounded-lg text-center hover:bg-primary-accent transition-colors shadow-lg shadow-primary/10">
-            Upgrade Now
+            upgrade now
           </NuxtLink>
         </div>
       </div>
@@ -131,7 +131,7 @@ const handleLogout = async () => {
     <div class="pt-6 border-t border-white/5 mt-auto">
       <button @click="handleLogout" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-400/10 transition-all border border-transparent hover:border-red-400/20 text-sm font-medium">
         <LogOut class="w-5 h-5" />
-        Logout
+        logout
       </button>
     </div>
   </aside>
