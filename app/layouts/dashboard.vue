@@ -1,23 +1,11 @@
 <script setup lang="ts">
 import { AlertCircle } from 'lucide-vue-next'
 
-const user = useSupabaseUser()
+const isMounted = ref(false)
+onMounted(() => { isMounted.value = true })
+
+const { user, userId, isAuthenticated, profile, isVerified, isLoading } = useAuth()
 const supabase = useSupabaseClient()
-
-const { data: profile } = await useAsyncData('layout-profile', async () => {
-  if (!user.value?.id) return null
-  const { data } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.value.id)
-    .single()
-  return data
-}, { watch: [user], immediate: true })
-
-const isVerified = computed(() => {
-  if (!user.value) return false
-  return profile.value?.is_verified || user.value.app_metadata.provider === 'google'
-})
 
 const resendLoading = ref(false)
 const resendSuccess = ref(false)
@@ -50,11 +38,12 @@ const resendVerification = async () => {
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col h-screen overflow-hidden">
-      <main class="flex-1 overflow-y-auto p-6 md:p-10 relative pb-32 md:pb-10">
+      <main class="flex-1 overflow-y-auto p-6 md:p-10 relative pb-40 md:pb-10">
+
         <DashboardHeader />
 
         <!-- Verification Wall (Global Dashboard Notice) -->
-        <div v-if="!isVerified" class="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div v-if="isMounted && !isVerified && !isLoading" class="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
           <div class="glass-card !bg-primary/5 border-primary/20 p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
             <div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-[100px] border border-primary/50 group-hover:bg-primary/20 transition-all"></div>
             
@@ -72,7 +61,7 @@ const resendVerification = async () => {
                <button @click="resendVerification" :disabled="resendLoading" class="w-full md:w-auto btn-gradient !py-3 !px-8 text-sm whitespace-nowrap disabled:opacity-50">
                   {{ resendLoading ? 'Sending...' : resendSuccess ? 'Link Sent!' : 'Resend Link' }}
                </button>
-               <button @click="navigateTo('/support')" class="w-full md:w-auto px-8 py-3 rounded-full border border-white/10 hover:bg-white/5 text-sm transition-all whitespace-nowrap font-bold">I need help</button>
+               <button @click="navigateTo('mailto:support@replysuite.com', { external: true })" class="w-full md:w-auto px-8 py-3 rounded-full border border-white/10 hover:bg-white/5 text-sm transition-all whitespace-nowrap font-bold">I need help</button>
             </div>
           </div>
         </div>

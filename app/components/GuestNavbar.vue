@@ -53,19 +53,25 @@ onMounted(() => {
 
     <!-- Right Side -->
     <div class="flex items-center gap-4">
-      <template v-if="!user">
-        <NuxtLink to="/login" class="hidden sm:block text-sm font-medium text-gray-400 hover:text-white transition-colors">
-          sign in
-        </NuxtLink>
-        <NuxtLink to="/login" class="btn-gradient px-6 py-2.5 text-sm">
-          get started
-        </NuxtLink>
-      </template>
-      <template v-else>
-        <NuxtLink to="/dashboard" class="btn-gradient px-8 py-2.5 text-sm flex items-center gap-2 group">
-           dashboard <ChevronRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </NuxtLink>
-      </template>
+      <ClientOnly>
+        <template v-if="!user">
+          <NuxtLink to="/login" class="hidden sm:block text-sm font-medium text-gray-400 hover:text-white transition-colors">
+            sign in
+          </NuxtLink>
+          <NuxtLink to="/login" class="btn-gradient px-6 py-2.5 text-sm">
+            get started
+          </NuxtLink>
+        </template>
+        <template v-else>
+          <NuxtLink to="/dashboard" class="btn-gradient px-8 py-2.5 text-sm flex items-center gap-2 group">
+             dashboard <ChevronRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </NuxtLink>
+        </template>
+
+        <template #fallback>
+           <div class="h-10 w-24 bg-white/5 animate-pulse rounded-full"></div>
+        </template>
+      </ClientOnly>
       
       <!-- Mobile Toggle -->
       <button @click="isMenuOpen = !isMenuOpen" class="lg:hidden p-2 text-gray-400 hover:text-white transition-colors">

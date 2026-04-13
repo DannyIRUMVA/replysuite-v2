@@ -1,14 +1,26 @@
 import { defineEventHandler, sendRedirect, getRequestURL, createError } from 'h3'
+import { serverSupabaseUser } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
+  const query = getQuery(event)
   const config = useRuntimeConfig()
-  const requestUrl = getRequestURL(event)
+  const queryUserId = query.userId as string
 
-  // Robust protocol detection for proxies/tunnels
-  const protocol = event.headers.get('x-forwarded-proto') || requestUrl.protocol.replace(':', '')
-  const clientId = config.instagramClientId?.toString().replace(/['" ]/g, '')
-  // Dynamically determine redirect URI
-  const redirectUri = `https://32b2-2c0f-eb68-6cd-a00-7d94-d226-b994-28ae.ngrok-free.app/api/auth/instagram/callback`
+  // Get current user to pass their ID in the OAuth state
+  const user = await serverSupabaseUser(event)
+  const targetUserId = user?.id || queryUserId
+
+  if (!targetUserId) {
+    return sendRedirect(event, '/login?error=Please login to connect Instagram')
+  }
+
+  const requestUrl = getRequestURL(event)
+  const host = getHeader(event, 'x-forwarded-host') || getHeader(event, 'host') || requestUrl.host
+  const proto = getHeader(event, 'x-forwarded-proto') || (requestUrl.protocol === 'https:' ? 'https' : 'http')
+
+  const clientId = config.instagramClientId
+  const redirectUri = `${proto}://${host}/api/auth/instagram/callback`
+
 
   if (!clientId) {
     throw createError({
@@ -27,7 +39,8 @@ export default defineEventHandler(async (event) => {
     'business_management'
   ].join(',')
 
-  const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&response_type=code`
+  // Pass targetUserId in state for reliable linking during callback
+  const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&response_type=code&state=${targetUserId}`
 
   return sendRedirect(event, authUrl)
 })

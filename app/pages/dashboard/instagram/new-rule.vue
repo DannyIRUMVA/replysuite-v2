@@ -8,7 +8,8 @@ import {
   Search,
   Check,
   AlertCircle,
-  Loader2
+  Loader2,
+  Lock
 } from 'lucide-vue-next'
 
 definePageMeta({
@@ -16,9 +17,12 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-const user = useSupabaseUser()
+const { userId, limits, canAdd, isAuthenticated } = useAuth()
 const supabase = useSupabaseClient()
 const router = useRouter()
+
+const triggersCount = ref(0)
+const canAddMore = computed(() => canAdd('rules', triggersCount.value))
 
 // Form State
 const accounts = ref<any[]>([])
@@ -28,25 +32,36 @@ const dmTemplate = ref('')
 const isSaving = ref(false)
 const isLoading = ref(true)
 
-// Fetch accounts on mount
+// Fetch accounts & current rule count on mount
 onMounted(async () => {
-  if (!user.value?.id) return
+  const currentId = userId.value
+  if (!currentId) return
   
-  const { data } = await supabase
-    .from('instagram_accounts')
-    .select('*')
-    .eq('user_id', user.value.id)
+  const [accountsRes, triggersRes] = await Promise.all([
+    supabase.from('instagram_accounts').select('*').eq('user_id', currentId),
+    supabase.from('instagram_comment_triggers').select('id').eq('user_id', currentId)
+  ])
   
-  if (data) {
-    accounts.value = data
-    if (data.length > 0) {
-      selectedAccountId.value = data[0].id
+  if (accountsRes.data) {
+    accounts.value = accountsRes.data
+    if (accountsRes.data.length > 0) {
+      selectedAccountId.value = accountsRes.data[0].id
     }
   }
+
+  if (triggersRes.data) {
+    triggersCount.value = triggersRes.data.length
+  }
+
   isLoading.value = false
 })
 
 const handleSave = async () => {
+  if (!canAddMore.value) {
+    alert(`you have reached your limit of ${limits.value.maxRules} rule(s). please upgrade your plan.`)
+    return
+  }
+
   if (!selectedAccountId.value || !keywords.value || !dmTemplate.value) {
     alert('please fill in all required fields.')
     return
@@ -60,7 +75,7 @@ const handleSave = async () => {
     const { error } = await supabase
       .from('instagram_comment_triggers')
       .insert({
-        user_id: user.value?.id,
+        user_id: userId.value,
         instagram_account_id: selectedAccountId.value,
         keywords: keywordArray,
         dm_template: dmTemplate.value,
@@ -112,6 +127,13 @@ const handleSave = async () => {
       <h3 class="text-lg font-bold text-white mb-2 uppercase tracking-tight">no accounts connected</h3>
       <p class="text-gray-500 text-sm mb-6">you need to connect an instagram account before creating automation rules.</p>
       <NuxtLink to="/dashboard/instagram" class="btn-primary inline-flex">connect account now</NuxtLink>
+    </div>
+
+    <div v-else-if="!canAddMore" class="glass-card p-12 text-center border-primary/20 bg-primary/5">
+      <Lock class="w-12 h-12 text-primary mx-auto mb-4" />
+      <h3 class="text-lg font-bold text-white mb-2 uppercase tracking-tight">rule limit reached</h3>
+      <p class="text-gray-500 text-sm mb-6 max-w-md mx-auto">you are currently using {{ triggersCount }} of {{ limits.maxRules }} available rules. upgrade your plan to forge more automations.</p>
+      <NuxtLink to="/dashboard/settings" class="btn-primary inline-flex">upgrade membership</NuxtLink>
     </div>
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -215,12 +237,13 @@ const handleSave = async () => {
 
            <button 
               @click="handleSave"
-              :disabled="isSaving"
+              :disabled="isSaving || !canAddMore"
               class="w-full mt-10 flex items-center justify-center gap-3 py-4 bg-primary text-black font-black rounded-2xl hover:bg-primary-accent transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
            >
-              <Save v-if="!isSaving" class="w-5 h-5" />
+              <Lock v-if="!canAddMore" class="w-5 h-5" />
+              <Save v-else-if="!isSaving" class="w-5 h-5" />
               <Loader2 v-else class="w-5 h-5 animate-spin" />
-              {{ isSaving ? 'forging...' : 'activate rule' }}
+              {{ isSaving ? 'forging...' : (canAddMore ? 'activate rule' : 'limit reached') }}
            </button>
         </div>
       </div>

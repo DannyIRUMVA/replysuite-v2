@@ -28,16 +28,21 @@ export const processInstagramComment = async (commentData: any) => {
     .eq('id', igAccount.user_id)
     .single()
 
-  const plan = profile?.user_memberships?.[0]?.plans || { name: 'Trial', max_triggers: 1, max_auto_dms: 50 }
+  const plan = profile?.user_memberships?.[0]?.plans || { name: 'Starter', max_triggers: 1, max_auto_dms_per_month: 50 }
   
-  // Count current DMs for this user (simple count from jobs table)
+  // Count current DMs for this user this month
+  const startOfMonth = new Date()
+  startOfMonth.setUTCDate(1)
+  startOfMonth.setUTCHours(0, 0, 0, 0)
+
   const { count: dmCount } = await supabase
     .from('instagram_message_jobs')
     .select('*', { count: 'exact', head: true })
     .eq('instagram_account_id', igAccount.id)
+    .gte('created_at', startOfMonth.toISOString())
 
-  if (plan.max_auto_dms && dmCount >= plan.max_auto_dms) {
-    console.log('DM Limit reached for this plan')
+  if (plan.max_auto_dms_per_month !== -1 && (dmCount || 0) >= (plan.max_auto_dms_per_month || 50)) {
+    console.log(`DM Limit reached for this month (${dmCount}/${plan.max_auto_dms_per_month})`)
     return
   }
 

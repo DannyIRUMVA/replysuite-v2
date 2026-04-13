@@ -1,11 +1,7 @@
 {
   "name": "replysuite-v2",
-  "main": "./.output/server/index.mjs",
+  "pages_build_output_dir": "dist",
   "compatibility_date": "2024-04-03",
-  "assets": {
-    "binding": "ASSETS",
-    "directory": "./.output/public/"
-  },
   "observability": {
     "enabled": true
   }

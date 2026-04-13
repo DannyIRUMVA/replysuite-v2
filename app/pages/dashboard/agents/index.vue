@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { 
   Plus, 
+  Bot, 
+  Trash2, 
+  Edit3, 
   MessageSquare, 
-  Settings2, 
-  Bot,
-  ChevronRight,
-  Brain,
-  Sparkles,
   Zap,
-  Activity,
-  History,
+  Info,
+  Loader2,
+  AlertCircle,
   MoreVertical,
-  Trash2,
-  Power
+  CheckCircle2,
+  Clock,
+  Activity,
+  Sparkles
 } from 'lucide-vue-next'
 
 definePageMeta({
@@ -20,82 +21,149 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-const user = useSupabaseUser()
+const { userId, limits, isVerified, isLoading: authLoading } = useAuth()
 const supabase = useSupabaseClient()
 
-// Placeholder agents for UI demonstration
-const agents = ref([
-  {
-    id: '1',
-    name: 'sales pilot',
-    personality: 'highly professional and persuasive, focused on converting interest into leads.',
-    status: 'active',
-    accuracy: '98%',
-    conversations: 142
-  },
-  {
-    id: '2',
-    name: 'support sentinel',
-    personality: 'empathetic and helpful, specialized in technical troubleshooting.',
-    status: 'paused',
-    accuracy: '94%',
-    conversations: 89
-  }
-])
+// State
+const isCreating = ref(false)
+const showCreateModal = ref(false)
 
-const isCreateModalOpen = ref(false)
+const newAgent = ref({
+  name: '',
+  system_prompt: ''
+})
+
+// UI State
+const canCreateAgent = computed(() => {
+  return agents.value.length < (limits.value.maxAgents || 1)
+})
+
+// Fetch Data using useAsyncData for consistency with other dashboard pages
+const { data: agentsData, pending: dataLoading, refresh: refreshAgents } = useAsyncData('agents-list', async () => {
+  if (!userId.value) return []
+  
+  const { data, error } = await supabase
+    .from('chatbots')
+    .select('*')
+    .is('deleted_at', null)
+    .eq('user_id', userId.value)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data || []
+}, {
+  watch: [userId]
+})
+
+const agents = computed(() => agentsData.value || [])
+const isLoading = computed(() => authLoading.value || dataLoading.value)
+
+const handleCreate = async () => {
+  if (!userId.value || !newAgent.value.name) return
+  if (!canCreateAgent.value) {
+    alert(`You've reached the limit of ${limits.value.maxAgents} agents for your current plan.`)
+    return
+  }
+  
+  isCreating.value = true
+  try {
+    const { data, error } = await supabase
+      .from('chatbots')
+      .insert({
+        user_id: userId.value,
+        name: newAgent.value.name,
+        system_prompt: newAgent.value.system_prompt
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    if (data) {
+      await refreshAgents()
+      showCreateModal.value = false
+      newAgent.value = { name: '', system_prompt: '' }
+    }
+  } catch (err) {
+    console.error('Error creating agent:', err)
+    alert('Failed to create agent')
+  } finally {
+    isCreating.value = false
+  }
+}
+
+const handleDelete = async (id: string) => {
+  if (!confirm('Are you sure you want to delete this agent?')) return
+  
+  const { error } = await supabase
+    .from('chatbots')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+  
+  if (!error) {
+    await refreshAgents()
+  }
+}
 </script>
 
 <template>
-  <div class="space-y-12">
+  <div class="space-y-12 pb-24 lg:pb-0">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
       <div class="max-w-xl">
-        <h2 class="text-xl font-bold tracking-tight text-white mb-2">ai agents</h2>
-        <p class="text-gray-500 text-sm">deploy and manage your fleet of intelligent conversation specialists.</p>
+        <h2 class="text-xl font-bold tracking-tight text-white mb-2 italic-none">ai agents</h2>
+        <p class="text-gray-500 text-sm italic-none">deploy and manage your fleet of intelligent conversation specialists.</p>
       </div>
       
       <button 
-        @click="isCreateModalOpen = true"
-        class="flex items-center gap-3 px-6 py-3 bg-primary text-black font-bold rounded-2xl hover:bg-primary-accent transition-all shadow-lg shadow-primary/10"
+        @click="canCreateAgent ? (showCreateModal = true) : null"
+        :class="[
+          'flex items-center gap-3 px-6 py-3 font-bold rounded-2xl transition-all shadow-lg',
+          canCreateAgent 
+            ? 'bg-primary text-black hover:bg-primary-accent shadow-primary/10' 
+            : 'bg-white/5 text-gray-500 cursor-not-allowed opacity-50'
+        ]"
       >
         <Plus class="w-5 h-5" />
-        forge new agent
+        {{ canCreateAgent ? 'forge new agent' : 'agent limit reached' }}
       </button>
     </div>
 
     <!-- Stats Row -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div v-for="stat in [
-        { label: 'active agents', value: '02', icon: Bot },
+        { label: 'active agents', value: agents.length.toString().padStart(2, '0'), icon: Bot },
         { label: 'success rate', value: '96.2%', icon: Sparkles },
         { label: 'total chats', value: '231', icon: MessageSquare },
         { label: 'response time', value: '< 2s', icon: Zap }
-      ]" :key="stat.label" class="glass-card !p-5">
+      ]" :key="stat.label" class="glass-card !p-5 bg-white/[0.01]">
         <div class="flex items-center gap-4">
           <div class="p-2.5 bg-white/5 rounded-xl">
             <component :is="stat.icon" class="w-5 h-5 text-gray-400" />
           </div>
           <div>
             <p class="text-[10px] font-bold tracking-widest text-gray-500 mb-0.5">{{ stat.label }}</p>
-            <p class="text-lg font-black text-white leading-none">{{ stat.value }}</p>
+            <p class="text-lg font-black text-white leading-none italic-none">{{ stat.value }}</p>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Agents Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div v-if="isLoading" class="flex justify-center py-20">
+      <Loader2 class="w-8 h-8 text-primary animate-spin" />
+    </div>
+
+    <div v-else-if="agents.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div 
         v-for="agent in agents" 
         :key="agent.id"
-        class="glass-card hover:border-primary/20 transition-all group relative overflow-hidden"
+        class="glass-card hover:border-primary/20 transition-all group relative overflow-hidden bg-white/[0.01]"
       >
         <div class="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-          <Brain class="w-24 h-24 text-white" />
+          <Zap class="w-24 h-24 text-white" />
         </div>
 
-        <div class="relative z-10">
+        <div class="relative z-10 p-6">
           <div class="flex items-start justify-between mb-6">
             <div class="flex items-center gap-4">
               <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary-accent/5 flex items-center justify-center border border-white/5 shadow-inner">
@@ -104,8 +172,8 @@ const isCreateModalOpen = ref(false)
               <div>
                 <h4 class="font-bold text-white tracking-tight uppercase text-xs">{{ agent.name }}</h4>
                 <div class="flex items-center gap-1.5 mt-1">
-                  <div class="w-1.5 h-1.5 rounded-full" :class="agent.status === 'active' ? 'bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]' : 'bg-gray-600'"></div>
-                  <span class="text-[9px] font-bold tracking-widest text-gray-500">{{ agent.status }}</span>
+                  <div class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"></div>
+                  <span class="text-[9px] font-bold tracking-widest text-gray-500 uppercase">active</span>
                 </div>
               </div>
             </div>
@@ -115,72 +183,126 @@ const isCreateModalOpen = ref(false)
             </button>
           </div>
 
-          <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-4 mb-6">
-            <p class="text-[11px] text-gray-400 leading-relaxed line-clamp-2">
-              {{ agent.personality }}
+          <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-4 mb-6 min-h-[60px]">
+            <p class="text-[11px] text-gray-400 leading-relaxed line-clamp-2 italic-none">
+              {{ agent.system_prompt || 'No system prompt configured. This agent will use default behavioral patterns.' }}
             </p>
           </div>
 
           <div class="flex items-center gap-6">
             <div class="flex items-center gap-2">
               <Activity class="w-3.5 h-3.5 text-gray-600" />
-              <span class="text-[10px] font-bold text-gray-400">{{ agent.conversations }} interactions</span>
+              <span class="text-[10px] font-bold text-gray-400">0 interactions</span>
             </div>
             <div class="flex items-center gap-2">
-              <Sparkles class="w-3.5 h-3.5 text-primary" />
-              <span class="text-[10px] font-bold text-gray-400">accuracy: {{ agent.accuracy }}</span>
+              <Clock class="w-3.5 h-3.5 text-gray-600" />
+              <span class="text-[10px] font-bold text-gray-400">deployed {{ new Date(agent.created_at).toLocaleDateString() }}</span>
             </div>
           </div>
 
           <div class="mt-8 flex items-center gap-3">
             <button class="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-[10px] font-bold tracking-widest text-white rounded-xl transition-all border border-white/5 flex items-center justify-center gap-2">
-              <Settings2 class="w-3.5 h-3.5" />
+              <Edit3 class="w-3.5 h-3.5" />
               configure
             </button>
             <button 
-              class="w-11 h-11 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 text-gray-500 hover:text-white transition-all"
-              title="toggle active state"
+              @click="handleDelete(agent.id)"
+              class="w-11 h-11 flex items-center justify-center bg-white/5 hover:bg-red-400/10 rounded-xl border border-white/5 text-gray-500 hover:text-red-400 transition-all"
             >
-              <Power class="w-4 h-4" />
+              <Trash2 class="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Empty/Add New Slot -->
       <button 
-        @click="isCreateModalOpen = true"
-        class="glass-card border-dashed border-white/10 hover:border-primary/30 transition-all flex flex-col items-center justify-center py-12 group"
+        @click="canCreateAgent ? (showCreateModal = true) : null"
+        :class="[
+          'glass-card border-dashed transition-all flex flex-col items-center justify-center py-12 group bg-white/[0.01]',
+          canCreateAgent 
+            ? 'border-white/10 hover:border-primary/30' 
+            : 'border-white/5 cursor-not-allowed opacity-40'
+        ]"
       >
         <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-          <Plus class="w-6 h-6 text-gray-600 group-hover:text-primary" />
+          <Plus :class="['w-6 h-6', canCreateAgent ? 'text-gray-600 group-hover:text-primary' : 'text-gray-800']" />
         </div>
-        <span class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">add another agent</span>
+        <span class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+          {{ canCreateAgent ? 'forge new agent' : 'limit reached' }}
+        </span>
       </button>
     </div>
 
-    <!-- Recent Logs -->
-    <div class="space-y-6">
-      <div class="flex items-center justify-between border-b border-white/5 pb-4">
-        <div class="flex items-center gap-3 font-bold text-white tracking-tight">
-          <History class="w-5 h-5 text-primary" />
-          recent agent activity
-        </div>
-        <button class="text-[10px] font-bold tracking-widest text-gray-500 hover:text-white transition-colors">view global logs archive</button>
+    <div v-else class="glass-card flex flex-col items-center py-20 text-center border-dashed border-white/10 bg-white/[0.01]">
+      <div class="w-20 h-20 bg-primary/5 rounded-3xl flex items-center justify-center mb-6 border border-primary/10">
+        <Bot class="w-10 h-10 text-primary" />
       </div>
+      <h3 class="text-xl font-bold text-white mb-2 tracking-tight italic-none">no agents forged yet</h3>
+      <p class="text-gray-500 text-sm max-w-sm mb-10 leading-relaxed italic-none">create your first ai agent to start automating your customer service and engagement.</p>
+      
+      <button 
+        @click="showCreateModal = true"
+        class="flex items-center gap-2 text-primary font-bold tracking-widest text-[11px]"
+      >
+        <Plus class="w-4 h-4" />
+        BUILD YOUR FIRST AGENT
+      </button>
+    </div>
 
-      <div class="space-y-3">
-        <div v-for="i in 3" :key="i" class="glass-card !p-4 flex items-center justify-between text-[11px] group hover:bg-white/[0.02]">
-          <div class="flex items-center gap-4">
-            <div class="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10">
-              <MessageSquare class="w-4 h-4 text-primary" />
-            </div>
+    <!-- Create Modal -->
+    <div v-if="showCreateModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-0">
+      <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" @click="showCreateModal = false"></div>
+      
+      <div class="relative w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+        <div class="p-8">
+          <div class="flex items-center justify-between mb-8">
+            <h3 class="text-xl font-bold text-white tracking-tight italic-none">Forge AI Agent</h3>
+            <button @click="showCreateModal = false" class="text-gray-500 hover:text-white">
+              <Plus class="w-6 h-6 rotate-45" />
+            </button>
+          </div>
+          
+          <div class="space-y-6">
             <div>
-              <p class="text-white font-bold tracking-tight">agent processed inbound comment</p>
-              <p class="text-gray-500 text-[10px]">2 minutes ago via instagram automation</p>
+              <label class="block text-[11px] font-bold tracking-widest text-gray-500 uppercase mb-2">Agent Name</label>
+              <input 
+                v-model="newAgent.name"
+                placeholder="e.g. Sales Pilot"
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-700 focus:outline-none focus:border-primary/50 transition-colors"
+              />
+            </div>
+            
+            <div>
+              <label class="block text-[11px] font-bold tracking-widest text-gray-500 uppercase mb-2">Behavioral Protocol</label>
+              <textarea 
+                v-model="newAgent.system_prompt"
+                rows="5"
+                placeholder="Describe how your agent should behave..."
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-700 focus:outline-none focus:border-primary/50 transition-colors resize-none mb-2"
+              ></textarea>
+              <p class="text-[10px] text-gray-600 leading-relaxed italic-none">
+                <Info class="w-3 h-3 inline mr-1" />
+                This protocol defines the agent's personality, tone, and decision-making logic.
+              </p>
             </div>
           </div>
-          <ChevronRight class="w-4 h-4 text-gray-700 group-hover:text-primary transition-colors" />
+
+          <div class="mt-10 flex gap-4">
+            <button 
+              @click="showCreateModal = false"
+              class="flex-1 py-3 text-[11px] font-bold tracking-widest text-gray-500 hover:bg-white/5 rounded-xl transition-all"
+            >
+              CANCEL
+            </button>
+            <button 
+              @click="handleCreate"
+              :disabled="isCreating || !newAgent.name"
+              class="flex-1 py-3 bg-primary text-black font-bold tracking-widest text-[11px] rounded-xl hover:bg-primary-accent transition-all shadow-lg shadow-primary/10 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <Loader2 v-if="isCreating" class="w-4 h-4 animate-spin" />
+              INITIATE FORGE
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -190,5 +312,9 @@ const isCreateModalOpen = ref(false)
 <style scoped>
 .glass-card {
   @apply bg-[#111111]/40 backdrop-blur-xl border border-white/5 p-8 rounded-[2rem];
+}
+
+.italic-none {
+  font-style: normal !important;
 }
 </style>

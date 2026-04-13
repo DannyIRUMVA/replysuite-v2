@@ -2,12 +2,30 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/supabase'],
+  modules: [
+    '@nuxtjs/tailwindcss',
+    '@nuxtjs/supabase',
+    '@polar-sh/nuxt'
+  ],
   nitro: {
     preset: 'cloudflare-pages'
   },
   supabase: {
-    redirect: false
+    redirect: false,
+    cookieOptions: {
+      maxAge: 604800,
+      sameSite: 'lax',
+      path: '/',
+      secure: process.env.NODE_ENV === 'production'
+    },
+    clientOptions: {
+      auth: {
+        flowType: 'pkce',
+        detectSessionInUrl: true,
+        persistSession: true,
+        autoRefreshToken: true
+      }
+    }
   },
   runtimeConfig: {
     instagramClientId: process.env.INSTAGRAM_APP_ID,
@@ -19,12 +37,22 @@ export default defineNuxtConfig({
     smtpFromName: process.env.SMTP_FROM_NAME,
 
     public: {
-      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-    }
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL
+    },
+    polarAccessToken: process.env.POLAR_ACCESS_TOKEN,
+    polarServer: process.env.POLAR_SERVER,
+    polarOrganizationId: process.env.POLAR_ORGANIZATION_ID,
   },
+
   vite: {
     server: {
       allowedHosts: true
+    },
+    optimizeDeps: {
+      include: [
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+      ]
     }
   }
 })

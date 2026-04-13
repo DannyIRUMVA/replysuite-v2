@@ -10,45 +10,9 @@ import {
   TrendingUp
 } from 'lucide-vue-next'
 
-const route = useRoute()
-const user = useSupabaseUser()
+const { user, profile, membership, isVerified } = useAuth()
 const supabase = useSupabaseClient()
-
-// Subscription logic: Guard with user ID and watch for session hydration
-const { data: membership } = await useAsyncData('active-membership', async () => {
-  if (!user.value?.id) return null
-  const { data } = await supabase
-    .from('user_memberships')
-    .select('*, plans(*)')
-    .eq('user_id', user.value.id)
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single()
-  return data
-}, {
-  watch: [user],
-  immediate: true
-})
-
-// Verification state for navigation
-const { data: profile } = await useAsyncData('sidebar-profile', async () => {
-  if (!user.value?.id) return null
-  const { data } = await supabase
-    .from('profiles')
-    .select('is_verified')
-    .eq('id', user.value.id)
-    .single()
-  return data
-}, {
-  watch: [user],
-  immediate: true
-})
-
-const isVerified = computed(() => {
-  if (!user.value) return false
-  return profile.value?.is_verified || user.value.app_metadata.provider === 'google'
-})
+const route = useRoute()
 
 const daysLeft = computed(() => {
   if (!membership.value?.ends_at) return 0
@@ -60,9 +24,9 @@ const daysLeft = computed(() => {
 
 const navLinks = computed(() => [
   { name: 'overview', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'instagram', href: '/dashboard/instagram', icon: Instagram, disabled: !isVerified.value },
-  { name: 'ai agents', href: '/dashboard/agents', icon: MessageSquare, disabled: !isVerified.value },
-  { name: 'analytics', href: '/dashboard/analytics', icon: TrendingUp, disabled: !isVerified.value },
+  { name: 'instagram', href: '/dashboard/instagram', icon: Instagram },
+  { name: 'ai agents', href: '/dashboard/agents', icon: MessageSquare },
+  { name: 'analytics', href: '/dashboard/analytics', icon: TrendingUp },
   { name: 'settings', href: '/dashboard/settings', icon: Settings },
 ])
 
@@ -87,13 +51,12 @@ const handleLogout = async () => {
       <NuxtLink 
         v-for="link in navLinks" 
         :key="link.name" 
-        :to="link.disabled ? '#' : link.href"
+        :to="link.href"
         class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all group"
         :class="[
           route.path === link.href 
             ? 'bg-primary/10 text-primary font-bold' 
-            : 'text-gray-400 hover:text-white hover:bg-white/5',
-          link.disabled ? 'opacity-40 cursor-not-allowed' : ''
+            : 'text-gray-400 hover:text-white hover:bg-white/5'
         ]"
       >
         <component :is="link.icon" class="w-5 h-5 group-hover:scale-110 transition-transform" />

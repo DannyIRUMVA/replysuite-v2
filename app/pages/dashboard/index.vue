@@ -11,44 +11,12 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-const user = useSupabaseUser()
-const supabase = useSupabaseClient()
-const profile = ref<any>(null)
-const loading = ref(true)
-const { track } = useActivity()
+const { user, profile, isVerified, isLoading } = useAuth()
+const isMounted = ref(false)
+onMounted(() => { isMounted.value = true })
 
-
-// Verification logic is partially handled by the layout, but we may need profile data here too.
-onMounted(async () => {
-  if (user.value?.id) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.value.id)
-      .single()
-    profile.value = data
-
-    // Automatically verify Google users in the database if not already done
-    if (user.value.app_metadata.provider === 'google' && data && !data.is_verified) {
-      await supabase
-        .from('profiles')
-        .update({ is_verified: true })
-        .eq('id', user.value.id)
-      profile.value.is_verified = true
-    }
-    
-    loading.value = false
-    
-    // Track dashboard visit
-    track('DASHBOARD_VISIT')
-  }
-})
-
-
-const isVerified = computed(() => {
-  if (!user.value) return false
-  return profile.value?.is_verified || user.value.app_metadata.provider === 'google'
-})
+// Only show skeleton after mounting if still loading, or force false on server
+const loading = computed(() => isMounted.value ? isLoading.value : false)
 
 const stats = [
   { name: 'Total Messages', value: '12.4k', icon: MessageSquare, change: '+12%', changeType: 'increase' },
@@ -60,8 +28,19 @@ const stats = [
 
 <template>
   <div>
-    <!-- Stats Grid (Locked if not verified) -->
-    <div :class="{ 'opacity-20 pointer-events-none grayscale select-none': !isVerified && !loading }" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10 transition-all duration-700">
+    <!-- Stats Grid (Loading or Locked if not verified) -->
+    <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div v-for="i in 4" :key="i" class="glass-card p-8 border-white/5 bg-[#0a0a0a]">
+        <div class="flex items-center justify-between mb-6">
+          <Skeleton width="48px" height="48px" rounded="12px" />
+          <Skeleton width="40px" height="14px" />
+        </div>
+        <Skeleton width="100px" height="12px" class="mb-3" />
+        <Skeleton width="140px" height="32px" />
+      </div>
+    </div>
+
+    <div v-else :class="{ 'opacity-20 pointer-events-none grayscale select-none': !isVerified }" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10 transition-all duration-700">
       <div v-for="stat in stats" :key="stat.name" class="glass-card p-8 border-white/5 bg-[#0a0a0a] group hover:border-primary/30 transition-all relative overflow-hidden">
         <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-all"></div>
         <div class="flex items-center justify-between mb-4">

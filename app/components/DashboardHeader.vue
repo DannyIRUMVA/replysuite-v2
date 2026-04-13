@@ -1,21 +1,6 @@
 <script setup lang="ts">
-const user = useSupabaseUser()
-const supabase = useSupabaseClient()
+const { user, profile } = useAuth()
 const route = useRoute()
-
-// Harden query: Ensure user ID is present and watch for changes
-const { data: profile } = await useAsyncData('header-user-profile', async () => {
-  if (!user.value?.id) return null
-  const { data } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.value.id)
-    .single()
-  return data
-}, {
-  watch: [user],
-  immediate: true
-})
 
 // Dynamic Header Content
 const pageContext = computed(() => {
@@ -28,7 +13,11 @@ const pageContext = computed(() => {
   return { title: 'dashboard', subtitle: 'welcome back to replysuite.' }
 })
 
+const isMounted = ref(false)
+onMounted(() => { isMounted.value = true })
+
 const greeting = computed(() => {
+  if (!isMounted.value) return 'welcome back'
   const hour = new Date().getHours()
   if (hour < 12) return 'good morning'
   if (hour < 17) return 'good afternoon'
