@@ -42,6 +42,10 @@ export default defineNuxtConfig({
     polarAccessToken: process.env.POLAR_ACCESS_TOKEN,
     polarServer: process.env.POLAR_SERVER,
     polarOrganizationId: process.env.POLAR_ORGANIZATION_ID,
+    geminiApiKey: process.env.GEMINI_API_KEY,
+    azureOpenAiKey: process.env.AZURE_OPENAI_KEY,
+    azureOpenAiEndpoint: process.env.AZURE_OPENAI_ENDPOINT,
+    azureOpenAiDeploymentName: process.env.AZURE_OPENAI_DEPLOYMENT_NAME,
   },
 
   vite: {

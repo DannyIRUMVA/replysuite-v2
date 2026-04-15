@@ -3,27 +3,64 @@ import {
   Instagram, 
   MessageSquare, 
   Zap, 
-  Target
+  Target,
+  ShieldAlert,
+  Bot,
+  Plus
 } from 'lucide-vue-next'
+import Skeleton from '~~/app/components/Skeleton.vue'
 
 definePageMeta({
   middleware: 'auth',
   layout: 'dashboard'
 })
 
-const { user, profile, isVerified, isLoading } = useAuth()
+const { user, profile, isVerified, isLoading, userId } = useAuth()
+const supabase = useSupabaseClient()
 const isMounted = ref(false)
 onMounted(() => { isMounted.value = true })
 
-// Only show skeleton after mounting if still loading, or force false on server
-const loading = computed(() => isMounted.value ? isLoading.value : false)
+// Async stats fetching with a fresh key to bypass any stale serialization cache
+const { data: realStats, pending: statsLoading } = useAsyncData('dashboard-metrics-v2', async () => {
+  if (!userId.value) return []
+  
+  const [messagesCount, activeRules, accountsCount] = await Promise.all([
+    supabase.from('instagram_message_jobs').select('*', { count: 'exact', head: true }),
+    supabase.from('instagram_comment_triggers').select('*', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('instagram_accounts').select('*', { count: 'exact', head: true }).eq('user_id', userId.value)
+  ])
 
-const stats = [
-  { name: 'Total Messages', value: '12.4k', icon: MessageSquare, change: '+12%', changeType: 'increase' },
-  { name: 'Leads Captured', value: '842', icon: Target, change: '+25%', changeType: 'increase' },
-  { name: 'Active Rules', value: '14', icon: Zap, change: '+2', changeType: 'increase' },
-  { name: 'Connected Accounts', value: '3', icon: Instagram, change: '0', changeType: 'neutral' },
-]
+  return [
+    { id: 'messages', name: 'Total Messages', value: (messagesCount.count || 0).toString(), change: '+12%', changeType: 'increase' },
+    { id: 'leads', name: 'Leads Captured', value: '0', change: '0%', changeType: 'neutral' },
+    { id: 'rules', name: 'Active Rules', value: (activeRules.count || 0).toString(), change: '+2', changeType: 'increase' },
+    { id: 'accounts', name: 'Connected Accounts', value: (accountsCount.count || 0).toString(), change: '0', changeType: 'neutral' },
+  ]
+}, { watch: [userId] })
+
+// Helper to get icons without putting them in reactive objects
+const getIcon = (id: string) => {
+  switch (id) {
+    case 'messages': return MessageSquare
+    case 'leads': return Target
+    case 'rules': return Zap
+    case 'accounts': return Instagram
+    default: return MessageSquare
+  }
+}
+
+const stats = computed(() => {
+  if (realStats.value && realStats.value.length > 0) return realStats.value
+  return [
+    { id: 'messages', name: 'Total Messages', value: '0', change: '0%', changeType: 'neutral' },
+    { id: 'leads', name: 'Leads Captured', value: '0', change: '0%', changeType: 'neutral' },
+    { id: 'rules', name: 'Active Rules', value: '0', change: '0', changeType: 'neutral' },
+    { id: 'accounts', name: 'Connected Accounts', value: '0', change: '0', changeType: 'neutral' },
+  ]
+})
+
+// Unified loading state
+const loading = computed(() => isMounted.value ? (isLoading.value || statsLoading.value) : false)
 </script>
 
 <template>
@@ -45,7 +82,7 @@ const stats = [
         <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-all"></div>
         <div class="flex items-center justify-between mb-4">
           <div class="p-3 rounded-xl bg-white/5 text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
-            <component :is="stat.icon" class="w-6 h-6" />
+            <component :is="getIcon(stat.id)" class="w-6 h-6" />
           </div>
           <span :class="stat.changeType === 'increase' ? 'text-green-500' : 'text-gray-500'" class="text-xs font-bold tracking-widest">{{ stat.change }}</span>
         </div>
@@ -73,8 +110,33 @@ const stats = [
         </div>
      </div>
 
-     <!-- Main content area (Empty states for now) -->
-     <div v-if="isVerified" class="grid lg:grid-cols-3 gap-10">
+     <!-- Main content area (Empty states or Skeletons) -->
+     <div v-if="loading" class="grid lg:grid-cols-3 gap-10">
+        <div class="lg:col-span-2 glass-card p-10 min-h-[400px]">
+           <div class="flex flex-col items-center justify-center h-full space-y-8">
+              <Skeleton width="6rem" height="6rem" circle />
+              <div class="space-y-4 flex flex-col items-center w-full">
+                <Skeleton width="40%" height="2rem" />
+                <Skeleton width="60%" height="1rem" />
+                <Skeleton width="8rem" height="3rem" radius="1rem" />
+              </div>
+           </div>
+        </div>
+        <div class="glass-card p-10 flex flex-col">
+           <Skeleton width="40%" height="1.5rem" class="mb-8" />
+           <div class="space-y-6">
+              <div v-for="i in 5" :key="i" class="flex items-center gap-4">
+                 <Skeleton width="2.5rem" height="2.5rem" circle />
+                 <div class="flex-1 space-y-2">
+                    <Skeleton width="70%" height="0.75rem" />
+                    <Skeleton width="40%" height="0.5rem" />
+                 </div>
+              </div>
+           </div>
+        </div>
+     </div>
+
+     <div v-else-if="isVerified" class="grid lg:grid-cols-3 gap-10">
         <div class="lg:col-span-2 glass-card p-10 min-h-[400px] border-white/5 flex flex-col items-center justify-center text-center">
            <div class="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-8">
               <Instagram class="w-12 h-12 text-primary opacity-30" />

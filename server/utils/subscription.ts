@@ -6,6 +6,7 @@ export const SubscriptionLimitSchema = z.object({
   max_instagram_accounts: z.number().default(1),
   max_triggers: z.number().default(1),
   max_auto_dms_per_month: z.number().default(50),
+  max_training_units: z.number().default(100),
 })
 
 export type SubscriptionLimits = z.infer<typeof SubscriptionLimitSchema>
@@ -38,6 +39,7 @@ export async function getUserSubscriptionLimits(event: H3Event, userId?: string 
       max_instagram_accounts: freePlan?.max_instagram_accounts || 1,
       max_triggers: freePlan?.max_triggers || 1,
       max_auto_dms_per_month: freePlan?.max_auto_dms_per_month || 50,
+      max_training_units: freePlan?.max_training_units || 100,
     })
   }
 
@@ -65,6 +67,7 @@ export async function getUserSubscriptionLimits(event: H3Event, userId?: string 
       max_instagram_accounts: freePlan?.max_instagram_accounts || 1,
       max_triggers: freePlan?.max_triggers || 1,
       max_auto_dms_per_month: freePlan?.max_auto_dms_per_month || 50,
+      max_training_units: freePlan?.max_training_units || 100,
     })
   }
 
@@ -72,7 +75,60 @@ export async function getUserSubscriptionLimits(event: H3Event, userId?: string 
     max_instagram_accounts: membership.plans.max_instagram_accounts,
     max_triggers: membership.plans.max_triggers,
     max_auto_dms_per_month: membership.plans.max_auto_dms_per_month,
+    max_training_units: (membership.plans as any).max_training_units || 100,
   })
+}
+
+/**
+ * Checks Training usage for the current month.
+ */
+export async function checkTrainingLimit(event: H3Event, chatbotId: string, userId: string): Promise<boolean> {
+  const client = await serverSupabaseClient(event)
+  const limits = await getUserSubscriptionLimits(event, userId)
+  
+  const monthYear = new Date().toISOString().slice(0, 7) // YYYY-MM
+
+  const { data: usage } = await client
+    .from('training_usage')
+    .select('training_count')
+    .eq('chatbot_id', chatbotId)
+    .eq('month_year', monthYear)
+    .maybeSingle()
+
+  const currentCount = usage?.training_count || 0
+  return currentCount < limits.max_training_units
+}
+
+/**
+ * Record training usage.
+ */
+export async function recordTrainingUsage(event: H3Event, chatbotId: string, userId: string, count: number = 1) {
+  const client = await serverSupabaseClient(event)
+  const monthYear = new Date().toISOString().slice(0, 7)
+
+  // Use upsert or manual check
+  const { data: existing } = await client
+    .from('training_usage')
+    .select('id, training_count')
+    .eq('chatbot_id', chatbotId)
+    .eq('month_year', monthYear)
+    .maybeSingle()
+
+  if (existing) {
+    await client
+      .from('training_usage')
+      .update({ training_count: existing.training_count + count })
+      .eq('id', existing.id)
+  } else {
+    await client
+      .from('training_usage')
+      .insert({
+        chatbot_id: chatbotId,
+        user_id: userId,
+        month_year: monthYear,
+        training_count: count
+      })
+  }
 }
 
 /**

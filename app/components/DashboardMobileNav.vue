@@ -4,48 +4,62 @@ import {
   Instagram, 
   MessageSquare, 
   Settings, 
-  TrendingUp 
+  TrendingUp,
+  Zap,
+  Bot
 } from 'lucide-vue-next'
 
-const { isVerified } = useAuth()
 const route = useRoute()
 
-const navLinks = computed(() => [
-  { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Insta', href: '/dashboard/instagram', icon: Instagram },
-  { name: 'AI', href: '/dashboard/agents', icon: MessageSquare },
-  { name: 'Stats', href: '/dashboard/analytics', icon: TrendingUp },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
-])
+// Map strings to components to avoid serialization of functions
+const iconMap: Record<string, any> = {
+  LayoutDashboard,
+  Instagram,
+  Bot,
+  TrendingUp,
+  Zap
+}
+
+const navLinks = [
+  { name: 'Hub', href: '/dashboard', icon: 'LayoutDashboard' },
+  { name: 'Store', href: '/dashboard/instagram', icon: 'Instagram' },
+  { name: 'Forge', href: '/dashboard/agents', icon: 'Bot' },
+  { name: 'Stats', href: '/dashboard/analytics', icon: 'TrendingUp' },
+  { name: 'Rules', href: '/dashboard/automation', icon: 'Zap' },
+]
 </script>
 
 <template>
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-[100] safe-area-bottom">
-    <div class="glass-nav-footer flex items-center justify-around py-3 px-2 relative overflow-hidden h-20 border-t border-white/10">
-      <!-- Background Glow Effect (Active State) -->
-      <div class="absolute inset-0 bg-primary/5 -z-10 pointer-events-none"></div>
-      
+  <nav class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-lg">
+    <div class="glass-dock flex items-center justify-around py-3 px-4 rounded-[2rem] border border-white/10 shadow-2xl shadow-black">
       <NuxtLink 
         v-for="link in navLinks" 
         :key="link.name" 
         :to="link.href"
-        class="flex flex-col items-center gap-1.5 py-1 px-3 transition-all duration-300 group min-w-[64px]"
-        :class="[
-          route.path === link.href ? 'text-primary' : 'text-gray-500',
-          'active:scale-95'
-        ]"
+        class="relative flex flex-col items-center gap-1 py-1 transition-all duration-300 group"
+        :class="[route.path === link.href ? 'text-primary' : 'text-gray-500']"
       >
-        <div class="relative">
-           <component :is="link.icon" class="w-6 h-6" :class="{ 'fill-current opacity-10': route.path === link.href }" />
-           <!-- Active Indicator -->
-           <div v-if="route.path === link.href" class="absolute -top-1 -right-1 w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_rgba(212,175,55,0.8)]"></div>
+        <div class="relative flex items-center justify-center">
+           <component 
+            :is="iconMap[link.icon]" 
+            class="w-5 h-5 transition-all duration-300" 
+            :class="[route.path === link.href ? 'scale-110' : 'group-active:scale-90']"
+           />
+           
+           <!-- Active Aura -->
+           <div 
+            v-if="route.path === link.href" 
+            class="absolute inset-0 bg-primary/20 blur-md rounded-full animate-pulse"
+           ></div>
         </div>
-        <span class="text-[10px] font-medium tracking-tight whitespace-nowrap">{{ link.name }}</span>
+        <span class="text-[9px] font-bold tracking-widest uppercase transition-all duration-300">
+          {{ link.name }}
+        </span>
         
-        <!-- Bottom Active Bar -->
+        <!-- Indicator Dot -->
         <div 
           v-if="route.path === link.href" 
-          class="absolute bottom-0 w-8 h-1 bg-primary rounded-t-full shadow-[0_-2px_6px_rgba(212,175,55,0.4)]"
+          class="absolute -bottom-1 w-1 h-1 bg-primary rounded-full"
         ></div>
       </NuxtLink>
     </div>
@@ -53,12 +67,14 @@ const navLinks = computed(() => [
 </template>
 
 <style scoped>
-.glass-nav-footer {
-  @apply bg-[#0a0a0a]/90 backdrop-blur-3xl;
+.glass-dock {
+  background: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+.router-link-active span {
+  @apply text-primary;
 }
 </style>
 

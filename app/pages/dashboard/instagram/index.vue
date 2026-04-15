@@ -15,6 +15,7 @@ import {
   Crown,
   Lock
 } from 'lucide-vue-next'
+import Skeleton from '~~/app/components/Skeleton.vue'
 
 definePageMeta({
   middleware: 'auth',
@@ -229,17 +230,20 @@ const deleteTrigger = async (id: string) => {
     <!-- Accounts Grid -->
     <ClientOnly>
       <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div v-for="i in 3" :key="i" class="glass-card p-8 border-white/5 bg-[#0a0a0a] min-h-[300px]">
+        <div v-for="i in 3" :key="i" class="glass-card p-8 border-white/5 bg-[#0a0a0a] min-h-[300px] flex flex-col">
           <div class="flex items-center gap-4 mb-8">
-            <div class="w-16 h-16 rounded-[20px] bg-white/5 animate-pulse"></div>
-            <div class="space-y-2">
-              <div class="w-32 h-4 bg-white/5 animate-pulse rounded"></div>
-              <div class="w-20 h-3 bg-white/5 animate-pulse rounded"></div>
+            <Skeleton width="4rem" height="4rem" circle />
+            <div class="space-y-2 flex-1">
+              <Skeleton width="60%" height="1rem" />
+              <Skeleton width="30%" height="0.6rem" />
             </div>
           </div>
-          <div class="space-y-4 mt-auto">
-            <div class="w-full h-11 bg-white/5 animate-pulse rounded-2xl"></div>
-            <div class="w-full h-11 bg-white/5 animate-pulse rounded-2xl"></div>
+          <div class="mt-auto space-y-4 pt-10">
+             <Skeleton width="100%" height="1rem" />
+             <div class="flex gap-4 pt-2">
+                <Skeleton width="80%" height="2.5rem" radius="0.75rem" />
+                <Skeleton width="2.5rem" height="2.5rem" radius="0.5rem" />
+             </div>
           </div>
         </div>
       </div>

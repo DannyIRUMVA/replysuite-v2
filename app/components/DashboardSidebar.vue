@@ -7,8 +7,23 @@ import {
   LogOut, 
   Zap,
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  Database,
+  Code2,
+  Megaphone
 } from 'lucide-vue-next'
+
+// Map strings to components to avoid serialization of functions
+const iconMap: Record<string, any> = {
+  LayoutDashboard,
+  TrendingUp,
+  Instagram,
+  Megaphone,
+  MessageSquare,
+  Database,
+  Code2,
+  Settings
+}
 
 const { user, profile, membership, isVerified } = useAuth()
 const supabase = useSupabaseClient()
@@ -22,13 +37,36 @@ const daysLeft = computed(() => {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 })
 
-const navLinks = computed(() => [
-  { name: 'overview', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'instagram', href: '/dashboard/instagram', icon: Instagram },
-  { name: 'ai agents', href: '/dashboard/agents', icon: MessageSquare },
-  { name: 'analytics', href: '/dashboard/analytics', icon: TrendingUp },
-  { name: 'settings', href: '/dashboard/settings', icon: Settings },
-])
+const sections = [
+  {
+    title: 'main',
+    links: [
+      { name: 'overview', href: '/dashboard', icon: 'LayoutDashboard' },
+      { name: 'analytics', href: '/dashboard/analytics', icon: 'TrendingUp' },
+    ]
+  },
+  {
+    title: 'instagram',
+    links: [
+      { name: 'accounts', href: '/dashboard/instagram', icon: 'Instagram' },
+      { name: 'automations', href: '/dashboard/automation', icon: 'Megaphone' },
+    ]
+  },
+  {
+    title: 'ai agents',
+    links: [
+      { name: 'my agents', href: '/dashboard/agents', icon: 'MessageSquare' },
+      { name: 'training', href: '/dashboard/agents/training', icon: 'Database' },
+      { name: 'integration', href: '/dashboard/agents/integration', icon: 'Code2' },
+    ]
+  },
+  {
+    title: 'account',
+    links: [
+      { name: 'settings', href: '/dashboard/settings', icon: 'Settings' },
+    ]
+  }
+]
 
 const handleLogout = async () => {
   await supabase.auth.signOut()
@@ -47,22 +85,27 @@ const handleLogout = async () => {
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-1 space-y-1">
-      <NuxtLink 
-        v-for="link in navLinks" 
-        :key="link.name" 
-        :to="link.href"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all group"
-        :class="[
-          route.path === link.href 
-            ? 'bg-primary/10 text-primary font-bold' 
-            : 'text-gray-400 hover:text-white hover:bg-white/5'
-        ]"
-      >
-        <component :is="link.icon" class="w-5 h-5 group-hover:scale-110 transition-transform" />
-        <span class="flex-1">{{ link.name }}</span>
-        <ChevronRight v-if="route.path === link.href" class="w-4 h-4" />
-      </NuxtLink>
+    <nav class="flex-1 space-y-8">
+      <div v-for="section in sections" :key="section.title" class="space-y-3">
+        <h5 class="px-4 text-[10px] font-bold tracking-[0.2em] text-gray-600 uppercase">{{ section.title }}</h5>
+        <div class="space-y-1">
+          <NuxtLink 
+            v-for="link in section.links" 
+            :key="link.name" 
+            :to="link.href"
+            class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group"
+            :class="[
+              route.path === link.href 
+                ? 'bg-primary/10 text-primary font-bold shadow-[0_0_20px_rgba(var(--primary),0.05)]' 
+                : 'text-gray-500 hover:text-white hover:bg-white/5'
+            ]"
+          >
+            <component :is="iconMap[link.icon]" class="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span class="flex-1 text-sm tracking-tight capitalize">{{ link.name }}</span>
+            <ChevronRight v-if="route.path === link.href" class="w-3 h-3" />
+          </NuxtLink>
+        </div>
+      </div>
     </nav>
 
     <!-- Subscription Card -->

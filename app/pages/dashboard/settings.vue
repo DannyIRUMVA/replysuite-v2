@@ -24,7 +24,7 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-const { user, userId, membership, plan, limits, isLoading: isSubLoading, profile: authProfile } = useAuth()
+const { user, userId, membership, plan, planSlug, limits, isLoading: isSubLoading, profile: authProfile } = useAuth()
 const supabase = useSupabaseClient()
 
 const activeTab = ref('profile')

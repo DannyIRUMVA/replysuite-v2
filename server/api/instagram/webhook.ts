@@ -32,8 +32,10 @@ export default defineEventHandler(async (event) => {
             
             console.log('New Instagram Comment:', commentData.text)
             
-            // Trigger Automation Logic
-            await processInstagramComment(commentData)
+            // Trigger Automation Logic (Background)
+            event.waitUntil(processInstagramComment(commentData).catch(err => {
+              console.error('[Webhook Background Error]', err)
+            }))
           }
         }
       }

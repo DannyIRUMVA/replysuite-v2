@@ -13,8 +13,11 @@ import {
   CheckCircle2,
   Clock,
   Activity,
-  Sparkles
+  Sparkles,
+  Database,
+  Search
 } from 'lucide-vue-next'
+import Skeleton from '~~/app/components/Skeleton.vue'
 
 definePageMeta({
   middleware: 'auth',
@@ -128,8 +131,20 @@ const handleDelete = async (id: string) => {
       </button>
     </div>
 
-    <!-- Stats Row -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Stats Row (Loading or Data) -->
+    <div v-if="isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div v-for="i in 4" :key="i" class="glass-card !p-5 bg-white/[0.01]">
+        <div class="flex items-center gap-4">
+          <Skeleton width="40px" height="40px" radius="12px" />
+          <div class="space-y-2 flex-1">
+            <Skeleton width="40%" height="0.6rem" />
+            <Skeleton width="60%" height="1rem" />
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div v-for="stat in [
         { label: 'active agents', value: agents.length.toString().padStart(2, '0'), icon: Bot },
         { label: 'success rate', value: '96.2%', icon: Sparkles },
@@ -141,7 +156,7 @@ const handleDelete = async (id: string) => {
             <component :is="stat.icon" class="w-5 h-5 text-gray-400" />
           </div>
           <div>
-            <p class="text-[10px] font-bold tracking-widest text-gray-500 mb-0.5">{{ stat.label }}</p>
+            <p class="text-[10px] font-bold tracking-widest text-gray-500 mb-0.5 uppercase">{{ stat.label }}</p>
             <p class="text-lg font-black text-white leading-none italic-none">{{ stat.value }}</p>
           </div>
         </div>
@@ -149,8 +164,31 @@ const handleDelete = async (id: string) => {
     </div>
 
     <!-- Agents Grid -->
-    <div v-if="isLoading" class="flex justify-center py-20">
-      <Loader2 class="w-8 h-8 text-primary animate-spin" />
+    <div v-if="isLoading" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div v-for="i in 2" :key="i" class="glass-card !p-0 overflow-hidden bg-white/[0.01] opacity-60">
+        <div class="p-6">
+          <div class="flex items-start justify-between mb-6">
+            <div class="flex items-center gap-4">
+               <Skeleton width="3rem" height="3rem" radius="1rem" />
+               <div class="space-y-2">
+                  <Skeleton width="8rem" height="1rem" />
+                  <Skeleton width="4rem" height="0.5rem" />
+               </div>
+            </div>
+            <Skeleton width="2rem" height="2rem" radius="0.5rem" />
+          </div>
+          <Skeleton width="100%" height="4rem" radius="1rem" class="mb-6" />
+          <div class="flex gap-4">
+             <Skeleton width="6rem" height="0.75rem" />
+             <Skeleton width="8rem" height="0.75rem" />
+          </div>
+          <div class="mt-8 flex gap-3">
+             <Skeleton width="40%" height="2.5rem" radius="0.75rem" />
+             <Skeleton width="40%" height="2.5rem" radius="0.75rem" />
+             <Skeleton width="3rem" height="2.5rem" radius="0.75rem" />
+          </div>
+        </div>
+      </div>
     </div>
 
     <div v-else-if="agents.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -201,6 +239,13 @@ const handleDelete = async (id: string) => {
           </div>
 
           <div class="mt-8 flex items-center gap-3">
+            <NuxtLink 
+              :to="`/dashboard/agents/training?id=${agent.id}`"
+              class="flex-1 py-2.5 bg-primary/10 hover:bg-primary/20 text-[10px] font-bold tracking-widest text-primary rounded-xl transition-all border border-primary/10 flex items-center justify-center gap-2"
+            >
+              <Database class="w-3.5 h-3.5" />
+              knowledge base
+            </NuxtLink>
             <button class="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-[10px] font-bold tracking-widest text-white rounded-xl transition-all border border-white/5 flex items-center justify-center gap-2">
               <Edit3 class="w-3.5 h-3.5" />
               configure

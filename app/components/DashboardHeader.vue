@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Zap, TrendingUp } from 'lucide-vue-next'
 const { user, profile } = useAuth()
 const route = useRoute()
 
@@ -27,9 +28,24 @@ const greeting = computed(() => {
 
 <template>
   <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+    <!-- Brand (Mobile Only) -->
+    <div class="flex md:hidden items-center justify-between w-full mb-2">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-gradient-to-tr from-primary to-primary-accent rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+          <Zap class="text-black w-4 h-4 fill-current" />
+        </div>
+        <span class="text-lg font-bold tracking-tight">replysuite</span>
+      </div>
+      
+      <!-- Upgrade Trigger (Mobile) -->
+      <NuxtLink to="/pricing" class="p-2 rounded-xl bg-primary/10 text-primary">
+        <TrendingUp class="w-4 h-4" />
+      </NuxtLink>
+    </div>
+
     <div class="animate-in fade-in slide-in-from-left-4 duration-500">
       <div class="flex items-center gap-2 mb-1">
-         <span class="text-[10px] font-bold tracking-widest text-primary">{{ greeting }}</span>
+         <span class="text-[10px] font-bold tracking-widest text-primary capitalize">{{ greeting }}</span>
          <div class="h-[1px] w-4 bg-primary/30"></div>
       </div>
       <h1 class="text-2xl md:text-3xl font-black tracking-tighter text-white leading-tight">

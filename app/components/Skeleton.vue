@@ -2,29 +2,34 @@
 interface Props {
   width?: string
   height?: string
-  rounded?: string
-  class?: string
+  radius?: string
+  circle?: boolean
+  pulse?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   width: '100%',
-  height: '20px',
-  rounded: '0.75rem',
-  class: ''
+  height: '1rem',
+  radius: '0.75rem',
+  circle: false,
+  pulse: true
 })
+
+const style = computed(() => ({
+  width: props.width,
+  height: props.height,
+  borderRadius: props.circle ? '50%' : props.radius
+}))
 </script>
 
 <template>
   <div 
-    class="skeleton-loader overflow-hidden relative bg-white/[0.03]"
-    :class="props.class"
-    :style="{ 
-      width: props.width, 
-      height: props.height, 
-      borderRadius: props.rounded 
-    }"
+    class="skeleton-loader bg-white/[0.03] overflow-hidden relative"
+    :class="{ 'pulse-anim': pulse }"
+    :style="style"
   >
-    <div class="shimmer-sweep absolute inset-0"></div>
+    <!-- Shimmer reflection effect -->
+    <div class="shimmer-effect absolute inset-0 -translate-x-full"></div>
   </div>
 </template>
 
@@ -33,15 +38,27 @@ const props = withDefaults(defineProps<Props>(), {
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.shimmer-sweep {
+.pulse-anim {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.shimmer-effect {
   background: linear-gradient(
     90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.05) 50%,
-    transparent 100%
+    transparent,
+    rgba(255, 255, 255, 0.03),
+    transparent
   );
-  animation: shimmer 1.5s infinite;
-  transform: translateX(-100%);
+  animation: shimmer 2s infinite;
 }
 
 @keyframes shimmer {
