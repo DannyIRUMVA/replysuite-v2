@@ -50,7 +50,11 @@ export default defineNuxtConfig({
 
   vite: {
     server: {
-      allowedHosts: true
+      allowedHosts: true,
+      hmr: {
+        protocol: 'ws',
+        host: 'localhost'
+      }
     },
     optimizeDeps: {
       include: [

@@ -22,7 +22,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-const { userId, limits, planSlug } = useAuth()
+const auth = useAuth()
+const { userId, limits, planSlug: userPlan } = auth
 const supabase = useSupabaseClient()
 
 // State
@@ -45,11 +46,11 @@ const newTrigger = ref({
   dm_template: 'Hello! How can I help?',
   reply_in_comment: true,
   reply_in_dm: false,
-  replyType: planSlug.value === 'starter' ? 'manual' : 'ai'
+  replyType: (userPlan?.value === 'starter') ? 'manual' : 'ai'
 })
 
 // Watch planSlug to update replyType if it changes (e.g. after upgrade)
-watch(planSlug, (newSlug) => {
+watch(userPlan, (newSlug) => {
   if (newSlug === 'starter') {
     newTrigger.value.replyType = 'manual'
   }
@@ -184,7 +185,7 @@ const handleCreateTrigger = async () => {
       dm_template: 'Hello! How can I help?', 
       reply_in_comment: true, 
       reply_in_dm: false, 
-      replyType: planSlug.value === 'starter' ? 'manual' : 'ai' 
+      replyType: userPlan?.value === 'starter' ? 'manual' : 'ai' 
     }
   } catch (err) {
     console.error('Error creating trigger:', err)
@@ -436,17 +437,17 @@ watch(selectedAccountId, () => {
                   Static Template
                 </button>
                 <button 
-                  @click="planSlug !== 'starter' ? newTrigger.replyType = 'ai' : null"
+                  @click="userPlan !== 'starter' ? newTrigger.replyType = 'ai' : null"
                   type="button"
                   :class="[
                     'flex-1 py-4 px-6 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all relative flex items-center justify-center gap-2 group',
                     newTrigger.replyType === 'ai' ? 'bg-primary text-black shadow-xl shadow-primary/20' : 'text-gray-500 hover:text-white bg-white/5',
-                    planSlug === 'starter' ? 'opacity-50 cursor-not-allowed grayscale' : ''
+                    userPlan === 'starter' ? 'opacity-50 cursor-not-allowed grayscale' : ''
                   ]"
                 >
                   AI Dynamic Agent
-                  <Zap v-if="planSlug === 'starter'" class="w-3 h-3 text-secondary group-hover:scale-125 transition-transform" />
-                  <div v-if="planSlug === 'starter'" class="absolute -top-2 -right-2 bg-secondary text-black text-[7px] font-black px-2 py-0.5 rounded-full shadow-lg">PRO</div>
+                  <Zap v-if="userPlan === 'starter'" class="w-3 h-3 text-secondary group-hover:scale-125 transition-transform" />
+                  <div v-if="userPlan === 'starter'" class="absolute -top-2 -right-2 bg-secondary text-black text-[7px] font-black px-2 py-0.5 rounded-full shadow-lg">PRO</div>
                 </button>
               </div>
 

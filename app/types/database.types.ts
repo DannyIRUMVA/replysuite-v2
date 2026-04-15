@@ -80,8 +80,7 @@ export type Database = {
       }
       chatbots: {
         Row: {
-          created_at: string | null
-          deleted_at: string | null
+          current_embedding_mb: number | null
           id: string
           name: string
           system_prompt: string | null
@@ -143,9 +142,12 @@ export type Database = {
       data_sources: {
         Row: {
           chatbot_id: string | null
+          content_text: string | null
           created_at: string | null
+          data_size_bytes: number | null
           id: string
           metadata: Json | null
+          status: string | null
           type: string | null
           user_id: string | null
         }
@@ -748,6 +750,41 @@ export type Database = {
         }
         Relationships: [\n          {
             foreignKeyName: "training_jobs_chatbot_id_fkey"
+            columns: ["chatbot_id"]
+            isOneToOne: false
+            referencedRelation: "chatbots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_usage: {
+        Row: {
+          chatbot_id: string | null
+          created_at: string | null
+          id: string
+          month_year: string
+          training_count: number | null
+          user_id: string
+        }
+        Insert: {
+          chatbot_id?: string | null
+          created_at?: string | null
+          id?: string
+          month_year: string
+          training_count?: number | null
+          user_id: string
+        }
+        Update: {
+          chatbot_id?: string | null
+          created_at?: string | null
+          id?: string
+          month_year?: string
+          training_count?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_usage_chatbot_id_fkey"
             columns: ["chatbot_id"]
             isOneToOne: false
             referencedRelation: "chatbots"
