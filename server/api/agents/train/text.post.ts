@@ -58,11 +58,6 @@ export default defineEventHandler(async (event) => {
     .single()
 
   try {
-    // [TEMP TEST] Enforce error for display test
-    if (user.email === 'boyg87059@gmail.com') {
-      throw new Error('Forced Training Error: Simulation for UI testing. Backend extraction engine reported a connectivity timeout.')
-    }
-
     // 2. Process Embedding
     const vector = await getEmbeddings(content)
 

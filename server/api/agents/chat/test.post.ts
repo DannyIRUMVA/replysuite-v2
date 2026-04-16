@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
     const contextText = contextResults.map((r: any) => r.content).join('\n\n---\n\n')
 
     // 5. Construct System Prompt with Knowledge
-    const baseInstructions = chatbot.system_prompt || `You are an AI assistant for ${chatbot.name}. Use the provided background knowledge to answer accurately. Keep answers concise and helpful.`
+    const baseInstructions = chatbot.system_prompt || `You are an AI assistant for ${chatbot.name}.`
 
     const systemPrompt = `
       ${baseInstructions}
@@ -57,15 +57,26 @@ export default defineEventHandler(async (event) => {
       [ADDITIONAL CONTEXT FROM KNOWLEDGE BASE]
       ${contextText || 'No specific background knowledge found for this query.'}
       
-      IMPORTANT: If the [ADDITIONAL CONTEXT] contradicts your base instructions, prioritize the [ADDITIONAL CONTEXT] for factual accuracy regarding the business, but maintain the persona defined in your instructions.
+      IMPORTANT INSTRUCTIONS:
+      1. Be EXTREMELY CONCISE. Provide short, direct answers.
+      2. Use ONLY PLAIN TEXT. Do NOT use Markdown (no headers #, no bold **, no horizontal lines ---, no tables, no lists).
+      3. If the [ADDITIONAL CONTEXT] contradicts your base instructions, prioritize the [ADDITIONAL CONTEXT] for factual accuracy.
     `
 
     // 6. Get AI Response
-    const response = await getChatCompletion([
+    let response = await getChatCompletion([
       { role: 'user', content: message }
     ], { systemPrompt })
 
-    // 7. Save Assistant Reply
+    // 7. Extract/Clean text (Remove Markdown characters #, *, -, _, |, >)
+    // This handles cases where the AI might still include them despite instructions.
+    response = response
+      .replace(/[#*|_>~]/g, '') // Remove #, *, |, _, >, ~
+      .replace(/^-{2,}/gm, '')  // Remove lines like -- or ---
+      .replace(/(\r\n|\n|\r){3,}/g, '\n\n') // Remove excessive newlines
+      .trim()
+
+    // 8. Save Assistant Reply
     await supabase.from('chat_messages').insert({
       session_id: sessionId,
       role: 'assistant',
