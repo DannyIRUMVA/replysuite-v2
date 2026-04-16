@@ -46,6 +46,7 @@ export const useAuth = () => {
     maxAgents: plan.value?.max_chatbots || 1,
     maxDms: plan.value?.max_auto_dms_per_month || 50,
     maxTrainings: planSlug.value === 'starter' ? 10 : 999999,
+    maxEmbeddingMb: plan.value?.max_embedding_mb || (planSlug.value === 'starter' ? 1.0 : 5.0),
   }))
 
   const isLoading = computed(() => isAuthDataLoading.value)

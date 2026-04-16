@@ -7,18 +7,16 @@ import {
   Type, 
   Plus, 
   Loader2, 
-  CheckCircle2, 
-  Trash2, 
-  Database,
   Search,
-  AlertTriangle,
-  ExternalLink,
-  Sparkles as LucideSparkles,
-  Clock,
   History,
+  AlertTriangle,
   Activity as LucideActivity,
-  Zap as LucideZap
+  Zap as LucideZap,
+  Sparkles as LucideSparkles
 } from 'lucide-vue-next'
+import HistoryTable from '~/components/agents/HistoryTable.vue'
+import DashboardStats from '~/components/agents/DashboardStats.vue'
+import ExtractionModal from '~/components/agents/ExtractionModal.vue'
 
 definePageMeta({
   middleware: 'auth',
@@ -40,16 +38,19 @@ const trainingJobs = ref<any[]>([])
 const monthlyUsage = ref(0)
 const totalTrainings = ref(0)
 
-// Forms
+// Form States
 const urlForm = ref({ url: '' })
 const textForm = ref({ title: '', content: '' })
 const selectedFile = ref<File | null>(null)
+
+// Extraction Viewer State
+const showExtractionModal = ref(false)
+const selectedExtraction = ref<{ title: string, content: string } | null>(null)
 
 // Fetch Data
 const fetchData = async () => {
   if (!chatbotId || !userId.value) return
   
-  isLoading.value = true
   try {
     const [chatbotRes, sourcesRes, jobsRes, usageRes] = await Promise.all([
       supabase.from('chatbots').select('*').eq('id', chatbotId).single(),
@@ -71,44 +72,89 @@ const fetchData = async () => {
   }
 }
 
+// Polling for processing jobs
+let pollInterval: any = null
+watch(trainingJobs, (newJobs) => {
+  const hasProcessing = newJobs.some(j => j.status === 'processing')
+  if (hasProcessing && !pollInterval) {
+    pollInterval = setInterval(fetchData, 3000)
+  } else if (!hasProcessing && pollInterval) {
+    clearInterval(pollInterval)
+    pollInterval = null
+  }
+}, { deep: true })
+
+onUnmounted(() => {
+  if (pollInterval) clearInterval(pollInterval)
+})
+
 onMounted(fetchData)
 
 // Actions
+const viewExtraction = (job: any) => {
+  // Find the corresponding source if possible, or use job meta
+  const source = sources.value.find(s => 
+    (s.metadata?.url && s.metadata.url === job.meta?.url) || 
+    (s.metadata?.filename && s.metadata.filename === job.meta?.filename) ||
+    (s.type === 'text' && s.metadata?.title === job.meta?.title)
+  )
+
+  selectedExtraction.value = {
+    title: job.meta?.title || job.meta?.filename || job.meta?.url || 'Extracted Data',
+    content: source?.content_text || job.meta?.error || 'Processing knowledge or data already indexed.'
+  }
+  showExtractionModal.value = true
+}
+
 const handleUrlTrain = async () => {
   if (!urlForm.value.url) return
   isProcessing.value = true
+  
   try {
-    const res = await $fetch('/api/agents/train/url', {
+    const trainPromise = $fetch('/api/agents/train/url', {
       method: 'POST',
       body: { chatbotId, url: urlForm.value.url }
     })
+
+    // Immediate visibility fix: Refresh data after a short delay to allow DB insert
+    setTimeout(() => fetchData(), 1000)
+
+    const res = await trainPromise
     if (res.success) {
       urlForm.value.url = ''
-      await fetchData()
     }
   } catch (err: any) {
+    console.error('[URL Training Error]', err)
     alert(err.message || 'Failed to train from URL')
   } finally {
     isProcessing.value = false
+    await fetchData()
   }
 }
 
 const handleTextTrain = async () => {
   if (!textForm.value.content) return
   isProcessing.value = true
+  
   try {
-    const res = await $fetch('/api/agents/train/text', {
+    const trainPromise = $fetch('/api/agents/train/text', {
       method: 'POST',
       body: { chatbotId, ...textForm.value }
     })
+
+    // Immediate visibility fix: Refresh data after a short delay
+    setTimeout(() => fetchData(), 1000)
+
+    const res = await trainPromise
     if (res.success) {
       textForm.value = { title: '', content: '' }
-      await fetchData()
     }
   } catch (err: any) {
+    console.error('[Text Training Error]', err)
     alert(err.message || 'Failed to train from text')
   } finally {
     isProcessing.value = false
+    await fetchData()
   }
 }
 
@@ -122,24 +168,30 @@ const handleFileChange = (e: Event) => {
 const handleFileTrain = async () => {
   if (!selectedFile.value) return
   isProcessing.value = true
+  
   try {
     const formData = new FormData()
     formData.append('file', selectedFile.value)
     formData.append('chatbotId', chatbotId)
 
-    const res = await $fetch('/api/agents/train/file', {
+    const trainPromise = $fetch('/api/agents/train/file', {
       method: 'POST',
       body: formData
     })
-    
+
+    // Immediate visibility fix
+    setTimeout(() => fetchData(), 1000)
+
+    const res = await trainPromise
     if (res.success) {
       selectedFile.value = null
-      await fetchData()
     }
   } catch (err: any) {
+    console.error('[File Training Error]', err)
     alert(err.message || 'Failed to train from file')
   } finally {
     isProcessing.value = false
+    await fetchData()
   }
 }
 
@@ -156,18 +208,8 @@ const handleDeleteSource = async (id: string) => {
   }
 }
 
-const maxEmbSize = computed(() => limits.value.maxEmbeddingMb || 5)
-const usagePercent = computed(() => {
-  if (!chatbot.value) return 0
-  return Math.min(100, (Number(chatbot.value.current_embedding_mb || 0) / maxEmbSize.value) * 100)
-})
-
-const maxMonthlyUnits = computed(() => limits.value.maxTrainingUnits || 5000)
-const monthlyUsagePercent = computed(() => Math.min(100, (monthlyUsage.value / maxMonthlyUnits.value) * 100))
-
-const maxTrainings = computed(() => limits.value.maxTrainings || 10)
-const trainingPercent = computed(() => Math.min(100, (totalTrainings.value / maxTrainings.value) * 100))
-const isOverTrainingLimit = computed(() => totalTrainings.value >= maxTrainings.value)
+// UI Helper
+const isOverTrainingLimit = computed(() => trainingJobs.value.length >= (limits.value.maxTrainings || 10))
 
 // Chat Test State
 const showChatTest = ref(false)
@@ -180,7 +222,7 @@ const handleTestChat = async () => {
   
   const userMsg = testInput.value
   testMessages.value.push({ role: 'user', content: userMsg })
-  testInput.value = ''
+  testInput.value= ''
   isTestLoading.value = true
 
   try {
@@ -197,31 +239,6 @@ const handleTestChat = async () => {
     isTestLoading.value = false
   }
 }
-
-// Ability Score Calculation (Knowledge Intelligence Score)
-const intelligenceScore = computed(() => {
-  if (sources.value.length === 0) return 0
-  // Base 20 pts per source + linear usage points (max 100)
-  const base = sources.value.length * 20
-  const bonus = Math.floor(monthlyUsage.value / 50)
-  return Math.min(100, base + bonus)
-})
-
-const intelligenceLabel = computed(() => {
-  const score = intelligenceScore.value
-  if (score === 0) return 'Dormant'
-  if (score < 30) return 'Novice'
-  if (score < 70) return 'Competent'
-  return 'Expert'
-})
-
-const intelligenceColor = computed(() => {
-  const score = intelligenceScore.value
-  if (score < 30) return 'text-orange-400'
-  if (score < 70) return 'text-primary'
-  return 'text-cyan-400'
-})
-
 </script>
 
 <template>
@@ -281,274 +298,134 @@ const intelligenceColor = computed(() => {
             </button>
           </div>
 
-          <!-- URL Form -->
-          <div v-if="activeTab === 'url'" class="space-y-6">
-            <div>
-              <label class="block text-[11px] font-bold tracking-widest text-gray-500 uppercase mb-3 italic-none">Target URL</label>
-              <div class="flex gap-3">
-                <input 
-                  v-model="urlForm.url"
-                  placeholder="https://example.com/docs"
-                  class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-700 focus:outline-none focus:border-primary/50 transition-colors italic-none"
-                />
-                <button 
-                  @click="handleUrlTrain"
-                  :disabled="isProcessing || !urlForm.url || isOverTrainingLimit"
-                  class="px-6 bg-primary text-black font-bold tracking-widest text-[11px] rounded-xl hover:bg-primary-accent transition-all disabled:opacity-50 flex items-center gap-2 uppercase italic-none"
-                >
-                  <Loader2 v-if="isProcessing" class="w-4 h-4 animate-spin" />
-                  {{ isOverTrainingLimit ? 'LIMIT REACHED' : 'SCRAPE & TRAIN' }}
-                </button>
-              </div>
-              <p v-if="isOverTrainingLimit" class="text-[10px] text-red-500 mt-2 font-bold uppercase tracking-widest italic-none">
-                Training limit reached for {{ planSlug }} plan. Upgrade for unlimited training.
-              </p>
-              <p class="text-[10px] text-gray-600 mt-3 flex items-center gap-2 italic-none uppercase tracking-widest font-bold">
-                <Search class="w-3 h-3" />
-                Autonomous extraction & vectorization active.
-              </p>
-            </div>
-          </div>
-
-          <!-- File Form -->
-          <div v-if="activeTab === 'file'" class="space-y-6">
-            <div 
-              class="border-2 border-dashed border-white/10 rounded-3xl p-10 text-center hover:border-primary/30 transition-all cursor-pointer bg-white/[0.01]"
-              @click="$refs.fileInput.click()"
-            >
-              <input 
-                type="file" 
-                ref="fileInput" 
-                class="hidden" 
-                accept=".pdf"
-                @change="handleFileChange"
-              />
-              <div v-if="!selectedFile" class="space-y-4">
-                <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <FileText class="w-8 h-8 text-gray-600" />
-                </div>
-                <p class="text-xs font-bold text-white uppercase tracking-widest italic-none">DRAG & DROP OR CLICK TO SELECT PDF</p>
-                <p class="text-[10px] text-gray-600 uppercase tracking-widest italic-none">Max File Size: 10MB</p>
-              </div>
-              <div v-else class="space-y-4">
-                <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <FileText class="w-8 h-8 text-primary" />
-                </div>
-                <p class="text-xs font-bold text-primary uppercase tracking-widest italic-none">{{ selectedFile.name }}</p>
-                <button 
-                  @click.stop="handleFileTrain"
-                  :disabled="isProcessing || isOverTrainingLimit"
-                  class="mt-4 px-8 py-3 bg-primary text-black font-bold tracking-widest text-[11px] rounded-xl hover:bg-primary-accent transition-all disabled:opacity-50 flex items-center gap-2 mx-auto uppercase italic-none"
-                >
-                  <Loader2 v-if="isProcessing" class="w-4 h-4 animate-spin" />
-                  {{ isOverTrainingLimit ? 'LIMIT REACHED' : 'Process Knowledge' }}
-                </button>
-              </div>
-              <p v-if="isOverTrainingLimit" class="text-[10px] text-red-500 mt-4 font-bold uppercase tracking-widest italic-none text-center">
-                Training limit reached. Upgrade to continue adding documents.
-              </p>
-            </div>
-          </div>
-
-          <!-- Text Form -->
-          <div v-if="activeTab === 'text'" class="space-y-6">
-            <div class="space-y-4">
+          <!-- Training Tabs Content -->
+          <div class="space-y-6">
+            <!-- URL Form -->
+            <div v-if="activeTab === 'url'" class="space-y-6">
               <div>
-                <label class="block text-[11px] font-bold tracking-widest text-gray-500 uppercase mb-2 italic-none">Subject / Title</label>
-                <input 
-                  v-model="textForm.title"
-                  placeholder="e.g. Return Policy"
-                  class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-700 focus:outline-none focus:border-primary/50 transition-colors italic-none"
-                />
+                <label class="block text-[11px] font-bold tracking-widest text-gray-500 uppercase mb-3 italic-none">Target URL</label>
+                <div class="flex gap-3">
+                  <input 
+                    v-model="urlForm.url"
+                    placeholder="https://example.com/docs"
+                    class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-700 focus:outline-none focus:border-primary/50 transition-colors italic-none"
+                  />
+                  <button 
+                    @click="handleUrlTrain"
+                    :disabled="isProcessing || !urlForm.url || isOverTrainingLimit"
+                    class="px-6 bg-primary text-black font-bold tracking-widest text-[11px] rounded-xl hover:bg-primary-accent transition-all disabled:opacity-50 flex items-center gap-2 uppercase italic-none"
+                  >
+                    <Loader2 v-if="isProcessing" class="w-4 h-4 animate-spin" />
+                    {{ isOverTrainingLimit ? 'LIMIT REACHED' : 'SCRAPE & TRAIN' }}
+                  </button>
+                </div>
+                <p v-if="isOverTrainingLimit" class="text-[10px] text-red-500 mt-2 font-bold uppercase tracking-widest italic-none">
+                  Training limit reached for {{ planSlug }} plan. Upgrade for unlimited training.
+                </p>
+                <p class="text-[10px] text-gray-600 mt-3 flex items-center gap-2 italic-none uppercase tracking-widest font-bold">
+                  <Search class="w-3 h-3" />
+                  Autonomous extraction & vectorization active.
+                </p>
               </div>
-              <div>
-                <label class="block text-[11px] font-bold tracking-widest text-gray-500 uppercase mb-2 italic-none">Knowledge Content</label>
-                <textarea 
-                  v-model="textForm.content"
-                  rows="8"
-                  placeholder="Paste your knowledge content here..."
-                  class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-gray-700 focus:outline-none focus:border-primary/50 transition-colors resize-none mb-2 italic-none"
-                ></textarea>
-              </div>
-              <button 
-                @click="handleTextTrain"
-                :disabled="isProcessing || !textForm.content || isOverTrainingLimit"
-                class="w-full py-3.5 bg-primary text-black font-bold tracking-widest text-[11px] rounded-xl hover:bg-primary-accent transition-all disabled:opacity-50 flex items-center justify-center gap-2 uppercase shadow-lg shadow-primary/10 italic-none"
+            </div>
+
+            <!-- File Form -->
+            <div v-if="activeTab === 'file'" class="space-y-6">
+              <div 
+                class="border-2 border-dashed border-white/10 rounded-3xl p-10 text-center hover:border-primary/30 transition-all cursor-pointer bg-white/[0.01]"
+                @click="$refs.fileInput.click()"
               >
-                <Plus v-if="!isProcessing" class="w-4 h-4" />
-                <Loader2 v-else class="w-4 h-4 animate-spin" />
-                {{ isOverTrainingLimit ? 'LIMIT REACHED' : 'Add to Knowledge Base' }}
-              </button>
-              <p v-if="isOverTrainingLimit" class="text-[10px] text-red-500 mt-2 font-bold uppercase tracking-widest italic-none text-center">
-                User on {{ planSlug }} plan has reached the maximum of 10 trainings.
-              </p>
+                <input 
+                  type="file" 
+                  ref="fileInput" 
+                  class="hidden" 
+                  accept=".pdf"
+                  @change="handleFileChange"
+                />
+                <div v-if="!selectedFile" class="space-y-4">
+                  <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <FileText class="w-8 h-8 text-gray-600" />
+                  </div>
+                  <p class="text-xs font-bold text-white uppercase tracking-widest italic-none">DRAG & DROP OR CLICK TO SELECT PDF</p>
+                  <p class="text-[10px] text-gray-600 uppercase tracking-widest italic-none">Max File Size: 10MB</p>
+                </div>
+                <div v-else class="space-y-4">
+                  <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <FileText class="w-8 h-8 text-primary" />
+                  </div>
+                  <p class="text-xs font-bold text-primary uppercase tracking-widest italic-none">{{ selectedFile.name }}</p>
+                  <button 
+                    @click.stop="handleFileTrain"
+                    :disabled="isProcessing || isOverTrainingLimit"
+                    class="mt-4 px-8 py-3 bg-primary text-black font-bold tracking-widest text-[11px] rounded-xl hover:bg-primary-accent transition-all disabled:opacity-50 flex items-center gap-2 mx-auto uppercase italic-none"
+                  >
+                    <Loader2 v-if="isProcessing" class="w-4 h-4 animate-spin" />
+                    {{ isOverTrainingLimit ? 'LIMIT REACHED' : 'Process Knowledge' }}
+                  </button>
+                </div>
+                <p v-if="isOverTrainingLimit" class="text-[10px] text-red-500 mt-4 font-bold uppercase tracking-widest italic-none text-center">
+                  Training limit reached. Upgrade to continue adding documents.
+                </p>
+              </div>
+            </div>
+
+            <!-- Text Form -->
+            <div v-if="activeTab === 'text'" class="space-y-6">
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-[11px] font-bold tracking-widest text-gray-500 uppercase mb-2 italic-none">Subject / Title</label>
+                  <input 
+                    v-model="textForm.title"
+                    placeholder="e.g. Return Policy"
+                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-700 focus:outline-none focus:border-primary/50 transition-colors italic-none"
+                  />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold tracking-widest text-gray-500 uppercase mb-2 italic-none">Knowledge Content</label>
+                  <textarea 
+                    v-model="textForm.content"
+                    rows="8"
+                    placeholder="Paste your knowledge content here..."
+                    class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-gray-700 focus:outline-none focus:border-primary/50 transition-colors resize-none mb-2 italic-none"
+                  ></textarea>
+                </div>
+                <button 
+                  @click="handleTextTrain"
+                  :disabled="isProcessing || !textForm.content || isOverTrainingLimit"
+                  class="w-full py-3.5 bg-primary text-black font-bold tracking-widest text-[11px] rounded-xl hover:bg-primary-accent transition-all disabled:opacity-50 flex items-center justify-center gap-2 uppercase shadow-lg shadow-primary/10 italic-none"
+                >
+                  <Plus v-if="!isProcessing" class="w-4 h-4" />
+                  <Loader2 v-else class="w-4 h-4 animate-spin" />
+                  {{ isOverTrainingLimit ? 'LIMIT REACHED' : 'Add to Knowledge Base' }}
+                </button>
+                <p v-if="isOverTrainingLimit" class="text-[10px] text-red-500 mt-2 font-bold uppercase tracking-widest italic-none text-center">
+                  User on {{ planSlug }} plan has reached the maximum of 10 trainings.
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
 
         <!-- Training Registry (Recorded History) -->
-        <div class="space-y-4 pt-4">
-          <div class="flex items-center justify-between px-4">
-            <div class="flex items-center gap-2">
-              <History class="w-4 h-4 text-gray-500" />
-              <h3 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Training Sessions ({{ totalTrainings }})</h3>
-            </div>
-            <button @click="fetchData" class="text-[10px] text-primary font-bold tracking-widest uppercase flex items-center gap-2 italic-none hover:opacity-70 transition-all">
-              <LucideActivity class="w-3 h-3" />
-              refresh logs
-            </button>
-          </div>
-
-          <div class="overflow-hidden rounded-[2rem] border border-white/5 bg-white/[0.01]">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="border-b border-white/5 bg-white/[0.02]">
-                  <th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-500 uppercase italic-none">Resource</th>
-                  <th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-500 uppercase italic-none">Type</th>
-                  <th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-500 uppercase italic-none">Status</th>
-                  <th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-500 uppercase italic-none">Recorded At</th>
-                  <th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-500 uppercase italic-none text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-white/[0.02]">
-                <tr v-if="trainingJobs.length === 0">
-                  <td colspan="5" class="px-6 py-12 text-center text-[10px] font-bold text-gray-700 uppercase tracking-widest italic-none">
-                    No registry entries found.
-                  </td>
-                </tr>
-                <tr 
-                  v-for="job in trainingJobs" 
-                  :key="job.id"
-                  class="group hover:bg-white/[0.02] transition-colors"
-                >
-                  <td class="px-6 py-4">
-                    <div class="flex flex-col">
-                      <span class="text-xs font-bold text-white uppercase italic-none leading-none mb-1">
-                        {{ job.meta?.title || job.meta?.filename || 'Intelligence Update' }}
-                      </span>
-                      <span class="text-[9px] text-gray-600 font-bold uppercase tracking-widest truncate max-w-[200px] italic-none">
-                         ID: {{ job.id.split('-')[0] }}
-                      </span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <span class="px-2 py-0.5 rounded bg-white/5 text-[9px] font-bold text-gray-500 uppercase tracking-widest italic-none">
-                      {{ job.meta?.type || 'BATCH' }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="flex items-center gap-2">
-                      <div :class="['w-1.5 h-1.5 rounded-full', job.status === 'finished' ? 'bg-primary' : 'bg-orange-500 animate-pulse']"></div>
-                      <span :class="['text-[9px] font-bold uppercase tracking-widest italic-none', job.status === 'finished' ? 'text-primary' : 'text-orange-500']">
-                        {{ job.status }}
-                      </span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="flex items-center gap-2 text-[10px] text-gray-500 font-bold tracking-widest italic-none">
-                      <Clock class="w-3 h-3" />
-                      {{ job.started_at ? new Date(job.started_at).toLocaleDateString() : 'Pending' }}
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 text-right">
-                    <CheckCircle2 v-if="job.status === 'finished'" class="w-4 h-4 text-primary ml-auto" />
-                    <Loader2 v-else class="w-4 h-4 text-orange-500 animate-spin ml-auto" />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <HistoryTable 
+          :jobs="trainingJobs" 
+          :sources="sources"
+          @view-extraction="viewExtraction"
+          @delete-source="handleDeleteSource"
+        />
       </div>
 
-      <!-- Right: Limits & Strategy -->
+      <!-- Right Column: Meter & Strategy -->
       <div class="space-y-6">
-        <!-- Intelligence Meter -->
-        <div class="glass-card bg-white/[0.01] relative overflow-hidden group">
-          <div class="absolute -right-10 -top-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl transition-all group-hover:bg-primary/10"></div>
-          
-          <div class="flex items-center justify-between mb-6 relative z-10">
-            <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Ability Level</h4>
-            <div :class="['px-2 py-0.5 rounded-md bg-white/5 text-[9px] font-bold uppercase tracking-widest', intelligenceColor]">
-              {{ intelligenceLabel }}
-            </div>
-          </div>
-
-          <div class="flex items-center gap-6 relative z-10">
-             <div class="relative w-24 h-24 flex items-center justify-center">
-                <svg class="w-full h-full -rotate-90">
-                  <circle cx="48" cy="48" r="40" fill="transparent" stroke="currentColor" stroke-width="8" class="text-white/5" />
-                  <circle 
-                    cx="48" cy="48" r="40" 
-                    fill="transparent" 
-                    stroke="currentColor" 
-                    stroke-width="8" 
-                    stroke-dasharray="251.2"
-                    :stroke-dashoffset="251.2 * (1 - intelligenceScore / 100)"
-                    :class="['transition-all duration-1000', intelligenceColor.replace('text-', 'text-')]" 
-                  />
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                   <p class="text-xl font-bold text-white">{{ intelligenceScore }}%</p>
-                </div>
-             </div>
-             <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 italic-none">Knowledge Intelligence Score (KIS)</p>
-                <p class="text-[9px] text-gray-600 leading-relaxed uppercase tracking-widest italic-none">
-                   Determines completion, reasoning quality and response accuracy.
-                </p>
-             </div>
-          </div>
-        </div>
-
-        <!-- Usage Meter -->
-        <div class="glass-card space-y-6">
-          <div class="flex items-center justify-between">
-            <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Vector Capacity</h4>
-            <Database class="w-4 h-4 text-gray-700" />
-          </div>
-          
-          <div class="space-y-4">
-            <div class="flex items-end justify-between font-bold italic-none">
-              <p class="text-2xl text-white">{{ chatbot?.current_embedding_mb || 0 }}<span class="text-xs text-gray-600 ml-1">MB</span></p>
-              <p class="text-[11px] text-gray-500 uppercase tracking-widest italic-none">LIMIT: {{ maxEmbSize }} MB</p>
-            </div>
-            
-            <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-              <div 
-                class="h-full bg-primary shadow-[0_0_12px_rgba(var(--primary),0.3)] transition-all duration-1000"
-                :style="{ width: `${usagePercent}%` }"
-              ></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Training Count Meter -->
-        <div class="glass-card space-y-6">
-          <div class="flex items-center justify-between">
-            <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Session Quota ({{ planSlug }})</h4>
-            <LucideActivity class="w-4 h-4 text-gray-700" />
-          </div>
-          
-          <div class="space-y-4">
-            <div class="flex items-end justify-between font-bold italic-none">
-              <p class="text-2xl text-white">{{ totalTrainings }}<span class="text-xs text-gray-600 ml-1">SESS.</span></p>
-              <p class="text-[11px] text-gray-500 uppercase tracking-widest italic-none">LIMIT: {{ limits.maxTrainings }}</p>
-            </div>
-            
-            <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-              <div 
-                class="h-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.3)] transition-all duration-1000"
-                :style="{ width: `${trainingPercent}%` }"
-              ></div>
-            </div>
-
-            <p class="text-[10px] text-gray-600 leading-relaxed uppercase tracking-widest italic-none">
-              {{ isOverTrainingLimit ? 'Quota exceeded. Upgrade to unlock unlimited trainings.' : 'You have remaining quotas for this agent.' }}
-            </p>
-          </div>
-        </div>
+        <DashboardStats 
+          :chatbot="chatbot"
+          :monthly-usage="monthlyUsage"
+          :total-trainings="trainingJobs.length"
+          :plan-slug="planSlug"
+          :sources-count="sources.length"
+          :limits="limits"
+        />
 
         <!-- Strategy Box -->
         <div class="glass-card bg-primary/5 border-primary/10">
@@ -648,6 +525,13 @@ const intelligenceColor = computed(() => {
         </div>
       </div>
     </div>
+
+    <!-- Extraction Result Modal -->
+    <ExtractionModal 
+      :show="showExtractionModal" 
+      :data="selectedExtraction"
+      @close="showExtractionModal = false"
+    />
   </div>
 </template>
 

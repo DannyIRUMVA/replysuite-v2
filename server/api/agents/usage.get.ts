@@ -22,9 +22,9 @@ export default defineEventHandler(async (event) => {
     .select('training_count')
     .eq('chatbot_id', chatbotId)
     .eq('month_year', currentMonth)
-    .single()
+    .maybeSingle()
 
-  if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows found"
+  if (error) {
     console.error('Error fetching usage:', error)
   }
 

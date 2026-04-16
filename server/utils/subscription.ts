@@ -6,7 +6,8 @@ export const SubscriptionLimitSchema = z.object({
   max_instagram_accounts: z.number().default(1),
   max_triggers: z.number().default(1),
   max_auto_dms_per_month: z.number().default(50),
-  max_training_units: z.number().default(100),
+  max_training_units: z.number().default(10),
+  max_embedding_mb: z.number().default(5.0),
 })
 
 export type SubscriptionLimits = z.infer<typeof SubscriptionLimitSchema>
@@ -40,6 +41,7 @@ export async function getUserSubscriptionLimits(event: H3Event, userId?: string 
       max_triggers: freePlan?.max_triggers || 1,
       max_auto_dms_per_month: freePlan?.max_auto_dms_per_month || 50,
       max_training_units: freePlan?.max_training_units || 100,
+      max_embedding_mb: freePlan?.max_embedding_mb || 1.0,
     })
   }
 
@@ -68,6 +70,7 @@ export async function getUserSubscriptionLimits(event: H3Event, userId?: string 
       max_triggers: freePlan?.max_triggers || 1,
       max_auto_dms_per_month: freePlan?.max_auto_dms_per_month || 50,
       max_training_units: freePlan?.max_training_units || 100,
+      max_embedding_mb: freePlan?.max_embedding_mb || 1.0,
     })
   }
 
@@ -76,6 +79,7 @@ export async function getUserSubscriptionLimits(event: H3Event, userId?: string 
     max_triggers: membership.plans.max_triggers,
     max_auto_dms_per_month: membership.plans.max_auto_dms_per_month,
     max_training_units: (membership.plans as any).max_training_units || 100,
+    max_embedding_mb: (membership.plans as any).max_embedding_mb || 5.0,
   })
 }
 
@@ -175,4 +179,3 @@ export async function checkLimit(event: H3Event, type: 'accounts' | 'triggers', 
 
   return false
 }
-

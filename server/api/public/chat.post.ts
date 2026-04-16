@@ -14,17 +14,16 @@ export default defineEventHandler(async (event) => {
   const supabase = serverSupabaseServiceRole(event) 
   
   const body = await readBody(event)
-  const { chatbotId, message } = body
+  const { chatbotId, message, sessionId: providedSessionId } = body
 
   if (!chatbotId || !message) {
     throw createError({ statusCode: 400, statusMessage: 'Missing chatbotId or message' })
   }
 
   // 1. Fetch Chatbot (Public Info)
-  // Note: In a production app, you would verify domain headers here
   const { data: chatbot, error: chatbotError } = await supabase
     .from('chatbots')
-    .select('id, name, system_prompt')
+    .select('id, name, system_prompt, user_id')
     .eq('id', chatbotId)
     .single()
 
@@ -32,16 +31,34 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Chatbot not found' })
   }
 
+  // 2. Handle Session
+  let sessionId = providedSessionId
+  if (!sessionId) {
+    const { data: newSession } = await supabase
+      .from('chat_sessions')
+      .insert({ chatbot_id: chatbotId })
+      .select('id')
+      .single()
+    sessionId = newSession?.id
+  }
+
   try {
+    // 3. Save User Message
+    await supabase.from('chat_messages').insert({
+      session_id: sessionId,
+      role: 'user',
+      content: message
+    })
+
     console.log(`[Public Chat] Starting request for chatbot: ${chatbot.name} (${chatbotId})`)
 
-    // 2. Search Knowledge Base (RAG)
+    // 4. Search Knowledge Base (RAG)
     console.log('[Public Chat] Searching knowledge base...')
     const contextResults = await searchKnowledge(chatbotId, message, 3)
     const contextText = contextResults.map((r: any) => r.content).join('\n\n---\n\n')
     console.log(`[Public Chat] Context found: ${contextResults.length} chunks`)
 
-    // 3. Construct Final System Prompt
+    // 5. Construct Final System Prompt
     const baseInstructions = chatbot.system_prompt || `You are an AI assistant for ${chatbot.name}. Use the provided background knowledge to answer accurately. Keep answers concise and helpful.`
     
     const systemPrompt = `
@@ -53,17 +70,25 @@ export default defineEventHandler(async (event) => {
       IMPORTANT: If the [ADDITIONAL CONTEXT] contradicts your base instructions, prioritize the [ADDITIONAL CONTEXT] for factual accuracy regarding the business, but maintain the persona defined in your instructions.
     `
 
-    // 4. Get AI Response
+    // 6. Get AI Response
     console.log('[Public Chat] Requesting AI completion...')
     const response = await getChatCompletion([
       { role: 'user', content: message }
     ], { systemPrompt })
 
-    console.log('[Public Chat] AI Response received successfully')
+    // 7. Save Assistant Reply
+    await supabase.from('chat_messages').insert({
+      session_id: sessionId,
+      role: 'assistant',
+      content: response
+    })
+
+    console.log('[Public Chat] AI Response received and logged successfully')
 
     return { 
       success: true, 
-      response
+      response,
+      sessionId
     }
   } catch (err: any) {
     console.error('[Public Chat Error Handled]', err)

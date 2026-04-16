@@ -1,18 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
-import { serverSupabaseClient, serverSupabaseUser } from '#supabase/server'
+import { serverSupabaseClient, serverSupabaseUser, serverSupabaseServiceRole } from '#supabase/server'
 import { getEmbeddings } from '~~/server/utils/ai'
-import { checkTrainingLimit, recordTrainingUsage } from '~~/server/utils/subscription'
+import { checkTrainingLimit, recordTrainingUsage, getUserSubscriptionLimits } from '~~/server/utils/subscription'
 import pdf from 'pdf-parse-fork'
 
 export default defineEventHandler(async (event) => {
   const supabase = await serverSupabaseClient(event)
   const user = await serverSupabaseUser(event)
 
-  // Initialize Admin client for Writes (bypasses RLS sync issues in heavy flows)
-  const supabaseAdmin = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const supabaseAdmin = serverSupabaseServiceRole(event)
   
   if (!user) throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
 
@@ -42,6 +38,28 @@ export default defineEventHandler(async (event) => {
   if (!canTrain) {
     throw createError({ statusCode: 403, statusMessage: 'Monthly training limit reached for this agent.' })
   }
+
+  // 1a. Check Capacity limit (Vector Capacity)
+  const limits = await getUserSubscriptionLimits(event, user.id)
+  const currentSizeMB = Number(chatbot.current_embedding_mb || 0)
+  if (currentSizeMB >= limits.max_embedding_mb) {
+    throw createError({ 
+      statusCode: 403, 
+      statusMessage: `Vector capacity reached (${limits.max_embedding_mb}MB). Please remove existing knowledge sources to add more.` 
+    })
+  }
+
+  // 1b. Create Training Job record
+  const { data: job } = await supabaseAdmin
+    .from('training_jobs')
+    .insert({
+      chatbot_id: chatbotId,
+      user_id: user.id,
+      status: 'processing',
+      meta: { type: 'file', filename: file.filename }
+    })
+    .select()
+    .single()
 
   try {
     // 2. Extract Text from PDF
@@ -108,10 +126,34 @@ export default defineEventHandler(async (event) => {
     // 7. Record usage
     await recordTrainingUsage(event, chatbotId, user.id, chunks.length)
 
+    // 8. Finalize Job
+    if (job) {
+      await supabaseAdmin
+        .from('training_jobs')
+        .update({ 
+          status: 'finished', 
+          finished_at: new Date().toISOString(),
+          meta: { ...job.meta as any, pages: pdfData.numpages, chunk_count: chunks.length }
+        })
+        .eq('id', job.id)
+    }
+
     return { success: true, source }
 
   } catch (err: any) {
     console.error('[File Training Error]', err)
+    
+    // Update job to failed
+    if (job) {
+      await supabaseAdmin
+        .from('training_jobs')
+        .update({ 
+          status: 'failed', 
+          meta: { ...job.meta as any, error: err.message } 
+        })
+        .eq('id', job.id)
+    }
+
     throw createError({ statusCode: 500, statusMessage: err.message || 'Error processing PDF' })
   }
 })

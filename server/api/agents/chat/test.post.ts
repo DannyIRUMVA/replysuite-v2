@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   if (!user) throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
 
   const body = await readBody(event)
-  const { chatbotId, message } = body
+  const { chatbotId, message, sessionId: providedSessionId } = body
 
   if (!chatbotId || !message) {
     throw createError({ statusCode: 400, statusMessage: 'Missing chatbotId or message' })
@@ -25,12 +25,30 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Chatbot not found or access denied' })
   }
 
+  // 2. Handle Session
+  let sessionId = providedSessionId
+  if (!sessionId) {
+    const { data: newSession } = await supabase
+      .from('chat_sessions')
+      .insert({ chatbot_id: chatbotId, metadata: { type: 'test' } })
+      .select('id')
+      .single()
+    sessionId = newSession?.id
+  }
+
   try {
-    // 2. Search Knowledge Base (RAG)
+    // 3. Save User Message
+    await supabase.from('chat_messages').insert({
+      session_id: sessionId,
+      role: 'user',
+      content: message
+    })
+
+    // 4. Search Knowledge Base (RAG)
     const contextResults = await searchKnowledge(chatbotId, message, 3)
     const contextText = contextResults.map((r: any) => r.content).join('\n\n---\n\n')
 
-    // 3. Construct System Prompt with Knowledge
+    // 5. Construct System Prompt with Knowledge
     const baseInstructions = chatbot.system_prompt || `You are an AI assistant for ${chatbot.name}. Use the provided background knowledge to answer accurately. Keep answers concise and helpful.`
 
     const systemPrompt = `
@@ -42,14 +60,22 @@ export default defineEventHandler(async (event) => {
       IMPORTANT: If the [ADDITIONAL CONTEXT] contradicts your base instructions, prioritize the [ADDITIONAL CONTEXT] for factual accuracy regarding the business, but maintain the persona defined in your instructions.
     `
 
-    // 4. Get AI Response
+    // 6. Get AI Response
     const response = await getChatCompletion([
       { role: 'user', content: message }
     ], { systemPrompt })
 
+    // 7. Save Assistant Reply
+    await supabase.from('chat_messages').insert({
+      session_id: sessionId,
+      role: 'assistant',
+      content: response
+    })
+
     return { 
       success: true, 
       response,
+      sessionId,
       hasContext: contextResults.length > 0,
       contextCount: contextResults.length
     }
