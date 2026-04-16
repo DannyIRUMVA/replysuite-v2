@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   // Note: In a production app, you would verify domain headers here
   const { data: chatbot, error: chatbotError } = await supabase
     .from('chatbots')
-    .select('id, name')
+    .select('id, name, system_prompt')
     .eq('id', chatbotId)
     .single()
 
@@ -41,15 +41,16 @@ export default defineEventHandler(async (event) => {
     const contextText = contextResults.map((r: any) => r.content).join('\n\n---\n\n')
     console.log(`[Public Chat] Context found: ${contextResults.length} chunks`)
 
-    // 3. Construct System Prompt
+    // 3. Construct Final System Prompt
+    const baseInstructions = chatbot.system_prompt || `You are an AI assistant for ${chatbot.name}. Use the provided background knowledge to answer accurately. Keep answers concise and helpful.`
+    
     const systemPrompt = `
-      You are an AI assistant for ${chatbot.name}. 
-      Use the provided background knowledge to answer accurately.
-      If you don't know the answer, say you're not sure but I can help with other things.
-      Keep answers concise and helpful.
+      ${baseInstructions}
 
-      [BACKGROUND KNOWLEDGE]
+      [ADDITIONAL CONTEXT FROM KNOWLEDGE BASE]
       ${contextText || 'No specific background knowledge found for this query.'}
+      
+      IMPORTANT: If the [ADDITIONAL CONTEXT] contradicts your base instructions, prioritize the [ADDITIONAL CONTEXT] for factual accuracy regarding the business, but maintain the persona defined in your instructions.
     `
 
     // 4. Get AI Response

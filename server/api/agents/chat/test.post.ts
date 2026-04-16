@@ -31,14 +31,15 @@ export default defineEventHandler(async (event) => {
     const contextText = contextResults.map((r: any) => r.content).join('\n\n---\n\n')
 
     // 3. Construct System Prompt with Knowledge
-    const systemPrompt = `
-      You are an AI assistant for ${chatbot.name}. 
-      Use the provided background knowledge to answer accurately.
-      If you don't know the answer, say you're not sure but I can help with other things.
-      Keep answers concise and helpful.
+    const baseInstructions = chatbot.system_prompt || `You are an AI assistant for ${chatbot.name}. Use the provided background knowledge to answer accurately. Keep answers concise and helpful.`
 
-      [BACKGROUND KNOWLEDGE]
+    const systemPrompt = `
+      ${baseInstructions}
+
+      [ADDITIONAL CONTEXT FROM KNOWLEDGE BASE]
       ${contextText || 'No specific background knowledge found for this query.'}
+      
+      IMPORTANT: If the [ADDITIONAL CONTEXT] contradicts your base instructions, prioritize the [ADDITIONAL CONTEXT] for factual accuracy regarding the business, but maintain the persona defined in your instructions.
     `
 
     // 4. Get AI Response
