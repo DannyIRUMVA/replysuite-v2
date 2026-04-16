@@ -7,9 +7,6 @@ export default defineNuxtConfig({
     '@nuxtjs/supabase',
     '@polar-sh/nuxt'
   ],
-  nitro: {
-    preset: 'cloudflare-pages'
-  },
   supabase: {
     redirect: false,
     cookieOptions: {
@@ -47,7 +44,6 @@ export default defineNuxtConfig({
     azureOpenAiEndpoint: process.env.AZURE_OPENAI_ENDPOINT,
     azureOpenAiDeploymentName: process.env.AZURE_OPENAI_DEPLOYMENT_NAME,
   },
-
   vite: {
     server: {
       allowedHosts: true,
@@ -61,6 +57,19 @@ export default defineNuxtConfig({
         '@vue/devtools-core',
         '@vue/devtools-kit',
       ]
+    }
+  },
+
+  nitro: {
+    preset: 'cloudflare-pages',
+    hooks: {
+      'render:html'(html, { event }) {
+        // If we are on a widget page, strip the devtools script to prevent SecurityError in iframes
+        if (event.path.startsWith('/widget/')) {
+          html.bodyAppend = html.bodyAppend.filter(s => !s.includes('nuxt-devtools'))
+          html.head = html.head.filter(s => !s.includes('nuxt-devtools'))
+        }
+      }
     }
   }
 })

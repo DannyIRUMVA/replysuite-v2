@@ -246,10 +246,13 @@ const handleDelete = async (id: string) => {
               <Database class="w-3.5 h-3.5" />
               knowledge base
             </NuxtLink>
-            <button class="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-[10px] font-bold tracking-widest text-white rounded-xl transition-all border border-white/5 flex items-center justify-center gap-2">
+            <NuxtLink 
+              :to="`/dashboard/agents/${agent.id}`"
+              class="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-[10px] font-bold tracking-widest text-white rounded-xl transition-all border border-white/5 flex items-center justify-center gap-2"
+            >
               <Edit3 class="w-3.5 h-3.5" />
               configure
-            </button>
+            </NuxtLink>
             <button 
               @click="handleDelete(agent.id)"
               class="w-11 h-11 flex items-center justify-center bg-white/5 hover:bg-red-400/10 rounded-xl border border-white/5 text-gray-500 hover:text-red-400 transition-all"

@@ -55,6 +55,41 @@ const instagramFeatures = [
     desc: 'Automatically send a personalized direct message the moment a rule is met.' 
   }
 ]
+
+// Real Chat Demo Logic
+const chatbotId = 'cacdbcdb-7157-4e12-92c4-a715aadf3112'
+const chatInput = ref('')
+const isChatLoading = ref(false)
+const chatMessages = ref([
+  { role: 'assistant', content: "hey! welcome to ReplySuite. i'm the gold standard of dm automation. how can i help you scale today?" }
+])
+
+const sendDemoMessage = async () => {
+  if (!chatInput.value.trim() || isChatLoading.value) return
+
+  const userMsg = chatInput.value
+  chatMessages.value.push({ role: 'user', content: userMsg })
+  chatInput.value = ''
+  isChatLoading.value = true
+
+  try {
+    const res = await $fetch<{ success: boolean; response: string }>('/api/public/chat', {
+      method: 'POST',
+      body: { chatbotId, message: userMsg }
+    })
+    
+    if (res.success) {
+      chatMessages.value.push({ role: 'assistant', content: res.response })
+    }
+  } catch (err) {
+    chatMessages.value.push({ 
+      role: 'assistant', 
+      content: "I apologize, but I encountered an error. Please try again or sign in to the full dashboard!" 
+    })
+  } finally {
+    isChatLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -122,36 +157,50 @@ const instagramFeatures = [
                     </div>
 
                     <!-- Chat Messages -->
-                    <div class="p-8 space-y-6">
-                       <div class="flex justify-start">
-                          <div class="bg-white/5 border border-white/5 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm">
-                             "How does the pricing work?"
+                    <div class="p-8 space-y-6 h-[400px] overflow-y-auto scrollbar-hide flex flex-col">
+                       <div 
+                         v-for="(msg, idx) in chatMessages" 
+                         :key="idx"
+                         :class="['flex', msg.role === 'user' ? 'justify-start' : 'justify-end']"
+                       >
+                          <div 
+                            :class="[
+                              'p-4 rounded-2xl text-sm transition-all animate-in fade-in slide-in-from-bottom-2',
+                              msg.role === 'user' 
+                                ? 'bg-white/5 border border-white/5 rounded-tl-none max-w-[80%]' 
+                                : 'bg-primary/10 border border-primary/20 rounded-tr-none max-w-[80%] text-white'
+                            ]"
+                          >
+                             {{ msg.content }}
                           </div>
                        </div>
-                       <div class="flex justify-end">
-                           <div class="bg-primary/10 border border-primary/20 p-4 rounded-2xl rounded-tr-none max-w-[80%] text-sm">
-                              "hey! we have 3 plans: free ($0), silver ($8.88), and gold ($26.88). would you like to see a comparison?"
-                           </div>
-                       </div>
-                       <div class="flex justify-start animate-pulse">
-                          <div class="bg-white/5 border border-white/5 p-4 rounded-lg px-6">
-                             <div class="flex gap-1">
-                                <div class="w-1 h-1 bg-gray-500 rounded-full"></div>
-                                <div class="w-1 h-1 bg-gray-500 rounded-full"></div>
-                                <div class="w-1 h-1 bg-gray-500 rounded-full"></div>
+                       
+                       <!-- Typing Indicator -->
+                       <div v-if="isChatLoading" class="flex justify-end animate-pulse">
+                          <div class="bg-primary/5 border border-primary/20 p-4 rounded-2xl rounded-tr-none">
+                             <div class="flex gap-1.5">
+                                <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                                <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                                <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
                              </div>
                           </div>
                        </div>
                     </div>
 
-                    <div class="absolute bottom-6 left-6 right-6 flex gap-2 font-bold tracking-tight">
-                       <div class="flex-grow bg-white/5 rounded-full px-5 py-3 border border-white/5 text-sm text-gray-500">
-                         Ask me anything...
-                       </div>
-                       <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30">
-                         <ArrowRight class="text-black w-6 h-6" />
-                       </div>
-                    </div>
+                    <form @submit.prevent="sendDemoMessage" class="absolute bottom-6 left-6 right-6 flex gap-2 font-bold tracking-tight">
+                       <input 
+                         v-model="chatInput"
+                         placeholder="Ask me anything..."
+                         class="flex-grow bg-white/5 rounded-full px-6 py-3 border border-white/5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-primary/50 transition-all font-medium"
+                       />
+                       <button 
+                         type="submit"
+                         :disabled="!chatInput.trim() || isChatLoading"
+                         class="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 text-black hover:scale-105 active:scale-95 transition-all disabled:opacity-30 disabled:grayscale"
+                       >
+                         <ArrowRight class="w-6 h-6" />
+                       </button>
+                    </form>
                  </div>
               </div>
 
@@ -160,7 +209,7 @@ const instagramFeatures = [
                  <Bot class="text-primary w-8 h-8 mb-2" />
                  <div class="text-xs font-bold tracking-widest">ai trained</div>
               </div>
-              <div class="absolute -bottom-10 -left-10 glass-card p-6 border-primary/20 animate-float-delayed">
+              <div class="absolute -top-10 -left-10 glass-card p-6 border-primary/20 animate-float-delayed">
                  <CheckCircle2 class="text-primary w-8 h-8 mb-2" />
                  <div class="text-xs font-bold tracking-widest">verified human</div>
               </div>

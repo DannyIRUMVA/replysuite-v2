@@ -45,6 +45,7 @@ export const useAuth = () => {
     maxRules: plan.value?.max_triggers || 1,
     maxAgents: plan.value?.max_chatbots || 1,
     maxDms: plan.value?.max_auto_dms_per_month || 50,
+    maxTrainings: planSlug.value === 'starter' ? 10 : 999999,
   }))
 
   const isLoading = computed(() => isAuthDataLoading.value)
