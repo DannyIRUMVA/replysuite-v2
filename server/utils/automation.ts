@@ -10,16 +10,17 @@ export const processInstagramComment = async (commentData: any) => {
   const { instagram_post_id, text, comment_id, from } = commentData
   const commenterUsername = from?.username
 
-  console.log(`[Automation] Processing comment from ${commenterUsername}: ${text}`)
+  console.log(`\n🚀 [Automation] START: Processing comment from @${commenterUsername}`)
+  console.log(`   📝 Text: "${text}"`)
+  console.log(`   📍 Post ID: ${instagram_post_id}`)
+  console.log(`   🔑 Comment ID: ${comment_id}`)
 
   // 1. Get Instagram Account
-  const { data: igAccount } = await supabase
-    .from('instagram_accounts')
-    .select('*, user_id')
-    .eq('instagram_account_id', commentData.recipient_id)
-    .single()
-
-  if (!igAccount) return console.error('[Automation] IG Account not found')
+  if (!igAccount) {
+    console.error(`❌ [Automation] ERROR: IG Account not found for recipient_id: ${commentData.recipient_id}`)
+    return 
+  }
+  console.log(`   ✅ Account Found: @${igAccount.username}`)
 
   // 2. Check User Plan & Limits
   const { data: profile } = await supabase
@@ -46,25 +47,61 @@ export const processInstagramComment = async (commentData: any) => {
     .gte('created_at', startOfMonth.toISOString())
 
   if (plan.max_replies_per_month !== -1 && (replyCount || 0) >= (plan.max_replies_per_month || 50)) {
-    console.log(`[Limit] Reply Limit reached (${replyCount}/${plan.max_replies_per_month})`)
+    console.warn(`⚠️ [Automation] LIMIT REACHED: ${replyCount}/${plan.max_replies_per_month} replies used this month.`)
     return
   }
+  console.log(`   📊 Plan Check: ${plan.name} (${replyCount || 0}/${plan.max_replies_per_month === -1 ? '∞' : plan.max_replies_per_month})`)
 
-  // 3. Find Matching Trigger
+  console.log(`   🔍 Searching for triggers on post ${instagram_post_id}...`)
   const { data: triggers } = await supabase
     .from('instagram_comment_triggers')
     .select('*')
-    .eq('instagram_post_id', instagram_post_id || commentData.media_id)
+    .eq('instagram_post_id', instagram_post_id)
     .eq('is_active', true)
 
+  console.log(`   📑 Found ${triggers?.length || 0} active triggers.`)
+
   const matchingTrigger = triggers?.find(t => {
-    if (!t.keywords || t.keywords.length === 0) return true
-    return t.keywords.some((kw: string) => text.toLowerCase().includes(kw.toLowerCase()))
+    // If no keywords defined, it's a "catch-all" trigger
+    if (!t.keywords || t.keywords.length === 0) {
+      console.log(`      ✨ Match Found: Catch-all trigger (no keywords)`)
+      return true
+    }
+    
+    console.log(`      🧐 Checking keywords: [${t.keywords.join(', ')}]`)
+    // Check for any of the keywords using word boundaries for better accuracy
+    const match = t.keywords.some((kw: string) => {
+      const cleanKw = kw.trim().toLowerCase()
+      if (!cleanKw) return false
+      
+      let isMatch = false
+      if (cleanKw.length <= 3) {
+        isMatch = text.toLowerCase().includes(cleanKw)
+      } else {
+        const regex = new RegExp(`\\b${cleanKw}\\b`, 'i')
+        isMatch = regex.test(text)
+      }
+      
+      if (isMatch) console.log(`      🎯 Keyword hit: "${cleanKw}"`)
+      return isMatch
+    })
+    return match
   })
 
-  if (!matchingTrigger) return
+  if (!matchingTrigger) {
+    console.log(`   ⏭️ [Automation] SKIPPED: No matching keywords found.`)
+    // Log as skipped in the database for better observability
+    await supabase.from('instagram_message_jobs').insert({
+      instagram_account_id: igAccount.id,
+      instagram_post_id: instagram_post_id,
+      comment_id: comment_id,
+      status: 'skipped',
+      payload: { reason: 'No keyword match', text: text }
+    })
+    return
+  }
 
-  console.log(`[Automation] Match found for rule: ${matchingTrigger.id}`)
+  console.log(`   ⚡ [Automation] MATCH SUCCESS: Trigger ID ${matchingTrigger.id}`)
 
   // 4. Generate AI Response if chatbot is linked
   let replyText = matchingTrigger.dm_template || 'Hello! How can I help?'
@@ -111,16 +148,20 @@ export const processInstagramComment = async (commentData: any) => {
   const results = await Promise.all(jobs)
   
   for (const res of results) {
+    const isError = !!res.error
+    console.log(`   ${isError ? '❌' : '✅'} Action Completed: ${res.action_type || 'Unknown'} (Result: ${isError ? 'FAILED' : 'SUCCESS'})`)
+    
     await supabase.from('instagram_message_jobs').insert({
       instagram_account_id: igAccount.id,
-      instagram_post_id: instagram_post_id || commentData.media_id,
+      instagram_post_id: instagram_post_id,
       comment_id: comment_id,
       trigger_id: matchingTrigger.id,
       chatbot_id: matchingTrigger.chatbot_id,
-      status: res.error ? 'failed' : 'sent',
+      status: isError ? 'failed' : 'sent',
       payload: res
     })
   }
+  console.log(`🏁 [Automation] FINISHED: Successfully processed @${commenterUsername}\n`)
 }
 
 async function sendCommentReply(commentId: string, message: string, accessToken: string) {
@@ -133,9 +174,10 @@ async function sendCommentReply(commentId: string, message: string, accessToken:
         access_token: accessToken
       })
     })
-    return await response.json()
+    const result = await response.json()
+    return { ...result, action_type: 'Comment Reply' }
   } catch (err) {
-    return { error: err }
+    return { error: err, action_type: 'Comment Reply' }
   }
 }
 
@@ -150,8 +192,9 @@ async function sendDM(commentId: string, message: string, accessToken: string) {
         access_token: accessToken
       })
     })
-    return await response.json()
+    const result = await response.json()
+    return { ...result, action_type: 'Direct DM' }
   } catch (err) {
-    return { error: err }
+    return { error: err, action_type: 'Direct DM' }
   }
 }
