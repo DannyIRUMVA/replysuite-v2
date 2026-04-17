@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Bot, Zap, MessageSquare, Target, Settings, BarChart3, Globe2, Layers, Headphones, Instagram, ArrowRight } from 'lucide-vue-next'
+import { Bot, Zap, MessageSquare, Target, Settings, BarChart3, Globe2, Layers, Headphones, Instagram, ArrowRight, Slack, MessageCircle, Send } from 'lucide-vue-next'
 
 definePageMeta({
   layout: 'default'
@@ -12,14 +12,14 @@ const features = [
     icon: Bot
   },
   {
-    title: 'Instagram Auto-DM',
-    desc: 'Convert comments to conversations. Automatically reply to posts, stories, and mentions.',
-    icon: Instagram
+    title: 'Website Integration',
+    desc: 'Embed your custom AI on any website via a simple script. Handle inquiries with zero latency.',
+    icon: Globe2
   },
   {
-    title: 'Multilingual Support',
-    desc: 'Fully optimized for Kinyarwanda, English, and French. Reach your local audience effectively.',
-    icon: Globe2
+    title: 'Multi-Channel',
+    desc: 'ROADMAP: Scalable integrations for Instagram, WhatsApp, and Slack coming very soon.',
+    icon: Layers
   },
   {
     title: 'Lead Management',
@@ -28,13 +28,13 @@ const features = [
   },
   {
     title: 'Advanced Analytics',
-    desc: 'Track conversion rates, response times, and sentiment across all your accounts.',
+    desc: 'Track conversion rates, response times, and sentiment across all your channels.',
     icon: BarChart3
   },
   {
-    title: 'Seamless Integrations',
-    desc: 'Connect with Zendesk, WhatsApp, and more in just a few clicks.',
-    icon: Layers
+    title: 'Custom Logic',
+    desc: 'COMING SOON: Build complex automation trees and specialized rules for your brand.',
+    icon: Zap
   }
 ]
 </script>
@@ -44,13 +44,13 @@ const features = [
       <!-- Hero -->
       <section class="max-w-7xl mx-auto px-6 py-32 text-center relative">
         <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10 animate-pulse"></div>
-        <span class="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest mb-10">Capabilities</span>
-        <h1 class="text-6xl md:text-9xl font-black mb-10 tracking-tighter leading-[0.85]">
-          POWERFUL <br />
-          <span class="text-gradient">CAPABILITIES.</span>
+        <span class="badge-gradient mb-10">Capabilities</span>
+        <h1 class="text-6xl md:text-9xl font-extrabold mb-10 tracking-tighter leading-[0.85] text-white">
+          Powerful <br />
+          <span class="text-gradient">Capabilities.</span>
         </h1>
-        <p class="text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed font-medium">
-          ReplySuite combines cutting-edge LLMs with robust social automation to give you the ultimate edge in customer engagement.
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed font-medium">
+          ReplySuite combines cutting-edge LLMs with sophisticated AI infrastructure to give you the ultimate edge in customer engagement.
         </p>
       </section>
 
@@ -61,7 +61,7 @@ const features = [
           <div class="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center text-primary mb-10 group-hover:bg-primary group-hover:text-black transition-all duration-500 border border-white/10 group-hover:border-primary/50 relative z-10">
             <component :is="feat.icon" class="w-10 h-10" />
           </div>
-          <h3 class="text-3xl font-bold mb-6 tracking-tight uppercase tracking-widest relative z-10 italic">{{ feat.title }}</h3>
+          <h3 class="text-2xl font-bold mb-6 tracking-tight text-white">{{ feat.title }}</h3>
           <p class="text-sm text-gray-500 leading-relaxed font-medium relative z-10">{{ feat.desc }}</p>
         </div>
       </section>
@@ -71,15 +71,15 @@ const features = [
         <!-- AI Deep Dive -->
         <div class="grid lg:grid-cols-2 gap-24 items-center">
           <div class="order-2 lg:order-1">
-            <h2 class="text-5xl md:text-7xl font-bold mb-10 tracking-tighter italic leading-none">
+            <h2 class="text-5xl md:text-7xl font-extrabold mb-10 tracking-tighter leading-none text-white transition-all">
               Trained on <br />
-              <span class="text-primary not-italic font-black uppercase tracking-widest">Your Data.</span>
+              <span class="text-gradient">Your Data.</span>
             </h2>
             <p class="text-gray-400 text-lg mb-12 leading-relaxed font-medium">
               Forget generic chatbots. ReplySuite learns from your PDFs, website, and past conversations to provide hyper-relevant answers that convert.
             </p>
             <div class="space-y-6">
-              <div v-for="item in ['Zero-shot learning', 'Context-aware responses', 'Anti-hallucination guardrails']" :key="item" class="flex items-center gap-6 text-sm font-black uppercase tracking-widest text-primary/80">
+              <div v-for="item in ['Zero-shot learning', 'Context-aware responses', 'Anti-hallucination guardrails']" :key="item" class="flex items-center gap-6 text-sm font-bold tracking-tight text-primary/80">
                 <div class="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
                    <Zap class="w-3 h-3 text-primary fill-current" />
                 </div>
@@ -90,7 +90,7 @@ const features = [
           <div class="order-1 lg:order-2">
              <div class="aspect-video glass-card border-white/10 p-12 flex flex-col items-center justify-center relative group bg-black/40 overflow-hidden">
                 <div class="absolute inset-0 bg-primary/5 blur-[100px] group-hover:bg-primary/10 transition-all duration-1000"></div>
-                <div class="absolute top-6 right-6 px-4 py-1 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-black text-primary uppercase tracking-[0.2em] relative z-10">GPT-4o Ready</div>
+                <div class="absolute top-6 right-6 px-4 py-1 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-bold text-primary uppercase tracking-[0.2em] relative z-10">GPT-4o Ready</div>
                 <div class="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform shadow-2xl shadow-primary/20">
                    <MessageSquare class="w-16 h-16 text-primary" />
                 </div>
@@ -109,12 +109,12 @@ const features = [
              </div>
           </div>
           <div>
-            <h2 class="text-5xl md:text-7xl font-bold mb-10 tracking-tighter italic leading-none">
-              Instagram <br />
-              <span class="text-primary not-italic font-black uppercase tracking-widest">Mastery.</span>
+            <h2 class="text-5xl md:text-7xl font-extrabold mb-10 tracking-tighter leading-none text-white">
+              Channel <br />
+              <span class="text-gradient">Mastery.</span>
             </h2>
             <p class="text-gray-400 text-lg mb-12 leading-relaxed font-medium">
-              Automate the grunt work so you can focus on creativity. From reply triggers to direct sales in DMs, we handle it all with precision.
+              Start with your website and scale to social channels as they launch. From reply triggers to direct sales, we handle it all with precision.
             </p>
              <NuxtLink to="/register" class="btn-gradient inline-flex items-center gap-4 px-10 py-5 text-lg group">
               Explore Integration 
@@ -127,14 +127,14 @@ const features = [
       <!-- Bottom Banner -->
       <section class="max-w-5xl mx-auto px-6 py-40 text-center relative">
         <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full"></div>
-        <h2 class="text-5xl md:text-8xl font-black mb-12 relative z-10 italic tracking-tighter leading-none">
-          READY TO <span class="text-primary not-italic uppercase tracking-widest">DOMINATE?</span>
+        <h2 class="text-5xl md:text-8xl font-extrabold mb-12 relative z-10 tracking-tighter leading-none text-white">
+          Ready to <span class="text-gradient">Dominate?</span>
         </h2>
-        <NuxtLink to="/register" class="bg-white text-black px-12 py-6 rounded-full font-black text-xl inline-flex items-center gap-4 relative z-10 hover:bg-gray-200 transition-colors uppercase tracking-[0.2em]">
-          Get Started For Free
+        <NuxtLink to="/register" class="bg-white text-black px-12 py-6 rounded-full font-bold text-xl inline-flex items-center gap-4 relative z-10 hover:bg-gray-200 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-white/10 uppercase tracking-[0.2em]">
+          Get Started Free
           <ArrowRight class="w-6 h-6" />
         </NuxtLink>
-        <p class="text-gray-600 mt-12 text-sm uppercase tracking-widest font-black">
+        <p class="text-gray-500 mt-12 text-xs uppercase tracking-widest font-bold">
           No credit card required • 30-day free month
         </p>
       </section>

@@ -83,7 +83,7 @@ definePageMeta({
           <Bot class="w-5 h-5" />
         </div>
         <div>
-          <h1 class="text-xs font-black uppercase tracking-widest text-white leading-tight">{{ chatbotName }}</h1>
+          <h1 class="text-xs font-extrabold uppercase tracking-widest text-white leading-tight">{{ chatbotName }}</h1>
           <div class="flex items-center gap-1.5">
             <div class="w-1 h-1 rounded-full bg-primary animate-pulse"></div>
             <span class="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Online</span>
@@ -161,7 +161,7 @@ definePageMeta({
       </form>
       <div class="mt-4 flex items-center justify-center gap-1.5 opacity-30 grayscale hover:opacity-100 hover:grayscale-0 transition-all cursor-default">
          <Sparkles class="w-3 h-3 text-primary" />
-         <span class="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Powered by ReplySuite</span>
+         <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Powered by ReplySuite</span>
       </div>
     </footer>
   </div>

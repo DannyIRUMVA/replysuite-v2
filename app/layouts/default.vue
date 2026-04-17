@@ -1,5 +1,20 @@
 <script setup lang="ts">
 // Default layout for Guest/Marketing pages
+const config = useRuntimeConfig()
+const siteUrl = config.public.siteUrl || 'https://replysuite.com'
+
+useSeoMeta({
+  ogSiteName: 'ReplySuite',
+  twitterCard: 'summary_large_image',
+  ogType: 'website',
+  twitterSite: '@replysuite',
+})
+
+useHead({
+  link: [
+    { rel: 'canonical', href: siteUrl }
+  ]
+})
 </script>
 
 <template>

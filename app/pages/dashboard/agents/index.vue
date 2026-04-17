@@ -113,21 +113,21 @@ const handleDelete = async (id: string) => {
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
       <div class="max-w-xl">
-        <h2 class="text-xl font-bold tracking-tight text-white mb-2 italic-none">ai agents</h2>
-        <p class="text-gray-500 text-sm italic-none">deploy and manage your fleet of intelligent conversation specialists.</p>
+        <h2 class="text-xl font-bold tracking-tight text-white mb-2 italic-none uppercase">AI Agents</h2>
+        <p class="text-gray-500 text-sm italic-none">Deploy and manage your fleet of intelligent conversation specialists.</p>
       </div>
       
       <button 
         @click="canCreateAgent ? (showCreateModal = true) : null"
         :class="[
-          'flex items-center gap-3 px-6 py-3 font-bold rounded-2xl transition-all shadow-lg',
+          'flex items-center gap-3 px-6 py-3 font-bold rounded-2xl transition-all shadow-lg text-[11px] tracking-widest uppercase',
           canCreateAgent 
             ? 'bg-primary text-black hover:bg-primary-accent shadow-primary/10' 
             : 'bg-white/5 text-gray-500 cursor-not-allowed opacity-50'
         ]"
       >
         <Plus class="w-5 h-5" />
-        {{ canCreateAgent ? 'forge new agent' : 'agent limit reached' }}
+        {{ canCreateAgent ? 'Forge New Agent' : 'Agent Limit Reached' }}
       </button>
     </div>
 
@@ -146,10 +146,10 @@ const handleDelete = async (id: string) => {
     
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div v-for="stat in [
-        { label: 'active agents', value: agents.length.toString().padStart(2, '0'), icon: Bot },
-        { label: 'success rate', value: '96.2%', icon: Sparkles },
-        { label: 'total chats', value: '231', icon: MessageSquare },
-        { label: 'response time', value: '< 2s', icon: Zap }
+        { label: 'Active Agents', value: agents.length.toString().padStart(2, '0'), icon: Bot },
+        { label: 'Success Rate', value: '96.2%', icon: Sparkles },
+        { label: 'Total Chats', value: '231', icon: MessageSquare },
+        { label: 'Response Time', value: '< 2s', icon: Zap }
       ]" :key="stat.label" class="glass-card !p-5 bg-white/[0.01]">
         <div class="flex items-center gap-4">
           <div class="p-2.5 bg-white/5 rounded-xl">
@@ -157,7 +157,7 @@ const handleDelete = async (id: string) => {
           </div>
           <div>
             <p class="text-[10px] font-bold tracking-widest text-gray-500 mb-0.5 uppercase">{{ stat.label }}</p>
-            <p class="text-lg font-black text-white leading-none italic-none">{{ stat.value }}</p>
+            <p class="text-lg font-bold text-white leading-none italic-none">{{ stat.value }}</p>
           </div>
         </div>
       </div>
@@ -211,7 +211,7 @@ const handleDelete = async (id: string) => {
                 <h4 class="font-bold text-white tracking-tight uppercase text-xs">{{ agent.name }}</h4>
                 <div class="flex items-center gap-1.5 mt-1">
                   <div class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"></div>
-                  <span class="text-[9px] font-bold tracking-widest text-gray-500 uppercase">active</span>
+                  <span class="text-[9px] font-bold tracking-widest text-gray-500 uppercase">Active</span>
                 </div>
               </div>
             </div>
@@ -222,7 +222,7 @@ const handleDelete = async (id: string) => {
           </div>
 
           <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-4 mb-6 min-h-[60px]">
-            <p class="text-[11px] text-gray-400 leading-relaxed line-clamp-2 italic-none">
+            <p class="text-[11px] text-gray-400 leading-relaxed line-clamp-2 italic-none capitalize">
               {{ agent.system_prompt || 'No system prompt configured. This agent will use default behavioral patterns.' }}
             </p>
           </div>
@@ -230,32 +230,32 @@ const handleDelete = async (id: string) => {
           <div class="flex items-center gap-6">
             <div class="flex items-center gap-2">
               <Activity class="w-3.5 h-3.5 text-gray-600" />
-              <span class="text-[10px] font-bold text-gray-400">0 interactions</span>
+              <span class="text-[10px] font-bold text-gray-400">0 Interactions</span>
             </div>
             <div class="flex items-center gap-2">
               <Clock class="w-3.5 h-3.5 text-gray-600" />
-              <span class="text-[10px] font-bold text-gray-400">deployed {{ new Date(agent.created_at).toLocaleDateString() }}</span>
+              <span class="text-[10px] font-bold text-gray-400">Deployed {{ new Date(agent.created_at).toLocaleDateString() }}</span>
             </div>
           </div>
 
           <div class="mt-8 flex items-center gap-3">
             <NuxtLink 
               :to="`/dashboard/agents/training?id=${agent.id}`"
-              class="flex-1 py-2.5 bg-primary/10 hover:bg-primary/20 text-[10px] font-bold tracking-widest text-primary rounded-xl transition-all border border-primary/10 flex items-center justify-center gap-2"
+              class="flex-1 py-2.5 bg-primary/10 hover:bg-primary/20 text-[10px] font-bold tracking-widest text-primary rounded-xl transition-all border border-primary/10 flex items-center justify-center gap-2 uppercase"
             >
               <Database class="w-3.5 h-3.5" />
-              knowledge base
+              Knowledge Base
             </NuxtLink>
             <NuxtLink 
               :to="`/dashboard/agents/${agent.id}`"
-              class="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-[10px] font-bold tracking-widest text-white rounded-xl transition-all border border-white/5 flex items-center justify-center gap-2"
+              class="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-[10px] font-bold tracking-widest text-white rounded-xl transition-all border border-white/5 flex items-center justify-center gap-2 uppercase"
             >
               <Edit3 class="w-3.5 h-3.5" />
-              configure
+              Configure
             </NuxtLink>
             <button 
               @click="handleDelete(agent.id)"
-              class="w-11 h-11 flex items-center justify-center bg-white/5 hover:bg-red-400/10 rounded-xl border border-white/5 text-gray-500 hover:text-red-400 transition-all"
+              class="w-11 h-11 flex items-center justify-center bg-white/5 hover:bg-red-400/10 rounded-xl border border-white/5 text-gray-500 hover:text-red-400 transition-all uppercase"
             >
               <Trash2 class="w-4 h-4" />
             </button>
@@ -276,7 +276,7 @@ const handleDelete = async (id: string) => {
           <Plus :class="['w-6 h-6', canCreateAgent ? 'text-gray-600 group-hover:text-primary' : 'text-gray-800']" />
         </div>
         <span class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">
-          {{ canCreateAgent ? 'forge new agent' : 'limit reached' }}
+          {{ canCreateAgent ? 'Forge New Agent' : 'Limit Reached' }}
         </span>
       </button>
     </div>
@@ -285,15 +285,15 @@ const handleDelete = async (id: string) => {
       <div class="w-20 h-20 bg-primary/5 rounded-3xl flex items-center justify-center mb-6 border border-primary/10">
         <Bot class="w-10 h-10 text-primary" />
       </div>
-      <h3 class="text-xl font-bold text-white mb-2 tracking-tight italic-none">no agents forged yet</h3>
-      <p class="text-gray-500 text-sm max-w-sm mb-10 leading-relaxed italic-none">create your first ai agent to start automating your customer service and engagement.</p>
+      <h3 class="text-xl font-bold text-white mb-2 tracking-tight italic-none uppercase">No Agents Forged Yet</h3>
+      <p class="text-gray-500 text-sm max-w-sm mb-10 leading-relaxed italic-none">Create your first AI agent to start automating your customer service and engagement.</p>
       
       <button 
         @click="showCreateModal = true"
-        class="flex items-center gap-2 text-primary font-bold tracking-widest text-[11px]"
+        class="flex items-center gap-2 text-primary font-bold tracking-widest text-[11px] uppercase"
       >
         <Plus class="w-4 h-4" />
-        BUILD YOUR FIRST AGENT
+        Build Your First Agent
       </button>
     </div>
 
@@ -304,8 +304,8 @@ const handleDelete = async (id: string) => {
       <div class="relative w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
         <div class="p-8">
           <div class="flex items-center justify-between mb-8">
-            <h3 class="text-xl font-bold text-white tracking-tight italic-none">Forge AI Agent</h3>
-            <button @click="showCreateModal = false" class="text-gray-500 hover:text-white">
+            <h3 class="text-xl font-bold text-white tracking-tight italic-none uppercase">Forge AI Agent</h3>
+            <button @click="showCreateModal = false" class="p-2 text-gray-500 hover:text-white transition-colors">
               <Plus class="w-6 h-6 rotate-45" />
             </button>
           </div>

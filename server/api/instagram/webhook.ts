@@ -1,5 +1,5 @@
-import { defineEventHandler, readRawBody, getQuery } from 'h3'
 import { processInstagramComment } from '../../utils/automation'
+import { serverSupabaseServiceRole } from '#supabase/server'
 import crypto from 'crypto'
 
 export default defineEventHandler(async (event) => {
@@ -65,7 +65,8 @@ export default defineEventHandler(async (event) => {
             console.log(`[Webhook] New Comment on post ${commentData.instagram_post_id}: ${commentData.text}`)
             
             // Trigger Automation Logic (Background)
-            event.waitUntil(processInstagramComment(commentData).catch(err => {
+            const supabase = serverSupabaseServiceRole(event)
+            event.waitUntil(processInstagramComment(supabase, commentData).catch(err => {
               console.error('[Webhook Background Error]', err)
             }))
           }

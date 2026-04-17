@@ -1,11 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
 import { searchKnowledge, getChatCompletion } from './ai'
 
-export const processInstagramComment = async (commentData: any) => {
-  const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+export const processInstagramComment = async (supabase: any, commentData: any) => {
 
   const { instagram_post_id, text, comment_id, from } = commentData
   const commenterUsername = from?.username

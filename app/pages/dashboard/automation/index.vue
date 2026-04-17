@@ -315,18 +315,15 @@ watch(selectedAccountId, () => {
                 </span>
                 <span v-else class="text-[9px] font-bold text-gray-600 uppercase">PAUSED</span>
               </div>
-              <h4 class="text-sm font-bold text-white uppercase italic-none">Auto-Reply via {{ trigger.chatbots?.name ||
-                'Assigned Agent' }}</h4>
+              <h4 class="text-sm font-bold text-white uppercase italic-none">Auto-Reply via {{ trigger.chatbots?.name || 'Assigned Agent' }}</h4>
               <div class="flex flex-wrap gap-4 pt-1">
                 <div class="flex items-center gap-2">
                   <Filter class="w-3.5 h-3.5 text-gray-600" />
-                  <span class="text-[10px] font-bold text-gray-500 uppercase">{{ trigger.keywords?.length ?
-                    trigger.keywords.join(', ') : 'All Comments' }}</span>
+                  <span class="text-[10px] font-bold text-gray-500 uppercase">{{ trigger.keywords?.length ? trigger.keywords.join(', ') : 'All Comments' }}</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <MessageCircle class="w-3.5 h-3.5 text-gray-600" />
-                  <span class="text-[10px] font-bold text-gray-500 uppercase">{{ trigger.reply_in_comment ? 'Comment' :
-                    '' }} {{ trigger.reply_in_dm ? '+ DM' : '' }}</span>
+                  <span class="text-[10px] font-bold text-gray-500 uppercase">{{ trigger.reply_in_comment ? 'Comment' : '' }} {{ trigger.reply_in_dm ? '+ DM' : '' }}</span>
                 </div>
               </div>
             </div>
@@ -399,8 +396,7 @@ watch(selectedAccountId, () => {
               <div v-else-if="selectedAccountId" class="flex items-center gap-3 mt-4" @click="currentStep = 1">
                 <div
                   class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl flex items-center gap-2 cursor-pointer hover:bg-white/10 transition-all">
-                  <span class="text-[10px] font-bold text-primary uppercase">{{accounts.find(a => a.id ===
-                    selectedAccountId)?.username }}</span>
+                  <span class="text-[10px] font-bold text-primary uppercase">{{ accounts.find(a => a.id === selectedAccountId)?.username }}</span>
                   <Settings2 class="w-3 h-3 text-gray-600" />
                 </div>
               </div>
@@ -464,8 +460,7 @@ watch(selectedAccountId, () => {
               <div v-else-if="currentStep > 3" class="mt-4 flex items-center gap-3" @click="currentStep = 3">
                 <div
                   class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl flex items-center gap-2 cursor-pointer hover:bg-white/10">
-                  <span class="text-[10px] font-bold text-white uppercase">{{ newTrigger.keywords || 'All Comments'
-                    }}</span>
+                  <span class="text-[10px] font-bold text-white uppercase">{{ newTrigger.keywords || 'All Comments' }}</span>
                   <Settings2 class="w-3 h-3 text-gray-600" />
                 </div>
               </div>
@@ -548,7 +543,6 @@ watch(selectedAccountId, () => {
         </div>
       </div>
     </div>
-    >
   </div>
 </template>
 

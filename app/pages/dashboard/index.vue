@@ -6,7 +6,9 @@ import {
   Target,
   ShieldAlert,
   Bot,
-  Plus
+  Plus,
+  TrendingUp,
+  Activity
 } from 'lucide-vue-next'
 import Skeleton from '~~/app/components/Skeleton.vue'
 
@@ -24,17 +26,17 @@ onMounted(() => { isMounted.value = true })
 const { data: realStats, pending: statsLoading } = useAsyncData('dashboard-metrics-v2', async () => {
   if (!userId.value) return []
   
-  const [messagesCount, activeRules, accountsCount] = await Promise.all([
+  const [messagesCount, activeRules, agentsCount] = await Promise.all([
     supabase.from('instagram_message_jobs').select('*', { count: 'exact', head: true }),
     supabase.from('instagram_comment_triggers').select('*', { count: 'exact', head: true }).eq('is_active', true),
-    supabase.from('instagram_accounts').select('*', { count: 'exact', head: true }).eq('user_id', userId.value)
+    supabase.from('chatbots').select('*', { count: 'exact', head: true }).eq('user_id', userId.value)
   ])
 
   return [
-    { id: 'messages', name: 'Total Messages', value: (messagesCount.count || 0).toString(), change: '+12%', changeType: 'increase' },
-    { id: 'leads', name: 'Leads Captured', value: '0', change: '0%', changeType: 'neutral' },
-    { id: 'rules', name: 'Active Rules', value: (activeRules.count || 0).toString(), change: '+2', changeType: 'increase' },
-    { id: 'accounts', name: 'Connected Accounts', value: (accountsCount.count || 0).toString(), change: '0', changeType: 'neutral' },
+    { id: 'messages', name: 'Total Conversations', value: (messagesCount.count || 0).toString(), change: '+12%', changeType: 'increase' },
+    { id: 'leads', name: 'Active Leads', value: '0', change: '0%', changeType: 'neutral' },
+    { id: 'agents', name: 'Forged Agents', value: (agentsCount.count || 0).toString(), change: '+2', changeType: 'increase' },
+    { id: 'activity', name: 'System Activity', value: 'Optimal', change: '100%', changeType: 'neutral' },
   ]
 }, { watch: [userId] })
 
@@ -43,8 +45,8 @@ const getIcon = (id: string) => {
   switch (id) {
     case 'messages': return MessageSquare
     case 'leads': return Target
-    case 'rules': return Zap
-    case 'accounts': return Instagram
+    case 'agents': return Bot
+    case 'activity': return Activity
     default: return MessageSquare
   }
 }
@@ -52,10 +54,10 @@ const getIcon = (id: string) => {
 const stats = computed(() => {
   if (realStats.value && realStats.value.length > 0) return realStats.value
   return [
-    { id: 'messages', name: 'Total Messages', value: '0', change: '0%', changeType: 'neutral' },
-    { id: 'leads', name: 'Leads Captured', value: '0', change: '0%', changeType: 'neutral' },
-    { id: 'rules', name: 'Active Rules', value: '0', change: '0', changeType: 'neutral' },
-    { id: 'accounts', name: 'Connected Accounts', value: '0', change: '0', changeType: 'neutral' },
+    { id: 'messages', name: 'Total Conversations', value: '0', change: '0%', changeType: 'neutral' },
+    { id: 'leads', name: 'Active Leads', value: '0', change: '0%', changeType: 'neutral' },
+    { id: 'agents', name: 'Forged Agents', value: '0', change: '0', changeType: 'neutral' },
+    { id: 'activity', name: 'System Activity', value: 'Idle', change: '0', changeType: 'neutral' },
   ]
 })
 
@@ -64,7 +66,13 @@ const loading = computed(() => isMounted.value ? (isLoading.value || statsLoadin
 </script>
 
 <template>
-  <div>
+  <div class="space-y-10">
+    <!-- Header -->
+    <div class="max-w-xl">
+        <h2 class="text-xl font-bold tracking-tight text-white mb-2 italic-none uppercase">Conversations Analytics</h2>
+        <p class="text-gray-500 text-sm italic-none">Your comprehensive intelligence overlook across all digital channels.</p>
+    </div>
+
     <!-- Stats Grid (Loading or Locked if not verified) -->
     <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
       <div v-for="i in 4" :key="i" class="glass-card p-8 border-white/5 bg-[#0a0a0a]">
@@ -87,30 +95,30 @@ const loading = computed(() => isMounted.value ? (isLoading.value || statsLoadin
           <span :class="stat.changeType === 'increase' ? 'text-green-500' : 'text-gray-500'" class="text-xs font-bold tracking-widest">{{ stat.change }}</span>
         </div>
         <p class="text-gray-500 text-xs mb-1 tracking-widest font-bold leading-none capitalize">{{ stat.name }}</p>
-        <p class="text-3xl font-black mt-2 tracking-tighter">{{ stat.value }}</p>
+        <p class="text-3xl font-bold mt-2 tracking-tighter">{{ stat.value }}</p>
       </div>
     </div>
 
     <!-- Feature Teasers for unverified (Secondary call to action) -->
      <div v-if="!isVerified && !loading" class="grid grid-cols-1 lg:grid-cols-2 gap-8 relative mt-20">
         <div class="absolute inset-x-0 -top-12 z-10 flex items-center justify-center">
-           <div class="px-6 py-2 rounded-full bg-[#0a0a0a] border border-primary/30 text-[10px] font-bold text-primary tracking-[0.2em] shadow-2xl shadow-primary/20">
-              unlock elite features
+           <div class="px-6 py-2 rounded-full bg-[#0a0a0a] border border-primary/30 text-[10px] font-bold text-primary tracking-[0.2em] shadow-2xl shadow-primary/20 uppercase">
+              Unlock Elite Features
            </div>
         </div>
         <div class="glass-card p-12 border-white/5 opacity-10 flex flex-col items-center text-center">
-           <Instagram class="w-20 h-20 text-gray-600 mb-8" />
-           <h3 class="text-2xl font-black mb-4 tracking-widest">instagram elite</h3>
-           <p class="text-gray-600 font-medium">Automate comments, DMs, and story mentions with AI.</p>
+           <Bot class="w-20 h-20 text-gray-600 mb-8" />
+           <h3 class="text-2xl font-bold mb-4 tracking-widest uppercase">Autonomous Agents</h3>
+           <p class="text-gray-600 font-medium">Scale your conversations with high-performance AI engines.</p>
         </div>
         <div class="glass-card p-12 border-white/5 opacity-10 flex flex-col items-center text-center">
-           <MessageSquare class="w-20 h-20 text-gray-600 mb-8" />
-           <h3 class="text-2xl font-black mb-4 tracking-widest">kinyarwanda ai</h3>
-           <p class="text-gray-600 font-medium">Build specialized AI agents that understand your local customers.</p>
+           <Target class="w-20 h-20 text-gray-600 mb-8" />
+           <h3 class="text-2xl font-bold mb-4 tracking-widest uppercase">Lead Intelligence</h3>
+           <p class="text-gray-600 font-medium">Identify and nurture high-value prospects automatically.</p>
         </div>
      </div>
 
-     <!-- Main content area (Empty states or Skeletons) -->
+     <!-- Main content area -->
      <div v-if="loading" class="grid lg:grid-cols-3 gap-10">
         <div class="lg:col-span-2 glass-card p-10 min-h-[400px]">
            <div class="flex flex-col items-center justify-center h-full space-y-8">
@@ -139,15 +147,15 @@ const loading = computed(() => isMounted.value ? (isLoading.value || statsLoadin
      <div v-else-if="isVerified" class="grid lg:grid-cols-3 gap-10">
         <div class="lg:col-span-2 glass-card p-10 min-h-[400px] border-white/5 flex flex-col items-center justify-center text-center">
            <div class="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-8">
-              <Instagram class="w-12 h-12 text-primary opacity-30" />
+              <TrendingUp class="w-12 h-12 text-primary opacity-30" />
            </div>
-           <h2 class="text-3xl font-black mb-4 tracking-tighter">No accounts connected</h2>
-           <p class="text-gray-500 max-w-sm font-medium mb-10">Connect your first Instagram account to start the gold standard of automation.</p>
-           <button class="btn-gradient px-8 py-4 font-black tracking-widest text-sm">connect instagram</button>
+           <h2 class="text-3xl font-bold mb-4 tracking-tighter">No Conversation Data</h2>
+           <p class="text-gray-500 max-w-sm font-medium mb-10">Deploy your first AI agent to start collecting elite behavioral data and conversation insights.</p>
+           <NuxtLink to="/dashboard/agents" class="bg-primary text-black px-8 py-4 font-bold tracking-widest text-sm rounded-xl hover:bg-primary-accent transition-all">Forge Your First Agent</NuxtLink>
         </div>
         
         <div class="glass-card p-10 border-white/5 text-center flex flex-col justify-center">
-           <h3 class="text-lg font-bold mb-6 tracking-tight">recent activity</h3>
+           <h3 class="text-lg font-bold mb-6 tracking-tight capitalize">Recent Activity</h3>
            <p class="text-gray-600">No activity yet. Let's get started!</p>
         </div>
      </div>
@@ -155,5 +163,10 @@ const loading = computed(() => isMounted.value ? (isLoading.value || statsLoadin
 </template>
 
 <style scoped>
-/* Scoped styles for the dashboard content */
+.glass-card {
+  @apply bg-[#111111]/40 backdrop-blur-xl border border-white/5 p-8 rounded-[2rem];
+}
+.italic-none {
+  font-style: normal !important;
+}
 </style>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,27 +7,28 @@
 @layer base {
   body {
     @apply bg-background text-white font-sans antialiased selection:bg-primary/30;
+    font-family: 'Plus Jakarta Sans', sans-serif;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary hover:bg-primary/90 transition-all px-6 py-3 rounded-full font-semibold text-white shadow-lg shadow-primary/20;
+    @apply bg-primary hover:bg-primary/90 transition-all px-6 py-3 rounded-full font-bold text-white shadow-lg shadow-primary/20;
   }
   
   .btn-gradient {
-    @apply bg-gradient-to-r from-primary to-primary-accent hover:opacity-90 transition-all px-6 py-3 rounded-full font-semibold text-black shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-[0.98];
+    @apply bg-gradient-to-r from-primary to-primary-accent hover:opacity-90 transition-all px-8 py-4 rounded-full font-bold text-black shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] tracking-tight;
   }
 
   .glass-card {
-    @apply bg-white/[0.01] border border-white/5 backdrop-blur-md rounded-24;
+    @apply bg-white/[0.01] border border-white/5 backdrop-blur-xl rounded-[32px] transition-all duration-500;
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-br from-primary via-primary-accent to-[#F9F6EE] font-bold;
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-primary via-primary-accent to-[#F9F6EE] font-black tracking-tight;
   }
 
   .badge-gradient {
-    @apply px-3 py-1 rounded-full bg-primary/5 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest;
+    @apply px-4 py-1.5 rounded-full bg-primary/5 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.2em];
   }
 }

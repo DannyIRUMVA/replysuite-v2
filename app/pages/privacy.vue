@@ -1,30 +1,36 @@
 <script setup lang="ts">
-import { ShieldCheck, Lock, Eye, Users, Globe, Mail, FileText } from 'lucide-vue-next'
+import { ShieldCheck, Scale, FileText, Lock, Globe, MessageCircle, Mail } from 'lucide-vue-next'
+
+useSeoMeta({
+  title: 'Privacy Policy | ReplySuite AI',
+  description: 'Your privacy is our priority. Learn how ReplySuite handles your brand data with industry-leading security and transparency.',
+})
 
 definePageMeta({
   layout: 'default'
 })
 
 const sections = [
-  { id: 'introduction', title: 'Introduction', icon: FileText },
-  { id: 'data-collection', title: 'Data Collection', icon: Eye },
-  { id: 'use-of-data', title: 'Use of Data', icon: Lock },
-  { id: 'sharing', title: 'Disclosure & Sharing', icon: Users },
-  { id: 'security', title: 'Security', icon: ShieldCheck },
-  { id: 'gdpr', title: 'GDPR & Rights', icon: Globe },
-  { id: 'subprocessors', title: 'Sub-processors', icon: Users },
-  { id: 'contact', title: 'Contact', icon: Mail }
+  { id: 'collection', title: 'Data Collection', icon: FileText },
+  { id: 'usage', title: 'Data Usage', icon: MessageCircle },
+  { id: 'security', title: 'Security Protocol', icon: Lock },
+  { id: 'compliance', title: 'Platform Compliance', icon: ShieldCheck },
+  { id: 'rights', title: 'User Rights', icon: Globe },
+  { id: 'updates', title: 'Policy Updates', icon: Scale },
+  { id: 'contact', title: 'Contact Support', icon: Mail }
 ]
 </script>
 
 <template>
-  <div class="relative">
+  <div class="relative min-h-screen bg-background">
     <!-- Hero Header -->
     <section class="max-w-7xl mx-auto px-6 pt-32 pb-20 border-b border-white/5 relative overflow-hidden">
        <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10 animate-pulse"></div>
-       <span class="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black tracking-widest mb-10">legal documentation</span>
-       <h1 class="text-5xl md:text-8xl font-black mb-8 tracking-tighter">privacy <span class="text-primary font-black tracking-widest">policy.</span></h1>
-       <p class="text-gray-500 font-medium">last updated: april 10, 2026</p>
+       <span class="badge-gradient mb-10">Legal Framework</span>
+       <h1 class="text-5xl md:text-8xl font-extrabold mb-8 tracking-tighter text-white">
+         Privacy <span class="text-gradient">Policy.</span>
+       </h1>
+       <p class="text-gray-500 font-bold uppercase tracking-[0.2em] text-xs">Last updated: April 10, 2026</p>
     </section>
 
     <!-- Content -->
@@ -34,17 +40,17 @@ const sections = [
         <div class="sticky top-32 space-y-2">
           <a v-for="s in sections" :key="s.id" :href="`#${s.id}`" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition-all group text-gray-500 hover:text-white">
             <component :is="s.icon" class="w-5 h-5 group-hover:text-primary transition-colors" />
-            <span class="text-sm font-bold tracking-widest">{{ s.title.toLowerCase() }}</span>
+            <span class="text-sm font-bold tracking-widest uppercase">{{ s.title }}</span>
           </a>
         </div>
       </aside>
 
       <!-- Main Text -->
       <main class="lg:col-span-3 prose prose-invert prose-primary max-w-none">
-<p class="text-primary font-black mb-12 tracking-widest uppercase text-xs">instagram comment to trigger dm</p>
+        <p class="text-primary font-bold mb-12 tracking-widest uppercase text-xs">Premium AI Automation Standards</p>
         
-        <section id="introduction" class="mb-20">
-          <h2 class="text-3xl font-black mb-8 tracking-widest flex items-center gap-4 text-white">
+        <section id="collection" class="mb-20">
+          <h2 class="text-3xl font-bold mb-8 tracking-tight flex items-center gap-4 text-white">
              <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <FileText class="w-5 h-5" />
              </div>
@@ -59,7 +65,7 @@ const sections = [
         </section>
 
         <section id="data-collection" class="mb-20">
-          <h2 class="text-3xl font-black mb-8 tracking-widest flex items-center gap-4 text-white">
+          <h2 class="text-3xl font-bold tracking-tight flex items-center gap-4 text-white">
              <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <Eye class="w-5 h-5" />
              </div>
@@ -70,18 +76,18 @@ const sections = [
           </p>
           <div class="grid md:grid-cols-2 gap-8 my-10 font-medium">
              <div class="glass-card p-8 border-white/5 bg-white/[0.01]">
-                <h4 class="text-primary font-black tracking-widest text-xs mb-4">personal data</h4>
-                <p class="text-gray-400 text-sm">email address, name, and instagram account metadata.</p>
+                <h4 class="text-primary font-bold tracking-widest text-xs mb-4">personal data</h4>
+                <p class="text-gray-400 text-sm">email address, name, and connected platform metadata.</p>
              </div>
              <div class="glass-card p-8 border-white/5 bg-white/[0.01]">
-                <h4 class="text-primary font-black tracking-widest text-xs mb-4">usage data</h4>
+                <h4 class="text-primary font-bold tracking-widest text-xs mb-4">usage data</h4>
                 <p class="text-gray-400 text-sm">ip address, browser type, diagnostic data, and interaction history.</p>
              </div>
           </div>
         </section>
 
         <section id="gdpr" class="mb-20">
-          <h2 class="text-3xl font-black mb-8 tracking-widest flex items-center gap-4 text-white">
+          <h2 class="text-3xl font-bold tracking-tight flex items-center gap-4 text-white">
              <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <Globe class="w-5 h-5" />
              </div>
@@ -93,7 +99,7 @@ const sections = [
         </section>
 
         <section id="contact" class="mb-20">
-           <h2 class="text-3xl font-black mb-8 tracking-widest flex items-center gap-4 text-white">
+           <h2 class="text-3xl font-bold tracking-tight flex items-center gap-4 text-white">
              <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <Mail class="w-5 h-5" />
              </div>

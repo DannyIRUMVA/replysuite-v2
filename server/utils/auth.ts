@@ -15,13 +15,15 @@ export interface AuthContext {
  * @param required - If true, throws 401 if no valid user is found
  */
 export async function getAuthContext(event: H3Event, required = true): Promise<AuthContext | null> {
+  const headers = getHeaders(event)
   let user = await serverSupabaseUser(event)
   
   // Fallback: If no user from cookie, but auth header exists, the client might be using Bearer token
   if (!user && headers.authorization) {
     try {
       const client = await serverSupabaseClient(event)
-      user = authUser
+      const { data } = await client.auth.getUser(headers.authorization)
+      user = data.user
     } catch (e) {
       console.error('[getAuthContext] Auth header fallback failed', e)
     }

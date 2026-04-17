@@ -9,13 +9,13 @@ export default <Partial<Config>>{
           accent: '#C5A059',  // Soft Champagne
         },
         background: {
-          DEFAULT: '#020202', // Slightly deeper black
-          card: '#0A0A0A',   // Thinner cards
-          accent: '#111111'  // Subtler highlights
+          DEFAULT: '#0A0A0B', // Sophisticated Off-Black
+          card: '#121214',   // Layered Cards
+          accent: '#18181B'  // Subtler highlights
         }
       },
       fontFamily: {
-        sans: ['Spline Sans', 'sans-serif'],
+        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
       },
       borderRadius: {
         '8': '8px',
@@ -23,6 +23,8 @@ export default <Partial<Config>>{
         '16': '16px',
         '24': '24px',
         '32': '32px',
+        '40': '40px',
+        '48': '48px',
       }
     },
   },

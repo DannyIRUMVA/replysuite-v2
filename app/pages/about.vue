@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { Users, Sparkles, ShieldCheck, Heart, ArrowRight } from 'lucide-vue-next'
 
+useSeoMeta({
+  title: 'Our Story | Empowering Creators with AI',
+  description: 'Learn the mission behind ReplySuite. We\'re building the sophisticated AI infrastructure that helps modern brands scale their engagement with human-like precision.',
+  ogTitle: 'About ReplySuite | Our Mission & Values',
+})
+
 definePageMeta({
   layout: 'default'
 })
@@ -29,13 +35,13 @@ const values = [
       <!-- Hero -->
       <section class="max-w-7xl mx-auto px-6 py-32 text-center relative">
         <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10 animate-pulse"></div>
-        <span class="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest mb-10">Our Story</span>
-        <h1 class="text-6xl md:text-9xl font-black mb-12 tracking-tighter leading-[0.85]">
-          BEYOND <br />
-          <span class="text-gradient">CONVERSATION.</span>
+        <span class="badge-gradient mb-10">Our Story</span>
+        <h1 class="text-6xl md:text-9xl font-extrabold mb-12 tracking-tighter leading-[0.85] text-white">
+          Beyond <br />
+          <span class="text-gradient">Conversation.</span>
         </h1>
         <p class="text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed font-medium">
-          ReplySuite was born from a simple idea: automation should feel human. We're building the infrastructure that helps brands scale without losing their soul.
+          ReplySuite is an AI-driven marketing automation platform designed for modern brands. We leverage custom knowledge bases to help you scale without losing your soul.
         </p>
       </section>
 
@@ -45,14 +51,14 @@ const values = [
           <div class="absolute top-0 right-0 w-1/3 h-full bg-primary/5 blur-[100px] group-hover:bg-primary/10 transition-all duration-1000"></div>
           <div class="grid lg:grid-cols-2 gap-20 items-center relative z-10">
             <div>
-              <h2 class="text-5xl md:text-7xl font-bold mb-10 tracking-tighter italic">
+              <h2 class="text-5xl md:text-7xl font-extrabold mb-10 tracking-tighter leading-tight text-white">
                 AI as an <br />
-                <span class="text-primary not-italic font-black uppercase tracking-widest leading-none">Extension.</span>
+                <span class="text-gradient leading-none">Extension.</span>
               </h2>
               <p class="text-lg text-gray-400 leading-relaxed font-medium mb-12">
-                We believe that every creator, from micro-influencers to global agencies, deserves world-class automation. ReplySuite isn't just a tool; it's a partner that learns, grows, and helps you win back your time.
+                We believe that every brand deserves world-class automation. ReplySuite isn't just a tool; it's a partner that learns from your data, grows with your business, and helps you win back your time.
               </p>
-              <div class="flex items-center gap-4 text-primary font-black uppercase tracking-widest text-xs">
+              <div class="flex items-center gap-4 text-primary font-bold uppercase tracking-[0.2em] text-[10px]">
                 Learn more about our technology
                 <ArrowRight class="w-4 h-4" />
               </div>
@@ -75,16 +81,16 @@ const values = [
           <div class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-10 group-hover:bg-primary group-hover:text-black transition-all">
             <component :is="val.icon" class="w-8 h-8" />
           </div>
-          <h3 class="text-2xl font-bold mb-6 tracking-tight uppercase tracking-widest">{{ val.title }}</h3>
+          <h3 class="text-2xl font-bold mb-6 tracking-tight text-white">{{ val.title }}</h3>
           <p class="text-sm text-gray-500 leading-relaxed font-medium">{{ val.desc }}</p>
         </div>
       </section>
 
       <!-- CTA -->
       <section class="max-w-5xl mx-auto px-6 py-40 text-center">
-        <h2 class="text-5xl md:text-8xl font-black mb-16 italic tracking-tighter leading-none">
-          LET'S <span class="text-primary not-italic uppercase tracking-widest">BUILD</span> <br />
-          TOGETHER.
+        <h2 class="text-5xl md:text-8xl font-extrabold mb-16 tracking-tighter leading-none text-white">
+          Let's <span class="text-gradient">Build</span> <br />
+          Together.
         </h2>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-8">
            <a href="mailto:support@replysuite.com" class="w-full sm:w-auto btn-gradient px-12 py-5 text-xl">Contact Sales</a>

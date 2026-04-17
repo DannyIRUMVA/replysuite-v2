@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { Zap } from 'lucide-vue-next'
+import { Zap, Mail, Lock, ArrowRight, Instagram, Github, Chrome, Loader2, Sparkles, AlertCircle } from 'lucide-vue-next'
+
+useSeoMeta({
+  title: 'Sign In | Access your AI Dashboard',
+  description: 'Log in to your ReplySuite account to manage your AI personas, monitor conversations, and optimize your Instagram engagement.',
+})
 
 definePageMeta({
   middleware: 'guest',

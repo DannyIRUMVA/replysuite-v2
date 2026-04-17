@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
 
     // 4. Search Knowledge Base (RAG)
     console.log('[Public Chat] Searching knowledge base...')
-    const contextResults = await searchKnowledge(chatbotId, message, 3)
+    const contextResults = await searchKnowledge(supabase, chatbotId, message, 3)
     const contextText = contextResults.map((r: any) => r.content).join('\n\n---\n\n')
     console.log(`[Public Chat] Context found: ${contextResults.length} chunks`)
 
