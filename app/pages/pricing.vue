@@ -21,7 +21,7 @@ const plans = [
   },
   {
     name: 'Silver',
-    price: '8.88',
+    price: '17.88',
     desc: 'The best value for growing elite brands.',
     features: ['3 website chatbots', '2,500 conversations / mo', 'Advanced bot training', 'Priority support'],
     popular: true

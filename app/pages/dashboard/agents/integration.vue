@@ -81,7 +81,7 @@ const playgroundHtml = computed(() => {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto space-y-12 pb-20">
+  <div class="w-full space-y-8 pb-20">
     <!-- Header -->
     <div class="relative overflow-hidden group p-8 rounded-[2.5rem] bg-white/[0.01] border border-white/5">
       <div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
@@ -98,12 +98,55 @@ const playgroundHtml = computed(() => {
       <NuxtLink to="/dashboard/settings" class="px-8 py-3 bg-primary text-black font-bold tracking-widest text-xs uppercase rounded-xl hover:scale-105 transition-all">go to settings</NuxtLink>
     </div>
 
-    <div v-else-if="isLoading" class="flex justify-center py-20">
-       <Loader2 class="w-8 h-8 text-primary animate-spin" />
+    <div v-else-if="isLoading" class="space-y-8">
+      <!-- Skeleton Header Sync -->
+      <section class="glass-card p-8 bg-[#0a0a0a] border-white/5 relative overflow-hidden">
+        <Skeleton width="180px" height="10px" class="mb-4" />
+        <Skeleton width="320px" height="48px" radius="1rem" />
+      </section>
+
+      <div class="grid lg:grid-cols-2 gap-8">
+        <div class="space-y-8">
+          <!-- Widget Embed Skeleton -->
+          <section class="glass-card p-8 bg-[#0a0a0a] border-white/5">
+            <div class="flex items-center gap-4 mb-8">
+              <Skeleton width="48px" height="48px" radius="0.75rem" />
+              <div class="space-y-2">
+                <Skeleton width="150px" height="14px" />
+                <Skeleton width="220px" height="10px" />
+              </div>
+            </div>
+            <Skeleton height="100px" radius="1rem" />
+          </section>
+        </div>
+
+        <div class="space-y-8">
+          <!-- CLI Skeleton -->
+          <section class="glass-card p-8 bg-[#0a0a0a] border-white/5">
+            <div class="flex items-center gap-4 mb-8">
+              <Skeleton width="48px" height="48px" radius="0.75rem" />
+              <div class="space-y-2">
+                <Skeleton width="180px" height="14px" />
+                <Skeleton width="240px" height="10px" />
+              </div>
+            </div>
+            <Skeleton height="120px" radius="1rem" />
+          </section>
+        </div>
+      </div>
+
+      <!-- Security Placeholder Skeleton -->
+      <section class="glass-card p-8 bg-[#0a0a0a] border-white/5 opacity-40">
+        <Skeleton width="200px" height="14px" class="mb-6" />
+        <div class="flex gap-4">
+          <Skeleton height="44px" class="flex-1" radius="0.75rem" />
+          <Skeleton width="100px" height="44px" radius="0.75rem" />
+        </div>
+      </section>
     </div>
 
     <div v-else class="space-y-8">
-      <!-- Selector -->
+      <!-- Selector (Full Width for prominence, or can be grid-aligned) -->
       <section class="glass-card p-8 bg-[#0a0a0a] border-white/5 relative overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
         <div class="relative z-10">
@@ -123,116 +166,125 @@ const playgroundHtml = computed(() => {
         </div>
       </section>
 
-      <!-- Direct Embed -->
-      <section class="glass-card p-8 bg-[#0a0a0a] border-white/5">
-        <div class="flex items-center gap-4 mb-8">
-          <div class="p-3 rounded-xl bg-primary/10 text-primary">
-            <Code2 class="w-6 h-6" />
-          </div>
-          <div>
-            <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">Widget Embedding</h3>
-            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Add this autonomous script to your website's <code class="text-primary">&lt;head&gt;</code> component.</p>
-          </div>
+      <div class="grid lg:grid-cols-2 gap-8">
+        <!-- Left Column: technical details & embed -->
+        <div class="space-y-8">
+          <!-- Direct Embed -->
+          <section class="glass-card h-full p-8 bg-[#0a0a0a] border-white/5">
+            <div class="flex items-center gap-4 mb-8">
+              <div class="p-3 rounded-xl bg-primary/10 text-primary">
+                <Code2 class="w-6 h-6" />
+              </div>
+              <div>
+                <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">Widget Embedding</h3>
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Add this autonomous script to your website's <code class="text-primary">&lt;head&gt;</code> component.</p>
+              </div>
+            </div>
+
+            <div class="relative group">
+              <div class="absolute -inset-1 bg-gradient-to-r from-primary/20 to-cyan-400/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000"></div>
+              <div class="relative flex items-center gap-4 p-6 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto overflow-y-hidden">
+                <pre class="text-gray-400 text-[11px] flex-1 leading-relaxed">{{ scriptTag }}</pre>
+                <button 
+                  @click="copyText(scriptTag, 'script')"
+                  class="shrink-0 p-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 transition-all hover:text-white"
+                >
+                  <Check v-if="copiedType === 'script'" class="w-4 h-4 text-primary" />
+                  <Copy v-else class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </section>
         </div>
 
-        <div class="relative group">
-          <div class="absolute -inset-1 bg-gradient-to-r from-primary/20 to-cyan-400/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000"></div>
-          <div class="relative flex items-center gap-4 p-6 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto">
-            <pre class="text-gray-400 text-[11px] flex-1 leading-relaxed">{{ scriptTag }}</pre>
-            <button 
-              @click="copyText(scriptTag, 'script')"
-              class="shrink-0 p-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 transition-all hover:text-white"
-            >
-              <Check v-if="copiedType === 'script'" class="w-4 h-4 text-primary" />
-              <Copy v-else class="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </section>
+        <div class="space-y-8">
+          <!-- API / Curl Test -->
+          <section class="glass-card h-full p-8 bg-[#0a0a0a] border-white/5">
+            <div class="flex items-center gap-4 mb-8">
+              <div class="p-3 rounded-xl bg-cyan-400/10 text-cyan-400">
+                <Terminal class="w-6 h-6" />
+              </div>
+              <div>
+                <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">CLI Connectivity Check</h3>
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Public-ready endpoint (no dashboard token required).</p>
+              </div>
+            </div>
 
-      <!-- API / Curl Test -->
-      <section class="glass-card p-8 bg-[#0a0a0a] border-white/5">
-        <div class="flex items-center gap-4 mb-8">
-          <div class="p-3 rounded-xl bg-cyan-400/10 text-cyan-400">
-            <Terminal class="w-6 h-6" />
-          </div>
-          <div>
-            <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">CLI Connectivity Check</h3>
-            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Public-ready endpoint (no dashboard token required).</p>
-          </div>
+            <div class="relative group">
+              <div class="absolute -inset-1 bg-cyan-400/10 rounded-2xl blur opacity-0 group-hover:opacity-20 transition duration-1000"></div>
+              <div class="relative flex items-center gap-4 p-6 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto overflow-y-hidden">
+                <pre class="text-gray-400 text-[11px] flex-1 leading-loose">{{ curlCommand }}</pre>
+                <button 
+                  @click="copyText(curlCommand, 'curl')"
+                  class="shrink-0 p-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 transition-all hover:text-white"
+                >
+                  <Check v-if="copiedType === 'curl'" class="w-4 h-4 text-cyan-400" />
+                  <Copy v-else class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </section>
         </div>
+      </div>
 
-        <div class="relative group">
-          <div class="absolute -inset-1 bg-cyan-400/10 rounded-2xl blur opacity-0 group-hover:opacity-20 transition duration-1000"></div>
-          <div class="relative flex items-center gap-4 p-6 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto">
-            <pre class="text-gray-400 text-[11px] flex-1 leading-loose">{{ curlCommand }}</pre>
-            <button 
-              @click="copyText(curlCommand, 'curl')"
-              class="shrink-0 p-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 transition-all hover:text-white"
-            >
-              <Check v-if="copiedType === 'curl'" class="w-4 h-4 text-cyan-400" />
-              <Copy v-else class="w-4 h-4" />
-            </button>
+      <div class="grid lg:grid-cols-2 gap-8">
+        <!-- Standalone Sandbox -->
+        <section class="glass-card p-8 bg-[#0a0a0a] border-white/5 relative overflow-hidden">
+          <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-8">
+              <div class="p-3 rounded-xl bg-primary/10 text-primary">
+                <Bot class="w-6 h-6" />
+              </div>
+              <div>
+                <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">Local Sandbox Tool</h3>
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Test the full widget experience in a clean environment.</p>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <p class="text-[10px] text-gray-400 leading-relaxed uppercase tracking-widest italic-none italic">
+                  Copy the code below, save it as <span class="text-primary italic-none">index.html</span> on your computer, and open it.
+              </p>
+              <div class="relative group">
+                  <div class="relative flex items-center gap-4 p-6 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto overflow-y-hidden">
+                      <pre class="text-gray-500 text-[9px] flex-1 leading-relaxed">{{ playgroundHtml }}</pre>
+                      <button 
+                        @click="copyText(playgroundHtml, 'playground')"
+                        class="shrink-0 p-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 transition-all hover:text-white"
+                      >
+                        <Check v-if="copiedType === 'playground'" class="w-4 h-4 text-primary" />
+                        <Copy v-else class="w-4 h-4" />
+                      </button>
+                  </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Standalone Sandbox -->
-      <section class="glass-card p-8 bg-[#0a0a0a] border-white/5 relative overflow-hidden">
-        <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="relative z-10">
+        <!-- Domain Protection -->
+        <section class="glass-card p-8 bg-[#0a0a0a] border-white/5 opacity-50">
           <div class="flex items-center gap-4 mb-8">
-            <div class="p-3 rounded-xl bg-primary/10 text-primary">
-              <Bot class="w-6 h-6" />
+            <div class="p-3 rounded-xl bg-white/5 text-gray-500">
+              <Globe class="w-6 h-6" />
             </div>
             <div>
-              <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">Local Sandbox Tool</h3>
-              <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Test the full widget experience in a clean environment.</p>
+              <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">Security Layers</h3>
+              <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Limit interaction to whitelisted domains.</p>
             </div>
           </div>
 
-          <div class="space-y-4">
-             <p class="text-[10px] text-gray-400 leading-relaxed uppercase tracking-widest italic-none italic">
-                Copy the code below, save it as <span class="text-primary italic-none">index.html</span> on your computer, and open it.
-             </p>
-             <div class="relative group">
-                <div class="relative flex items-center gap-4 p-6 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto">
-                    <pre class="text-gray-500 text-[9px] flex-1 leading-relaxed">{{ playgroundHtml }}</pre>
-                    <button 
-                      @click="copyText(playgroundHtml, 'playground')"
-                      class="shrink-0 p-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 transition-all hover:text-white"
-                    >
-                      <Check v-if="copiedType === 'playground'" class="w-4 h-4 text-primary" />
-                      <Copy v-else class="w-4 h-4" />
-                    </button>
-                </div>
-             </div>
+          <div class="flex gap-4">
+              <input 
+                type="text" 
+                placeholder="e.g. dev.yourdomain.com"
+                disabled
+                class="flex-1 bg-white/5 border border-white/10 rounded-xl px-5 py-3 focus:outline-none text-[11px] font-bold tracking-widest uppercase italic-none text-gray-700 placeholder:text-gray-800"
+              />
+              <button class="bg-white/5 text-gray-700 px-8 py-3 rounded-xl font-black text-xs tracking-widest uppercase cursor-not-allowed">active</button>
           </div>
-        </div>
-      </section>
-
-      <!-- Domain Protection -->
-      <section class="glass-card p-8 bg-[#0a0a0a] border-white/5 opacity-50">
-        <div class="flex items-center gap-4 mb-8">
-          <div class="p-3 rounded-xl bg-white/5 text-gray-500">
-            <Globe class="w-6 h-6" />
-          </div>
-          <div>
-            <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">Security Layers</h3>
-            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Limit interaction to whitelisted domains.</p>
-          </div>
-        </div>
-
-        <div class="flex gap-4">
-            <input 
-              type="text" 
-              placeholder="e.g. dev.yourdomain.com"
-              disabled
-              class="flex-1 bg-white/5 border border-white/10 rounded-xl px-5 py-3 focus:outline-none text-[11px] font-bold tracking-widest uppercase italic-none text-gray-700 placeholder:text-gray-800"
-            />
-            <button class="bg-white/5 text-gray-700 px-8 py-3 rounded-xl font-black text-xs tracking-widest uppercase cursor-not-allowed">active</button>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   </div>
 </template>

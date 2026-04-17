@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { 
-  Activity, 
-  TrendingUp, 
-  Zap, 
-  Target, 
+import {
+  Activity,
+  TrendingUp,
+  Zap,
+  Target,
   RefreshCw,
   ArrowUpRight,
   Bot,
@@ -83,26 +83,13 @@ const areaPath = computed(() => {
 </script>
 
 <template>
-  <div class="p-8 max-w-7xl mx-auto space-y-12">
+  <div class="p-4 max-w-8xl mx-auto space-y-12">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
-      <div class="space-y-2">
-        <div class="flex items-center gap-3">
-          <div class="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <span class="text-[10px] font-black tracking-[0.2em] text-primary uppercase">intelligence_hub.v2</span>
-        </div>
-        <h1 class="text-5xl font-black text-white tracking-tighter uppercase italic flex items-center gap-4">
-          Analytics <span class="text-primary italic-none tracking-normal">Flux</span>
-        </h1>
-        <p class="text-gray-500 text-xs font-bold tracking-widest uppercase">Global performance monitoring and AI efficiency metrics</p>
-      </div>
-      
-      <button 
-        @click="fetchAnalytics"
-        :disabled="isLoading"
-        class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl px-6 py-4 flex items-center gap-3 transition-all group active:scale-95"
-      >
-        <RefreshCw :class="['w-4 h-4 text-primary transition-transform duration-700', isLoading ? 'animate-spin' : 'group-hover:rotate-180']" />
+      <button @click="fetchAnalytics" :disabled="isLoading"
+        class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl px-6 py-4 flex items-center gap-3 transition-all group active:scale-95">
+        <RefreshCw
+          :class="['w-4 h-4 text-primary transition-transform duration-700', isLoading ? 'animate-spin' : 'group-hover:rotate-180']" />
         <span class="text-[10px] font-bold text-white uppercase tracking-widest">Refresh Stream</span>
       </button>
     </div>
@@ -115,8 +102,10 @@ const areaPath = computed(() => {
       <!-- Quick Stats Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Stat Card 1 -->
-        <div class="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 space-y-4 hover:border-primary/30 transition-all group overflow-hidden relative">
-          <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors" />
+        <div
+          class="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 space-y-4 hover:border-primary/30 transition-all group overflow-hidden relative">
+          <div
+            class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors" />
           <div class="flex items-center justify-between relative">
             <div class="bg-primary/10 text-primary p-3 rounded-2xl">
               <Activity class="w-5 h-5" />
@@ -133,8 +122,10 @@ const areaPath = computed(() => {
         </div>
 
         <!-- Stat Card 2 -->
-        <div class="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 space-y-4 hover:border-secondary/30 transition-all group overflow-hidden relative">
-          <div class="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-secondary/10 transition-colors" />
+        <div
+          class="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 space-y-4 hover:border-secondary/30 transition-all group overflow-hidden relative">
+          <div
+            class="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-secondary/10 transition-colors" />
           <div class="flex items-center justify-between relative">
             <div class="bg-secondary/10 text-secondary p-3 rounded-2xl">
               <Zap class="w-5 h-5" />
@@ -150,8 +141,10 @@ const areaPath = computed(() => {
         </div>
 
         <!-- Stat Card 3 -->
-        <div class="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 space-y-4 hover:border-primary/30 transition-all group overflow-hidden relative">
-          <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors" />
+        <div
+          class="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 space-y-4 hover:border-primary/30 transition-all group overflow-hidden relative">
+          <div
+            class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors" />
           <div class="flex items-center justify-between relative">
             <div class="bg-primary/10 text-primary p-3 rounded-2xl">
               <Bot class="w-5 h-5" />
@@ -167,8 +160,10 @@ const areaPath = computed(() => {
         </div>
 
         <!-- Stat Card 4 -->
-        <div class="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 space-y-4 hover:border-red-500/30 transition-all group overflow-hidden relative">
-          <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-red-500/10 transition-colors" />
+        <div
+          class="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 space-y-4 hover:border-red-500/30 transition-all group overflow-hidden relative">
+          <div
+            class="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-red-500/10 transition-colors" />
           <div class="flex items-center justify-between relative">
             <div class="bg-red-500/10 text-red-500 p-3 rounded-2xl">
               <AlertCircle class="w-5 h-5" />
@@ -184,17 +179,18 @@ const areaPath = computed(() => {
       <!-- Main Visuals -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Chart Section -->
-        <div class="lg:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 space-y-10 relative overflow-hidden group">
+        <div
+          class="lg:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 space-y-10 relative overflow-hidden group">
           <div class="absolute top-0 right-0 p-8">
             <div class="flex items-center gap-2">
               <div class="w-2 h-2 rounded-full bg-primary" />
-              <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Real-time engagement flux</span>
+              <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Real-Time Engagement Flux</span>
             </div>
           </div>
 
           <div class="space-y-2">
             <h2 class="text-2xl font-black text-white tracking-tighter uppercase italic">Efficiency Horizon</h2>
-            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Automation activity over the last 14 days</p>
+            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Automation Activity Over The Last 14 Days</p>
           </div>
 
           <div class="relative h-64 w-full">
@@ -209,26 +205,20 @@ const areaPath = computed(() => {
               <!-- Area -->
               <path :d="areaPath" fill="url(#areaGrad)" />
               <!-- Line -->
-              <path :d="linePath" fill="none" stroke="var(--color-primary)" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round" />
+              <path :d="linePath" fill="none" stroke="var(--color-primary)" stroke-width="0.5" stroke-linecap="round"
+                stroke-linejoin="round" />
               <!-- Dots -->
-              <circle 
-                v-for="point in chartData" 
-                :key="point.date"
-                :cx="point.x" 
-                :cy="point.y" 
-                r="1" 
-                fill="black"
-                stroke="var(--color-primary)"
-                stroke-width="0.3"
-                class="hover:scale-150 transition-transform cursor-pointer"
-              >
+              <circle v-for="point in chartData" :key="point.date" :cx="point.x" :cy="point.y" r="1" fill="black"
+                stroke="var(--color-primary)" stroke-width="0.3"
+                class="hover:scale-150 transition-transform cursor-pointer">
                 <title>{{ point.date }}: {{ point.count }}</title>
               </circle>
             </svg>
-            
+
             <!-- X-Axis Labels -->
             <div class="absolute bottom-[-24px] left-0 w-full flex justify-between px-1">
-              <span v-for="point in chartData.filter((_, i) => i % 3 === 0)" :key="point.date" class="text-[8px] font-black text-gray-600 uppercase tracking-tighter">
+              <span v-for="point in chartData.filter((_, i) => i % 3 === 0)" :key="point.date"
+                class="text-[8px] font-black text-gray-600 uppercase tracking-tighter">
                 {{ point.date.split('-')[2] }}/{{ point.date.split('-')[1] }}
               </span>
             </div>
@@ -239,26 +229,23 @@ const areaPath = computed(() => {
         <div class="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 space-y-10">
           <div class="space-y-2">
             <h2 class="text-2xl font-black text-white tracking-tighter uppercase italic">Rule Ranking</h2>
-            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Highest performing automation triggers</p>
+            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Highest Performing Automation Triggers</p>
           </div>
 
           <div class="space-y-4">
-            <div 
-              v-for="(trigger, idx) in analytics.topTriggers" 
-              :key="trigger.name"
-              class="flex items-center gap-4 p-5 rounded-3xl bg-white/5 border border-white/5 hover:border-primary/20 transition-all group"
-            >
-              <div class="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-[10px] font-black text-gray-500 group-hover:text-primary transition-colors">
+            <div v-for="(trigger, idx) in analytics.topTriggers" :key="trigger.name"
+              class="flex items-center gap-4 p-5 rounded-3xl bg-white/5 border border-white/5 hover:border-primary/20 transition-all group">
+              <div
+                class="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-[10px] font-black text-gray-500 group-hover:text-primary transition-colors">
                 #{{ idx + 1 }}
               </div>
               <div class="flex-1">
-                <p class="text-[10px] font-black text-white uppercase tracking-tight line-clamp-1">{{ trigger.name }}</p>
+                <p class="text-[10px] font-black text-white uppercase tracking-tight line-clamp-1">{{ trigger.name }}
+                </p>
                 <div class="flex items-center gap-2 mt-1">
                   <div class="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
-                    <div 
-                      class="h-full bg-primary" 
-                      :style="{ width: `${(trigger.count / analytics.topTriggers[0].count) * 100}%` }" 
-                    />
+                    <div class="h-full bg-primary"
+                      :style="{ width: `${(trigger.count / analytics.topTriggers[0].count) * 100}%` }" />
                   </div>
                 </div>
               </div>
@@ -267,7 +254,8 @@ const areaPath = computed(() => {
               </div>
             </div>
 
-            <div v-if="analytics.topTriggers.length === 0" class="text-center py-20 grayscale opacity-20 border-2 border-dashed border-white/5 rounded-[2rem]">
+            <div v-if="analytics.topTriggers.length === 0"
+              class="text-center py-20 grayscale opacity-20 border-2 border-dashed border-white/5 rounded-[2rem]">
               <Target class="w-8 h-8 mx-auto mb-4" />
               <p class="text-[9px] font-black tracking-[0.2em] text-gray-500 uppercase">Awaiting rule impact data...</p>
             </div>
@@ -282,8 +270,11 @@ const areaPath = computed(() => {
         <AlertCircle class="w-10 h-10" />
       </div>
       <h2 class="text-3xl font-black text-white tracking-tighter uppercase italic">Stream Disconnected</h2>
-      <p class="text-gray-500 text-xs font-bold tracking-widest uppercase mt-4">Unable to synchronize with the intelligence engine.</p>
-      <button @click="fetchAnalytics" class="mt-8 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] px-10 py-5 rounded-full hover:scale-110 transition-transform">
+      <p class="text-gray-500 text-xs font-bold tracking-widest uppercase mt-4">Unable to synchronize with the
+        intelligence
+        engine.</p>
+      <button @click="fetchAnalytics"
+        class="mt-8 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] px-10 py-5 rounded-full hover:scale-110 transition-transform">
         Reconnect
       </button>
     </div>
@@ -291,19 +282,40 @@ const areaPath = computed(() => {
 </template>
 
 <style scoped>
-.italic-none { font-style: normal; }
+.italic-none {
+  font-style: normal;
+}
 
 /* Custom Colors for the dashboard */
 :root {
-  --color-primary: #D4AF37; /* Premium Gold */
-  --color-secondary: #C5A059; /* Soft Champagne */
+  --color-primary: #D4AF37;
+  /* Premium Gold */
+  --color-secondary: #C5A059;
+  /* Soft Champagne */
 }
 
 /* Fallback for primary/secondary classes if they arent in tailwind config */
-.text-primary { color: #D4AF37; }
-.bg-primary { background-color: #D4AF37; }
-.border-primary { border-color: #D4AF37; }
-.text-secondary { color: #C5A059; }
-.bg-secondary { background-color: #C5A059; }
-.border-secondary { border-color: #C5A059; }
+.text-primary {
+  color: #D4AF37;
+}
+
+.bg-primary {
+  background-color: #D4AF37;
+}
+
+.border-primary {
+  border-color: #D4AF37;
+}
+
+.text-secondary {
+  color: #C5A059;
+}
+
+.bg-secondary {
+  background-color: #C5A059;
+}
+
+.border-secondary {
+  border-color: #C5A059;
+}
 </style>

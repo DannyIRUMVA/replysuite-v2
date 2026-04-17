@@ -1,0 +1,185 @@
+<script setup lang="ts">
+import {
+  User,
+  Save,
+  Globe,
+  Mail,
+  Phone,
+  Building2,
+  Clock
+} from 'lucide-vue-next'
+
+definePageMeta({
+  middleware: 'auth',
+  layout: 'dashboard'
+})
+
+const { user, profile: authProfile } = useAuth()
+const supabase = useSupabaseClient()
+
+const loading = ref(false)
+const saveSuccess = ref(false)
+const errorMsg = ref('')
+
+const profile = ref({
+  full_name: '',
+  company_name: '',
+  bio: '',
+  website: '',
+  contact_email: '',
+  phone: '',
+  country: '',
+  timezone: '',
+  avatar_url: ''
+})
+
+// Sync local form state with centralized auth profile
+watch(authProfile, (newProfile) => {
+  if (newProfile) {
+    profile.value = { ...profile.value, ...newProfile }
+  }
+}, { immediate: true })
+
+const updateProfile = async () => {
+  try {
+    loading.value = true
+    errorMsg.value = ''
+    saveSuccess.value = false
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        full_name: profile.value.full_name,
+        company_name: profile.value.company_name,
+        bio: profile.value.bio,
+        website: profile.value.website,
+        contact_email: profile.value.contact_email,
+        phone: profile.value.phone,
+        country: profile.value.country,
+        timezone: profile.value.timezone,
+        avatar_url: profile.value.avatar_url
+      })
+      .eq('id', user.value?.id)
+
+    if (error) throw error
+    saveSuccess.value = true
+    setTimeout(() => { saveSuccess.value = false }, 3000)
+  } catch (err: any) {
+    errorMsg.value = err.message
+  } finally {
+    loading.value = false
+  }
+}
+</script>
+
+<template>
+  <div class="max-w-8xl mx-auto">
+    <div class="flex flex-col lg:flex-row gap-12">
+      <!-- Navigation Sidebar -->
+      <SettingsNavigation />
+
+      <!-- Main Section -->
+      <main class="flex-1 glass-card p-10 border-white/5 bg-[#0a0a0a] min-h-[600px] relative overflow-hidden">
+        <div class="absolute -right-20 -top-20 w-80 h-80 bg-primary/5 rounded-full blur-[100px] -z-10"></div>
+
+        <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div class="flex items-center gap-6 mb-12">
+            <div class="w-24 h-24 rounded-3xl bg-primary/10 p-1 group relative cursor-pointer overflow-hidden">
+              <img :src="profile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user?.email"
+                class="w-full h-full rounded-[20px] object-cover" />
+              <div
+                class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                <Save class="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <div>
+              <h3 class="text-xl font-black tracking-wide text-primary leading-tight">Identity</h3>
+              <p class="text-gray-500 text-sm font-medium">Your brand avatar and display information.</p>
+            </div>
+          </div>
+
+          <form @submit.prevent="updateProfile" class="grid md:grid-cols-2 gap-8">
+            <div class="col-span-2 md:col-span-1">
+              <label class="input-label">
+                <Building2 class="w-4 h-4" /> Full Name
+              </label>
+              <input v-model="profile.full_name" type="text" class="setting-input" placeholder="Your Name" />
+            </div>
+            <div class="col-span-2 md:col-span-1">
+              <label class="input-label">
+                <Building2 class="w-4 h-4" /> Company Name
+              </label>
+              <input v-model="profile.company_name" type="text" class="setting-input" placeholder="Brand Name" />
+            </div>
+            <div class="col-span-2">
+              <label class="input-label">Short Bio</label>
+              <textarea v-model="profile.bio" class="setting-input min-h-[100px] py-4 rounded-[24px]"
+                placeholder="Tell us about your brand..."></textarea>
+            </div>
+            <div class="col-span-2 md:col-span-1">
+              <label class="input-label">
+                <Globe class="w-4 h-4" /> Website URL
+              </label>
+              <input v-model="profile.website" type="url" class="setting-input" placeholder="https://..." />
+            </div>
+            <div class="col-span-2 md:col-span-1">
+              <label class="input-label">
+                <Mail class="w-4 h-4" /> Business Email
+              </label>
+              <input v-model="profile.contact_email" type="email" class="setting-input"
+                placeholder="contact@brand.com" />
+            </div>
+            <div class="col-span-2 md:col-span-1">
+              <label class="input-label">
+                <Phone class="w-4 h-4" /> Contact Phone
+              </label>
+              <input v-model="profile.phone" type="tel" class="setting-input" placeholder="+250..." />
+            </div>
+            <div class="col-span-2 md:col-span-1">
+              <label class="input-label">
+                <Clock class="w-4 h-4" /> Timezone
+              </label>
+              <select v-model="profile.timezone" class="setting-input appearance-none">
+                <option value="UTC">UTC (Universal Time Coordinated)</option>
+                <option value="Africa/Kigali">CAT (Central Africa Time)</option>
+                <option value="Europe/London">GMT (Greenwich Mean Time)</option>
+                <option value="America/New_York">EST (Eastern Standard Time)</option>
+              </select>
+            </div>
+
+            <div class="col-span-2 pt-10 flex items-center justify-between border-t border-white/5 mt-4">
+              <div v-if="saveSuccess"
+                class="text-green-400 text-sm font-bold animate-in fade-in zoom-in tracking-widest">
+                Gold Standard Applied!
+              </div>
+              <div v-else-if="errorMsg" class="text-red-400 text-sm font-bold">
+                {{ errorMsg }}
+              </div>
+              <div v-else></div>
+
+              <button type="submit" :disabled="loading"
+                class="btn-gradient px-12 py-4 flex items-center gap-3 group whitespace-nowrap">
+                <Save class="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                {{ loading ? 'Securing...' : 'Save Profile' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.setting-input {
+  @apply w-full bg-background border border-white/5 rounded-full px-8 py-5 focus:outline-none focus:border-primary/50 transition-all text-white placeholder-gray-700 font-medium;
+}
+
+.input-label {
+  @apply flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-gray-600 mb-4 ml-4;
+}
+
+.glass-card {
+  @apply rounded-[48px];
+}
+</style>

@@ -6,23 +6,23 @@ const route = useRoute()
 // Dynamic Header Content
 const pageContext = computed(() => {
   const path = route.path
-  if (path === '/dashboard') return { title: 'executive hub', subtitle: "checking your ai workforce's pulse." }
-  if (path === '/dashboard/settings') return { title: 'elite settings', subtitle: 'refining your identity and operations.' }
-  if (path.includes('/instagram')) return { title: 'social pulse', subtitle: 'managing instagram automation flow.' }
-  if (path.includes('/agents')) return { title: 'agent forge', subtitle: 'crafting intelligent conversation rules.' }
-  if (path.includes('/analytics')) return { title: 'insight engine', subtitle: 'visualizing your data performance.' }
-  return { title: 'dashboard', subtitle: 'welcome back to replysuite.' }
+  if (path === '/dashboard') return { title: 'Executive Hub', subtitle: "Checking your AI workforce's pulse." }
+  if (path === '/dashboard/settings') return { title: 'Elite Settings', subtitle: 'Refining your identity and operations.' }
+  if (path.includes('/instagram')) return { title: 'Social Pulse', subtitle: 'Managing Instagram automation flow.' }
+  if (path.includes('/agents')) return { title: 'Agent Forge', subtitle: 'Crafting intelligent conversation rules.' }
+  if (path.includes('/analytics')) return { title: 'Insight Engine', subtitle: 'Visualizing your data performance.' }
+  return { title: 'Dashboard', subtitle: 'Welcome back to ReplySuite.' }
 })
 
 const isMounted = ref(false)
 onMounted(() => { isMounted.value = true })
 
 const greeting = computed(() => {
-  if (!isMounted.value) return 'welcome back'
+  if (!isMounted.value) return 'Welcome Back'
   const hour = new Date().getHours()
-  if (hour < 12) return 'good morning'
-  if (hour < 17) return 'good afternoon'
-  return 'good evening'
+  if (hour < 12) return 'Good Morning'
+  if (hour < 17) return 'Good Afternoon'
+  return 'Good Evening'
 })
 </script>
 
@@ -34,11 +34,11 @@ const greeting = computed(() => {
         <div class="w-8 h-8 bg-gradient-to-tr from-primary to-primary-accent rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
           <Zap class="text-black w-4 h-4 fill-current" />
         </div>
-        <span class="text-lg font-bold tracking-tight">replysuite</span>
+        <span class="text-lg font-bold tracking-tight">ReplySuite</span>
       </div>
       
       <!-- Upgrade Trigger (Mobile) -->
-      <NuxtLink to="/pricing" class="p-2 rounded-xl bg-primary/10 text-primary">
+      <NuxtLink to="/pricing" class="p-2.5 rounded-xl bg-primary text-black shadow-lg shadow-primary/20 transition-all active:scale-95">
         <TrendingUp class="w-4 h-4" />
       </NuxtLink>
     </div>
@@ -56,9 +56,9 @@ const greeting = computed(() => {
     
     <div class="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 border-white/5 pt-6 md:pt-0">
       <div class="relative hidden sm:block">
-         <NuxtLink to="/pricing" class="relative flex items-center gap-4 py-2.5 px-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-primary/30 transition-all group">
-            <span class="text-[10px] font-bold tracking-widest text-gray-500 group-hover:text-primary transition-colors">upgrade</span>
-            <div class="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover:bg-primary transition-all"></div>
+         <NuxtLink to="/pricing" class="relative flex items-center gap-4 py-2.5 px-6 rounded-2xl bg-primary text-black font-bold border border-primary/20 hover:scale-105 hover:shadow-xl hover:shadow-primary/30 transition-all group whitespace-nowrap shadow-lg shadow-primary/20">
+            <span class="text-[10px] uppercase tracking-widest font-black">Upgrade Plan</span>
+            <TrendingUp class="w-3.5 h-3.5" />
          </NuxtLink>
       </div>
 
@@ -70,8 +70,8 @@ const greeting = computed(() => {
             />
          </div>
          <div class="pr-5 hidden lg:block">
-            <p class="text-[10px] font-bold tracking-widest text-gray-500 leading-none mb-1">logged in as</p>
-            <p class="text-xs font-bold text-white leading-none">{{ (profile?.full_name || user?.email?.split('@')[0] || 'member').toLowerCase() }}</p>
+            <p class="text-[10px] font-bold tracking-widest text-gray-500 leading-none mb-1">Logged In As</p>
+            <p class="text-xs font-bold text-white leading-none">{{ profile?.full_name || user?.email?.split('@')[0] || 'Member' }}</p>
          </div>
       </NuxtLink>
     </div>
