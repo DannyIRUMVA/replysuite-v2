@@ -139,7 +139,26 @@ export const processInstagramComment = async (supabase: any, commentData: any) =
     jobs.push(sendDM(comment_id, replyText, igAccount.access_token))
   }
 
-  // 6. Execute and Log
+  // 6. Save Conversation History for UI/Analytics
+  if (matchingTrigger.chatbot_id && replyText) {
+    try {
+      const { data: session } = await supabase.from('chat_sessions').insert({
+        chatbot_id: matchingTrigger.chatbot_id,
+        metadata: { type: 'instagram', post_id: instagram_post_id, comment_id: comment_id, username: commenterUsername }
+      }).select('id').single()
+      
+      if (session) {
+        await supabase.from('chat_messages').insert([
+          { session_id: session.id, role: 'user', content: text },
+          { session_id: session.id, role: 'assistant', content: replyText }
+        ])
+      }
+    } catch (err) {
+      console.error('❌ [Automation] Failed to save chat history:', err)
+    }
+  }
+
+  // 7. Execute and Log
   const results = await Promise.all(jobs)
   
   for (const res of results) {

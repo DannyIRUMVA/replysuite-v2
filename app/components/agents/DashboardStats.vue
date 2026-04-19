@@ -111,7 +111,7 @@ const isOverTrainingLimit = computed(() => props.totalTrainings >= props.limits.
       </div>
     </div>
 
-    <!-- Training Count Meter -->
+    <!-- Session Quota Meter -->
     <div class="glass-card space-y-6">
       <div class="flex items-center justify-between">
         <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Session Quota ({{ planSlug }})</h4>
@@ -120,19 +120,19 @@ const isOverTrainingLimit = computed(() => props.totalTrainings >= props.limits.
       
       <div class="space-y-4">
         <div class="flex items-end justify-between font-bold italic-none">
-          <p class="text-2xl text-white">{{ totalTrainings }}<span class="text-xs text-gray-600 ml-1">SESS.</span></p>
-          <p class="text-[11px] text-gray-500 uppercase tracking-widest italic-none">LIMIT: {{ limits.maxTrainings }}</p>
+          <p class="text-2xl text-white">{{ monthlyUsage }}<span class="text-xs text-gray-600 ml-1">REPLIES</span></p>
+          <p class="text-[11px] text-gray-500 uppercase tracking-widest italic-none">LIMIT: {{ limits.maxTrainings === -1 ? '∞' : limits.maxTrainings }}</p>
         </div>
         
         <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
           <div 
             class="h-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.3)] transition-all duration-1000"
-            :style="{ width: `${trainingPercent}%` }"
+            :style="{ width: limits.maxTrainings === -1 ? '0%' : `${Math.min(100, (monthlyUsage / limits.maxTrainings) * 100)}%` }"
           ></div>
         </div>
 
         <p class="text-[10px] text-gray-600 leading-relaxed uppercase tracking-widest italic-none">
-          {{ isOverTrainingLimit ? 'Quota exceeded. Upgrade to unlock unlimited trainings.' : 'You have remaining quotas for this agent.' }}
+          {{ (limits.maxTrainings !== -1 && monthlyUsage >= limits.maxTrainings) ? 'Quota exceeded. Upgrade to unlock unlimited replies.' : 'You have remaining reply quotas for this agent.' }}
         </p>
       </div>
     </div>

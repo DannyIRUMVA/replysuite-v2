@@ -13,22 +13,23 @@ export default defineEventHandler(async (event) => {
 
   const supabase = await serverSupabaseClient(event)
   
-  // Get current month
+  // Get current month start
   const now = new Date()
-  const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
+  now.setUTCDate(1)
+  now.setUTCHours(0, 0, 0, 0)
 
-  const { data, error } = await supabase
-    .from('training_usage')
-    .select('training_count')
+  const { count, error } = await supabase
+    .from('instagram_message_jobs')
+    .select('*', { count: 'exact', head: true })
     .eq('chatbot_id', chatbotId)
-    .eq('month_year', currentMonth)
-    .maybeSingle()
+    .neq('status', 'skipped')
+    .gte('created_at', now.toISOString())
 
   if (error) {
     console.error('Error fetching usage:', error)
   }
 
   return {
-    usage: data?.training_count || 0
+    usage: count || 0
   }
 })

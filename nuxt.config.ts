@@ -110,6 +110,12 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    preset: 'cloudflare-pages'
+    preset: 'cloudflare-pages',
+    commonJS: {
+      dynamicRequireTargets: [
+        './node_modules/pdf-parse/lib/pdf.js/**/*.js',
+        './node_modules/pdf-parse/**/*.js'
+      ]
+    }
   }
 })

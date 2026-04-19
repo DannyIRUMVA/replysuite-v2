@@ -51,6 +51,7 @@ serve(async (req) => {
         .from('instagram_message_jobs')
         .select('status')
         .in('instagram_account_id', accountIds)
+        .neq('status', 'skipped')
         .gte('created_at', thirtyDaysAgo.toISOString()),
 
       // Timeline Data (for the chart)
