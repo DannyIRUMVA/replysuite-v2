@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, Zap, Rocket, Shield, ArrowRight, HelpCircle } from 'lucide-vue-next'
+import { Check, Zap, Rocket, Shield, ArrowRight, HelpCircle, Loader2 } from 'lucide-vue-next'
 
 useSeoMeta({
   title: 'Pricing Plans | Simple, Transparent AI Automation',
@@ -10,6 +10,61 @@ useSeoMeta({
 definePageMeta({
   layout: 'default'
 })
+
+const { isAuthenticated, refreshAuth } = useAuth()
+const supabase = useSupabaseClient()
+const isProcessing = ref<string | null>(null)
+
+// Fetch real plans from DB for product IDs
+const { data: dbPlans } = await useAsyncData('plans', async () => {
+  const { data } = await supabase.from('plans').select('*').order('monthly_price', { ascending: true })
+  return data
+})
+
+const getPlanId = (name: string) => {
+  const slug = name.toLowerCase()
+  return dbPlans.value?.find(p => p.internal_slug === slug)?.polar_product_id
+}
+
+const handleSelect = async (plan: any) => {
+  if (!isAuthenticated.value) {
+    return navigateTo('/register')
+  }
+
+  isProcessing.value = plan.name
+  
+  try {
+    if (plan.name === 'Free') {
+      // Direct Onboarding for Free
+      const res = await $fetch('/api/billing/onboard-free', { method: 'POST' })
+      if (res.success) {
+        await refreshAuth()
+        return navigateTo('/dashboard/analytics')
+      }
+    } else {
+      // Checkout flow for Paid
+      const productId = getPlanId(plan.name)
+      if (!productId) {
+        alert('Plan configuration missing. Please contact support.')
+        return
+      }
+
+      const res = await $fetch('/api/billing/checkout', {
+        method: 'POST',
+        body: { productId }
+      })
+
+      if (res.url) {
+        window.location.href = res.url
+      }
+    }
+  } catch (err: any) {
+    console.error('[Pricing] Action failed:', err)
+    alert('Failed to process request. Please try again.')
+  } finally {
+    isProcessing.value = null
+  }
+}
 
 const plans = [
   {
@@ -76,13 +131,20 @@ const faqs = [
               <span class="text-gray-500 font-bold tracking-[0.1em] text-[10px] uppercase">/month</span>
             </div>
 
-            <NuxtLink 
-              to="/register" 
-              class="w-full py-5 rounded-full font-bold text-center mb-12 transition-all tracking-[0.1em] text-sm"
+            <button 
+              @click="handleSelect(plan)"
+              :disabled="isProcessing === plan.name"
+              class="w-full py-5 rounded-full font-bold text-center mb-12 transition-all tracking-[0.1em] text-sm flex items-center justify-center gap-2"
               :class="plan.popular ? 'btn-gradient' : 'bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20'"
             >
-              {{ plan.name === 'Gold' ? 'Get Started' : 'Start Free Month' }}
-            </NuxtLink>
+              <template v-if="isProcessing === plan.name">
+                <Loader2 class="w-4 h-4 animate-spin" />
+                Processing...
+              </template>
+              <template v-else>
+                {{ isAuthenticated ? (plan.name === 'Free' ? 'Activate Free' : 'Select Plan') : (plan.name === 'Gold' ? 'Get Started' : 'Start Free Month') }}
+              </template>
+            </button>
 
             <div class="space-y-6 flex-grow">
               <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-4 text-sm font-medium text-gray-400">

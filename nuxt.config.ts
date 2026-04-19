@@ -6,7 +6,7 @@ export default defineNuxtConfig({
     head: {
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
-      title: 'ReplySuite | Trainable AI for Instagram',
+      title: 'ReplySuite | Trainable AI for reply',
       titleTemplate: '%s | ReplySuite',
       meta: [
         { name: 'theme-color', content: '#EAB308' },
@@ -30,8 +30,25 @@ export default defineNuxtConfig({
   modules: [
     '@nuxtjs/tailwindcss',
     '@nuxtjs/supabase',
-    '@polar-sh/nuxt'
+    '@polar-sh/nuxt',
+    '@nuxt/scripts'
   ],
+  scripts: {
+    registry: {
+      googleTagManager: {
+        id: 'GTM-N5X7KRBD',
+      }
+    }
+  },
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+        'lucide-vue-next'
+      ]
+    }
+  },
   supabase: {
     url: process.env.SUPABASE_URL,
     key: process.env.SUPABASE_KEY,

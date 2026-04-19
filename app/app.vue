@@ -4,7 +4,6 @@ import '~/assets/css/main.css'
 
 <template>
   <div>
-    <NuxtRouteAnnouncer />
     <NuxtLoadingIndicator />
     <NuxtLayout>
       <NuxtPage />
@@ -18,6 +17,7 @@ import '~/assets/css/main.css'
 .page-leave-active {
   transition: all 0.2s;
 }
+
 .page-enter-from,
 .page-leave-to {
   opacity: 0;

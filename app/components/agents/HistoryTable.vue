@@ -105,7 +105,7 @@ const getJobSource = (job: any) => {
               <td class="px-6 py-4">
                 <div class="flex items-center gap-2 text-[10px] text-gray-500 font-bold tracking-widest italic-none">
                   <Clock class="w-3 h-3" />
-                  {{ job.started_at ? new Date(job.started_at).toLocaleDateString() : 'Pending' }}
+                  {{ job.created_at ? new Date(job.created_at).toLocaleDateString() : 'Pending' }}
                 </div>
               </td>
               <td class="px-6 py-4 text-right">

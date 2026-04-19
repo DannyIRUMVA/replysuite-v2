@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // 1b. Create Training Job record
-  const { data: job } = await supabaseAdmin
+  const { data: job, error: jobError } = await supabaseAdmin
     .from('training_jobs')
     .insert({
       chatbot_id: chatbotId,
@@ -56,6 +56,11 @@ export default defineEventHandler(async (event) => {
     })
     .select()
     .single()
+
+  if (jobError) {
+    console.error('[Text Training] Failed to insert job:', jobError)
+    throw createError({ statusCode: 500, statusMessage: 'Internal DB Error: Missing tables or columns' })
+  }
 
   try {
     // 2. Process Embedding

@@ -45,12 +45,13 @@ export async function getUserSubscriptionLimits(event: H3Event, userId?: string 
     })
   }
 
-  // Get active membership and plan
+  // Get active membership and plan (limit to 1 to prevent PGRST116 errors on duplicates)
   const { data: membership, error } = await client
     .from('user_memberships')
     .select('*, plans(*)')
     .eq('user_id', finalUserId)
     .eq('is_active', true)
+    .limit(1)
     .maybeSingle()
 
   if (error) {

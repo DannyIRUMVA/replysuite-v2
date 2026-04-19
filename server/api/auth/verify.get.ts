@@ -1,4 +1,5 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
+import { syncUserToPolar } from '~~/server/utils/polar'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -36,6 +37,16 @@ export default defineEventHandler(async (event) => {
   if (profileError) {
     console.error('[Verify] Profile Update Error:', profileError)
     return sendRedirect(event, '/login?error=Internal processing error')
+  }
+
+  // 3.5 Sync to Polar for monitoring (Background)
+  try {
+    const { data: user } = await client.auth.admin.getUserById(verifyRecord.user_id)
+    if (user?.user) {
+      await syncUserToPolar(user.user.id, user.user.email!)
+    }
+  } catch (err) {
+    console.error('[Verify] Polar Sync Background Error:', err)
   }
 
   // 4. Update Verification record

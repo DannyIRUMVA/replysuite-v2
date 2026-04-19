@@ -22,7 +22,7 @@ export const useAuth = () => {
     
     const [profileRes, membershipRes] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', currentId).single(),
-      supabase.from('user_memberships').select('*, plans(*)').eq('user_id', currentId).eq('is_active', true).maybeSingle()
+      supabase.from('user_memberships').select('*, plans(*)').eq('user_id', currentId).eq('is_active', true).limit(1).maybeSingle()
     ])
     
     return {

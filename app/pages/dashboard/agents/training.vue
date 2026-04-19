@@ -54,15 +54,15 @@ const fetchData = async () => {
   try {
     const [chatbotRes, sourcesRes, jobsRes, usageRes] = await Promise.all([
       supabase.from('chatbots').select('*').eq('id', chatbotId).single(),
-      supabase.from('data_sources').select('*').eq('chatbot_id', chatbotId).order('created_at', { ascending: false }),
-      supabase.from('training_jobs').select('*').eq('chatbot_id', chatbotId).order('started_at', { ascending: false }),
+      supabase.from('data_sources').select('*').eq('chatbot_id', chatbotId),
+      supabase.from('training_jobs').select('*').eq('chatbot_id', chatbotId),
       $fetch(`/api/agents/usage?chatbotId=${chatbotId}`)
     ])
 
     if (chatbotRes.error) throw chatbotRes.error
     chatbot.value = chatbotRes.data
-    sources.value = sourcesRes.data || []
-    trainingJobs.value = jobsRes.data || []
+    sources.value = (sourcesRes.data || []).reverse()
+    trainingJobs.value = (jobsRes.data || []).reverse()
     totalTrainings.value = trainingJobs.value.length
     monthlyUsage.value = (usageRes as any).usage || 0
   } catch (err) {
@@ -276,7 +276,7 @@ const handleTestChat = async () => {
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Left: Training Interface -->
-      <div class="lg:col-span-2 space-y-6">
+      <div class="lg:col-span-2 space-y-6 min-w-0">
         <div class="glass-card !bg-white/[0.01]">
           <!-- Tabs -->
           <div class="flex items-center gap-1 p-1 bg-white/5 rounded-2xl mb-8">

@@ -50,16 +50,21 @@ export default defineEventHandler(async (event) => {
   }
 
   // 1b. Create Training Job record
-  const { data: job } = await supabaseAdmin
+  const { data: job, error: jobError } = await supabaseAdmin
     .from('training_jobs')
     .insert({
       chatbot_id: chatbotId,
       user_id: user.id,
       status: 'processing',
-      meta: { type: 'file', filename: file.filename }
+      meta: { type: 'file', filename: file.filename || file.name }
     })
     .select()
     .single()
+
+  if (jobError) {
+    console.error('[File Training] Failed to insert job:', jobError)
+    throw createError({ statusCode: 500, statusMessage: 'Internal DB Error: Could not initialize PDF extraction' })
+  }
 
   try {
     // 2. Extract Text from PDF

@@ -23,6 +23,7 @@
   "devDependencies": {
     "@nuxtjs/supabase": "^2.0.5",
     "@nuxtjs/tailwindcss": "^6.14.0",
+    "@nuxt/scripts": "^1.0.1",
     "lucide-vue-next": "^1.0.0",
     "wrangler": "^4.81.1"
   }

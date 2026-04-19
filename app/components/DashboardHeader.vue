@@ -38,7 +38,7 @@ const greeting = computed(() => {
       </div>
       
       <!-- Upgrade Trigger (Mobile) -->
-      <NuxtLink to="/pricing" class="p-2.5 rounded-xl bg-primary text-black shadow-lg shadow-primary/20 transition-all active:scale-95">
+      <NuxtLink to="/dashboard/pricing" class="p-2.5 rounded-xl bg-primary text-black shadow-lg shadow-primary/20 transition-all active:scale-95">
         <TrendingUp class="w-4 h-4" />
       </NuxtLink>
     </div>
@@ -56,7 +56,7 @@ const greeting = computed(() => {
     
     <div class="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 border-white/5 pt-6 md:pt-0">
       <div class="relative hidden sm:block">
-         <NuxtLink to="/pricing" class="relative flex items-center gap-4 py-2.5 px-6 rounded-2xl bg-primary text-black font-bold border border-primary/20 hover:scale-105 hover:shadow-xl hover:shadow-primary/30 transition-all group whitespace-nowrap shadow-lg shadow-primary/20">
+         <NuxtLink to="/dashboard/pricing" class="relative flex items-center gap-4 py-2.5 px-6 rounded-2xl bg-primary text-black font-bold border border-primary/20 hover:scale-105 hover:shadow-xl hover:shadow-primary/30 transition-all group whitespace-nowrap shadow-lg shadow-primary/20">
             <span class="text-[10px] uppercase tracking-widest font-black">Upgrade Plan</span>
             <TrendingUp class="w-3.5 h-3.5" />
          </NuxtLink>

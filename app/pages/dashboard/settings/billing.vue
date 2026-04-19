@@ -38,7 +38,6 @@ const pricingPlans = [
   {
     name: 'Starter',
     id: 'starter',
-    productId: '1a1fcaa7-179a-4e91-8f14-2aaf471bc1cb',
     price: '0',
     features: ['1 Active AI Bot', 'Basic Knowledge Base', '50 AI Messages / month', 'Shared Infrastructure'],
     limitDesc: 'Perfect for initial training'
@@ -62,12 +61,27 @@ const pricingPlans = [
   }
 ]
 
-const handleUpgrade = async (productId: string) => {
+const handleUpgrade = async (plan: any) => {
+  if (plan.id === planSlug.value) return
+
+  checkoutLoading.value = plan.id
   try {
-    checkoutLoading.value = productId
+    if (plan.id === 'starter') {
+      const res = await $fetch('/api/billing/onboard-free', { method: 'POST' })
+      if (res.success) {
+        window.location.reload()
+      }
+      return
+    }
+
+    if (!plan.productId) {
+      errorMsg.value = 'Configuration sync error. Please contact support.'
+      return
+    }
+
     const response = await $fetch<{ url: string }>('/api/billing/checkout', {
       method: 'POST',
-      body: { productId }
+      body: { productId: plan.productId }
     })
 
     if (response?.url) {
@@ -75,7 +89,7 @@ const handleUpgrade = async (productId: string) => {
     }
   } catch (err: any) {
     console.error('Checkout error:', err)
-    errorMsg.value = 'Failed to start checkout. Please try again.'
+    errorMsg.value = 'Failed to process request. Please try again.'
   } finally {
     checkoutLoading.value = null
   }
@@ -141,11 +155,11 @@ const handleUpgrade = async (productId: string) => {
                 </li>
               </ul>
 
-              <button @click="handleUpgrade(p.productId)"
-                :disabled="planSlug === p.id || checkoutLoading === p.productId"
+              <button @click="handleUpgrade(p)"
+                :disabled="planSlug === p.id || checkoutLoading === p.id"
                 class="w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all"
                 :class="planSlug === p.id ? 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/10' : 'bg-primary text-black hover:bg-primary-accent shadow-lg shadow-primary/10'">
-                <span v-if="checkoutLoading === p.productId" class="flex items-center justify-center gap-2">
+                <span v-if="checkoutLoading === p.id" class="flex items-center justify-center gap-2">
                   <Loader2 class="w-3 h-3 animate-spin" /> processing
                 </span>
                 <span v-else-if="planSlug === p.id">Current Plan</span>
