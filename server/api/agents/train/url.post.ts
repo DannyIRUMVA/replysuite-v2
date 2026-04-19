@@ -19,6 +19,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Missing chatbotId or url' })
   }
 
+  const userId = (user as any)?.id || (user as any)?.sub
+  if (!userId) throw createError({ statusCode: 401, statusMessage: 'Unauthorized - Missing User ID' })
+
   // 1. Verify ownership via USER client (respects RLS)
   // This ensures the current user actually owns the agent.
   const { data: chatbot, error: chatbotError } = await supabase
@@ -35,19 +38,19 @@ export default defineEventHandler(async (event) => {
   if (!chatbot) {
     console.error('[URL Training Debug] Chatbot not found or RLS denied access:', { 
       queriedId: chatbotId,
-      queriedUserId: user.id
+      queriedUserId: userId
     })
     throw createError({ statusCode: 404, statusMessage: 'Agent not found or access denied' })
   }
 
   // Check training limit
-  const canTrain = await checkTrainingLimit(event, chatbotId, user.id)
+  const canTrain = await checkTrainingLimit(event, chatbotId, userId)
   if (!canTrain) {
     throw createError({ statusCode: 403, statusMessage: 'Monthly training limit reached for this agent.' })
   }
 
   // 1a. Check Capacity limit (Vector Capacity)
-  const limits = await getUserSubscriptionLimits(event, user.id)
+  const limits = await getUserSubscriptionLimits(event, userId)
   const currentSizeMB = Number(chatbot.current_embedding_mb || 0)
   if (currentSizeMB >= limits.max_embedding_mb) {
     throw createError({ 
@@ -61,7 +64,7 @@ export default defineEventHandler(async (event) => {
     .from('training_jobs')
     .insert({
       chatbot_id: chatbotId,
-      user_id: user.id,
+      user_id: userId,
       status: 'processing',
       meta: { type: 'url', url }
     })
