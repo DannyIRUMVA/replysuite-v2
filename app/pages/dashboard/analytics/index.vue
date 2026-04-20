@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-vue-next'
+import Skeleton from '~~/app/components/Skeleton.vue'
 
 definePageMeta({
   middleware: 'auth',
@@ -94,8 +95,40 @@ const areaPath = computed(() => {
       </button>
     </div>
 
-    <div v-if="isLoading && !analytics" class="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <div v-for="i in 4" :key="i" class="h-32 rounded-3xl bg-white/5 animate-pulse border border-white/5" />
+    <div v-if="isLoading && !analytics" class="space-y-12 w-full">
+      <!-- Quick Stats Skeleton -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div v-for="i in 4" :key="i" class="bg-white/5 backdrop-blur-3xl border border-white/10 p-8 rounded-[2.5rem]">
+          <div class="flex items-center justify-between mb-6">
+            <Skeleton width="48px" height="48px" rounded="16px" />
+            <Skeleton width="40px" height="14px" />
+          </div>
+          <Skeleton width="100px" height="12px" class="mb-3" />
+          <Skeleton width="140px" height="32px" />
+        </div>
+      </div>
+      
+      <!-- Layout Body Skeleton -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 min-h-[400px]">
+           <Skeleton width="30%" height="2rem" class="mb-2" />
+           <Skeleton width="50%" height="1rem" class="mb-10" />
+           <Skeleton width="100%" height="16rem" rounded="1rem" />
+        </div>
+        <div class="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 flex flex-col">
+           <Skeleton width="50%" height="2rem" class="mb-2" />
+           <Skeleton width="60%" height="1rem" class="mb-10" />
+           <div class="space-y-6">
+              <div v-for="i in 5" :key="i" class="flex items-center gap-4">
+                 <Skeleton width="2.5rem" height="2.5rem" rounded="1rem" />
+                 <div class="flex-1 space-y-2">
+                    <Skeleton width="50%" height="1rem" />
+                    <Skeleton width="100%" height="0.5rem" />
+                 </div>
+              </div>
+           </div>
+        </div>
+      </div>
     </div>
 
     <template v-else-if="analytics">

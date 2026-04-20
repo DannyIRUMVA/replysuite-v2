@@ -141,20 +141,38 @@ export const processInstagramComment = async (supabase: any, commentData: any) =
 
   // 6. Save Conversation History for UI/Analytics
   if (matchingTrigger.chatbot_id && replyText) {
+    console.log(`\n[Automation Debug] Attempting to save chat reply for chatbot ID: ${matchingTrigger.chatbot_id}`)
     try {
-      const { data: session } = await supabase.from('chat_sessions').insert({
+      console.log(`[Automation Debug] Step 1: Creating chat_sessions record...`)
+      const { data: session, error: sessionErr } = await supabase.from('chat_sessions').insert({
         chatbot_id: matchingTrigger.chatbot_id,
+        user_id: profile.id,
         metadata: { type: 'instagram', post_id: instagram_post_id, comment_id: comment_id, username: commenterUsername }
       }).select('id').single()
       
+      if (sessionErr) {
+        console.error(`[Automation Debug] ❌ Failed to create chat_sessions:`, sessionErr)
+        throw sessionErr
+      }
+      
+      console.log(`[Automation Debug] ✅ Successfully created chat_session with ID: ${session?.id}`)
+
       if (session) {
-        await supabase.from('chat_messages').insert([
+        console.log(`[Automation Debug] Step 2: Saving user comment and bot reply to chat_messages...`)
+        const { error: messagesErr } = await supabase.from('chat_messages').insert([
           { session_id: session.id, role: 'user', content: text },
           { session_id: session.id, role: 'assistant', content: replyText }
         ])
+
+        if (messagesErr) {
+          console.error(`[Automation Debug] ❌ Failed to save chat_messages:`, messagesErr)
+          throw messagesErr
+        }
+        
+        console.log(`[Automation Debug] ✅ Successfully logged messages to database!`)
       }
     } catch (err) {
-      console.error('❌ [Automation] Failed to save chat history:', err)
+      console.error('❌ [Automation] Exception caught during chat history save:', err)
     }
   }
 

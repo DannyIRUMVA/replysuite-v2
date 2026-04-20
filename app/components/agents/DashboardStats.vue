@@ -50,90 +50,118 @@ const isOverTrainingLimit = computed(() => props.totalTrainings >= props.limits.
 </script>
 
 <template>
-  <div class="space-y-6">
-    <!-- Intelligence Meter -->
-    <div class="glass-card bg-white/[0.01] relative overflow-hidden group">
-      <div class="absolute -right-10 -top-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl transition-all group-hover:bg-primary/10"></div>
-      
-      <div class="flex items-center justify-between mb-6 relative z-10">
-        <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Ability Level</h4>
-        <div :class="['px-2 py-0.5 rounded-md bg-white/5 text-[9px] font-bold uppercase tracking-widest', intelligenceColor]">
-          {{ intelligenceLabel }}
+  <div class="glass-card !p-0 overflow-hidden relative">
+    <div class="absolute -right-10 -top-10 w-48 h-48 bg-primary/5 rounded-full blur-3xl"></div>
+    
+    <div class="divide-y divide-white/5">
+      <!-- Intelligence Meter -->
+      <div class="p-6 sm:p-8 space-y-6 relative group">
+        <div class="flex items-center justify-between relative z-10">
+          <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Ability Level</h4>
+          <div :class="['px-2 py-0.5 rounded-md bg-white/5 text-[9px] font-bold uppercase tracking-widest', intelligenceColor]">
+            {{ intelligenceLabel }}
+          </div>
+        </div>
+
+        <div class="flex flex-col 2xl:flex-row items-center 2xl:items-start gap-4 2xl:gap-6 relative z-10">
+           <div class="relative w-24 h-24 flex items-center justify-center shrink-0">
+              <svg class="w-full h-full -rotate-90">
+                <circle cx="48" cy="48" r="40" fill="transparent" stroke="currentColor" stroke-width="8" class="text-white/5" />
+                <circle 
+                  cx="48" cy="48" r="40" 
+                  fill="transparent" 
+                  stroke="currentColor" 
+                  stroke-width="8" 
+                  stroke-dasharray="251.2"
+                  :stroke-dashoffset="251.2 * (1 - intelligenceScore / 100)"
+                  :class="['transition-all duration-1000', intelligenceColor.replace('text-', 'text-')]" 
+                />
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                 <p class="text-xl font-bold text-white">{{ intelligenceScore }}%</p>
+              </div>
+           </div>
+           <div class="text-center 2xl:text-left mt-2 2xl:mt-0">
+              <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 italic-none">Knowledge Intelligence Score (KIS)</p>
+              <p class="text-[9px] text-gray-600 leading-relaxed uppercase tracking-widest italic-none">
+                 Determines completion, reasoning quality and response accuracy.
+              </p>
+           </div>
         </div>
       </div>
 
-      <div class="flex items-center gap-6 relative z-10">
-         <div class="relative w-24 h-24 flex items-center justify-center">
-            <svg class="w-full h-full -rotate-90">
-              <circle cx="48" cy="48" r="40" fill="transparent" stroke="currentColor" stroke-width="8" class="text-white/5" />
-              <circle 
-                cx="48" cy="48" r="40" 
-                fill="transparent" 
-                stroke="currentColor" 
-                stroke-width="8" 
-                stroke-dasharray="251.2"
-                :stroke-dashoffset="251.2 * (1 - intelligenceScore / 100)"
-                :class="['transition-all duration-1000', intelligenceColor.replace('text-', 'text-')]" 
-              />
-            </svg>
-            <div class="absolute inset-0 flex flex-col items-center justify-center">
-               <p class="text-xl font-bold text-white">{{ intelligenceScore }}%</p>
-            </div>
-         </div>
-         <div>
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 italic-none">Knowledge Intelligence Score (KIS)</p>
-            <p class="text-[9px] text-gray-600 leading-relaxed uppercase tracking-widest italic-none">
-               Determines completion, reasoning quality and response accuracy.
-            </p>
-         </div>
-      </div>
-    </div>
-
-    <!-- Usage Meter -->
-    <div class="glass-card space-y-6">
-      <div class="flex items-center justify-between">
-        <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Vector Capacity</h4>
-        <Database class="w-4 h-4 text-gray-700" />
-      </div>
-      
-      <div class="space-y-4">
-        <div class="flex items-end justify-between font-bold italic-none">
-          <p class="text-2xl text-white">{{ chatbot?.current_embedding_mb || 0 }}<span class="text-xs text-gray-600 ml-1">MB</span></p>
-          <p class="text-[11px] text-gray-500 uppercase tracking-widest italic-none">LIMIT: {{ limits.maxEmbeddingMb }} MB</p>
+      <!-- Usage Meter -->
+      <div class="p-6 sm:p-8 space-y-6">
+        <div class="flex items-center justify-between">
+          <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Vector Capacity</h4>
+          <Database class="w-4 h-4 text-gray-700" />
         </div>
         
-        <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-          <div 
-            class="h-full bg-primary shadow-[0_0_12px_rgba(var(--primary),0.3)] transition-all duration-1000"
-            :style="{ width: `${usagePercent}%` }"
-          ></div>
+        <div class="space-y-4">
+          <div class="flex items-end justify-between font-bold italic-none">
+            <p class="text-2xl text-white">{{ chatbot?.current_embedding_mb || 0 }}<span class="text-xs text-gray-600 ml-1">MB</span></p>
+            <p class="text-[11px] text-gray-500 uppercase tracking-widest italic-none">LIMIT: {{ limits.maxEmbeddingMb }} MB</p>
+          </div>
+          
+          <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+            <div 
+              class="h-full bg-primary shadow-[0_0_12px_rgba(var(--primary),0.3)] transition-all duration-1000"
+              :style="{ width: `${usagePercent}%` }"
+            ></div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Session Quota Meter -->
-    <div class="glass-card space-y-6">
-      <div class="flex items-center justify-between">
-        <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Session Quota ({{ planSlug }})</h4>
-        <LucideActivity class="w-4 h-4 text-gray-700" />
-      </div>
-      
-      <div class="space-y-4">
-        <div class="flex items-end justify-between font-bold italic-none">
-          <p class="text-2xl text-white">{{ monthlyUsage }}<span class="text-xs text-gray-600 ml-1">REPLIES</span></p>
-          <p class="text-[11px] text-gray-500 uppercase tracking-widest italic-none">LIMIT: {{ limits.maxTrainings === -1 ? '∞' : limits.maxTrainings }}</p>
+      <!-- Bot Replies Quota Meter -->
+      <div class="p-6 sm:p-8 space-y-6">
+        <div class="flex items-center justify-between">
+          <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Bot Replies ({{ planSlug }})</h4>
+          <LucideActivity class="w-4 h-4 text-gray-700" />
         </div>
         
-        <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-          <div 
-            class="h-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.3)] transition-all duration-1000"
-            :style="{ width: limits.maxTrainings === -1 ? '0%' : `${Math.min(100, (monthlyUsage / limits.maxTrainings) * 100)}%` }"
-          ></div>
-        </div>
+        <div class="space-y-4">
+          <div class="flex items-end justify-between font-bold italic-none">
+            <p class="text-2xl text-white">{{ monthlyUsage }}<span class="text-xs text-gray-600 ml-1">REPLIES</span></p>
+            <p class="text-[11px] text-gray-500 uppercase tracking-widest italic-none">LIMIT: {{ limits.maxReplies === -1 ? '∞' : limits.maxReplies }}</p>
+          </div>
+          
+          <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+            <div 
+              class="h-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.3)] transition-all duration-1000"
+              :style="{ width: limits.maxReplies === -1 ? '0%' : `${Math.min(100, (monthlyUsage / (limits.maxReplies || 1)) * 100)}%` }"
+            ></div>
+          </div>
 
-        <p class="text-[10px] text-gray-600 leading-relaxed uppercase tracking-widest italic-none">
-          {{ (limits.maxTrainings !== -1 && monthlyUsage >= limits.maxTrainings) ? 'Quota exceeded. Upgrade to unlock unlimited replies.' : 'You have remaining reply quotas for this agent.' }}
-        </p>
+          <p class="text-[10px] text-gray-600 leading-relaxed uppercase tracking-widest italic-none">
+            {{ (limits.maxReplies !== -1 && monthlyUsage >= (limits.maxReplies || 0)) ? 'Quota exceeded. Upgrade to unlock unlimited replies.' : 'You have remaining reply quotas for this agent.' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Knowledge Training Meter -->
+      <div class="p-6 sm:p-8 space-y-6">
+        <div class="flex items-center justify-between">
+          <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Training Limit ({{ planSlug }})</h4>
+          <Database class="w-4 h-4 text-gray-700" />
+        </div>
+        
+        <div class="space-y-4">
+          <div class="flex items-end justify-between font-bold italic-none">
+            <p class="text-2xl text-white">{{ totalTrainings }}<span class="text-xs text-gray-600 ml-1">DOCS</span></p>
+            <p class="text-[11px] text-gray-500 uppercase tracking-widest italic-none">LIMIT: {{ limits.maxTrainings === -1 ? '∞' : limits.maxTrainings }}</p>
+          </div>
+          
+          <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+            <div 
+              class="h-full bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.3)] transition-all duration-1000"
+              :style="{ width: limits.maxTrainings === -1 ? '0%' : `${trainingPercent}%` }"
+            ></div>
+          </div>
+
+          <p class="text-[10px] text-gray-600 leading-relaxed uppercase tracking-widest italic-none">
+            {{ isOverTrainingLimit ? 'Quota exceeded. Upgrade to unlock unlimited trainings.' : 'You have remaining document trainings for this agent.' }}
+          </p>
+        </div>
       </div>
     </div>
   </div>
