@@ -33,7 +33,7 @@ const notify = useNotify()
 const isLoading = ref(true)
 const isSaving = ref(false)
 const agent = ref<any>(null)
-const activeTab = ref<'identity' | 'design'>('identity')
+const activeTab = ref<'identity' | 'design' | 'security'>('identity')
 
 // Forms
 const form = ref({
@@ -46,6 +46,7 @@ const form = ref({
   chat_bubble_style: 'rounded',
   widget_position: 'bottom-right',
   welcome_message: 'Hello! How can I help you today?',
+  allowed_domains: [] as string[],
 })
 
 const languageOptions = [
@@ -120,6 +121,7 @@ const fetchData = async () => {
         chat_bubble_style: data.chat_bubble_style || 'rounded',
         widget_position: data.widget_position || 'bottom-right',
         welcome_message: data.welcome_message || 'Hello! How can I help you today?',
+        allowed_domains: data.allowed_domains || [],
       }
     }
   } catch (err) {
@@ -149,6 +151,7 @@ const handleSave = async () => {
         chat_bubble_style: form.value.chat_bubble_style,
         widget_position: form.value.widget_position,
         welcome_message: form.value.welcome_message,
+        allowed_domains: form.value.allowed_domains,
       })
       .eq('id', chatbotId)
 
@@ -226,7 +229,11 @@ const resetDesign = () => {
     <!-- Tab Switcher -->
     <div class="flex gap-2 p-1.5 bg-white/[0.03] border border-white/[0.06] rounded-2xl w-fit">
       <button
-        v-for="tab in [{ id: 'identity', label: 'Core Identity', icon: Bot }, { id: 'design', label: 'Design & Colors', icon: Palette }]"
+        v-for="tab in [
+          { id: 'identity', label: 'Core Identity', icon: Bot }, 
+          { id: 'design', label: 'Design & Colors', icon: Palette },
+          { id: 'security', label: 'Domain Security', icon: Shield }
+        ]"
         :key="tab.id"
         @click="activeTab = tab.id as any"
         :class="[
@@ -637,6 +644,110 @@ const resetDesign = () => {
           </div>
         </div>
       </div>
+    </div>
+    <!-- ─── SECURITY TAB ────────────────────────────────────────── -->
+    <div v-else-if="activeTab === 'security'" class="max-w-3xl space-y-8">
+      <section class="glass-card">
+        <div class="flex items-center gap-4 mb-8">
+          <div class="p-3 rounded-2xl bg-primary/10 border border-primary/20">
+            <Shield class="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white tracking-tight uppercase">Domain Whitelisting</h3>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Prevent unauthorized websites from embedding your widget</p>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4">
+            <div class="flex items-start gap-4">
+              <Info class="w-4 h-4 text-primary shrink-0 mt-1" />
+              <div class="space-y-1">
+                <p class="text-xs font-bold text-white uppercase tracking-tight">Security Protocol</p>
+                <p class="text-[10px] text-gray-500 leading-relaxed uppercase tracking-wider">
+                  If this list is empty, your widget can be embedded on any website. Once you add a domain, all other origins (except localhost) will be blocked.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">Authorized Origins</label>
+            
+            <div class="space-y-3">
+              <div 
+                v-for="(domain, index) in form.allowed_domains" 
+                :key="index"
+                class="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl group"
+              >
+                <Globe class="w-4 h-4 text-gray-500" />
+                <span class="flex-1 text-xs text-white">{{ domain }}</span>
+                <button 
+                  @click="form.allowed_domains.splice(index, 1)"
+                  class="p-2 text-gray-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </button>
+              </div>
+
+              <div class="flex items-center gap-3 mt-4">
+                <input 
+                  type="text"
+                  id="new-domain-input"
+                  class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors text-xs"
+                  placeholder="e.g. example.com"
+                  @keypress.enter.prevent="() => {
+                    const el = document.getElementById('new-domain-input') as HTMLInputElement
+                    if (el && el.value) {
+                      form.allowed_domains.push(el.value.trim().replace(/^https?:\/\//, '').split('/')[0])
+                      el.value = ''
+                    }
+                  }"
+                />
+                <button 
+                  @click="() => {
+                    const el = document.getElementById('new-domain-input') as HTMLInputElement
+                    if (el && el.value) {
+                      form.allowed_domains.push(el.value.trim().replace(/^https?:\/\//, '').split('/')[0])
+                      el.value = ''
+                    }
+                  }"
+                  class="px-5 py-3 bg-white/5 border border-white/10 text-white rounded-xl font-bold text-[10px] tracking-widest uppercase hover:bg-white/10 transition-all"
+                >
+                  Add Domain
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Advanced Options -->
+      <section class="glass-card opacity-50 grayscale pointer-events-none">
+        <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-6 flex items-center gap-2">
+          Advanced Security <span class="bg-primary/20 text-primary px-2 py-0.5 rounded text-[8px]">PRO</span>
+        </h3>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5">
+            <div>
+              <p class="text-xs font-bold text-white">Rate Limiting</p>
+              <p class="text-[9px] text-gray-600 uppercase tracking-widest">Limit requests per session</p>
+            </div>
+            <div class="w-10 h-5 bg-gray-800 rounded-full relative p-1">
+              <div class="w-3 h-3 bg-white/20 rounded-full" />
+            </div>
+          </div>
+          <div class="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5">
+            <div>
+              <p class="text-xs font-bold text-white">Data Anonymization</p>
+              <p class="text-[9px] text-gray-600 uppercase tracking-widest">Strip PII from chat history</p>
+            </div>
+            <div class="w-10 h-5 bg-gray-800 rounded-full relative p-1">
+              <div class="w-3 h-3 bg-white/20 rounded-full" />
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
 
   </div>

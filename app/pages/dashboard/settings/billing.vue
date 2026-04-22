@@ -67,9 +67,11 @@ const handleUpgrade = async (plan: any) => {
 
   checkoutLoading.value = plan.id
   try {
+    // Downgrade to free plan — local only, no Polar involved
     if (plan.id === 'starter') {
       const res = await $fetch('/api/billing/onboard-free', { method: 'POST' })
-      if (res.success) {
+      if ((res as any).success) {
+        notify.success('You are now on the Starter plan.')
         window.location.reload()
       }
       return
@@ -80,17 +82,29 @@ const handleUpgrade = async (plan: any) => {
       return
     }
 
-    const response = await $fetch<{ url: string }>('/api/billing/checkout', {
-      method: 'POST',
-      body: { productId: plan.productId }
-    })
+    // Use the smart upgrade endpoint:
+    // - If user already has a Polar subscription → updates it in-place (no "already subscribed" error)
+    // - If fresh user → returns a checkout URL
+    const response = await $fetch<{ url?: string; upgraded?: boolean; message?: string }>(
+      '/api/billing/upgrade',
+      { method: 'POST', body: { productId: plan.productId } }
+    )
+
+    if (response?.upgraded) {
+      // Subscription was updated directly — no redirect needed
+      notify.success(response.message || 'Plan upgraded successfully!')
+      window.location.reload()
+      return
+    }
 
     if (response?.url) {
+      // New subscription — redirect to Polar checkout
       window.location.href = response.url
     }
   } catch (err: any) {
-    console.error('Checkout error:', err)
-    notify.error('Failed to process request. Please try again.')
+    console.error('Upgrade error:', err)
+    const msg = err?.data?.message || err?.message || 'Failed to process request. Please try again.'
+    notify.error(msg)
   } finally {
     checkoutLoading.value = null
   }

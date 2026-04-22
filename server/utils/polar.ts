@@ -31,7 +31,31 @@ export async function syncUserToPolar(userId: string, email: string, name?: stri
     
     console.log(`[Polar Sync] Syncing user ${safeUserId} (${email})...`)
 
-    // We use external_id as the primary mapping key.
+    // 1. Try to find the customer by externalId first
+    const existingByExternal = await polar.customers.list({ externalId: safeUserId })
+    if (existingByExternal.result?.items?.[0]) {
+      console.log(`[Polar Sync] User ${safeUserId} already mapped in Polar: ${existingByExternal.result.items[0].id}`)
+      return existingByExternal.result.items[0]
+    }
+
+    // 2. Try to find the customer by email (to avoid 409 and link existing)
+    const existingByEmail = await polar.customers.list({ email })
+    if (existingByEmail.result?.items?.[0]) {
+      const customer = existingByEmail.result.items[0]
+      console.log(`[Polar Sync] Found existing customer by email ${email}: ${customer.id}. Linking externalId...`)
+      
+      // Update them with our externalId
+      const updated = await polar.customers.update(customer.id, {
+        externalId: safeUserId,
+        metadata: {
+          ...customer.metadata,
+          supabase_user_id: safeUserId
+        }
+      })
+      return updated
+    }
+
+    // 3. Create fresh if not found
     const customer = await polar.customers.create({
       email,
       externalId: safeUserId,
@@ -42,17 +66,9 @@ export async function syncUserToPolar(userId: string, email: string, name?: stri
       }
     })
 
-    console.log(`[Polar Sync] Successfully synced/created customer: ${customer.id}`)
+    console.log(`[Polar Sync] Successfully created new customer: ${customer.id}`)
     return customer
   } catch (err: any) {
-    // If customer already exists with this external_id, we might get a 409 or similar.
-    // In that case, we can try to find and update, but for "monitoring" purposes, 
-    // the initial creation is usually enough.
-    if (err.status === 409 || (err.message && err.message.includes('exists'))) {
-       console.log(`[Polar Sync] User ${userId} already exists in Polar.`)
-       return null
-    }
-
     console.error('[Polar Sync] Error syncing user to Polar:', err.message)
     return null
   }
