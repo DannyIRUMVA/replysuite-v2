@@ -20,6 +20,7 @@ definePageMeta({
 const { userId, limits, canAdd, isAuthenticated } = useAuth()
 const supabase = useSupabaseClient()
 const router = useRouter()
+const notify = useNotify()
 
 const triggersCount = ref(0)
 const canAddMore = computed(() => canAdd('rules', triggersCount.value))
@@ -58,12 +59,12 @@ onMounted(async () => {
 
 const handleSave = async () => {
   if (!canAddMore.value) {
-    alert(`you have reached your limit of ${limits.value.maxRules} rule(s). please upgrade your plan.`)
+    notify.warn(`you have reached your limit of ${limits.value.maxRules} rule(s). please upgrade your plan.`)
     return
   }
 
   if (!selectedAccountId.value || !keywords.value || !dmTemplate.value) {
-    alert('please fill in all required fields.')
+    notify.warn('please fill in all required fields.')
     return
   }
 
@@ -87,7 +88,7 @@ const handleSave = async () => {
     router.push('/dashboard/instagram')
   } catch (err: any) {
     console.error('error saving trigger:', err)
-    alert('failed to save automation rule. please try again.')
+    notify.error('failed to save automation rule. please try again.')
   } finally {
     isSaving.value = false
   }

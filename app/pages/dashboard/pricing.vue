@@ -13,6 +13,7 @@ useSeoMeta({
 
 const { isAuthenticated, refreshAuth, planSlug } = useAuth()
 const isProcessing = ref<string | null>(null)
+const notify = useNotify()
 
 const handleSelect = async (plan: any) => {
   if (planSlug.value === plan.id) return
@@ -28,7 +29,7 @@ const handleSelect = async (plan: any) => {
       }
     } else {
       if (!plan.productId) {
-        alert('Plan configuration missing. Please contact support.')
+        notify.warn('Plan configuration missing. Please contact support.')
         return
       }
 
@@ -43,7 +44,7 @@ const handleSelect = async (plan: any) => {
     }
   } catch (err: any) {
     console.error('[Dashboard Pricing] Action failed:', err)
-    alert('Failed to process request. Please try again.')
+    notify.error('Failed to process request. Please try again.')
   } finally {
     isProcessing.value = null
   }

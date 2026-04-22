@@ -2,7 +2,7 @@ import { searchKnowledge, getChatCompletion } from './ai'
 
 export const processInstagramComment = async (supabase: any, commentData: any) => {
 
-  const { instagram_post_id, text, comment_id, from } = commentData
+  const { instagram_post_id, text, comment_id, from, recipient_id } = commentData
   const commenterUsername = from?.username
 
   console.log(`\n🚀 [Automation] START: Processing comment from @${commenterUsername}`)
@@ -11,8 +11,14 @@ export const processInstagramComment = async (supabase: any, commentData: any) =
   console.log(`   🔑 Comment ID: ${comment_id}`)
 
   // 1. Get Instagram Account
+  const { data: igAccount } = await supabase
+    .from('instagram_accounts')
+    .select('*')
+    .eq('instagram_id', recipient_id)
+    .single()
+
   if (!igAccount) {
-    console.error(`❌ [Automation] ERROR: IG Account not found for recipient_id: ${commentData.recipient_id}`)
+    console.error(`❌ [Automation] ERROR: IG Account not found for recipient_id: ${recipient_id}`)
     return 
   }
   console.log(`   ✅ Account Found: @${igAccount.username}`)

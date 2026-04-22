@@ -17,8 +17,9 @@ definePageMeta({
 
 const { userId, membership, planSlug, isLoading: isSubLoading } = useAuth()
 const supabase = useSupabaseClient()
+const notify = useNotify()
 
-const errorMsg = ref('')
+// Removed errorMsg ref in favor of notify system
 const checkoutLoading = ref<string | null>(null)
 
 const { data: payments } = useAsyncData('payment-history', async () => {
@@ -75,7 +76,7 @@ const handleUpgrade = async (plan: any) => {
     }
 
     if (!plan.productId) {
-      errorMsg.value = 'Configuration sync error. Please contact support.'
+      notify.error('Configuration sync error. Please contact support.')
       return
     }
 
@@ -89,7 +90,7 @@ const handleUpgrade = async (plan: any) => {
     }
   } catch (err: any) {
     console.error('Checkout error:', err)
-    errorMsg.value = 'Failed to process request. Please try again.'
+    notify.error('Failed to process request. Please try again.')
   } finally {
     checkoutLoading.value = null
   }
@@ -183,7 +184,7 @@ const handleUpgrade = async (plan: any) => {
                 </div>
                 <div>
                   <p class="font-bold text-gray-200">${{ pay.amount }} · {{ pay.status }}</p>
-                  <p class="text-xs text-gray-600">{{ new Date(pay.created_at).toLocaleDateString() }}</p>
+                  <p class="text-xs text-gray-600">{{ pay.created_at ? new Date(pay.created_at).toLocaleDateString() : 'N/A' }}</p>
                 </div>
               </div>
               <button class="text-gray-500 hover:text-white transition-colors">

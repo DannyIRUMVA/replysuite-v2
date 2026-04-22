@@ -22,7 +22,9 @@ export default defineNuxtConfig({
     'render:html'(html: any, { event }: any) {
       // If we are on a widget page, strip the devtools script to prevent SecurityError in iframes
       if (event && event.path && event.path.startsWith('/widget/')) {
-        html.bodyAppend = html.bodyAppend.filter((s: string) => !s.includes('nuxt-devtools'))
+        if (html.bodyAppend) {
+          html.bodyAppend = html.bodyAppend.filter((s: string) => !s.includes('nuxt-devtools'))
+        }
         html.head = html.head.filter((s: string) => !s.includes('nuxt-devtools'))
       }
     }
@@ -38,15 +40,6 @@ export default defineNuxtConfig({
       googleTagManager: {
         id: 'GTM-N5X7KRBD',
       }
-    }
-  },
-  vite: {
-    optimizeDeps: {
-      include: [
-        '@vue/devtools-core',
-        '@vue/devtools-kit',
-        'lucide-vue-next'
-      ]
     }
   },
   supabase: {
@@ -79,9 +72,12 @@ export default defineNuxtConfig({
     smtpFromName: process.env.SMTP_FROM_NAME,
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN,
+    whatsappWebhookUrl: process.env.WHATSAPP_WEBHOOK_URL,
 
     public: {
-      siteUrl: process.env.NUXT_PUBLIC_SITE_URL
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL,
+      metaAppId: process.env.INSTAGRAM_APP_ID
     },
 
     polarAccessToken: process.env.POLAR_ACCESS_TOKEN,
@@ -96,8 +92,7 @@ export default defineNuxtConfig({
     server: {
       allowedHosts: true,
       hmr: {
-        protocol: 'ws',
-        host: 'localhost',
+        protocol: 'wss',
         clientPort: 443
       }
     },
@@ -105,6 +100,7 @@ export default defineNuxtConfig({
       include: [
         '@vue/devtools-core',
         '@vue/devtools-kit',
+        'lucide-vue-next'
       ]
     }
   },

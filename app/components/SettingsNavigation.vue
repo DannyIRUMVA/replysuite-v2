@@ -2,7 +2,7 @@
 import { 
   User, 
   CreditCard, 
-  Shield 
+  Shield
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -10,7 +10,7 @@ const route = useRoute()
 const tabs = [
   { id: 'profile', name: 'Profile', href: '/dashboard/settings', icon: User },
   { id: 'billing', name: 'Billing', href: '/dashboard/settings/billing', icon: CreditCard },
-  { id: 'account', name: 'Account', href: '/dashboard/settings/account', icon: Shield },
+  { id: 'account', name: 'Account', href: '/dashboard/settings/account', icon: Shield }
 ]
 
 const isActive = (href: string) => {

@@ -34,7 +34,7 @@ export async function syncUserToPolar(userId: string, email: string, name?: stri
     // We use external_id as the primary mapping key.
     const customer = await polar.customers.create({
       email,
-      external_id: safeUserId,
+      externalId: safeUserId,
       name: name || email.split('@')[0],
       metadata: {
         supabase_user_id: safeUserId,

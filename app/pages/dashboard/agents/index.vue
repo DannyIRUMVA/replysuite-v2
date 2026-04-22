@@ -26,6 +26,7 @@ definePageMeta({
 
 const { userId, limits, isVerified, isLoading: authLoading } = useAuth()
 const supabase = useSupabaseClient()
+const notify = useNotify()
 
 // State
 const isCreating = ref(false)
@@ -64,7 +65,7 @@ const isLoading = computed(() => authLoading.value || dataLoading.value)
 const handleCreate = async () => {
   if (!userId.value || !newAgent.value.name) return
   if (!canCreateAgent.value) {
-    alert(`You've reached the limit of ${limits.value.maxAgents} agents for your current plan.`)
+    notify.warn(`You've reached the limit of ${limits.value.maxAgents} agents for your current plan.`)
     return
   }
   
@@ -88,14 +89,14 @@ const handleCreate = async () => {
     }
   } catch (err) {
     console.error('Error creating agent:', err)
-    alert('Failed to create agent')
+    notify.error('Failed to create agent')
   } finally {
     isCreating.value = false
   }
 }
 
 const handleDelete = async (id: string) => {
-  if (!confirm('Are you sure you want to delete this agent?')) return
+  if (!(await notify.confirm('Are you sure you want to delete this agent?'))) return
   
   const { error } = await supabase
     .from('chatbots')

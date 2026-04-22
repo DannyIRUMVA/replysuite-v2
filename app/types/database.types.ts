@@ -80,24 +80,31 @@ export type Database = {
       }
       chatbots: {
         Row: {
+          created_at: string | null
           current_embedding_mb: number | null
+          deleted_at: string | null
           id: string
+          is_public: boolean | null
           name: string
           system_prompt: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
+          current_embedding_mb?: number | null
           deleted_at?: string | null
           id?: string
+          is_public?: boolean | null
           name: string
           system_prompt?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
+          current_embedding_mb?: number | null
           deleted_at?: string | null
           id?: string
+          is_public?: boolean | null
           name?: string
           system_prompt?: string | null
           user_id?: string | null
@@ -153,16 +160,23 @@ export type Database = {
         }
         Insert: {
           chatbot_id?: string | null
+          content_text?: string | null
           created_at?: string | null
+          data_size_bytes?: number | null
           id?: string
           metadata?: Json | null
+          status?: string | null
           type?: string | null
           user_id?: string | null
         }
         Update: {
           chatbot_id?: string | null
-          created_at?: string | null\n          id?: string
+          content_text?: string | null
+          created_at?: string | null
+          data_size_bytes?: number | null
+          id?: string
           metadata?: Json | null
+          status?: string | null
           type?: string | null
           user_id?: string | null
         }
@@ -272,6 +286,8 @@ export type Database = {
           instagram_post_id: string | null
           is_active: boolean | null
           keywords: string[] | null
+          reply_in_comment: boolean | null
+          reply_in_dm: boolean | null
           trigger_type: string | null
         }
         Insert: {
@@ -282,6 +298,8 @@ export type Database = {
           instagram_post_id?: string | null
           is_active?: boolean | null
           keywords?: string[] | null
+          reply_in_comment?: boolean | null
+          reply_in_dm?: boolean | null
           trigger_type?: string | null
         }
         Update: {
@@ -292,6 +310,8 @@ export type Database = {
           instagram_post_id?: string | null
           is_active?: boolean | null
           keywords?: string[] | null
+          reply_in_comment?: boolean | null
+          reply_in_dm?: boolean | null
           trigger_type?: string | null
         }
         Relationships: [
@@ -394,7 +414,8 @@ export type Database = {
           id?: string
           instagram_account_id?: string | null
           instagram_post_id?: string | null
-          payload?: Json | null\n          recipient_asid?: string | null
+          payload?: Json | null
+          recipient_asid?: string | null
           status?: string | null
           trigger_id?: string | null
         }
@@ -438,7 +459,8 @@ export type Database = {
         }
         Insert: {
           caption?: string | null
-          created_at?: string | null\n          id: string
+          created_at?: string | null
+          id: string
           instagram_account_id?: string | null
           media_type?: string | null
           media_url?: string | null
@@ -553,7 +575,8 @@ export type Database = {
           provider: string | null
           reference: string | null
           status: string | null
-          user_id: string | null\n        }
+          user_id: string | null
+        }
         Insert: {
           amount?: number | null
           created_at?: string | null
@@ -568,7 +591,8 @@ export type Database = {
         Update: {
           amount?: number | null
           created_at?: string | null
-          currency?: string | null\n          id?: string
+          currency?: string | null
+          id?: string
           plan_id?: string | null
           provider?: string | null
           reference?: string | null
@@ -599,11 +623,21 @@ export type Database = {
           created_at: string | null
           description: string | null
           display_name: string | null
+          has_auto_comment: boolean | null
+          has_script_embed: boolean | null
           id: string
           instagram_access: boolean | null
-          max_auto_dms: number | null\n          max_auto_dms_per_month: number | null
+          internal_slug: string | null
+          max_auto_dms: number | null
+          max_auto_dms_per_month: number | null
           max_chatbots: number | null
-          max_sources: number | null\n          max_tokens: number | null\n          max_triggers: number | null
+          max_embedding_mb: number | null
+          max_instagram_accounts: number | null
+          max_replies_per_month: number | null
+          max_sources: number | null
+          max_tokens: number | null
+          max_training_units: number | null
+          max_triggers: number | null
           monthly_price_usd: number | null
           name: string
           polar_payment_processor: string | null
@@ -614,17 +648,26 @@ export type Database = {
           remove_branding: boolean | null
           yearly_price_usd: number | null
         }
-        Insert: {\n          advanced_training?: boolean | null
+        Insert: {
+          advanced_training?: boolean | null
           api_access?: boolean | null
-          created_at?: string | null\n          description?: string | null
+          created_at?: string | null
+          description?: string | null
           display_name?: string | null
+          has_auto_comment?: boolean | null
+          has_script_embed?: boolean | null
           id?: string
           instagram_access?: boolean | null
+          internal_slug?: string | null
           max_auto_dms?: number | null
           max_auto_dms_per_month?: number | null
           max_chatbots?: number | null
+          max_embedding_mb?: number | null
+          max_instagram_accounts?: number | null
+          max_replies_per_month?: number | null
           max_sources?: number | null
           max_tokens?: number | null
+          max_training_units?: number | null
           max_triggers?: number | null
           monthly_price_usd?: number | null
           name: string
@@ -636,16 +679,26 @@ export type Database = {
           remove_branding?: boolean | null
           yearly_price_usd?: number | null
         }
-        Update: {\n          advanced_training?: boolean | null
+        Update: {
+          advanced_training?: boolean | null
           api_access?: boolean | null
           created_at?: string | null
-          description?: string | null\n          display_name?: string | null
+          description?: string | null
+          display_name?: string | null
+          has_auto_comment?: boolean | null
+          has_script_embed?: boolean | null
           id?: string
-          instagram_access?: boolean | null\n          max_auto_dms?: number | null
+          instagram_access?: boolean | null
+          internal_slug?: string | null
+          max_auto_dms?: number | null
           max_auto_dms_per_month?: number | null
           max_chatbots?: number | null
+          max_embedding_mb?: number | null
+          max_instagram_accounts?: number | null
+          max_replies_per_month?: number | null
           max_sources?: number | null
           max_tokens?: number | null
+          max_training_units?: number | null
           max_triggers?: number | null
           monthly_price_usd?: number | null
           name?: string
@@ -663,15 +716,20 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
-          company_name: string | null\n          contact_email: string | null
-          country: string | null\n          created_at: string | null
-          full_name: string | null\n          id: string
+          company_name: string | null
+          contact_email: string | null
+          country: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
           is_active: boolean | null
-          is_verified: boolean | null\n          phone: string | null
+          is_verified: boolean | null
+          phone: string | null
           timezone: string | null
           website: string | null
         }
-        Insert: {\n          avatar_url?: string | null
+        Insert: {
+          avatar_url?: string | null
           bio?: string | null
           company_name?: string | null
           contact_email?: string | null
@@ -685,13 +743,15 @@ export type Database = {
           timezone?: string | null
           website?: string | null
         }
-        Update: {\n          avatar_url?: string | null
+        Update: {
+          avatar_url?: string | null
           bio?: string | null
           company_name?: string | null
           contact_email?: string | null
           country?: string | null
           created_at?: string | null
-          full_name?: string | null\n          id?: string
+          full_name?: string | null
+          id?: string
           is_active?: boolean | null
           is_verified?: boolean | null
           phone?: string | null
@@ -710,11 +770,13 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          id?: string\n          level: string
+          id?: string
+          level: string
           message: string
           meta?: Json | null
         }
-        Update: {\n          created_at?: string
+        Update: {
+          created_at?: string
           id?: string
           level?: string
           message?: string
@@ -726,7 +788,8 @@ export type Database = {
         Row: {
           chatbot_id: string
           finished_at: string | null
-          id: string\n          meta: Json | null
+          id: string
+          meta: Json | null
           started_at: string | null
           status: string
           user_id: string
@@ -743,12 +806,14 @@ export type Database = {
         Update: {
           chatbot_id?: string
           finished_at?: string | null
-          id?: string\n          meta?: Json | null
+          id?: string
+          meta?: Json | null
           started_at?: string | null
           status?: string
           user_id?: string
         }
-        Relationships: [\n          {
+        Relationships: [
+          {
             foreignKeyName: "training_jobs_chatbot_id_fkey"
             columns: ["chatbot_id"]
             isOneToOne: false
@@ -764,7 +829,7 @@ export type Database = {
           id: string
           month_year: string
           training_count: number | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           chatbot_id?: string | null
@@ -772,7 +837,7 @@ export type Database = {
           id?: string
           month_year: string
           training_count?: number | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           chatbot_id?: string | null
@@ -780,7 +845,7 @@ export type Database = {
           id?: string
           month_year?: string
           training_count?: number | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -790,10 +855,18 @@ export type Database = {
             referencedRelation: "chatbots"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "training_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_activity: {
-        Row: {\n          created_at: string
+        Row: {
+          created_at: string
           id: string
           meta: Json | null
           source: string | null
@@ -804,7 +877,8 @@ export type Database = {
           created_at?: string
           id?: string
           meta?: Json | null
-          source?: string | null\n          type: string
+          source?: string | null
+          type: string
           user_id?: string | null
         }
         Update: {
@@ -825,7 +899,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           plan_id: string | null
-          starts_at: string | null\n          user_id: string | null
+          starts_at: string | null
+          user_id: string | null
         }
         Insert: {
           amount?: number | null
@@ -841,7 +916,8 @@ export type Database = {
           amount?: number | null
           created_at?: string | null
           ends_at?: string | null
-          id?: string\n          is_active?: boolean | null
+          id?: string
+          is_active?: boolean | null
           plan_id?: string | null
           starts_at?: string | null
           user_id?: string | null
@@ -905,27 +981,33 @@ export type Database = {
       user_verifications: {
         Row: {
           created_at: string | null
+          expires_at: string | null
           id: string
           metadata: Json | null
           status: string | null
+          token: string | null
           user_id: string | null
           verification_type: string | null
           verified_at: string | null
         }
         Insert: {
           created_at?: string | null
+          expires_at?: string | null
           id?: string
           metadata?: Json | null
           status?: string | null
+          token?: string | null
           user_id?: string | null
           verification_type?: string | null
           verified_at?: string | null
         }
         Update: {
           created_at?: string | null
+          expires_at?: string | null
           id?: string
           metadata?: Json | null
           status?: string | null
+          token?: string | null
           user_id?: string | null
           verification_type?: string | null
           verified_at?: string | null
@@ -972,19 +1054,136 @@ export type Database = {
           },
         ]
       }
+      whatsapp_accounts: {
+        Row: {
+          access_token: string
+          chatbot_id: string | null
+          created_at: string | null
+          id: string
+          phone_number: string
+          phone_number_id: string
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+          waba_id: string | null
+        }
+        Insert: {
+          access_token: string
+          chatbot_id?: string | null
+          created_at?: string | null
+          id?: string
+          phone_number: string
+          phone_number_id: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          waba_id?: string | null
+        }
+        Update: {
+          access_token?: string
+          chatbot_id?: string | null
+          created_at?: string | null
+          id?: string
+          phone_number?: string
+          phone_number_id?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          waba_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_accounts_chatbot_id_fkey"
+            columns: ["chatbot_id"]
+            isOneToOne: false
+            referencedRelation: "chatbots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_message_jobs: {
+        Row: {
+          chatbot_id: string | null
+          created_at: string | null
+          from_number: string
+          id: string
+          payload: Json | null
+          status: string | null
+          whatsapp_account_id: string | null
+        }
+        Insert: {
+          chatbot_id?: string | null
+          created_at?: string | null
+          from_number: string
+          id?: string
+          payload?: Json | null
+          status?: string | null
+          whatsapp_account_id?: string | null
+        }
+        Update: {
+          chatbot_id?: string | null
+          created_at?: string | null
+          from_number?: string
+          id?: string
+          payload?: Json | null
+          status?: string | null
+          whatsapp_account_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_message_jobs_chatbot_id_fkey"
+            columns: ["chatbot_id"]
+            isOneToOne: false
+            referencedRelation: "chatbots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_message_jobs_whatsapp_account_id_fkey"
+            columns: ["whatsapp_account_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      match_embeddings: {
-        Args: { p_chatbot_id: string; p_limit?: number; p_query_vec: string }
+      get_daily_analytics: {
+        Args: { acc_ids: string[]; days_count: number }
         Returns: {
-          content: string
-          id: string
-          score: number
+          count: number
+          date: string
         }[]
       }
+      match_embeddings:
+        | {
+            Args: {
+              p_chatbot_id: string
+              p_limit?: number
+              p_query_vec: string
+            }
+            Returns: {
+              content: string
+              id: string
+              score: number
+            }[]
+          }
+        | {
+            Args: {
+              match_count: number
+              match_threshold: number
+              p_chatbot_id: string
+              query_embedding: string
+            }
+            Returns: {
+              content: string
+              id: string
+              similarity: number
+            }[]
+          }
       match_embeddings_meta: {
         Args: { p_chatbot_id: string; p_limit?: number; p_query_vec: string }
         Returns: {
@@ -1096,7 +1295,7 @@ export type Enums<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
+> = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]

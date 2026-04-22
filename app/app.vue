@@ -8,6 +8,10 @@ import '~/assets/css/main.css'
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+
+    <!-- Global UI Providers -->
+    <ToastProvider />
+    <ConfirmModal />
   </div>
 </template>
 

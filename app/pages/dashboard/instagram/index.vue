@@ -24,13 +24,12 @@ definePageMeta({
 
 const { userId, limits, planSlug, canAdd, isLoading: authLoading } = useAuth()
 const supabase = useSupabaseClient()
+const notify = useNotify()
 const user = useSupabaseUser() // Keep user for email display if needed, but use userId for queries
 
 const accounts = ref<any[]>([])
 const triggers = ref<any[]>([])
 const isConnectLoading = ref(false)
-const errorMessage = ref('')
-const successMessage = ref('')
 
 // Subscription & Limits are now provided by useAuth
 const canConnectMore = computed(() => canAdd('accounts', accounts.value.length))
@@ -93,12 +92,12 @@ onMounted(() => {
   // 2. Check for success/error query params from OAuth
   const route = useRoute()
   if (route.query.success) {
-    successMessage.value = 'successfully connected instagram account'
+    notify.success('successfully connected instagram account')
     refreshData()
     useRouter().replace({ query: {} })
   }
   if (route.query.error) {
-    errorMessage.value = decodeURIComponent(route.query.error as string)
+    notify.error(decodeURIComponent(route.query.error as string))
     useRouter().replace({ query: {} })
   }
 })
@@ -108,7 +107,7 @@ const handleConnect = async () => {
   errorMessage.value = ''
 
   if (!canConnectMore.value) {
-    errorMessage.value = `you have reached your limit of ${limits.value.maxAccounts} account(s). please upgrade your plan to connect more.`
+    notify.warn(`you have reached your limit of ${limits.value.maxAccounts} account(s). please upgrade your plan to connect more.`)
     return
   }
   
@@ -123,7 +122,7 @@ const handleConnect = async () => {
 
   if (!userId) {
     console.warn('[DEBUG] No user ID found in handleConnect after fallback')
-    errorMessage.value = 'your session is still loading. please wait a second and try again.'
+    notify.warn('your session is still loading. please wait a second and try again.')
     return
   }
   
@@ -136,13 +135,13 @@ const handleConnect = async () => {
     replace: true 
   }).catch(err => {
     console.error('[DEBUG] Navigation failed:', err)
-    errorMessage.value = 'failed to initiate connection. please refresh and try again.'
+    notify.error('failed to initiate connection. please refresh and try again.')
     isConnectLoading.value = false
   })
 }
 
 const handleDeleteAccount = async (id: string) => {
-  if (!confirm('are you sure you want to disconnect this account? all active automations will stop.')) return
+  if (!(await notify.confirm('are you sure you want to disconnect this account? all active automations will stop.'))) return
   
   const { error } = await supabase
     .from('instagram_accounts')
@@ -152,6 +151,7 @@ const handleDeleteAccount = async (id: string) => {
   if (!error) {
     accounts.value = accounts.value.filter(a => a.id !== id)
     triggers.value = triggers.value.filter(t => t.instagram_account_id !== id)
+    notify.success('Account successfully disconnected.')
   }
 }
 
@@ -167,7 +167,7 @@ const toggleTrigger = async (trigger: any) => {
 }
 
 const deleteTrigger = async (id: string) => {
-  if (!confirm('delete this automation rule?')) return
+  if (!(await notify.confirm('delete this automation rule?'))) return
   const { error } = await supabase
     .from('instagram_comment_triggers')
     .delete()
@@ -182,17 +182,7 @@ const deleteTrigger = async (id: string) => {
 <template>
   <div class="space-y-12 pb-24 lg:pb-0">
     <!-- Feedback Messages -->
-    <div v-if="errorMessage" class="glass-card border-red-500/20 bg-red-500/5 p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-      <AlertCircle class="w-5 h-5 text-red-500 shrink-0" />
-      <p class="text-sm text-red-200 uppercase tracking-widest font-bold">{{ errorMessage }}</p>
-      <button @click="errorMessage = ''" class="ml-auto text-red-500/50 hover:text-red-500">×</button>
-    </div>
-
-    <div v-if="successMessage" class="glass-card border-primary/20 bg-primary/5 p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-      <Zap class="w-5 h-5 text-primary shrink-0" />
-      <p class="text-sm text-primary uppercase tracking-widest font-bold font-style-normal">{{ successMessage }}</p>
-      <button @click="successMessage = ''" class="ml-auto text-primary/50 hover:text-primary">×</button>
-    </div>
+    <div v-if="false"> <!-- legacy banners removed --> </div>
 
     <!-- Header/CTA -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">

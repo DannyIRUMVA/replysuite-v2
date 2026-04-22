@@ -22,6 +22,7 @@ const chatbotId = route.params.id as string
 const { userId } = useAuth()
 const supabase = useSupabaseClient()
 const router = useRouter()
+const notify = useNotify()
 
 // State
 const isLoading = ref(true)
@@ -85,16 +86,17 @@ const handleSave = async () => {
     if (error) throw error
     // Refresh local state
     agent.value = { ...agent.value, ...form.value }
+    notify.success('Agent settings successfully updated.')
   } catch (err) {
     console.error('Error saving settings:', err)
-    alert('Failed to save changes')
+    notify.error('Failed to save changes')
   } finally {
     isSaving.value = false
   }
 }
 
 const handleDelete = async () => {
-  if (!confirm('Are you sure you want to delete this agent? This action cannot be undone.')) return
+  if (!(await notify.confirm('Are you sure you want to delete this agent? This action cannot be undone.'))) return
   
   try {
     const { error } = await supabase
@@ -103,10 +105,11 @@ const handleDelete = async () => {
       .eq('id', chatbotId)
 
     if (error) throw error
+    notify.success('Agent decommissioned successfully.')
     router.push('/dashboard/agents')
   } catch (err) {
     console.error('Error deleting agent:', err)
-    alert('Failed to delete agent')
+    notify.error('Failed to delete agent')
   }
 }
 </script>

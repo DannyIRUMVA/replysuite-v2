@@ -13,6 +13,7 @@ definePageMeta({
 
 const { isAuthenticated, refreshAuth } = useAuth()
 const supabase = useSupabaseClient()
+const notify = useNotify()
 const isProcessing = ref<string | null>(null)
 
 // Fetch real plans from DB for product IDs
@@ -45,7 +46,7 @@ const handleSelect = async (plan: any) => {
       // Checkout flow for Paid
       const productId = getPlanId(plan.name)
       if (!productId) {
-        alert('Plan configuration missing. Please contact support.')
+        notify.error('Plan configuration missing. Please contact support.')
         return
       }
 
@@ -60,7 +61,7 @@ const handleSelect = async (plan: any) => {
     }
   } catch (err: any) {
     console.error('[Pricing] Action failed:', err)
-    alert('Failed to process request. Please try again.')
+    notify.error('Failed to process request. Please try again.')
   } finally {
     isProcessing.value = null
   }

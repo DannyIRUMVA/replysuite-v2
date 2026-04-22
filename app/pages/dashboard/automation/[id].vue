@@ -25,6 +25,7 @@ definePageMeta({
 
 const route = useRoute()
 const supabase = useSupabaseClient()
+const notify = useNotify()
 const triggerId = route.params.id as string
 
 // State
@@ -48,6 +49,7 @@ const fetchTriggerDetails = async () => {
 
   if (error) {
     console.error('Error fetching trigger:', error)
+    notify.error('Failed to sync automation intelligence.')
     return
   }
   trigger.value = data
@@ -65,6 +67,7 @@ const fetchActivityLogs = async () => {
 
   if (error) {
     console.error('Error fetching logs:', error)
+    notify.error('Intelligence logs unavailable at this moment.')
     return
   }
   

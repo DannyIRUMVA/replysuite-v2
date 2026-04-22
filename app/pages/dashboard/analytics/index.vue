@@ -19,6 +19,7 @@ definePageMeta({
 })
 
 const supabase = useSupabaseClient()
+const notify = useNotify()
 const analytics = ref<any>(null)
 const isLoading = ref(true)
 
@@ -28,6 +29,7 @@ const fetchAnalytics = async () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       console.error('No active session found')
+      notify.error('Intelligence session lost. Please re-authenticate.')
       return
     }
 
@@ -41,12 +43,14 @@ const fetchAnalytics = async () => {
       if (error.context && typeof error.context.json === 'function') {
         const errBody = await error.context.json()
         console.error('Edge Function Error Body:', errBody)
+        notify.error(`Intelligence Engine: ${errBody.message || 'Processing failure'}`)
       }
       throw error
     }
     analytics.value = data
   } catch (err: any) {
     console.error('Failed to fetch analytics:', err)
+    notify.error('Unable to synchronize with the intelligence engine.')
   } finally {
     isLoading.value = false
   }

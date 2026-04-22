@@ -88,22 +88,39 @@ export const useAuth = () => {
   })
 
   // 5. Self-Healing: Sync DB flag if markers are present
-  const isSyncing = ref(false)
+  // Use useState to persist these flags across various composable calls in the same session
+  const hasSyncedVerification = useState('auth-synced', () => false)
+  const isSyncing = useState('auth-syncing', () => false)
+  const isInteracting = useState('auth-interacting', () => false)
+  
   watch([user, profile], async ([u, p]) => {
-    if (process.server || isSyncing.value) return
+    // Prevent server-side execution, redundant syncs, or syncs during active loading/typing
+    if (process.server || isSyncing.value || hasSyncedVerification.value || isAuthDataLoading.value || isInteracting.value) return
     
+    // Only attempt sync if we have a user and profile, profile says not verified, but markers say verified
     if (u && p && !p.is_verified && isVerified.value) {
       try {
         isSyncing.value = true
         console.log('[DEBUG] Self-healing verification for:', u.email)
-        await supabase.from('profiles').update({ is_verified: true }).eq('id', userId.value)
-        // Refresh local state immediately to break the watch loop
-        await refreshAuth()
+        
+        const { error } = await supabase.from('profiles').update({ is_verified: true }).eq('id', userId.value)
+        
+        if (!error) {
+          hasSyncedVerification.value = true
+          // silent refresh - we don't want to trigger global loading for a background flag sync
+          await refreshAuth()
+        }
+      } catch (err) {
+        console.error('[AUTH] Background Sync Error:', err)
       } finally {
         isSyncing.value = false
       }
     }
   }, { immediate: true })
+
+  const setInteracting = (state: boolean) => {
+    isInteracting.value = state
+  }
 
 
   /**
@@ -127,6 +144,7 @@ export const useAuth = () => {
     isAuthenticated,
     isVerified,
     canAdd,
-    refreshAuth
+    refreshAuth,
+    setInteracting
   }
 }

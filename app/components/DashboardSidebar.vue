@@ -12,7 +12,8 @@ import {
   Code2,
   Megaphone,
   Lock,
-  X
+  X,
+  MessageCircle
 } from 'lucide-vue-next'
 
 // Map strings to components to avoid serialization of functions
@@ -25,7 +26,8 @@ const iconMap: Record<string, any> = {
   Database,
   Code2,
   Settings,
-  Lock
+  Lock,
+  MessageCircle
 }
 
 const { user, profile, membership, isVerified } = useAuth()
@@ -53,8 +55,9 @@ const sections = [
   {
     title: 'Channels',
     links: [
-      { name: 'Integration', href: '/dashboard/agents/integration', icon: 'Code2' },
+      { name: 'Website', href: '/dashboard/integrations/website', icon: 'Code2' },
       { name: 'Instagram', href: '/dashboard/instagram', icon: 'Instagram', locked: true },
+      { name: 'WhatsApp', href: '/dashboard/integrations/whatsapp', icon: 'MessageCircle' },
       { name: 'Automations', href: '/dashboard/automation', icon: 'Megaphone', locked: true },
     ]
   },

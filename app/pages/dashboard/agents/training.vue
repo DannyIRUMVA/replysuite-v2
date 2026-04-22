@@ -27,6 +27,7 @@ const route = useRoute()
 const chatbotId = route.query.id as string
 const { userId, limits, planSlug } = useAuth()
 const supabase = useSupabaseClient()
+const notify = useNotify()
 
 // State
 const isLoading = ref(true)
@@ -125,7 +126,7 @@ const handleUrlTrain = async () => {
     }
   } catch (err: any) {
     console.error('[URL Training Error]', err)
-    alert(err.message || 'Failed to train from URL')
+    notify.error(err.message || 'Failed to train from URL')
   } finally {
     isProcessing.value = false
     await fetchData()
@@ -151,7 +152,7 @@ const handleTextTrain = async () => {
     }
   } catch (err: any) {
     console.error('[Text Training Error]', err)
-    alert(err.message || 'Failed to train from text')
+    notify.error(err.message || 'Failed to train from text')
   } finally {
     isProcessing.value = false
     await fetchData()
@@ -188,7 +189,7 @@ const handleFileTrain = async () => {
     }
   } catch (err: any) {
     console.error('[File Training Error]', err)
-    alert(err.message || 'Failed to train from file')
+    notify.error(err.message || 'Failed to train from file')
   } finally {
     isProcessing.value = false
     await fetchData()
@@ -196,7 +197,7 @@ const handleFileTrain = async () => {
 }
 
 const handleDeleteSource = async (id: string) => {
-  if (!confirm('Are you sure you want to remove this knowledge source? The corresponding embeddings will also be deleted.')) return
+  if (!(await notify.confirm('Are you sure you want to remove this knowledge source? The corresponding embeddings will also be deleted.'))) return
 
   try {
     // Delete embeddings first

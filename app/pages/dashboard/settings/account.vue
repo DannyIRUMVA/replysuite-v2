@@ -10,6 +10,19 @@ definePageMeta({
 })
 
 const { user } = useAuth()
+const notify = useNotify()
+
+const handleResetPassword = async () => {
+  if (await notify.confirm('Are you sure you want to reset your password? A link will be sent to your email.')) {
+    notify.success('Security link dispatched to your inbox.')
+  }
+}
+
+const handleDeleteAccount = async () => {
+  if (await notify.confirm('CRITICAL: This will permanently delete your account and all associated AI agents. This action is irreversible. Proceed?')) {
+    notify.error('Identity decommissioning initiated. Contact support for final verification.')
+  }
+}
 </script>
 
 <template>
@@ -43,7 +56,7 @@ const { user } = useAuth()
                   <p class="font-bold text-gray-200">Password</p>
                   <p class="text-sm text-gray-500">Last changed 2 months ago.</p>
                 </div>
-                <button class="text-primary text-xs font-black uppercase tracking-widest hover:underline">Reset
+                <button @click="handleResetPassword" class="text-primary text-xs font-black uppercase tracking-widest hover:underline">Reset
                   Password</button>
               </div>
             </div>
@@ -57,6 +70,7 @@ const { user } = useAuth()
                     This action cannot be undone.</p>
                 </div>
                 <button
+                  @click="handleDeleteAccount"
                   class="px-8 py-3 rounded-full border border-red-500/20 text-red-500 hover:bg-red-500/10 text-xs font-black uppercase tracking-widest transition-all">Delete</button>
               </div>
             </div>

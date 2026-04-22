@@ -42,8 +42,8 @@ const sendMessage = async () => {
       body: { chatbotId, message: userMsg }
     })
     
-    if (res.success) {
-      messages.value.push({ role: 'assistant', content: res.response })
+    if (typeof res === 'object' && res && 'success' in res && res.success) {
+      messages.value.push({ role: 'assistant', content: (res as any).response })
     }
   } catch (err: any) {
     messages.value.push({ 

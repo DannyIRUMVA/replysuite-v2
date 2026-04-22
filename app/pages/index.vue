@@ -24,6 +24,9 @@ useSeoMeta({
    ogTitle: 'ReplySuite | AI-Driven Marketing Automation Platform',
    description: 'ReplySuite is an AI-driven marketing automation platform designed for modern brands. By leveraging a custom-trained knowledge base, ReplySuite allows businesses to feed their own data into a sophisticated AI model that handles customer inquiries with human-like precision.',
    ogDescription: 'Train your unique AI chatbot on your brand data to handle website interactions automatically. Built for brands who demand human-like precision.',
+})
+
+useHead({
    script: [
       {
          src: 'https://replysuite.app/embed.js',

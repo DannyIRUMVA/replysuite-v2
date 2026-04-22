@@ -1,6 +1,6 @@
 import { processInstagramComment } from '../../utils/automation'
 import { serverSupabaseServiceRole } from '#supabase/server'
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)

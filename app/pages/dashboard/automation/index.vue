@@ -30,6 +30,7 @@ definePageMeta({
 const auth = useAuth()
 const { userId, limits, planSlug: userPlan } = auth
 const supabase = useSupabaseClient()
+const notify = useNotify()
 
 // State
 const isLoading = ref(true)
@@ -119,7 +120,7 @@ const fetchPosts = async (isLoadMore = false) => {
     nextPageCursor.value = res.paging?.cursors?.after || null
   } catch (err) {
     console.error('Error fetching posts:', err)
-    alert('Failed to fetch Instagram posts.')
+    notify.error('Failed to fetch Instagram posts.')
   } finally {
     isFetchingPosts.value = false
     isFetchingMore.value = false
@@ -198,11 +199,12 @@ const handleCreateTrigger = async () => {
 
     if (error) throw error
     await fetchData()
+    notify.success('Automation rule deployed successfully.')
     showCreateModal.value = false
     resetNewTrigger()
   } catch (err) {
     console.error('Error creating trigger:', err)
-    alert('Failed to create automation rule.')
+    notify.error('Failed to create automation rule.')
   } finally {
     isCreating.value = false
   }
@@ -218,7 +220,7 @@ const toggleTriggerStatus = async (trigger: any) => {
 }
 
 const handleDeleteTrigger = async (id: string) => {
-  if (!confirm('Delete this automation rule?')) return
+  if (!(await notify.confirm('Delete this automation rule?'))) return
   const { error } = await supabase.from('instagram_comment_triggers').delete().eq('id', id)
   if (!error) await fetchData()
 }
