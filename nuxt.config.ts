@@ -92,8 +92,8 @@ export default defineNuxtConfig({
     server: {
       allowedHosts: true,
       hmr: {
-        protocol: 'wss',
-        clientPort: 443
+        // protocol: 'wss',
+        // clientPort: 443
       }
     },
     optimizeDeps: {

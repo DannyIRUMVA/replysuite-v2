@@ -21,6 +21,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // 1. Sync to Polar (Monitoring requirement)
+  let polarCustomerId: string | undefined
   try {
     const profile = await client
       .from('profiles')
@@ -28,7 +29,10 @@ export default defineEventHandler(async (event) => {
       .eq('id', userId)
       .single()
 
-    await syncUserToPolar(userId, user.email || 'unknown@user.com', profile.data?.full_name)
+    const customer = await syncUserToPolar(userId, user.email || 'unknown@user.com', profile.data?.full_name)
+    if (customer) {
+       polarCustomerId = customer.id
+    }
   } catch (error) {
     console.error('[Onboard-Free] Polar Sync Error:', error)
     // We continue even if polar sync fails, to not block the user
@@ -50,13 +54,19 @@ export default defineEventHandler(async (event) => {
 
   // 3. Create membership (Service Role required to bypass RLS)
   const adminClient = serverSupabaseServiceRole(event)
-  const { error: membershipError } = await adminClient
-    .from('user_memberships')
-    .upsert({
+  const upsertData: any = {
       user_id: userId,
       plan_id: plan.id,
       is_active: true
-    })
+  }
+  
+  if (polarCustomerId) {
+      upsertData.polar_customer_id = polarCustomerId
+  }
+
+  const { error: membershipError } = await adminClient
+    .from('user_memberships')
+    .upsert(upsertData)
 
   if (membershipError) {
      console.error('[Onboard-Free] Membership Error:', membershipError)

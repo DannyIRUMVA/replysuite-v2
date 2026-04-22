@@ -39,14 +39,22 @@ export default defineEventHandler(async (event) => {
     return sendRedirect(event, '/login?error=Internal processing error')
   }
 
-  // 3.5 Sync to Polar for monitoring (Background)
+  // 3.5 Sync to Polar for monitoring
   try {
     const { data: user } = await client.auth.admin.getUserById(verifyRecord.user_id)
     if (user?.user) {
-      await syncUserToPolar(user.user.id, user.user.email!)
+      const customer = await syncUserToPolar(user.user.id, user.user.email!)
+      if (customer) {
+        // Save customer ID to membership record
+        await client
+          .from('user_memberships')
+          .update({ polar_customer_id: customer.id })
+          .eq('user_id', user.user.id)
+        console.log(`[Verify] Linked Polar Customer ${customer.id} to user ${user.user.id}`)
+      }
     }
   } catch (err) {
-    console.error('[Verify] Polar Sync Background Error:', err)
+    console.error('[Verify] Polar Sync Error:', err)
   }
 
   // 4. Update Verification record

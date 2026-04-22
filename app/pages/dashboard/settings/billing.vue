@@ -62,6 +62,25 @@ const pricingPlans = [
   }
 ]
 
+const isSyncing = ref(false)
+
+const handleSync = async () => {
+  isSyncing.value = true
+  try {
+    const res = await $fetch<{ success: boolean; message: string }>('/api/billing/sync', { method: 'POST' })
+    if (res.success) {
+      notify.success(res.message)
+      window.location.reload()
+    } else {
+      notify.error(res.message)
+    }
+  } catch (err: any) {
+    notify.error('Failed to sync billing state.')
+  } finally {
+    isSyncing.value = false
+  }
+}
+
 const handleUpgrade = async (plan: any) => {
   if (plan.id === planSlug.value) return
 
@@ -125,7 +144,7 @@ const handleUpgrade = async (plan: any) => {
           <h3 class="text-xl font-black tracking-wide text-primary mb-6">Billing Hub</h3>
 
           <!-- Active Plan Badge -->
-          <div class="mb-12 flex items-center justify-between p-6 glass-card border-primary/20 bg-primary/5">
+          <div class="mb-12 flex flex-col md:flex-row items-start md:items-center justify-between p-6 gap-6 glass-card border-primary/20 bg-primary/5">
             <div class="flex items-center gap-4">
               <div class="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary">
                 <Crown v-if="planSlug === 'gold'" class="w-6 h-6" />
@@ -137,9 +156,18 @@ const handleUpgrade = async (plan: any) => {
                 <h4 class="text-lg font-black uppercase tracking-tighter">{{ planSlug }}</h4>
               </div>
             </div>
-            <div class="text-right">
-              <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Next Billing Date</p>
-              <p class="text-sm font-bold text-white">{{ membership?.ends_at ? new Date(membership.ends_at).toLocaleDateString() : 'N/A' }}</p>
+            
+            <div class="flex items-center gap-8 w-full md:w-auto justify-between md:justify-end">
+              <div class="text-right">
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Next Billing Date</p>
+                <p class="text-sm font-bold text-white">{{ membership?.ends_at ? new Date(membership.ends_at).toLocaleDateString() : 'N/A' }}</p>
+              </div>
+              <button @click="handleSync" 
+                :disabled="isSyncing"
+                class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50">
+                <span v-if="isSyncing" class="flex items-center gap-2 italic lowercase"><Loader2 class="w-3 h-3 animate-spin"/> syncing...</span>
+                <span v-else class="flex items-center gap-2"><TrendingUp class="w-3 h-3"/> Sync Status</span>
+              </button>
             </div>
           </div>
 

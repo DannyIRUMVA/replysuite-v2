@@ -98,7 +98,7 @@ export const useAuth = () => {
     if (process.server || isSyncing.value || hasSyncedVerification.value || isAuthDataLoading.value || isInteracting.value) return
     
     // Only attempt sync if we have a user and profile, profile says not verified, but markers say verified
-    if (u && p && !p.is_verified && isVerified.value) {
+    if (u && p && !p.is_verified && isVerified.value && userId.value) {
       try {
         isSyncing.value = true
         console.log('[DEBUG] Self-healing verification for:', u.email)

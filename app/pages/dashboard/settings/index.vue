@@ -14,7 +14,7 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-const { user, profile: authProfile, setInteracting } = useAuth()
+const { user, userId, profile: authProfile, setInteracting } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()
 
@@ -49,22 +49,25 @@ const updateProfile = async () => {
     errorMsg.value = ''
     saveSuccess.value = false
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        full_name: profile.value.full_name,
-        company_name: profile.value.company_name,
-        bio: profile.value.bio,
-        website: profile.value.website,
-        contact_email: profile.value.contact_email,
-        phone: profile.value.phone,
-        country: profile.value.country,
-        timezone: profile.value.timezone,
-        avatar_url: profile.value.avatar_url
-      })
-      .eq('id', user.value?.id)
+      // Ensure we have a valid ID before attempting update
+      if (!userId.value) throw new Error('Identity session missing. Please re-login.')
 
-    if (error) throw error
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: profile.value.full_name,
+          company_name: profile.value.company_name,
+          bio: profile.value.bio,
+          website: profile.value.website,
+          contact_email: profile.value.contact_email,
+          phone: profile.value.phone,
+          country: profile.value.country,
+          timezone: profile.value.timezone,
+          avatar_url: profile.value.avatar_url
+        })
+        .eq('id', userId.value)
+
+      if (error) throw error
     notify.success('Identity Updated. Gold Standard Applied!')
   } catch (err: any) {
     notify.error(err.message)
