@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
 
   const { data, error } = await supabase
     .from('chatbots')
-    .select('name, is_public')
+    .select('name, is_public, primary_color, secondary_color, chat_bubble_style, widget_position, welcome_message')
     .eq('id', id)
     .single()
 
@@ -20,6 +20,11 @@ export default defineEventHandler(async (event) => {
 
   return {
     success: true,
-    name: data.name
+    name: data.name,
+    primaryColor: data.primary_color || '#D4AF37',
+    secondaryColor: data.secondary_color || '#0a0a0a',
+    bubbleStyle: data.chat_bubble_style || 'rounded',
+    widgetPosition: data.widget_position || 'bottom-right',
+    welcomeMessage: data.welcome_message || 'Hello! How can I help you today?',
   }
 })

@@ -15,7 +15,8 @@ import {
   Activity,
   Sparkles,
   Database,
-  Search
+  Search,
+  Globe
 } from 'lucide-vue-next'
 import Skeleton from '~~/app/components/Skeleton.vue'
 
@@ -34,8 +35,21 @@ const showCreateModal = ref(false)
 
 const newAgent = ref({
   name: '',
-  system_prompt: ''
+  system_prompt: '',
+  default_language: 'English'
 })
+
+const languageOptions = [
+  { label: 'Kinyarwanda', value: 'Kinyarwanda' },
+  { label: 'English', value: 'English' },
+  { label: 'French', value: 'French' },
+  { label: 'Chinese', value: 'Chinese' },
+  { label: 'Kirundi', value: 'Kirundi' },
+  { label: 'Swahili', value: 'Swahili' },
+  { label: 'Spanish', value: 'Spanish' },
+  { label: 'Portuguese', value: 'Portuguese' },
+  { label: 'German', value: 'German' }
+]
 
 // UI State
 const canCreateAgent = computed(() => {
@@ -76,7 +90,8 @@ const handleCreate = async () => {
       .insert({
         user_id: userId.value,
         name: newAgent.value.name,
-        system_prompt: newAgent.value.system_prompt
+        system_prompt: newAgent.value.system_prompt,
+        default_language: newAgent.value.default_language
       })
       .select()
       .single()
@@ -85,7 +100,7 @@ const handleCreate = async () => {
     if (data) {
       await refreshAgents()
       showCreateModal.value = false
-      newAgent.value = { name: '', system_prompt: '' }
+      newAgent.value = { name: '', system_prompt: '', default_language: 'English' }
     }
   } catch (err) {
     console.error('Error creating agent:', err)
@@ -333,6 +348,15 @@ const handleDelete = async (id: string) => {
                 <Info class="w-3 h-3 inline mr-1" />
                 This protocol defines the agent's personality, tone, and decision-making logic.
               </p>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold tracking-widest text-gray-500 uppercase mb-2">Default Language</label>
+              <CustomSelect 
+                v-model="newAgent.default_language" 
+                :options="languageOptions"
+                placeholder="Select Language"
+              />
             </div>
           </div>
 

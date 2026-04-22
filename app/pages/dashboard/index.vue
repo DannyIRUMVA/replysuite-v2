@@ -22,21 +22,30 @@ const supabase = useSupabaseClient()
 const isMounted = ref(false)
 onMounted(() => { isMounted.value = true })
 
-// Async stats fetching with a fresh key to bypass any stale serialization cache
-const { data: realStats, pending: statsLoading } = useAsyncData('dashboard-metrics-v2', async () => {
+// Async stats fetching with real data from multiple tables
+const { data: realStats, pending: statsLoading } = useAsyncData('dashboard-metrics-v3', async () => {
   if (!userId.value) return []
   
-  const [messagesCount, activeRules, agentsCount] = await Promise.all([
-    supabase.from('instagram_message_jobs').select('*', { count: 'exact', head: true }),
-    supabase.from('instagram_comment_triggers').select('*', { count: 'exact', head: true }).eq('is_active', true),
-    supabase.from('chatbots').select('*', { count: 'exact', head: true }).eq('user_id', userId.value)
+  // Get user's chatbot IDs first for scoped queries
+  const { data: bots } = await supabase.from('chatbots').select('id').eq('user_id', userId.value).is('deleted_at', null)
+  const botIds = (bots || []).map((b: any) => b.id)
+
+  const [sessionsRes, agentsRes, whatsappRes, igRes] = await Promise.all([
+    botIds.length > 0
+      ? supabase.from('chat_sessions').select('*', { count: 'exact', head: true }).in('chatbot_id', botIds)
+      : Promise.resolve({ count: 0 }),
+    supabase.from('chatbots').select('*', { count: 'exact', head: true }).eq('user_id', userId.value).is('deleted_at', null),
+    supabase.from('whatsapp_accounts').select('*', { count: 'exact', head: true }).eq('user_id', userId.value),
+    supabase.from('instagram_accounts').select('*', { count: 'exact', head: true }).eq('user_id', userId.value),
   ])
 
+  const totalChannels = (whatsappRes.count || 0) + (igRes.count || 0)
+
   return [
-    { id: 'messages', name: 'Total Conversations', value: (messagesCount.count || 0).toString(), change: '+12%', changeType: 'increase' },
-    { id: 'leads', name: 'Active Leads', value: '0', change: '0%', changeType: 'neutral' },
-    { id: 'agents', name: 'Forged Agents', value: (agentsCount.count || 0).toString(), change: '+2', changeType: 'increase' },
-    { id: 'activity', name: 'System Activity', value: 'Optimal', change: '100%', changeType: 'neutral' },
+    { id: 'messages', name: 'Total Conversations', value: (sessionsRes.count || 0).toLocaleString(), change: 'Live', changeType: 'increase' },
+    { id: 'leads', name: 'Connected Channels', value: totalChannels.toString(), change: `${whatsappRes.count || 0} WA`, changeType: totalChannels > 0 ? 'increase' : 'neutral' },
+    { id: 'agents', name: 'Forged Agents', value: (agentsRes.count || 0).toString(), change: `${botIds.length} Active`, changeType: botIds.length > 0 ? 'increase' : 'neutral' },
+    { id: 'activity', name: 'System Status', value: 'Optimal', change: '100%', changeType: 'neutral' },
   ]
 }, { watch: [userId] })
 
@@ -55,9 +64,9 @@ const stats = computed(() => {
   if (realStats.value && realStats.value.length > 0) return realStats.value
   return [
     { id: 'messages', name: 'Total Conversations', value: '0', change: '0%', changeType: 'neutral' },
-    { id: 'leads', name: 'Active Leads', value: '0', change: '0%', changeType: 'neutral' },
+    { id: 'leads', name: 'Connected Channels', value: '0', change: '0%', changeType: 'neutral' },
     { id: 'agents', name: 'Forged Agents', value: '0', change: '0', changeType: 'neutral' },
-    { id: 'activity', name: 'System Activity', value: 'Idle', change: '0', changeType: 'neutral' },
+    { id: 'activity', name: 'System Status', value: 'Idle', change: '0', changeType: 'neutral' },
   ]
 })
 

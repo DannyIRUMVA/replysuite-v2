@@ -72,6 +72,16 @@ const updateProfile = async () => {
     loading.value = false
   }
 }
+
+const timezoneOptions = [
+  { label: 'UTC (Universal Time Coordinated)', value: 'UTC' },
+  { label: 'CAT (Central Africa Time)', value: 'Africa/Kigali' },
+  { label: 'GMT (Greenwich Mean Time)', value: 'Europe/London' },
+  { label: 'EST (Eastern Standard Time)', value: 'America/New_York' },
+  { label: 'PST (Pacific Standard Time)', value: 'America/Los_Angeles' },
+  { label: 'IST (India Standard Time)', value: 'Asia/Kolkata' },
+  { label: 'CST (China Standard Time)', value: 'Asia/Shanghai' },
+]
 </script>
 
 <template>
@@ -141,12 +151,11 @@ const updateProfile = async () => {
               <label class="input-label">
                 <Clock class="w-4 h-4" /> Timezone
               </label>
-              <select v-model="profile.timezone" @focus="setInteracting(true)" @blur="setInteracting(false)" class="setting-input appearance-none">
-                <option value="UTC">UTC (Universal Time Coordinated)</option>
-                <option value="Africa/Kigali">CAT (Central Africa Time)</option>
-                <option value="Europe/London">GMT (Greenwich Mean Time)</option>
-                <option value="America/New_York">EST (Eastern Standard Time)</option>
-              </select>
+              <CustomSelect
+                v-model="profile.timezone"
+                :options="timezoneOptions"
+                placeholder="Select Timezone"
+              />
             </div>
 
             <div class="col-span-2 pt-10 flex items-center justify-between border-t border-white/5 mt-4">

@@ -38,8 +38,12 @@ const testMessage = ref('Hello from ReplySuite! This is a test message for Meta 
 const isSendingTest = ref(false)
 
 const templateBody = ref('Thank you for contacting us. Our AI agent is currently reviewing your request.')
+const templateName = ref('')
 const isCreatingTemplate = ref(false)
 const isDeploying = ref(false)
+
+const fetchedNumbers = ref<any[]>([])
+const isSavingNumber = ref(false)
 
 // Manual Setup State
 const showManualSetup = ref(false)
@@ -182,34 +186,65 @@ const startWhatsAppEmbeddedSignup = () => {
   }
 
   // Invoke the genuine Meta Embedded Signup Protocol natively
-  (window as any).FB.login((response: any) => {
+  (window as any).FB.login(async (response: any) => {
     if (response.authResponse) {
       // The Access Token and signed code arrives here natively!
       console.log('✅ Meta Embedded Sequence Successful', response)
       
-      // We attempt to bridge this into our backend mapping
-      // NOTE: In production, the 'code' should be exchanged for a long-lived token via backend
-      // For now, we notify the user and expect manual token if required, 
-      // but we will try to auto-insert if possible.
-      notify.success("Meta Authorized! Finalizing your secure connection...")
-      
-      // Since Meta only returns 'code' usually in the callback, 
-      // we navigate the user to 'Manual' or handle it if BSP is active.
-      // For this implementation, we assume the user might need to fulfill the tokens.
-      isConnecting.value = false
-      fetchAccounts() // Refresh list in case something was auto-created via webhook
+      try {
+          notify.success("Meta Authorized! Extracting phone numbers...")
+          const res = await $fetch('/api/whatsapp/fetch-numbers', {
+              method: 'POST',
+              body: { accessToken: response.authResponse.accessToken }
+          })
+          
+          fetchedNumbers.value = res.numbers.map((n: any) => ({ ...n, accessToken: response.authResponse.accessToken }))
+          
+          if (fetchedNumbers.value.length === 0) {
+             notify.warn("No phone numbers found connected to this specific FB structure! Falling back to Manual Setup.")
+             showManualSetup.value = true
+          }
+      } catch (err) {
+          notify.error("Failed to map Meta Graph automatically.")
+          showManualSetup.value = true
+      } finally {
+          isConnecting.value = false
+          fetchAccounts()
+      }
     } else {
       console.warn('Authentication aborted or unfulfilled securely.')
       isConnecting.value = false
     }
   }, {
     scope: 'whatsapp_business_management,whatsapp_business_messaging',
-    response_type: 'code',
+    response_type: 'token,code',
     override_default_response_type: true,
     extras: {
       feature: 'whatsapp_embedded_signup'
     }
   })
+}
+
+const saveFetchedNumber = async (num: any) => {
+    isSavingNumber.value = true
+    try {
+        await $fetch('/api/whatsapp/connect', {
+            method: 'POST',
+            body: {
+                waba_id: num.waba_id,
+                phone_number_id: num.phone_number_id,
+                phone_number: num.display_phone_number,
+                accessToken: num.accessToken
+            }
+        })
+        notify.success('Number Successfully Bound! Access Token saved natively.')
+        fetchedNumbers.value = [] // Clear selection
+        fetchAccounts()
+    } catch (err: any) {
+        notify.error(`Secure Bind Failed: ${err.data?.statusMessage || err.message}`)
+    } finally {
+        isSavingNumber.value = false
+    }
 }
 
 const updateMapping = async (accountId: string, chatbotId: string | null) => {
@@ -306,6 +341,27 @@ const deployNode = async (accountId: string) => {
                     Manual Override
                 </button>
             </div>
+        </div>
+
+        <!-- Fetched Numbers Selection UI -->
+        <div v-if="fetchedNumbers.length > 0 && !showManualSetup" class="mt-8 animate-in fade-in slide-in-from-top-4 duration-500 p-8 rounded-[2rem] bg-green-500/5 border border-green-500/20 relative z-20">
+             <h3 class="text-sm font-black text-white uppercase tracking-widest mb-6 border-b border-green-500/20 pb-4">Select Associated Line Extract</h3>
+             <div class="space-y-4">
+                 <div v-for="num in fetchedNumbers" :key="num.phone_number_id" class="flex flex-col sm:flex-row items-center justify-between p-5 bg-[#0a0a0a] rounded-2xl border border-white/5 hover:border-green-500/30 transition-all group">
+                     <div>
+                         <p class="font-bold text-white tracking-widest">{{ num.display_phone_number }} <span class="text-xs text-green-500 ml-2 uppercase">({{ num.verified_name }})</span></p>
+                         <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-2 flex items-center gap-3">
+                            <span>Quality: <strong class="text-gray-300">{{ num.quality_rating }}</strong></span>
+                            <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                            <span>Asset ID: <strong class="text-gray-300">{{ num.waba_id }}</strong></span>
+                         </p>
+                     </div>
+                     <button @click="saveFetchedNumber(num)" :disabled="isSavingNumber" class="mt-4 sm:mt-0 bg-green-600 text-black hover:bg-green-500 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-green-500/10 disabled:opacity-50">
+                        <Loader2 v-if="isSavingNumber" class="w-3 h-3 animate-spin" />
+                        {{ isSavingNumber ? 'Binding...' : 'Bind Number' }}
+                     </button>
+                 </div>
+             </div>
         </div>
 
         <!-- Manual Form -->

@@ -65,7 +65,7 @@ const sections = [
     title: 'AI Agents',
     links: [
       { name: 'My Agents', href: '/dashboard/agents', icon: 'MessageSquare' },
-      { name: 'Training', href: '/dashboard/agents/training', icon: 'Database' },
+      { name: 'Conversations', href: '/dashboard/conversations', icon: 'MessageCircle' },
     ]
   },
   {

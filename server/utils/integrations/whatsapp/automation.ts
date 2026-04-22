@@ -124,23 +124,45 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
   if (replyText) {
     console.log(`\n[WhatsApp Debug] Saving chat into chat_sessions...`)
     try {
-      const { data: session, error: sessErr } = await supabase.from('chat_sessions').insert({
-        chatbot_id: waAccount.chatbot_id,
-        user_id: profile.id, // Successfully binds thread to owner
-        metadata: { type: 'whatsapp', phone: from_number, username: customer_name }
-      }).select('id').single()
-      
-      if (sessErr) {
-         console.error('❌ Failed to insert WhatsApp chat_sessions:', sessErr)
-         throw sessErr
+      // Find existing active session for this specific phone number to maintain timeline
+      let session;
+      const { data: existingSessions, error: findErr } = await supabase
+        .from('chat_sessions')
+        .select('id')
+        .eq('chatbot_id', waAccount.chatbot_id)
+        .contains('metadata', { phone: from_number })
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      if (existingSessions && existingSessions.length > 0) {
+        session = existingSessions[0]
+      } else {
+        const { data: newSession, error: sessErr } = await supabase.from('chat_sessions').insert({
+          chatbot_id: waAccount.chatbot_id,
+          metadata: { type: 'whatsapp', phone: from_number, username: customer_name }
+        }).select('id').single()
+        
+        if (sessErr) {
+           console.error('❌ Failed to insert new WhatsApp chat_sessions:', sessErr)
+           throw sessErr
+        }
+        session = newSession
       }
 
       const { error: msgErr } = await supabase.from('chat_messages').insert([
         { session_id: session.id, role: 'user', content: text },
         { session_id: session.id, role: 'assistant', content: replyText }
       ])
-      if (msgErr) throw msgErr
-    } catch (err) { }
+      
+      if (msgErr) {
+          console.error('❌ Failed to insert WhatsApp chat_messages:', msgErr)
+          throw msgErr
+      }
+      
+      console.log(`   ✅ Chat history securely appended to Session: ${session.id}`)
+    } catch (err) { 
+        console.error('❌ [WhatsApp Debug] Database Insertion Error:', err)
+    }
   }
 
   // 6. Push Message natively to WhatsApp Meta Graph API
