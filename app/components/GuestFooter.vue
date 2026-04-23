@@ -1,107 +1,115 @@
 <script setup lang="ts">
-import { Zap, Share2, Globe2, Layers, MessageSquare, Instagram, Twitter } from 'lucide-vue-next'
+import { Zap, Instagram, Twitter, Globe2, Github, Mail } from 'lucide-vue-next'
 </script>
 
 <template>
-  <footer class="max-w-7xl mx-auto px-6 py-20 border-t border-white/5 space-y-20">
-    <div class="grid md:grid-cols-4 gap-16">
-      <!-- Brand Section -->
-      <div class="md:col-span-2">
-        <div class="flex items-center gap-2 mb-8">
+  <footer class="max-w-7xl mx-auto px-6 py-24 border-t border-white/5">
+    <!-- Top Brand Row -->
+    <div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-20 pb-20 border-b border-white/5">
+      <div class="max-w-md">
+        <div class="flex items-center gap-3 mb-8">
           <Zap class="text-primary w-8 h-8 fill-current" />
-          <span class="text-2xl font-bold">ReplySuite</span>
+          <span class="text-3xl font-bold tracking-tighter text-white">ReplySuite</span>
         </div>
-        <p class="text-gray-500 max-w-sm leading-relaxed mb-8">
-          The gold standard in Instagram automation and AI workforce management. Scale your customer support and lead
-          generation instantly.
+        <p class="text-gray-500 leading-relaxed font-medium">
+          The gold standard in AI automation and brand engagement. We provide the infrastructure for the next generation of digital-native brands.
         </p>
-        <div class="flex gap-4">
-          <a href="#"
-            class="p-3 rounded-full bg-white/[0.02] border border-white/5 text-gray-500 hover:text-primary hover:border-primary/20 transition-all">
-            <Instagram class="w-5 h-5" />
-          </a>
-          <a href="#"
-            class="p-3 rounded-full bg-white/[0.02] border border-white/5 text-gray-500 hover:text-primary hover:border-primary/20 transition-all">
-            <Twitter class="w-5 h-5" />
-          </a>
-          <a href="#"
-            class="p-3 rounded-full bg-white/[0.02] border border-white/5 text-gray-500 hover:text-primary hover:border-primary/20 transition-all">
-            <Globe2 class="w-5 h-5" />
-          </a>
-        </div>
       </div>
+      <div class="flex gap-4">
+        <a v-for="icon in [Instagram, Twitter, Github, Mail]" :key="icon" href="#" 
+          class="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-gray-500 hover:text-primary hover:border-primary/20 transition-all hover:-translate-y-1">
+          <component :is="icon" class="w-5 h-5" />
+        </a>
+      </div>
+    </div>
 
-      <!-- Links Sections -->
+    <!-- 4 Column Links Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-16 mb-20">
+      <!-- Column 1: Product -->
       <div>
-        <h4 class="text-xs font-bold uppercase tracking-widest text-primary mb-8">Product</h4>
-        <ul class="space-y-4 text-sm text-gray-500">
-          <li>
-            <NuxtLink to="/product" class="hover:text-white transition-colors">AI Chatbot</NuxtLink>
-          </li>
-          <li>
-            <NuxtLink to="/features" class="hover:text-white transition-colors">Multi-Channel DM</NuxtLink>
-          </li>
-          <li>
-            <NuxtLink to="/product#integrations" class="hover:text-white transition-colors">Integrations</NuxtLink>
-          </li>
-          <li>
-            <NuxtLink to="/pricing" class="hover:text-white transition-colors">Pricing & Plans</NuxtLink>
+        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-10">Product</h4>
+        <ul class="space-y-4">
+          <li v-for="link in [
+            { name: 'AI Chatbot', to: '/product' },
+            { name: 'Multi-Channel DM', to: '/features' },
+            { name: 'Integrations', to: '/integrations' },
+            { name: 'Pricing & Plans', to: '/pricing' },
+            { name: 'Product Changelog', to: '/changelog' }
+          ]" :key="link.name">
+            <NuxtLink :to="link.to" class="text-sm text-gray-500 hover:text-white transition-colors font-medium">{{ link.name }}</NuxtLink>
           </li>
         </ul>
       </div>
 
+      <!-- Column 2: Resources -->
       <div>
-        <h4 class="text-xs font-bold uppercase tracking-widest text-primary mb-8">Company</h4>
-        <ul class="space-y-4 text-sm text-gray-500">
-          <li>
-            <NuxtLink to="/about" class="hover:text-white transition-colors">Our Story</NuxtLink>
-          </li>
-          <li>
-            <NuxtLink to="/about#mission" class="hover:text-white transition-colors">Mission & Values</NuxtLink>
-          </li>
-          <li>
-            <NuxtLink to="/ethics" class="hover:text-white transition-colors">AI Ethics</NuxtLink>
-          </li>
-          <li>
-            <a href="mailto:partnership@replysuite.app" class="hover:text-white transition-colors">Partnerships</a>
+        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-10">Resources</h4>
+        <ul class="space-y-4">
+          <li v-for="link in [
+            { name: 'Documentation', to: '/docs' },
+            { name: 'Blog & Insights', to: '/blog' },
+            { name: 'Success Stories', to: '/about#mission' },
+            { name: 'Community Hub', to: '/community' },
+            { name: 'API Reference', to: '/docs' }
+          ]" :key="link.name">
+            <NuxtLink :to="link.to" class="text-sm text-gray-500 hover:text-white transition-colors font-medium">{{ link.name }}</NuxtLink>
           </li>
         </ul>
       </div>
 
+      <!-- Column 3: Company -->
       <div>
-        <h4 class="text-xs font-bold uppercase tracking-widest text-primary mb-8">Trust & Legal</h4>
-        <ul class="space-y-4 text-sm text-gray-500">
-          <li>
-            <NuxtLink to="/security" class="hover:text-white transition-colors">Security Posture</NuxtLink>
+        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-10">Company</h4>
+        <ul class="space-y-4">
+          <li v-for="link in [
+            { name: 'Our Story', to: '/about' },
+            { name: 'Careers', to: '/careers' },
+            { name: 'Contact Sales', to: '/contact' },
+            { name: 'Institutional Email', to: 'mailto:support@replysuite.app' },
+            { name: 'Brand Assets', to: '/brand' }
+          ]" :key="link.name">
+            <NuxtLink :to="link.to" class="text-sm text-gray-500 hover:text-white transition-colors font-medium">{{ link.name }}</NuxtLink>
           </li>
-          <li>
-            <NuxtLink to="/privacy" class="hover:text-white transition-colors">Privacy Policy</NuxtLink>
-          </li>
-          <li>
-            <NuxtLink to="/terms" class="hover:text-white transition-colors">Terms of Service</NuxtLink>
-          </li>
-          <li>
-            <NuxtLink to="/terms#usage" class="hover:text-white transition-colors">Fair Usage (SLA)</NuxtLink>
-          </li>
-          <li>
-            <NuxtLink to="/cookie" class="hover:text-white transition-colors">Cookie Policy</NuxtLink>
+        </ul>
+      </div>
+
+      <!-- Column 4: Trust & Legal -->
+      <div>
+        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-10">Trust & Legal</h4>
+        <ul class="space-y-4">
+          <li v-for="link in [
+            { name: 'Security Posture', to: '/security' },
+            { name: 'AI Ethics', to: '/ethics' },
+            { name: 'Privacy Policy', to: '/privacy' },
+            { name: 'Terms of Service', to: '/terms' },
+            { name: 'Cookie Policy', to: '/cookie' }
+          ]" :key="link.name">
+            <NuxtLink :to="link.to" class="text-sm text-gray-500 hover:text-white transition-colors font-medium">{{ link.name }}</NuxtLink>
           </li>
         </ul>
       </div>
     </div>
 
-    <!-- Bottom Section -->
-    <div
-      class="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden">
-      <div class="text-xs text-gray-600">© 2026 ReplySuite. All rights reserved.</div>
-
-      <div class="flex items-center gap-4">
-        <div
-          class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/5 border border-green-500/10 text-[10px] font-bold text-green-500/80 uppercase tracking-widest">
+    <!-- Bottom Bar -->
+    <div class="pt-10 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
+      <div class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+        © 2026 ReplySuite AI. All rights reserved.
+      </div>
+      
+      <div class="flex items-center gap-8">
+        <div class="flex items-center gap-3 px-4 py-2 rounded-full bg-green-500/5 border border-green-500/10 text-[10px] font-bold text-green-500/80 uppercase tracking-widest">
           <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
           All Systems Operational
+        </div>
+        <div class="hidden md:flex items-center gap-2 text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+          <Globe2 class="w-3 h-3" />
+          Region: Global Edge
         </div>
       </div>
     </div>
   </footer>
 </template>
+
+<style scoped>
+/* No additional styles needed with Tailwind */
+</style>
