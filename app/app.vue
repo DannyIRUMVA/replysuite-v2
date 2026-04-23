@@ -4,7 +4,7 @@ import '~/assets/css/main.css'
 
 <template>
   <div>
-    <NuxtLoadingIndicator />
+    <NuxtLoadingIndicator color="#D4AF37" :height="3" />
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>

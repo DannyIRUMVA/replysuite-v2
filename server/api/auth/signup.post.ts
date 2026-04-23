@@ -66,8 +66,8 @@ export default defineEventHandler(async (event) => {
     console.error('[Signup] Profile Error:', profileError)
   }
 
-  // 2. Generate custom verification token
-  const token = crypto.randomUUID()
+  // 2. Generate custom verification code (6 digits)
+  const token = Math.floor(100000 + Math.random() * 900000).toString()
   const expiresAt = new Date()
   expiresAt.setHours(expiresAt.getHours() + 24)
 

@@ -30,7 +30,7 @@ const iconMap: Record<string, any> = {
   MessageCircle
 }
 
-const { user, profile, membership, isVerified } = useAuth()
+const { user, profile, membership, isVerified, isLoading } = useAuth()
 const supabase = useSupabaseClient()
 const route = useRoute()
 

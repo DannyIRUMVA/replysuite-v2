@@ -57,23 +57,54 @@ const canCreateAgent = computed(() => {
 })
 
 // Fetch Data using useAsyncData for consistency with other dashboard pages
-const { data: agentsData, pending: dataLoading, refresh: refreshAgents } = useAsyncData('agents-list', async () => {
-  if (!userId.value) return []
+const { data: pageData, pending: dataLoading, refresh: refreshAgents } = useAsyncData('agents-data', async () => {
+  if (!userId.value) return { agents: [], stats: { totalChats: 0 } }
   
-  const { data, error } = await supabase
+  // 1. Fetch Agents (with data source count via Supabase join)
+  const { data: agents, error: agentsError } = await supabase
     .from('chatbots')
-    .select('*')
+    .select('*, data_sources(count)')
     .is('deleted_at', null)
     .eq('user_id', userId.value)
     .order('created_at', { ascending: false })
 
-  if (error) throw error
-  return data || []
+  if (agentsError) throw agentsError
+  
+  const agentIds = (agents || []).map(a => a.id)
+  let totalChats = 0
+  
+  if (agentIds.length > 0) {
+    const { count, error: statsError } = await supabase
+      .from('chat_sessions')
+      .select('*', { count: 'exact', head: true })
+      .in('chatbot_id', agentIds)
+    
+    if (!statsError) {
+      totalChats = count || 0
+    }
+  }
+
+  // Normalize data_sources from [{count}] to a number
+  const normalizedAgents = (agents || []).map(a => ({
+    ...a,
+    data_source_count: Array.isArray(a.data_sources) ? (a.data_sources[0]?.count ?? 0) : 0
+  }))
+
+  const totalDataSources = normalizedAgents.reduce((s, a) => s + a.data_source_count, 0)
+
+  return {
+    agents: normalizedAgents,
+    stats: {
+      totalChats,
+      totalDataSources
+    }
+  }
 }, {
   watch: [userId]
 })
 
-const agents = computed(() => agentsData.value || [])
+const agents = computed(() => pageData.value?.agents || [])
+const stats = computed(() => pageData.value?.stats || { totalChats: 0, totalDataSources: 0 })
 const isLoading = computed(() => authLoading.value || dataLoading.value)
 
 const handleCreate = async () => {
@@ -163,9 +194,9 @@ const handleDelete = async (id: string) => {
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div v-for="stat in [
         { label: 'Active Agents', value: agents.length.toString().padStart(2, '0'), icon: Bot },
-        { label: 'Success Rate', value: '96.2%', icon: Sparkles },
-        { label: 'Total Chats', value: '231', icon: MessageSquare },
-        { label: 'Response Time', value: '< 2s', icon: Zap }
+        { label: 'Plan Limit', value: `${agents.length} / ${limits.maxAgents ?? '∞'}`, icon: Sparkles },
+        { label: 'Total Chats', value: stats.totalChats.toLocaleString(), icon: MessageSquare },
+        { label: 'Data Sources', value: stats.totalDataSources.toLocaleString(), icon: Database }
       ]" :key="stat.label" class="glass-card !p-5 bg-white/[0.01]">
         <div class="flex items-center gap-4">
           <div class="p-2.5 bg-white/5 rounded-xl">

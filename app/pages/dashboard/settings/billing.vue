@@ -52,7 +52,7 @@ const pricingPlans = [
     name: 'Starter',
     id: 'starter',
     price: '0',
-    features: ['1 Active AI Bot', 'Basic Knowledge Base', '50 AI Messages / month', 'Shared Infrastructure'],
+    features: ['1 Current AI Bot', 'Basic Knowledge Base', '50 AI Messages / month', 'Shared Infrastructure'],
     limitDesc: 'Perfect for initial training'
   },
   {
@@ -60,7 +60,7 @@ const pricingPlans = [
     id: 'silver',
     productId: 'dc070937-6444-40a6-8a02-fd8b25df7aae',
     price: '17.88',
-    features: ['3 Active AI Bots', 'Advanced Knowledge Base', 'Unlimited AI Messages', 'Priority Processing'],
+    features: ['3 Current AI Bots', 'Advanced Knowledge Base', 'Unlimited AI Messages', 'Priority Processing'],
     limitDesc: 'For growing enterprises',
     popular: true
   },
