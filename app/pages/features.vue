@@ -1,6 +1,21 @@
 <script setup lang="ts">
 import { Bot, Zap, MessageSquare, Target, Settings, BarChart3, Globe2, Layers, Headphones, Instagram, ArrowRight, Slack, MessageCircle, Send } from 'lucide-vue-next'
 
+useSeoMeta({
+  title: 'Features | AI Automation for Every Channel',
+  description: 'Explore all ReplySuite features: trainable AI chatbots, Instagram DM automation, WhatsApp replies, website embeds, and real-time analytics. One platform, every channel.',
+  ogTitle: 'ReplySuite Features | Multi-Channel AI Automation',
+  ogDescription: 'Trainable chatbots, Instagram DM automation, WhatsApp, website embeds & analytics — all in one platform.',
+  ogUrl: 'https://replysuite.app/features',
+  twitterCard: 'summary_large_image',
+  twitterTitle: 'ReplySuite Features',
+  twitterDescription: 'AI-powered live chat for Instagram, WhatsApp, and your website.',
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: 'https://replysuite.app/features' }]
+})
+
 definePageMeta({
   layout: 'default'
 })

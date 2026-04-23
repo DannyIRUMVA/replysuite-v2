@@ -1,6 +1,9 @@
 (function () {
   'use strict';
 
+  // ── Wappalyzer / technology-detection fingerprint ────────────────────────────
+  window.ReplySuite = { version: '2.0.0', vendor: 'Replysuite', status: 'active' };
+
   var script = document.currentScript || (function () {
     var scripts = document.getElementsByTagName('script');
     return scripts[scripts.length - 1];
@@ -18,9 +21,9 @@
   fetch(BASE_URL + '/api/public/config/' + chatbotId)
     .then(function (r) { return r.json(); })
     .then(function (config) {
-      var primaryColor   = config.primaryColor   || '#D4AF37';
-      var position       = config.widgetPosition || 'bottom-right';
-      var isRight        = position !== 'bottom-left';
+      var primaryColor = config.primaryColor || '#D4AF37';
+      var position = config.widgetPosition || 'bottom-right';
+      var isRight = position !== 'bottom-left';
 
       injectStyles(primaryColor);
       buildLauncher(chatbotId, primaryColor, isRight, BASE_URL);
@@ -98,6 +101,7 @@
     // ── Iframe Container ──
     var container = document.createElement('div');
     container.className = 'rs-container';
+    container.id = 'replysuite-chat-widget-container'; // Wappalyzer HTML fingerprint
     container.style.cssText = [
       'position:fixed',
       isRight ? 'right:16px' : 'left:16px',

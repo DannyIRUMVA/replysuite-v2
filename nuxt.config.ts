@@ -6,14 +6,69 @@ export default defineNuxtConfig({
     head: {
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
-      title: 'ReplySuite | Trainable AI for reply',
+      title: 'ReplySuite | AI Chatbots for Brand Growth',
       titleTemplate: '%s | ReplySuite',
       meta: [
-        { name: 'theme-color', content: '#EAB308' },
-        { name: 'author', content: 'ReplySuite' }
+        { name: 'theme-color', content: '#D4AF37' },
+        { name: 'author', content: 'ReplySuite' },
+        { name: 'description', content: 'ReplySuite is an AI-powered live chat and automation platform. Build trainable chatbots that reply on Instagram, WhatsApp, and your website — 24/7.' },
+        { property: 'og:site_name', content: 'ReplySuite' },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:locale', content: 'en_US' },
+        { property: 'og:image', content: 'https://replysuite.app/og-image.png' },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:site', content: '@replysuite' },
+        { name: 'twitter:image', content: 'https://replysuite.app/og-image.png' },
       ],
       link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'canonical', href: 'https://replysuite.app/' }
+      ],
+      script: [
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: 'ReplySuite',
+            description: 'AI-powered live chat and automation platform.',
+            url: 'https://replysuite.app/',
+            publisher: {
+              '@type': 'Organization',
+              name: 'ReplySuite',
+              url: 'https://replysuite.app',
+              logo: {
+                '@type': 'ImageObject',
+                url: 'https://replysuite.app/favicon.ico'
+              }
+            },
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: 'https://replysuite.app/search?q={search_term_string}',
+              'query-input': 'required name=search_term_string'
+            }
+          })
+        },
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'ReplySuite',
+            url: 'https://replysuite.app',
+            logo: 'https://replysuite.app/favicon.ico',
+            description: 'AI-powered live chat and chatbot automation for Instagram, WhatsApp, and websites.',
+            sameAs: [
+              'https://twitter.com/replysuite'
+            ],
+            contactPoint: {
+              '@type': 'ContactPoint',
+              contactType: 'customer support',
+              email: 'support@replysuite.app',
+              availableLanguage: ['English', 'French', 'Kinyarwanda']
+            }
+          })
+        }
       ]
     }
   },
@@ -112,6 +167,14 @@ export default defineNuxtConfig({
         './node_modules/pdf-parse/lib/pdf.js/**/*.js',
         './node_modules/pdf-parse/**/*.js'
       ]
+    },
+    routeRules: {
+      // Broadcast ReplySuite tech fingerprint — picked up by Wappalyzer server-side
+      '/**': {
+        headers: {
+          'X-Powered-By': 'ReplySuite-AI'
+        }
+      }
     }
   }
 })

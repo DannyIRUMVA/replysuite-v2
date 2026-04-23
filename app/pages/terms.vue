@@ -57,7 +57,7 @@ const sections = [
              Introduction
           </h2>
           <p class="leading-relaxed text-lg">
-            Welcome to ReplySuite ("Company", "us", "we", or "our"). These Terms of Service ("Terms") govern your use of our website located at replysuite.com and our automation services (collectively, "Service").
+            Welcome to ReplySuite ("Company", "us", "we", or "our"). These Terms of Service ("Terms") govern your use of our website located at replysuite.app and our automation services (collectively, "Service").
           </p>
           <p class="leading-relaxed text-lg">
             By accessing or using our Service, you agree to be bound by these Terms and our Privacy Policy. If you disagree with any part of the terms, then you may not access the Service.
@@ -120,7 +120,7 @@ const sections = [
              Contact
           </h2>
           <p class="leading-relaxed">
-            If you have any questions about these Terms, please contact us at <a href="mailto:support@replysuite.com" class="text-primary hover:underline font-bold">support@replysuite.com</a>.
+            If you have any questions about these Terms, please contact our legal department at <a href="mailto:legal@replysuite.app" class="text-primary hover:underline font-bold">legal@replysuite.app</a>.
           </p>
         </section>
       </main>

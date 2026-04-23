@@ -1,0 +1,27 @@
+{
+  "name": "ReplySuite",
+  "description": "AI-powered live chat and automation platform by Rask-D Technology. Build trainable chatbots for Instagram, WhatsApp, and websites.",
+  "website": "https://replysuite.app",
+  "cpe": null,
+  "saas": true,
+  "oss": false,
+  "categories": [
+    "Live Chat",
+    "Chatbots"
+  ],
+  "icon": "replysuite.svg",
+  "headers": {
+    "X-Powered-By": "ReplySuite"
+  },
+  "html": "<div[^>]+id=\"replysuite-chat-widget-container\"",
+  "scripts": "embed\\.js",
+  "js": {
+    "ReplySuite": "",
+    "ReplySuite.version": ""
+  },
+  "pricing": [
+    "freemium",
+    "recurring"
+  ],
+  "implies": []
+}

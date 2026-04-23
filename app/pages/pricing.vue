@@ -2,9 +2,99 @@
 import { Check, Zap, Rocket, Shield, ArrowRight, HelpCircle, Loader2 } from 'lucide-vue-next'
 
 useSeoMeta({
-  title: 'Pricing Plans | Simple, Transparent AI Automation',
+  title: 'Pricing & Plans | ReplySuite',
   description: 'Choose the perfect plan for your brand growth. From startups to high-volume global brands, we have the gold standard of AI automation for every level.',
   ogTitle: 'ReplySuite Pricing | Scalable AI Automation',
+  ogDescription: 'Simple, transparent pricing for AI chatbots and automation. Start free, scale as you grow.',
+  ogUrl: 'https://replysuite.app/pricing',
+  twitterCard: 'summary_large_image',
+  twitterTitle: 'ReplySuite Pricing',
+  twitterDescription: 'Affordable AI chatbot plans for every business size.',
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: 'https://replysuite.app/pricing' }],
+  script: [
+    {
+      type: 'application/ld+json',
+      children: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'ReplySuite',
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web',
+        url: 'https://replysuite.app',
+        description: 'AI-powered live chat and chatbot automation for Instagram, WhatsApp, and websites.',
+        offers: [
+          {
+            '@type': 'Offer',
+            name: 'Free Plan',
+            price: '0.00',
+            priceCurrency: 'USD',
+            description: '1 chatbot, 100 conversations per month, trainable AI agent, email support.',
+            url: 'https://replysuite.app/pricing'
+          },
+          {
+            '@type': 'Offer',
+            name: 'Silver Plan',
+            price: '17.88',
+            priceCurrency: 'USD',
+            description: '3 chatbots, 2,500 conversations per month, advanced bot training, priority support.',
+            url: 'https://replysuite.app/pricing'
+          },
+          {
+            '@type': 'Offer',
+            name: 'Gold Plan',
+            price: '26.88',
+            priceCurrency: 'USD',
+            description: 'Unlimited chatbots, unlimited conversations, proprietary bot training, dedicated account manager.',
+            url: 'https://replysuite.app/pricing'
+          }
+        ]
+      })
+    },
+    {
+      type: 'application/ld+json',
+      children: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'Can I cancel my ReplySuite subscription any time?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Yes, you can cancel your subscription at any time from your account settings. You will retain access until the end of your billing cycle.'
+            }
+          },
+          {
+            '@type': 'Question',
+            name: 'Does ReplySuite offer a free trial?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Yes. All new verified accounts automatically receive a 30-day free month so you can experience ReplySuite risk-free. No credit card is required for the Free plan.'
+            }
+          },
+          {
+            '@type': 'Question',
+            name: 'What happens if I exceed my monthly conversation limit on ReplySuite?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'ReplySuite will notify you when you reach 80% and 100% of your monthly conversation limit. You can upgrade your plan at any time to continue service without interruption.'
+            }
+          },
+          {
+            '@type': 'Question',
+            name: 'How much does ReplySuite cost?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'ReplySuite offers three plans: Free ($0/month, 1 chatbot, 100 conversations), Silver ($17.88/month, 3 chatbots, 2,500 conversations), and Gold ($26.88/month, unlimited chatbots and conversations). Enterprise pricing is available on request.'
+            }
+          }
+        ]
+      })
+    }
+  ]
 })
 
 definePageMeta({
@@ -158,7 +248,45 @@ const faqs = [
           </div>
         </div>
 
+        <!-- Plan Comparison Table — machine-readable for AI crawlers -->
+        <section class="max-w-5xl mx-auto mb-32 overflow-x-auto">
+          <h2 class="text-3xl font-extrabold tracking-tight text-white text-center mb-12">
+            Compare <span class="text-gradient">Plans</span>
+          </h2>
+          <table class="w-full text-sm border-collapse" aria-label="ReplySuite pricing plan comparison">
+            <thead>
+              <tr class="border-b border-white/10">
+                <th class="text-left py-4 px-6 text-gray-400 font-bold uppercase tracking-widest text-[10px]">Feature</th>
+                <th class="py-4 px-6 text-center font-bold text-white">Free<br /><span class="text-primary font-extrabold text-lg">$0</span><span class="text-gray-500 text-[10px]">/mo</span></th>
+                <th class="py-4 px-6 text-center font-bold text-white bg-primary/5 rounded-t-2xl">Silver<br /><span class="text-primary font-extrabold text-lg">$17.88</span><span class="text-gray-500 text-[10px]">/mo</span></th>
+                <th class="py-4 px-6 text-center font-bold text-white">Gold<br /><span class="text-primary font-extrabold text-lg">$26.88</span><span class="text-gray-500 text-[10px]">/mo</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, i) in [
+                { label: 'AI Chatbots', free: '1', silver: '3', gold: 'Unlimited' },
+                { label: 'Conversations / month', free: '100', silver: '2,500', gold: 'Unlimited' },
+                { label: 'Trainable AI agent', free: '✓', silver: '✓', gold: '✓' },
+                { label: 'Advanced bot training', free: '—', silver: '✓', gold: '✓' },
+                { label: 'Priority support', free: '—', silver: '✓', gold: '✓' },
+                { label: 'Dedicated account manager', free: '—', silver: '—', gold: '✓' },
+                { label: 'Instagram Auto-DM', free: '—', silver: '✓', gold: '✓' },
+                { label: 'Free trial', free: '30 days', silver: '30 days', gold: '30 days' },
+              ]" :key="row.label"
+                :class="i % 2 === 0 ? 'bg-white/[0.01]' : ''"
+                class="border-b border-white/5 transition-colors hover:bg-white/[0.03]"
+              >
+                <td class="py-4 px-6 text-gray-400 font-medium">{{ row.label }}</td>
+                <td class="py-4 px-6 text-center text-gray-300">{{ row.free }}</td>
+                <td class="py-4 px-6 text-center text-white font-semibold bg-primary/[0.03]">{{ row.silver }}</td>
+                <td class="py-4 px-6 text-center text-gray-300">{{ row.gold }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
         <!-- FAQ Section -->
+
         <section class="max-w-4xl mx-auto py-32 border-t border-white/5">
           <div class="text-center mb-24">
              <h2 class="text-5xl font-extrabold mb-6 tracking-tight text-white">Common <span class="text-gradient">Inquiries.</span></h2>

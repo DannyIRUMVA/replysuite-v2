@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ShieldCheck, Scale, FileText, Lock, Globe, MessageCircle, Mail } from 'lucide-vue-next'
+import { ShieldCheck, Scale, FileText, Lock, Globe, MessageCircle, Mail, Eye, Zap, ArrowRight } from 'lucide-vue-next'
 
 useSeoMeta({
   title: 'Privacy Policy | ReplySuite AI',
@@ -15,8 +15,8 @@ const sections = [
   { id: 'usage', title: 'Data Usage', icon: MessageCircle },
   { id: 'security', title: 'Security Protocol', icon: Lock },
   { id: 'compliance', title: 'Platform Compliance', icon: ShieldCheck },
+  { id: 'ethics', title: 'AI Ethics', icon: Zap },
   { id: 'rights', title: 'User Rights', icon: Globe },
-  { id: 'updates', title: 'Policy Updates', icon: Scale },
   { id: 'contact', title: 'Contact Support', icon: Mail }
 ]
 </script>
@@ -106,8 +106,24 @@ const sections = [
              contact
           </h2>
           <p class="text-gray-400 leading-relaxed">
-            If you have any questions about this Privacy Policy, please contact us at <a href="mailto:privacy@replysuite.com" class="text-primary hover:underline font-bold">privacy@replysuite.com</a>.
+            If you have any questions about this Privacy Policy, please contact our security team at <a href="mailto:security@replysuite.app" class="text-primary hover:underline font-bold">security@replysuite.app</a>.
           </p>
+        </section>
+
+        <section id="ethics" class="mb-20">
+           <h2 class="text-3xl font-bold tracking-tight flex items-center gap-4 text-white">
+             <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <Zap class="w-5 h-5 fill-current" />
+             </div>
+             AI Ethics & Transparency
+          </h2>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            We are committed to responsible AI. This includes ensuring your data is never used for training global models and providing transparency on our model usage.
+          </p>
+          <NuxtLink to="/ethics" class="inline-flex items-center gap-2 text-primary font-bold hover:underline">
+            View full AI Ethics Statement
+            <ArrowRight class="w-4 h-4" />
+          </NuxtLink>
         </section>
       </main>
     </div>

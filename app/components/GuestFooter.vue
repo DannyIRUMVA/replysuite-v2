@@ -39,13 +39,13 @@ import { Zap, Share2, Globe2, Layers, MessageSquare, Instagram, Twitter } from '
             <NuxtLink to="/product" class="hover:text-white transition-colors">AI Chatbot</NuxtLink>
           </li>
           <li>
-            <NuxtLink to="/features" class="hover:text-white transition-colors">Instagram Auto-DM</NuxtLink>
+            <NuxtLink to="/features" class="hover:text-white transition-colors">Multi-Channel DM</NuxtLink>
           </li>
           <li>
             <NuxtLink to="/product#integrations" class="hover:text-white transition-colors">Integrations</NuxtLink>
           </li>
           <li>
-            <NuxtLink to="/pricing" class="hover:text-white transition-colors">Pricing</NuxtLink>
+            <NuxtLink to="/pricing" class="hover:text-white transition-colors">Pricing & Plans</NuxtLink>
           </li>
         </ul>
       </div>
@@ -54,16 +54,37 @@ import { Zap, Share2, Globe2, Layers, MessageSquare, Instagram, Twitter } from '
         <h4 class="text-xs font-bold uppercase tracking-widest text-primary mb-8">Company</h4>
         <ul class="space-y-4 text-sm text-gray-500">
           <li>
-            <NuxtLink to="/about" class="hover:text-white transition-colors">About Us</NuxtLink>
+            <NuxtLink to="/about" class="hover:text-white transition-colors">Our Story</NuxtLink>
           </li>
           <li>
-            <NuxtLink to="/about#mission" class="hover:text-white transition-colors">Our Mission</NuxtLink>
+            <NuxtLink to="/about#mission" class="hover:text-white transition-colors">Mission & Values</NuxtLink>
+          </li>
+          <li>
+            <NuxtLink to="/ethics" class="hover:text-white transition-colors">AI Ethics</NuxtLink>
+          </li>
+          <li>
+            <a href="mailto:partnership@replysuite.app" class="hover:text-white transition-colors">Partnerships</a>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-widest text-primary mb-8">Trust & Legal</h4>
+        <ul class="space-y-4 text-sm text-gray-500">
+          <li>
+            <NuxtLink to="/security" class="hover:text-white transition-colors">Security Posture</NuxtLink>
           </li>
           <li>
             <NuxtLink to="/privacy" class="hover:text-white transition-colors">Privacy Policy</NuxtLink>
           </li>
           <li>
             <NuxtLink to="/terms" class="hover:text-white transition-colors">Terms of Service</NuxtLink>
+          </li>
+          <li>
+            <NuxtLink to="/terms#usage" class="hover:text-white transition-colors">Fair Usage (SLA)</NuxtLink>
+          </li>
+          <li>
+            <NuxtLink to="/cookie" class="hover:text-white transition-colors">Cookie Policy</NuxtLink>
           </li>
         </ul>
       </div>

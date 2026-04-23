@@ -2,9 +2,18 @@
 import { Users, Sparkles, ShieldCheck, Heart, ArrowRight } from 'lucide-vue-next'
 
 useSeoMeta({
-  title: 'Our Story | Empowering Creators with AI',
+  title: 'About ReplySuite | Our Story & Mission',
   description: 'Learn the mission behind ReplySuite. We\'re building the sophisticated AI infrastructure that helps modern brands scale their engagement with human-like precision.',
   ogTitle: 'About ReplySuite | Our Mission & Values',
+  ogDescription: 'ReplySuite empowers creators and brands with AI-powered chatbots and automation tools.',
+  ogUrl: 'https://replysuite.app/about',
+  twitterCard: 'summary_large_image',
+  twitterTitle: 'About ReplySuite',
+  twitterDescription: 'The story and mission behind ReplySuite — AI for brand growth.',
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: 'https://replysuite.app/about' }]
 })
 
 definePageMeta({
@@ -93,7 +102,7 @@ const values = [
           Together.
         </h2>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-8">
-           <a href="mailto:support@replysuite.com" class="w-full sm:w-auto btn-gradient px-12 py-5 text-xl">Contact Sales</a>
+           <a href="mailto:partnership@replysuite.app" class="w-full sm:w-auto btn-gradient px-12 py-5 text-xl">Partner With Us</a>
            <NuxtLink to="/pricing" class="w-full sm:w-auto border border-white/10 px-12 py-5 rounded-full hover:bg-white/5 transition-colors text-xl font-bold">View Pricing</NuxtLink>
         </div>
       </section>

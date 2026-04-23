@@ -1,10 +1,10 @@
 User-agent: *
-Allow: /
-
-# Disallow indexing of private/authentication utility routes
 Disallow: /dashboard/
 Disallow: /confirm
+Disallow: /verify
 Disallow: /api/
+Disallow: /widget/
+Allow: /
 
-# Sitemap location (if generated, standard path)
-Sitemap: https://replysuite.com/sitemap.xml
+# Sitemap
+Sitemap: https://replysuite.app/sitemap.xml
