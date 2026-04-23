@@ -38,9 +38,9 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
     .single()
 
   const plan = profile?.user_memberships?.[0]?.plans || { 
-    name: 'Starter', 
-    max_replies_per_month: 100, // Syncing with your free plan logic
-    has_auto_comment: true 
+    name: 'None', 
+    max_replies_per_month: 0,
+    has_auto_comment: false 
   }
   
   // Count current replies this month
@@ -54,7 +54,7 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
     .eq('whatsapp_account_id', waAccount.id)
     .gte('created_at', startOfMonth.toISOString())
 
-  if (plan.max_replies_per_month !== -1 && (replyCount || 0) >= (plan.max_replies_per_month || 100)) {
+  if (plan.max_replies_per_month !== -1 && (replyCount || 0) >= (plan.max_replies_per_month || 0)) {
     console.warn(`⚠️ [WhatsApp Automation] LIMIT REACHED: ${replyCount}/${plan.max_replies_per_month} replies used this month.`)
     return
   }

@@ -11,13 +11,24 @@ useSeoMeta({
   description: 'Unlock the full power of ReplySuite AI automation.',
 })
 
-const { isAuthenticated, refreshAuth, planSlug } = useAuth()
+const { isAuthenticated, refreshAuth, planSlug, polarCustomerId, syncWithPolar, isLoading: isAuthLoading } = useAuth()
 const isProcessing = ref<string | null>(null)
 const notify = useNotify()
 
-const handleSelect = async (plan: any) => {
-  if (planSlug.value === plan.id) return
+const isMounted = ref(false)
+const isLoading = computed(() => !isMounted.value || isAuthLoading.value)
 
+// Automatically sync with Polar on mount if identity is missing or to verify deep status
+onMounted(async () => {
+  isMounted.value = true
+  if (!polarCustomerId.value) {
+    console.log('[Pricing] Missing Polar identity. Syncing...')
+    await syncWithPolar()
+  }
+})
+
+const handleSelect = async (plan: any) => {
+  // Allow re-selecting for troubleshooting or explicit upgrades
   isProcessing.value = plan.id
   
   try {
@@ -25,6 +36,7 @@ const handleSelect = async (plan: any) => {
       const res = await $fetch('/api/billing/onboard-free', { method: 'POST' })
       if (res.success) {
         await refreshAuth()
+        notify.success('Starter plan activated')
         return navigateTo('/dashboard/analytics')
       }
     } else {
@@ -40,6 +52,12 @@ const handleSelect = async (plan: any) => {
 
       if (res.url) {
         window.location.href = res.url
+      } else if (res.updated) {
+        // Handle instant update (proration)
+        notify.success('Plan updated successfully! Your new limits are active.')
+        await syncWithPolar() // Deep sync to update local DB and refreshAuth
+        // Optional: navigate to dashboard
+        // return navigateTo('/dashboard/analytics')
       }
     }
   } catch (err: any) {
@@ -78,58 +96,75 @@ const plans = [
     popular: false
   }
 ]
+
+const openPortal = async () => {
+  try {
+    const res = await $fetch('/api/billing/portal')
+    if (res.url) {
+      window.open(res.url, '_blank')
+    }
+  } catch (err) {
+    notify.error('Failed to open billing portal')
+  }
+}
 </script>
 
 <template>
   <div class="p-8 max-w-6xl mx-auto">
     <!-- Header -->
     <div class="mb-12">
-      <span class="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary uppercase tracking-widest mb-4 inline-block">
-        Subscription Required
+      <span class="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary mb-4 inline-block tracking-wider">
+        Subscription required
       </span>
-      <h1 class="text-4xl font-extrabold text-white tracking-tight mb-4">
-        Choose your <span class="text-gradient">Empire Class.</span>
+      <h1 class="text-4xl font-extrabold text-white tracking-tight mb-4 lowercase">
+        Choose your <span class="text-gradient">empire class.</span>
       </h1>
-      <p class="text-gray-500 font-medium">Please select a plan to unlock your AI dashboard and start automating.</p>
+      <p class="text-gray-500 font-medium lowercase">please select a plan to unlock your ai dashboard and start automating.</p>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex flex-col items-center justify-center min-h-[40vh] py-20">
+      <Loader2 class="w-12 h-12 text-primary animate-spin mb-6" />
+      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">Retrieving Empire Classes...</p>
     </div>
 
     <!-- Pricing Grid -->
-    <div class="grid lg:grid-cols-3 gap-8">
+    <div v-else class="grid lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div 
         v-for="plan in plans" 
         :key="plan.name"
         class="glass-card p-10 flex flex-col relative transition-all duration-300 hover:border-primary/30 border-white/5"
         :class="plan.popular ? 'border-primary/20 bg-primary/[0.02]' : ''"
       >
-        <div v-if="plan.popular" class="absolute -top-3 left-6 px-4 py-1 bg-primary text-black text-[9px] font-bold tracking-widest rounded-full uppercase">
-          Best Value
+        <div v-if="plan.popular" class="absolute -top-3 left-6 px-4 py-1 bg-primary text-black text-[9px] font-bold tracking-widest rounded-full">
+          best value
         </div>
 
         <div class="mb-8">
           <h3 class="text-2xl font-bold text-white mb-2">{{ plan.name }}</h3>
-          <p class="text-xs text-gray-500 font-medium">{{ plan.desc }}</p>
+          <p class="text-xs text-gray-400 font-medium">{{ plan.desc }}</p>
         </div>
 
         <div class="mb-10 flex items-baseline gap-2">
           <span class="text-4xl font-extrabold text-white">${{ plan.price }}</span>
-          <span class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">/mo</span>
+          <span class="text-[10px] text-gray-600 font-bold tracking-widest">/mo</span>
         </div>
 
         <button 
           @click="handleSelect(plan)"
-          :disabled="isProcessing === plan.id || planSlug === plan.id"
-          class="w-full py-4 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all mb-10 flex items-center justify-center gap-2"
-          :class="planSlug === plan.id ? 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/10' : (plan.popular ? 'bg-primary text-black hover:bg-primary/90' : 'bg-white/5 hover:bg-white/10 text-white border border-white/10')"
+          :disabled="isProcessing === plan.id"
+          class="w-full py-4 rounded-xl font-bold text-[11px] tracking-widest transition-all mb-10 flex items-center justify-center gap-2"
+          :class="planSlug === plan.id ? 'bg-primary/20 text-primary border border-primary/30' : (plan.popular ? 'bg-primary text-black hover:bg-primary/90' : 'bg-white/5 hover:bg-white/10 text-white border border-white/10')"
         >
           <template v-if="isProcessing === plan.id">
             <Loader2 class="w-4 h-4 animate-spin" />
-            Processing...
+            processing...
           </template>
           <template v-else-if="planSlug === plan.id">
-            Current Plan
+            current plan
           </template>
           <template v-else>
-            {{ plan.id === 'starter' ? 'Activate Starter' : 'Upgrade Plan' }}
+            {{ plan.id === 'starter' ? 'get started' : 'select plan' }}
           </template>
         </button>
 
@@ -144,18 +179,37 @@ const plans = [
       </div>
     </div>
 
-    <!-- Help Note -->
-    <div class="mt-12 p-6 rounded-2xl bg-white/[0.01] border border-white/5 flex items-center gap-4">
-      <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
-        <Shield class="w-5 h-5 text-gray-500" />
+    <!-- Sync and Manage Portal -->
+    <div class="mt-12 flex flex-col md:flex-row items-center justify-between gap-6 p-8 rounded-[32px] bg-white/[0.01] border border-white/5 relative overflow-hidden">
+      <div class="flex items-center gap-4 relative z-10">
+        <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+          <Shield class="w-6 h-6" />
+        </div>
+        <div>
+          <p class="text-[12px] font-bold text-white tracking-widest mb-1">Billing Management</p>
+          <p class="text-[11px] text-gray-500 font-medium lowercase">payments are managed via polar.sh. need to update your card or cancel? use the portal.</p>
+        </div>
       </div>
-      <div>
-        <p class="text-[11px] font-bold text-white uppercase tracking-widest mb-1">Secure Transaction</p>
-        <p class="text-[11px] text-gray-500 font-medium italic-none">Payments are managed via Polar.sh. Standard 30-day free month applies to all plans.</p>
+      
+      <div class="flex items-center gap-4 relative z-10 w-full md:w-auto">
+        <button 
+          @click="syncWithPolar" 
+          class="flex-1 md:flex-none px-6 py-3 rounded-xl border border-white/10 hover:bg-white/5 text-[10px] font-bold tracking-widest transition-all uppercase"
+        >
+          Sync Plan Status
+        </button>
+        <button 
+          v-if="planSlug && planSlug !== 'starter'"
+          @click="openPortal" 
+          class="flex-1 md:flex-none px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-[10px] font-bold tracking-widest transition-all uppercase"
+        >
+          Manage Subscription
+        </button>
       </div>
     </div>
   </div>
 </template>
+
 
 <style scoped>
 .glass-card {

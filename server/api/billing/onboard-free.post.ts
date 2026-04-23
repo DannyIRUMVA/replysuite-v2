@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
       .eq('id', userId)
       .single()
 
-    const customer = await syncUserToPolar(userId, user.email || 'unknown@user.com', profile.data?.full_name)
+    const customer = await syncUserToPolar(event, userId, user.email || 'unknown@user.com', profile.data?.full_name)
     if (customer) {
        polarCustomerId = customer.id
     }
@@ -54,19 +54,27 @@ export default defineEventHandler(async (event) => {
 
   // 3. Create membership (Service Role required to bypass RLS)
   const adminClient = serverSupabaseServiceRole(event)
-  const upsertData: any = {
+  
+  // Deactivate all existing memberships for this user to avoid duplicates
+  await adminClient
+    .from('user_memberships')
+    .update({ is_active: false })
+    .eq('user_id', userId)
+
+  const insertData: any = {
       user_id: userId,
       plan_id: plan.id,
-      is_active: true
+      is_active: true,
+      starts_at: new Date().toISOString()
   }
   
   if (polarCustomerId) {
-      upsertData.polar_customer_id = polarCustomerId
+      insertData.polar_customer_id = polarCustomerId
   }
 
   const { error: membershipError } = await adminClient
     .from('user_memberships')
-    .upsert(upsertData)
+    .insert(insertData)
 
   if (membershipError) {
      console.error('[Onboard-Free] Membership Error:', membershipError)

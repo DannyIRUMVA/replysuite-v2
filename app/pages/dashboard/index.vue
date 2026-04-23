@@ -71,7 +71,8 @@ const stats = computed(() => {
 })
 
 // Unified loading state
-const loading = computed(() => isMounted.value ? (isLoading.value || statsLoading.value) : false)
+// Unified loading state - ensure we show skeletons until mounted and data is ready
+const loading = computed(() => !isMounted.value || isLoading.value || statsLoading.value)
 </script>
 
 <template>

@@ -38,15 +38,19 @@ export const useAuth = () => {
   const profile = computed(() => authData.value?.profile || null)
   const membership = computed(() => authData.value?.membership || null)
   const plan = computed(() => membership.value?.plans || null)
-  const planSlug = computed(() => plan.value?.internal_slug || 'starter')
+  const planSlug = computed(() => plan.value?.internal_slug || null)
   
   const limits = computed(() => ({
-    maxAccounts: plan.value?.max_instagram_accounts || 1,
-    maxRules: plan.value?.max_triggers || 1,
-    maxAgents: plan.value?.max_chatbots || 1,
-    maxDms: plan.value?.max_auto_dms_per_month || 50,
-    maxTrainings: planSlug.value === 'starter' ? 10 : 999999,
-    maxEmbeddingMb: plan.value?.max_embedding_mb || (planSlug.value === 'starter' ? 1.0 : 5.0),
+    maxAccounts: plan.value?.max_instagram_accounts || 0,
+    maxRules: plan.value?.max_triggers || 0,
+    maxAgents: plan.value?.max_chatbots || 0,
+    maxDms: plan.value?.max_auto_dms_per_month || 0,
+    maxTrainings: plan.value?.max_training_units || 0,
+    maxEmbeddingMb: plan.value?.max_embedding_mb || 0,
+    maxReplies: plan.value?.max_replies_per_month || 0,
+    hasAdvancedTraining: plan.value?.advanced_training || false,
+    hasApiAccess: plan.value?.api_access || false,
+    removeBranding: plan.value?.remove_branding || false
   }))
 
   const isLoading = computed(() => isAuthDataLoading.value)
@@ -132,11 +136,28 @@ export const useAuth = () => {
     return false
   }
 
+  /**
+   * Force a deep-sync with Polar subscription data.
+   */
+  const syncWithPolar = async () => {
+    try {
+      const res = await $fetch('/api/billing/sync')
+      if (res.success) {
+        await refreshAuth()
+        return res
+      }
+    } catch (err) {
+      console.error('[Auth Sync] Polar sync failed:', err)
+    }
+    return null
+  }
+
   return {
     user,
     userId,
     profile,
     membership,
+    polarCustomerId: computed(() => profile.value?.polar_customer_id || null),
     plan,
     planSlug,
     limits,
@@ -145,6 +166,7 @@ export const useAuth = () => {
     isVerified,
     canAdd,
     refreshAuth,
+    syncWithPolar,
     setInteracting
   }
 }

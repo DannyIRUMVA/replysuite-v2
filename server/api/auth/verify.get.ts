@@ -43,13 +43,8 @@ export default defineEventHandler(async (event) => {
   try {
     const { data: user } = await client.auth.admin.getUserById(verifyRecord.user_id)
     if (user?.user) {
-      const customer = await syncUserToPolar(user.user.id, user.user.email!)
+      const customer = await syncUserToPolar(event, user.user.id, user.user.email!)
       if (customer) {
-        // Save customer ID to membership record
-        await client
-          .from('user_memberships')
-          .update({ polar_customer_id: customer.id })
-          .eq('user_id', user.user.id)
         console.log(`[Verify] Linked Polar Customer ${customer.id} to user ${user.user.id}`)
       }
     }
@@ -73,6 +68,6 @@ export default defineEventHandler(async (event) => {
     meta: { tokenId: verifyRecord.id }
   })
 
-  // 6. Redirect to login with success
-  return sendRedirect(event, '/login?verified=true')
+  // 6. Redirect to login with success and onboarding hint
+  return sendRedirect(event, '/login?verified=true&onboarding=true')
 })

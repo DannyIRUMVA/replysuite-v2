@@ -31,9 +31,9 @@ export const processInstagramComment = async (supabase: any, commentData: any) =
     .single()
 
   const plan = profile?.user_memberships?.[0]?.plans || { 
-    name: 'Starter', 
-    max_replies_per_month: 50,
-    has_auto_comment: true // Default true for basic testing
+    name: 'None', 
+    max_replies_per_month: 0,
+    has_auto_comment: false
   }
   
   // Count current replies this month
@@ -47,7 +47,7 @@ export const processInstagramComment = async (supabase: any, commentData: any) =
     .eq('instagram_account_id', igAccount.id)
     .gte('created_at', startOfMonth.toISOString())
 
-  if (plan.max_replies_per_month !== -1 && (replyCount || 0) >= (plan.max_replies_per_month || 50)) {
+  if (plan.max_replies_per_month !== -1 && (replyCount || 0) >= (plan.max_replies_per_month || 0)) {
     console.warn(`⚠️ [Automation] LIMIT REACHED: ${replyCount}/${plan.max_replies_per_month} replies used this month.`)
     return
   }

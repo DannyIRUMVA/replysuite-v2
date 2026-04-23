@@ -15,12 +15,24 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-const { userId, membership, planSlug, isLoading: isSubLoading } = useAuth()
+const { userId, membership, planSlug, isLoading: isAuthLoading, refreshAuth, syncWithPolar, polarCustomerId } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()
 
+const isMounted = ref(false)
+const isLoading = computed(() => !isMounted.value || isAuthLoading.value)
+
 // Removed errorMsg ref in favor of notify system
 const checkoutLoading = ref<string | null>(null)
+
+// Automatically sync with Polar on mount if identity exists but status might be stale
+onMounted(async () => {
+  isMounted.value = true
+  if (polarCustomerId.value) {
+    console.log('[Billing] Verification check...')
+    await syncWithPolar()
+  }
+})
 
 const { data: payments } = useAsyncData('payment-history', async () => {
   const currentId = userId.value
@@ -67,10 +79,10 @@ const isSyncing = ref(false)
 const handleSync = async () => {
   isSyncing.value = true
   try {
-    const res = await $fetch<{ success: boolean; message: string }>('/api/billing/sync', { method: 'POST' })
+    const res = await $fetch<{ success: boolean; message: string }>('/api/billing/sync')
     if (res.success) {
       notify.success(res.message)
-      window.location.reload()
+      await refreshAuth()
     } else {
       notify.error(res.message)
     }
@@ -91,7 +103,7 @@ const handleUpgrade = async (plan: any) => {
       const res = await $fetch('/api/billing/onboard-free', { method: 'POST' })
       if ((res as any).success) {
         notify.success('You are now on the Starter plan.')
-        window.location.reload()
+        await refreshAuth()
       }
       return
     }
@@ -112,7 +124,7 @@ const handleUpgrade = async (plan: any) => {
     if (response?.upgraded) {
       // Subscription was updated directly — no redirect needed
       notify.success(response.message || 'Plan upgraded successfully!')
-      window.location.reload()
+      await refreshAuth()
       return
     }
 
@@ -140,7 +152,14 @@ const handleUpgrade = async (plan: any) => {
       <main class="flex-1 glass-card p-10 border-white/5 bg-[#0a0a0a] min-h-[600px] relative overflow-hidden">
         <div class="absolute -right-20 -top-20 w-80 h-80 bg-primary/5 rounded-full blur-[100px] -z-10"></div>
 
-        <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div v-if="isLoading" class="flex items-center justify-center h-[400px]">
+          <div class="flex flex-col items-center gap-4">
+            <Loader2 class="w-10 h-10 text-primary animate-spin" />
+            <p class="text-xs font-bold tracking-widest text-gray-600 uppercase">Synchronizing Billing...</p>
+          </div>
+        </div>
+
+        <div v-else class="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <h3 class="text-xl font-black tracking-wide text-primary mb-6">Billing Hub</h3>
 
           <!-- Active Plan Badge -->
@@ -152,7 +171,7 @@ const handleUpgrade = async (plan: any) => {
                 <Zap v-else class="w-6 h-6" />
               </div>
               <div>
-                <p class="text-[10px] font-black uppercase tracking-widest text-primary">Active Subscription</p>
+                <p class="text-[10px] font-black uppercase tracking-widest text-primary">Current Subscription</p>
                 <h4 class="text-lg font-black uppercase tracking-tighter">{{ planSlug }}</h4>
               </div>
             </div>
@@ -206,7 +225,7 @@ const handleUpgrade = async (plan: any) => {
                   <Loader2 class="w-3 h-3 animate-spin" /> processing
                 </span>
                 <span v-else-if="planSlug === p.id">Current Plan</span>
-                <span v-else>Upgrade Now</span>
+                <span v-else>Select Plan</span>
               </button>
             </div>
           </div>

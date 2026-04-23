@@ -129,26 +129,39 @@ const handleLogout = async () => {
       </div>
     </nav>
 
-    <!-- Subscription Card -->
-    <div v-if="membership" class="mt-8 mb-4">
+    <!-- Subscription Card (Skeleton while loading) -->
+    <div v-if="isLoading" class="mt-8 mb-4">
+      <div class="glass-card p-5 border border-white/5 bg-white/[0.02]">
+        <div class="flex items-center justify-between mb-3">
+          <Skeleton width="60px" height="10px" />
+          <Skeleton width="12px" height="12px" circle />
+        </div>
+        <Skeleton width="120px" height="14px" class="mb-2" />
+        <Skeleton width="80px" height="10px" class="mb-4" />
+        <Skeleton width="100%" height="36px" rounded="8px" />
+      </div>
+    </div>
+
+    <!-- Subscription Card (Actual Data) -->
+    <div v-else-if="membership" class="mt-8 mb-4">
       <div class="glass-card p-5 border border-primary/20 bg-gradient-to-b from-primary/5 to-transparent relative overflow-hidden group">
         <div class="absolute -right-10 -bottom-10 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
         
         <div class="relative z-10">
           <div class="flex items-center justify-between mb-3">
-             <span class="text-[10px] font-bold tracking-widest text-primary capitalize">{{ membership.plans?.name }} Plan</span>
+             <span class="text-[10px] font-bold tracking-widest text-primary capitalize">Current Plan: {{ membership.plans?.name }}</span>
              <Zap class="w-3 h-3 text-primary fill-current" />
           </div>
           
           <h4 class="font-bold text-sm mb-1 capitalize">
-            {{ membership.plans?.name === 'Trial' ? 'Free Month Trial' : membership.plans?.display_name }}
+            {{ membership.plans?.display_name || membership.plans?.name }}
           </h4>
-          <p class="text-[11px] text-gray-500 mb-4">
-            {{ daysLeft }} Days Remaining
+          <p class="text-[11px] text-gray-500 mb-4 lowercase">
+            {{ daysLeft }} days remaining
           </p>
 
-          <NuxtLink to="/pricing" class="block w-full py-2.5 bg-primary text-black text-[11px] font-bold rounded-lg text-center hover:bg-primary-accent transition-colors shadow-lg shadow-primary/10">
-            Upgrade Now
+          <NuxtLink to="/dashboard/pricing" class="block w-full py-2.5 bg-primary text-black text-[11px] font-bold rounded-lg text-center hover:bg-primary-accent transition-colors shadow-lg shadow-primary/10 uppercase">
+            Select Plan
           </NuxtLink>
         </div>
       </div>
@@ -198,6 +211,6 @@ const handleLogout = async () => {
 
 <style scoped>
 .glass-card {
-  @apply bg-[#111111]/40 backdrop-blur-xl border border-white/5 p-8 rounded-[2rem];
+  @apply bg-[#111111]/40 backdrop-blur-xl border border-white/5 rounded-[2rem];
 }
 </style>

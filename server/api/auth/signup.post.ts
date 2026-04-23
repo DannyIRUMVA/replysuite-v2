@@ -3,7 +3,14 @@ import { serverSupabaseClient, serverSupabaseServiceRole } from '#supabase/serve
 export default defineEventHandler(async (event) => {
 
   const body = await readBody(event)
-  const { email, password } = body
+  const { 
+    email, 
+    password, 
+    fullName, 
+    companyName, 
+    phone, 
+    industry 
+  } = body
 
   if (!email || !password) {
     throw createError({
@@ -18,6 +25,12 @@ export default defineEventHandler(async (event) => {
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        full_name: fullName,
+        company_name: companyName
+      }
+    }
   })
 
   if (authError) {
@@ -35,13 +48,30 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // 1.5 Create Profile Record (Defensive insert)
+  const serviceClient = serverSupabaseServiceRole(event)
+  const { error: profileError } = await serviceClient
+    .from('profiles')
+    .upsert({
+      id: userId,
+      full_name: fullName,
+      company_name: companyName,
+      phone: phone,
+      bio: industry, // Using bio for industry for now
+      contact_email: email,
+      is_verified: false
+    })
+
+  if (profileError) {
+    console.error('[Signup] Profile Error:', profileError)
+  }
+
   // 2. Generate custom verification token
   const token = crypto.randomUUID()
   const expiresAt = new Date()
   expiresAt.setHours(expiresAt.getHours() + 24)
 
   // 3. Store in user_verifications (using service role)
-  const serviceClient = serverSupabaseServiceRole(event)
   const { error: dbError } = await serviceClient
     .from('user_verifications')
     .insert({
