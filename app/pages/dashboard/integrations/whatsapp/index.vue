@@ -18,18 +18,22 @@ onMounted(() => {
   fetchAccounts()
 })
 
-const currentStep = computed(() => {
-    if (accounts.value.length === 0) return 1
-    const unmapped = accounts.value.find(a => !a.chatbot_id)
-    if (unmapped) return 2
-    const undeployed = accounts.value.find(a => a.status !== 'deployed')
-    if (undeployed) return 3
-    return 4 // Fully Deployed
-})
-
 const isConnecting = ref(false)
+const isAddingNew = ref(false)
 const isLoadingAccounts = ref(true)
 const accounts = ref<any[]>([])
+
+const currentStep = computed(() => {
+    if (isConnecting.value || showManualSetup.value || isAddingNew.value) return 1
+    if (accounts.value.length === 0) return 1
+    
+    // Find first account that needs attention
+    const incomplete = accounts.value.find(a => !a.chatbot_id || a.status !== 'deployed')
+    if (!incomplete) return 4
+    
+    if (!incomplete.chatbot_id) return 2
+    return 3
+})
 
 // Agents for mapping
 const { data: agentsData, refresh: refreshAgents } = useAsyncData('agents-list-integrations', async () => {
@@ -65,12 +69,20 @@ const config = useRuntimeConfig()
 
 // Fetch Accounts
 const fetchAccounts = async () => {
+    console.log('🔄 [WhatsApp] Fetching accounts...')
     isLoadingAccounts.value = true
     try {
-        const { data } = await supabase.from('whatsapp_accounts').select('*').order('created_at', { ascending: false })
+        const { data, error } = await supabase
+            .from('whatsapp_accounts')
+            .select('*')
+            .order('created_at', { ascending: false })
+        
+        if (error) throw error
         accounts.value = data || []
-    } catch (err) {
-        console.error('Error fetching WA accounts:', err)
+        console.log(`✅ [WhatsApp] Found ${accounts.value.length} accounts`)
+    } catch (err: any) {
+        console.error('❌ [WhatsApp] Error fetching accounts:', err.message)
+        notify.error('Failed to load WhatsApp accounts. Please refresh the page.')
     } finally {
         isLoadingAccounts.value = false
     }
@@ -84,7 +96,7 @@ const sendTestMessage = async (accountId: string) => {
     }
     isSendingTest.value = true
     try {
-        const res = await $fetch('/api/whatsapp/test-message', {
+        await $fetch('/api/whatsapp/test-message', {
             method: 'POST',
             body: {
                 whatsappAccountId: accountId,
@@ -109,7 +121,7 @@ const createReviewTemplate = async (accountId: string) => {
     }
     isCreatingTemplate.value = true
     try {
-        const res = await $fetch('/api/whatsapp/templates', {
+        await $fetch('/api/whatsapp/templates', {
             method: 'POST',
             body: {
                 whatsappAccountId: accountId,
@@ -142,7 +154,7 @@ const submitManualSetup = async () => {
 
     isSubmittingManual.value = true
     try {
-        const res = await $fetch('/api/whatsapp/connect', {
+        const response: any = await $fetch('/api/whatsapp/connect', {
             method: 'POST',
             body: {
                 phone_number: manualPhone.value,
@@ -151,11 +163,24 @@ const submitManualSetup = async () => {
                 accessToken: manualToken.value
             }
         })
-        notify.success('Manual Activation Successful!')
+        
+        console.log('Manual Connect Response:', response)
+        notify.success(response.message || 'Manual Activation Successful!')
+        
+        // Reset all states that might block the stepper
         showManualSetup.value = false
-        fetchAccounts()
+        isAddingNew.value = false
+        isConnecting.value = false
+        
+        // Await the fetch to ensure reactive state updates before the user looks at the screen
+        await fetchAccounts()
+        console.log('Accounts after refresh:', accounts.value.length)
+
+        // If the number is already there, it should have a chatbot_id or be in Step 2.
+        // We force a UI update by ensuring the list is visible.
     } catch (err: any) {
-        notify.error(`Manual Activation Failed: ${err.statusMessage || err.message}`)
+        console.error('Manual activation error:', err)
+        notify.error(`Manual Activation Failed: ${err.data?.statusMessage || err.message}`)
     } finally {
         isSubmittingManual.value = false
     }
@@ -180,77 +205,6 @@ useHead({
     }
   ]
 })
-
-const startWhatsAppEmbeddedSignup = () => {
-  isConnecting.value = true
-  
-  if (!(window as any).FB) {
-    notify.warn('Meta SDK layer is pending. Please ensure no adblockers are halting the script and try again seconds later.')
-    isConnecting.value = false
-    return
-  }
-
-  // Invoke the genuine Meta Embedded Signup Protocol natively
-  (window as any).FB.login(async (response: any) => {
-    if (response.authResponse) {
-      // The Access Token and signed code arrives here natively!
-      console.log('✅ Meta Embedded Sequence Successful', response)
-      
-      try {
-          notify.success("Meta Authorized! Extracting phone numbers...")
-          const res = await $fetch('/api/whatsapp/fetch-numbers', {
-              method: 'POST',
-              body: { accessToken: response.authResponse.accessToken }
-          })
-          
-          fetchedNumbers.value = res.numbers.map((n: any) => ({ ...n, accessToken: response.authResponse.accessToken }))
-          
-          if (fetchedNumbers.value.length === 0) {
-             notify.warn("No phone numbers found connected to this specific FB structure! Falling back to Manual Setup.")
-             showManualSetup.value = true
-          }
-      } catch (err) {
-          notify.error("Failed to map Meta Graph automatically.")
-          showManualSetup.value = true
-      } finally {
-          isConnecting.value = false
-          fetchAccounts()
-      }
-    } else {
-      console.warn('Authentication aborted or unfulfilled securely.')
-      isConnecting.value = false
-    }
-  }, {
-    scope: 'whatsapp_business_management,whatsapp_business_messaging',
-    response_type: 'token,code',
-    override_default_response_type: true,
-    extras: {
-      feature: 'whatsapp_embedded_signup'
-    }
-  })
-}
-
-const saveFetchedNumber = async (num: any) => {
-    isSavingNumber.value = true
-    try {
-        await $fetch('/api/whatsapp/connect', {
-            method: 'POST',
-            body: {
-                waba_id: num.waba_id,
-                phone_number_id: num.phone_number_id,
-                phone_number: num.display_phone_number,
-                accessToken: num.accessToken
-            }
-        })
-        notify.success('Number Successfully Bound! Access Token saved natively.')
-        fetchedNumbers.value = [] // Clear selection
-        fetchAccounts()
-    } catch (err: any) {
-        notify.error(`Secure Bind Failed: ${err.data?.statusMessage || err.message}`)
-    } finally {
-        isSavingNumber.value = false
-    }
-}
 
 const updateMapping = async (accountId: string, chatbotId: string | null) => {
     try {
@@ -314,110 +268,81 @@ const deployNode = async (accountId: string) => {
 
     <main class="w-full space-y-12 relative z-50 pointer-events-auto">
       <!-- Step 1: Connection HUB -->
-      <section v-if="accounts.length === 0 || showManualSetup" class="glass-card p-10 bg-black/40 border-white/5 relative overflow-hidden group">
+      <section v-if="accounts.length === 0 || isAddingNew" class="glass-card p-10 bg-black/40 border-white/5 relative overflow-hidden group animate-in fade-in slide-in-from-top-4 duration-700">
         <div class="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none"></div>
         
-        <!-- Embedded Selector -->
-        <div v-if="!showManualSetup" class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-10">
             <div class="flex items-center gap-6">
-                <div class="w-16 h-16 rounded-[24px] bg-green-500/10 flex items-center justify-center border border-green-500/20">
-                    <MessageSquare class="w-8 h-8 text-green-500/60" />
-                </div>
-                <div>
-                    <h2 class="text-2xl font-black text-white tracking-tighter uppercase mb-1">Step 1: Link physical line</h2>
-                    <p class="text-xs text-gray-500 font-medium lowercase first-letter:uppercase">Secure your entry point via Meta's genuine handoff protocol.</p>
-                </div>
+              <div class="w-16 h-16 rounded-[24px] bg-primary/10 flex items-center justify-center border border-primary/20">
+                <MessageSquare class="w-8 h-8 text-primary/60" />
+              </div>
+              <div>
+                <h2 class="text-2xl font-black text-white tracking-tighter uppercase mb-1">Step 1: Link WhatsApp Line</h2>
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-widest">Manual API Configuration</p>
+              </div>
             </div>
-            
-            <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-                <button 
-                @click="startWhatsAppEmbeddedSignup"
-                :disabled="isConnecting"
-                class="w-full sm:w-auto bg-green-600 hover:bg-green-500 text-black px-10 py-5 rounded-[24px] text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-green-600/20 disabled:opacity-50 flex items-center justify-center gap-3"
-                >
-                    <Loader2 v-if="isConnecting" class="w-4 h-4 animate-spin" />
-                    {{ isConnecting ? 'Authenticating...' : 'Connect Number' }}
-                </button>
+            <button v-if="accounts.length > 0" @click="isAddingNew = false" class="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors">
+              Cancel
+            </button>
+          </div>
 
-                <button 
-                @click="showManualSetup = true"
-                class="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-white px-8 py-5 rounded-[24px] text-xs font-bold uppercase tracking-widest transition-all"
-                >
-                    Manual Override
-                </button>
+          <!-- Manual Fields -->
+          <div class="grid md:grid-cols-2 gap-8 mb-10">
+            <div class="space-y-2">
+              <label class="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">WhatsApp Business Account ID (WABA)</label>
+              <input v-model="manualWabaId" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" placeholder="Found in WhatsApp Manager Settings" class="w-full bg-white/[0.02] border border-white/5 rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary/50 transition-all" />
             </div>
-        </div>
-
-        <!-- Fetched Numbers Selection UI -->
-        <div v-if="fetchedNumbers.length > 0 && !showManualSetup" class="mt-8 animate-in fade-in slide-in-from-top-4 duration-500 p-8 rounded-[2rem] bg-green-500/5 border border-green-500/20 relative z-20">
-             <h3 class="text-sm font-black text-white uppercase tracking-widest mb-6 border-b border-green-500/20 pb-4">Select Associated Line Extract</h3>
-             <div class="space-y-4">
-                 <div v-for="num in fetchedNumbers" :key="num.phone_number_id" class="flex flex-col sm:flex-row items-center justify-between p-5 bg-[#0a0a0a] rounded-2xl border border-white/5 hover:border-green-500/30 transition-all group">
-                     <div>
-                         <p class="font-bold text-white tracking-widest">{{ num.display_phone_number }} <span class="text-xs text-green-500 ml-2 uppercase">({{ num.verified_name }})</span></p>
-                         <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-2 flex items-center gap-3">
-                            <span>Quality: <strong class="text-gray-300">{{ num.quality_rating }}</strong></span>
-                            <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
-                            <span>Asset ID: <strong class="text-gray-300">{{ num.waba_id }}</strong></span>
-                         </p>
-                     </div>
-                     <button @click="saveFetchedNumber(num)" :disabled="isSavingNumber" class="mt-4 sm:mt-0 bg-green-600 text-black hover:bg-green-500 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-green-500/10 disabled:opacity-50">
-                        <Loader2 v-if="isSavingNumber" class="w-3 h-3 animate-spin" />
-                        {{ isSavingNumber ? 'Binding...' : 'Bind Number' }}
-                     </button>
-                 </div>
-             </div>
-        </div>
-
-        <!-- Manual Form -->
-        <div v-else class="animate-in fade-in slide-in-from-top-4 duration-500 space-y-8 relative z-10">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-2xl font-black text-white tracking-tighter uppercase mb-1">Manual Mapping</h2>
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 italic-none">Direct node activation via meta asset IDs.</p>
-                </div>
-                <button @click="showManualSetup = false" class="text-gray-600 hover:text-white transition-all p-2 bg-white/5 rounded-full"> 
-                    <Plus class="w-5 h-5 rotate-45" />
-                </button>
+            <div class="space-y-2">
+              <label class="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Phone Number ID</label>
+              <input v-model="manualPhoneId" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" placeholder="Found in API Setup tab" class="w-full bg-white/[0.02] border border-white/5 rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary/50 transition-all" />
             </div>
-
-            <div class="grid sm:grid-cols-2 gap-6">
-                <div class="space-y-2">
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-gray-500">Phone Number</label>
-                    <input v-model="manualPhone" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" placeholder="+1234567890" class="w-full bg-white/[0.02] border border-white/5 rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary/50 transition-all font-mono" />
-                </div>
-                <div class="space-y-2">
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">
-                        Phone Number ID
-                        <HelpCircle class="w-3 h-3 text-gray-700" />
-                    </label>
-                    <input v-model="manualPhoneId" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" class="w-full bg-white/[0.02] border border-white/5 rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary/50 transition-all font-mono" />
-                </div>
-                <div class="space-y-2">
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">WABA ID</label>
-                    <input v-model="manualWabaId" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" class="w-full bg-white/[0.02] border border-white/5 rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary/50 transition-all font-mono" />
-                </div>
-                <div class="space-y-2">
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Graph Access Token</label>
-                    <input v-model="manualToken" @focus="setInteracting(true)" @blur="setInteracting(false)" type="password" class="w-full bg-white/[0.02] border border-white/5 rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary/50 transition-all" />
-                </div>
+            <div class="space-y-2">
+              <label class="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Display Phone Number</label>
+              <input v-model="manualPhone" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" placeholder="+250..." class="w-full bg-white/[0.02] border border-white/5 rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary/50 transition-all" />
             </div>
-
-            <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/5">
-                <button 
-                    @click="submitManualSetup"
-                    :disabled="isSubmittingManual"
-                    class="w-full sm:w-auto bg-primary text-black px-10 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
-                >
-                    <Loader2 v-if="isSubmittingManual" class="w-4 h-4 animate-spin inline-block mr-2" />
-                    Verify & Activate Node
-                </button>
+            <div class="space-y-2">
+              <label class="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Permanent Access Token</label>
+              <input v-model="manualToken" @focus="setInteracting(true)" @blur="setInteracting(false)" type="password" placeholder="System User Token" class="w-full bg-white/[0.02] border border-white/5 rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary/50 transition-all" />
             </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-4 pt-8 border-t border-white/5">
+            <div class="flex items-center gap-6">
+              <button 
+                @click="submitManualSetup"
+                :disabled="isSubmittingManual"
+                class="bg-primary text-black px-12 py-5 rounded-[2rem] text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-primary/20 disabled:opacity-50 flex items-center gap-3"
+              >
+                <Loader2 v-if="isSubmittingManual" class="w-4 h-4 animate-spin" />
+                Verify and Continue
+              </button>
+              
+              <button v-if="accounts.length === 0" @click="fetchAccounts" class="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors flex items-center gap-2">
+                <Loader2 v-if="isLoadingAccounts" class="w-3 h-3 animate-spin" />
+                Check Connection
+              </button>
+            </div>
+            <a :href="manualGuideUrl" target="_blank" class="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all flex items-center gap-2">
+              <HelpCircle class="w-4 h-4" />
+              Configuration Guide
+            </a>
+          </div>
         </div>
       </section>
 
       <!-- Steps 2-4: Active Node Management -->
-      <section v-if="accounts.length > 0" class="space-y-12">
+      <section v-if="accounts.length > 0 && !isAddingNew" class="space-y-12">
+        <div class="flex justify-between items-end mb-8">
+            <div>
+                <h2 class="text-4xl font-black text-white tracking-tighter uppercase">Active Nodes</h2>
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-widest mt-2">Managing {{ accounts.length }} Connected WhatsApp Line(s)</p>
+            </div>
+            <button @click="isAddingNew = true" class="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
+                Add Another Line
+            </button>
+        </div>
+
         <div v-for="wa in accounts" :key="wa.id" class="space-y-8">
             <!-- Account Card -->
             <div class="glass-card p-10 bg-[#0a0a0a] border-white/5 relative overflow-hidden group">

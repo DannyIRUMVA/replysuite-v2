@@ -25,10 +25,13 @@ export default defineEventHandler(async (event) => {
       .single()
 
     if (existing) {
-       // Just update the Access Token and return
+      // Just update the Access Token and ensure ownership
       const { error: updateError } = await supabase
         .from('whatsapp_accounts')
-        .update({ access_token: accessToken })
+        .update({ 
+          access_token: accessToken,
+          user_id: user.id 
+        })
         .eq('id', existing.id)
 
       if (updateError) throw updateError

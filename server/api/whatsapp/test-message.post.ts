@@ -48,6 +48,7 @@ export default defineEventHandler(async (event) => {
 
   // 2. Transmit to Meta Graph API
   try {
+    console.log(`[WhatsApp Test] Sending to Meta: ${waAccount.phone_number_id} using token ${waAccount.access_token?.slice(0, 5)}...`)
     const metaResponse = await fetch(`https://graph.facebook.com/v21.0/${waAccount.phone_number_id}/messages`, {
       method: 'POST',
       headers: {
@@ -63,12 +64,13 @@ export default defineEventHandler(async (event) => {
       })
     })
 
-    const result = await metaResponse.json()
+    const result: any = await metaResponse.json()
+    console.log('[WhatsApp Test] Meta Response:', JSON.stringify(result))
 
     if (result.error) {
       throw createError({ 
         statusCode: 500, 
-        statusMessage: `Meta API Error: ${result.error.message}` 
+        statusMessage: `Meta API Error: ${result.error.message} (Code: ${result.error.code})` 
       })
     }
 
@@ -78,6 +80,7 @@ export default defineEventHandler(async (event) => {
       metaResponse: result 
     }
   } catch (err: any) {
+    console.error('[WhatsApp Test] Execution Error:', err)
     throw createError({ 
       statusCode: 500, 
       statusMessage: err.message || 'Internal connection failure to Meta servers.' 

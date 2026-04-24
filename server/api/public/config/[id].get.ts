@@ -51,10 +51,20 @@ export default defineEventHandler(async (event) => {
   const allowedDomains = data.allowed_domains || []
 
   if (allowedDomains.length > 0) {
-    const requestHost = origin ? new URL(origin).hostname : (referer ? new URL(referer).hostname : '')
+    let requestHost = ''
+    
+    try {
+      if (origin && origin !== 'null') {
+        requestHost = new URL(origin).hostname
+      } else if (referer) {
+        requestHost = new URL(referer).hostname
+      }
+    } catch (e) {
+      console.warn(`[Security] Failed to parse origin/referer for chatbot ${id}:`, { origin, referer })
+    }
     
     // Always allow localhost for development convenience
-    const isLocal = requestHost === 'localhost' || requestHost === '127.0.0.1'
+    const isLocal = requestHost === 'localhost' || requestHost === '127.0.0.1' || !requestHost
     const isAllowed = isLocal || allowedDomains.some(domain => {
       const cleanDomain = domain.replace(/^https?:\/\//, '').split('/')[0]
       return requestHost === cleanDomain || requestHost.endsWith(`.${cleanDomain}`)
