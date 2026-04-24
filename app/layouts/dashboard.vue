@@ -5,6 +5,7 @@ const isMounted = ref(false)
 onMounted(() => { isMounted.value = true })
 
 const { user, userId, isAuthenticated, profile, polarCustomerId, isVerified, isLoading, planSlug } = useAuth()
+const { showFeedback, feedbackSource, closeFeedback } = useFeedback()
 const supabase = useSupabaseClient()
 const route = useRoute()
 
@@ -41,6 +42,21 @@ watch([polarCustomerId, planSlug, isLoading, isMounted], ([polarId, slug, loadin
         <DashboardMobileNav />
       </main>
     </div>
+    
+    <!-- Global Feedback Modal -->
+    <Transition
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="showFeedback" class="fixed inset-0 z-[300] flex items-center justify-center p-6">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" @click="closeFeedback"></div>
+        <FeedbackForm :source="feedbackSource" @close="closeFeedback" class="relative z-10" />
+      </div>
+    </Transition>
   </div>
 </template>
 

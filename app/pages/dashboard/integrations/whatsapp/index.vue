@@ -7,9 +7,16 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-const { user, setInteracting } = useAuth()
+const { user, setInteracting, planSlug } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()
+
+onMounted(() => {
+  if (planSlug.value === 'starter' || !planSlug.value) {
+    navigateTo('/pricing')
+  }
+  fetchAccounts()
+})
 
 const currentStep = computed(() => {
     if (accounts.value.length === 0) return 1
@@ -68,8 +75,6 @@ const fetchAccounts = async () => {
         isLoadingAccounts.value = false
     }
 }
-
-onMounted(fetchAccounts)
 
 const sendTestMessage = async (accountId: string) => {
     if (!testPhone.value || !testMessage.value) return

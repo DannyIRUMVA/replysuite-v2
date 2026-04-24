@@ -100,7 +100,7 @@ const integrations = [
             <span class="text-primary">POST</span> /api/v1/webhooks<br />
             {<br />
             &nbsp;&nbsp;<span class="text-white">"event":</span> "message.received",<br />
-            &nbsp;&nbsp;<span class="text-white">"channel":</span> "instagram",<br />
+            &nbsp;&nbsp;<span class="text-white">"channel":</span> "whatsapp",<br />
             &nbsp;&nbsp;<span class="text-white">"payload":</span> { ... }<br />
             }
           </div>

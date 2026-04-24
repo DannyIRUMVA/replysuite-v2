@@ -18,6 +18,9 @@ import {
 } from 'lucide-vue-next'
 
 const { openFeedback } = useFeedback()
+const { user, profile, membership, isVerified, isLoading, planSlug } = useAuth()
+const route = useRoute()
+const supabase = useSupabaseClient()
 
 // Map strings to components to avoid serialization of functions
 const iconMap: Record<string, any> = {
@@ -34,9 +37,6 @@ const iconMap: Record<string, any> = {
   HelpCircle
 }
 
-const { user, profile, membership, isVerified, isLoading } = useAuth()
-const supabase = useSupabaseClient()
-const route = useRoute()
 
 const showComingSoon = ref(false)
 
@@ -48,7 +48,7 @@ const daysLeft = computed(() => {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 })
 
-const sections = [
+const sections = computed(() => [
   {
     title: 'Main',
     links: [
@@ -60,7 +60,7 @@ const sections = [
     title: 'Channels',
     links: [
       { name: 'Website', href: '/dashboard/integrations/website', icon: 'Code2' },
-      { name: 'WhatsApp', href: '/dashboard/integrations/whatsapp', icon: 'MessageCircle' },
+      { name: 'WhatsApp', href: '/dashboard/integrations/whatsapp', icon: 'MessageCircle', locked: planSlug.value === 'starter' || !planSlug.value },
       { name: 'Automations', href: '/dashboard/automation', icon: 'Megaphone', locked: true },
     ]
   },
@@ -83,7 +83,7 @@ const sections = [
       { name: 'Share Feedback', action: () => openFeedback('Dashboard Sidebar'), icon: 'HelpCircle' },
     ]
   }
-]
+])
 
 const handleLogout = async () => {
   await supabase.auth.signOut()

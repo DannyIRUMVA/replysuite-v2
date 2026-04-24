@@ -31,7 +31,7 @@ useHead({
             name: 'Free Plan',
             price: '0.00',
             priceCurrency: 'USD',
-            description: '1 chatbot, 100 conversations per month, trainable AI agent, email support.',
+            description: '1 chatbot, 100 AI replies per month, 10 training sessions, email support.',
             url: 'https://replysuite.app/pricing'
           },
           {
@@ -39,7 +39,7 @@ useHead({
             name: 'Silver Plan',
             price: '17.88',
             priceCurrency: 'USD',
-            description: '3 chatbots, 2,500 conversations per month, advanced bot training, priority support.',
+            description: '3 chatbots, 4,000 AI replies per month, 30 training sessions, Official WhatsApp API.',
             url: 'https://replysuite.app/pricing'
           },
           {
@@ -47,7 +47,7 @@ useHead({
             name: 'Gold Plan',
             price: '26.88',
             priceCurrency: 'USD',
-            description: 'Unlimited chatbots, unlimited conversations, proprietary bot training, dedicated account manager.',
+            description: '5 chatbots, 10,000 AI replies, 100 training sessions, Official WhatsApp API.',
             url: 'https://replysuite.app/pricing'
           }
         ]
@@ -64,7 +64,7 @@ useHead({
             name: 'How much does ReplySuite cost?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'ReplySuite offers three plans: Free ($0/month, 1 chatbot, 100 conversations), Silver ($17.88/month, 3 chatbots, 2,500 conversations), and Gold ($26.88/month, unlimited chatbots and conversations). Enterprise pricing is available on request.'
+              text: 'ReplySuite offers three plans: Free ($0/month, 1 chatbot, 100 replies), Silver ($17.88/month, 3 chatbots, 4,000 replies, 30 training sessions), and Gold ($26.88/month, 10,000 replies, 100 training sessions, WhatsApp).'
             }
           }
         ]
@@ -138,21 +138,21 @@ const plans = [
     name: 'Free',
     price: '0.00',
     desc: 'Experience the gold standard risk-free.',
-    features: ['1 website chatbot', '100 conversations / mo', 'Trainable AI agent', 'Email support'],
+    features: ['1 website chatbot', '100 AI replies / mo', '10 training sessions', 'Trainable AI agent', 'Email support'],
     popular: false
   },
   {
     name: 'Silver',
     price: '17.88',
     desc: 'The best value for growing elite brands.',
-    features: ['3 website chatbots', '2,500 conversations / mo', 'Advanced bot training', 'Priority support'],
+    features: ['3 website chatbots', '4,000 AI replies / mo', '30 training sessions', 'Official WhatsApp API', 'Advanced bot training'],
     popular: true
   },
   {
     name: 'Gold',
     price: '26.88',
-    desc: 'Unlimited power for high-volume experts.',
-    features: ['Unlimited chatbots', 'Unlimited conversations', 'Proprietary bot training', 'Dedicated manager'],
+    desc: 'High-performance for scaling experts.',
+    features: ['5 website chatbots', '10,000 AI replies / mo', '100 training sessions', 'Official WhatsApp API', 'Dedicated manager'],
     popular: false
   }
 ]
@@ -240,13 +240,14 @@ const faqs = [
             </thead>
             <tbody>
               <tr v-for="(row, i) in [
-                { label: 'AI Chatbots', free: '1', silver: '3', gold: 'Unlimited' },
-                { label: 'Conversations / month', free: '100', silver: '2,500', gold: 'Unlimited' },
+                { label: 'AI Chatbots', free: '1', silver: '3', gold: '5' },
+                { label: 'AI Replies / month', free: '100', silver: '4,000', gold: '10,000' },
+                { label: 'Training Sessions / mo', free: '10', silver: '30', gold: '100' },
                 { label: 'Trainable AI agent', free: '✓', silver: '✓', gold: '✓' },
                 { label: 'Advanced bot training', free: '—', silver: '✓', gold: '✓' },
-                { label: 'Priority support', free: '—', silver: '✓', gold: '✓' },
+                { label: 'WhatsApp Official API', free: '—', silver: '✓', gold: '✓' },
                 { label: 'Dedicated account manager', free: '—', silver: '—', gold: '✓' },
-                { label: 'Instagram Auto-DM', free: '—', silver: '✓', gold: '✓' },
+                { label: 'Priority support', free: '—', silver: '✓', gold: '✓' },
                 { label: 'Free trial', free: '30 days', silver: '30 days', gold: '30 days' },
               ]" :key="row.label"
                 :class="i % 2 === 0 ? 'bg-white/[0.01]' : ''"

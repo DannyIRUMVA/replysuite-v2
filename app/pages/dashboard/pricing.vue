@@ -74,7 +74,7 @@ const plans = [
     id: 'starter',
     price: '0.00',
     desc: 'Experience the gold standard risk-free.',
-    features: ['1 website chatbot', '100 conversations / mo', 'Trainable AI agent', 'Email support'],
+    features: ['1 website chatbot', '100 AI replies / mo', '10 training sessions', 'Trainable AI agent', 'Email support'],
     popular: false
   },
   {
@@ -83,7 +83,7 @@ const plans = [
     productId: 'dc070937-6444-40a6-8a02-fd8b25df7aae',
     price: '17.88',
     desc: 'The best value for growing elite brands.',
-    features: ['3 website chatbots', '2,500 conversations / mo', 'Advanced bot training', 'Priority support'],
+    features: ['3 website chatbots', '4,000 AI replies / mo', '30 training sessions', 'Advanced bot training', 'Priority support'],
     popular: true
   },
   {
@@ -91,8 +91,8 @@ const plans = [
     id: 'gold',
     productId: 'd0493f6f-16bc-4d3c-97bb-7be920840f12',
     price: '26.88',
-    desc: 'Unlimited power for high-volume experts.',
-    features: ['Unlimited chatbots', 'Unlimited conversations', 'Proprietary bot training', 'Dedicated manager'],
+    desc: 'Elite power for high-volume experts.',
+    features: ['5 website chatbots', '10,000 AI replies / mo', '100 training sessions', 'WhatsApp integration', 'Dedicated manager'],
     popular: false
   }
 ]
