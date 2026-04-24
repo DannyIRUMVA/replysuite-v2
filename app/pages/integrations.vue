@@ -3,7 +3,7 @@ import { Instagram, Globe, MessageSquare, Code, Layout, Zap, ArrowRight, Share2,
 
 useSeoMeta({
   title: 'Integrations | ReplySuite Ecosystem',
-  description: 'Connect ReplySuite to the tools you already use. Seamlessly integrate AI with Instagram, WhatsApp, and your own custom tech stack.',
+  description: 'Connect ReplySuite to your website and WhatsApp. Seamlessly integrate AI with your own custom tech stack and WordPress.',
 })
 
 definePageMeta({
@@ -12,52 +12,22 @@ definePageMeta({
 
 const integrations = [
   {
-    name: 'Instagram',
-    desc: 'Automate Direct Messages and comment replies with brand-aware AI.',
-    icon: Instagram,
+    name: 'Website Integration',
+    desc: 'Deploy your AI agent on any website with a single line of code. High-performance, lightweight script compatible with all frameworks.',
+    icon: Code,
     status: 'Native'
   },
   {
-    name: 'WhatsApp',
-    desc: 'Handle business inquiries on the world’s most popular messaging app.',
+    name: 'WordPress Plugin',
+    desc: 'The official ReplySuite plugin for WordPress. Seamlessly integrate AI into your site, compatible with Elementor and WooCommerce.',
+    icon: Globe,
+    status: 'Native'
+  },
+  {
+    name: 'WhatsApp Business',
+    desc: 'Scale your communication on the world’s most popular messaging app using our official Meta API integration.',
     icon: MessageCircle,
     status: 'Native'
-  },
-  {
-    name: 'Salesforce',
-    desc: 'Sync conversation data with the world’s #1 CRM platform automatically.',
-    icon: Shield,
-    status: 'Enterprise'
-  },
-  {
-    name: 'Slack',
-    desc: 'Get real-time notifications for human handoffs directly in your team channels.',
-    icon: MessageSquare,
-    status: 'Native'
-  },
-  {
-    name: 'Zendesk',
-    desc: 'Seamlessly escalate AI conversations to human support tickets.',
-    icon: Zap,
-    status: 'Beta'
-  },
-  {
-    name: 'Zapier',
-    desc: 'Connect your conversations to 6,000+ apps and automated workflows.',
-    icon: Share2,
-    status: 'Beta'
-  },
-  {
-    name: 'Custom API',
-    desc: 'Build your own integrations using our developer-first REST API.',
-    icon: Code,
-    status: 'Enterprise'
-  },
-  {
-    name: 'Shopify',
-    desc: 'Sync product data and handle order inquiries automatically.',
-    icon: Layout,
-    status: 'Upcoming'
   }
 ]
 </script>
@@ -73,7 +43,7 @@ const integrations = [
         <span class="text-gradient">Workflow.</span>
       </h1>
       <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed font-medium">
-        ReplySuite lives where your customers are. Deploy your trained AI across every channel instantly.
+        ReplySuite is optimized for where it matters most. Deploy your AI on your website, WordPress site, or WhatsApp instantly.
       </p>
     </section>
 

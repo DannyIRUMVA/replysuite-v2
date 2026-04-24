@@ -22,7 +22,7 @@ const iconMap: Record<string, any> = {
 
 const navLinks = [
   { name: 'Hub', href: '/dashboard', icon: 'LayoutDashboard' },
-  { name: 'Store', href: '/dashboard/instagram', icon: 'Instagram' },
+  { name: 'Web', href: '/dashboard/integrations/website', icon: 'Zap' },
   { name: 'Forge', href: '/dashboard/agents', icon: 'Bot' },
   { name: 'Stats', href: '/dashboard/analytics', icon: 'TrendingUp' },
   { name: 'Rules', href: '/dashboard/automation', icon: 'Zap' },

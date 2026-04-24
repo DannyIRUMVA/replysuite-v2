@@ -60,7 +60,6 @@ const sections = [
     title: 'Channels',
     links: [
       { name: 'Website', href: '/dashboard/integrations/website', icon: 'Code2' },
-      { name: 'Instagram', href: '/dashboard/instagram', icon: 'Instagram', locked: true },
       { name: 'WhatsApp', href: '/dashboard/integrations/whatsapp', icon: 'MessageCircle' },
       { name: 'Automations', href: '/dashboard/automation', icon: 'Megaphone', locked: true },
     ]

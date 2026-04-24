@@ -22,8 +22,8 @@ import {
 useSeoMeta({
    title: 'ReplySuite | The Infrastructure of AI Conversation',
    ogTitle: 'ReplySuite | Enterprise AI Automation Platform',
-   description: 'The gold standard for RAG-powered AI agents. Train your unique AI workforce on brand data and deploy to WhatsApp, Instagram, and Web in minutes.',
-   ogDescription: 'Elite AI automation for digital-native brands. Train RAG models on your own documents and automate DMs with human-like precision.',
+   description: 'The gold standard for RAG-powered AI agents. Train your unique AI workforce on brand data and deploy to WhatsApp and Web in minutes.',
+   ogDescription: 'Elite AI automation for digital-native brands. Train RAG models on your own documents and automate conversations with human-like precision.',
 })
 
 useHead({
@@ -65,7 +65,7 @@ const steps = [
    {
       num: '03',
       title: 'Deploy Everywhere',
-      desc: 'Connect to WhatsApp, Instagram, or Web with one click. Scale without limits.'
+      desc: 'Connect to WhatsApp, WordPress, or any Website with one click. Scale without limits.'
    }
 ]
 
@@ -81,9 +81,9 @@ const channelFeatures = [
       icon: MessageCircle
    },
    {
-      title: 'Instagram Elite Protocol',
-      desc: 'Handle thousands of high-intent DMs automatically with brand-aware precision.',
-      icon: Instagram
+      title: 'WordPress Plugin',
+      desc: 'One-click deployment for the world’s most popular CMS. Native support for Elementor and WooCommerce.',
+      icon: Globe2
    }
 ]
 
