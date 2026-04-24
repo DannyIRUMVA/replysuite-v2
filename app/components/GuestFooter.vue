@@ -92,8 +92,18 @@ import { Zap, Instagram, Twitter, Globe2, Github, Mail } from 'lucide-vue-next'
 
     <!-- Bottom Bar -->
     <div class="pt-10 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
-      <div class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
-        © 2026 ReplySuite AI. All rights reserved.
+      <div class="flex flex-col gap-2">
+        <div class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+          © 2026 ReplySuite AI. All rights reserved.
+        </div>
+        <div class="flex items-center gap-4 opacity-30 grayscale hover:grayscale-0 transition-all">
+           <span class="text-[9px] font-bold text-gray-500 uppercase tracking-tighter">Infrastructure:</span>
+           <div class="flex items-center gap-3">
+              <span class="text-[9px] font-bold text-white uppercase border border-white/20 px-1 rounded">Azure Security</span>
+              <span class="text-[9px] font-bold text-white uppercase border border-white/20 px-1 rounded">Cloudflare Edge</span>
+              <span class="text-[9px] font-bold text-white uppercase border border-white/20 px-1 rounded">Official Meta API</span>
+           </div>
+        </div>
       </div>
       
       <div class="flex items-center gap-8">
@@ -101,9 +111,20 @@ import { Zap, Instagram, Twitter, Globe2, Github, Mail } from 'lucide-vue-next'
           <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
           All Systems Operational
         </div>
-        <div class="hidden md:flex items-center gap-2 text-[10px] text-gray-600 font-bold uppercase tracking-widest">
-          <Globe2 class="w-3 h-3" />
-          Region: Global Edge
+        <div class="hidden md:flex items-center gap-6 text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+          <div class="flex items-center gap-2 group cursor-pointer hover:text-white transition-colors">
+            <Globe2 class="w-3 h-3 group-hover:text-primary" />
+            <select class="bg-transparent border-none focus:ring-0 cursor-pointer appearance-none">
+              <option value="en">English (US)</option>
+              <option value="pt">Português (BR)</option>
+              <option value="es">Español (ES)</option>
+              <option value="hi">हिन्दी (IN)</option>
+              <option value="rw">Kinyarwanda (RW)</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            Region: Global Edge
+          </div>
         </div>
       </div>
     </div>

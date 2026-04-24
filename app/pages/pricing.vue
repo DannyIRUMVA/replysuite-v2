@@ -61,30 +61,6 @@ useHead({
         mainEntity: [
           {
             '@type': 'Question',
-            name: 'Can I cancel my ReplySuite subscription any time?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Yes, you can cancel your subscription at any time from your account settings. You will retain access until the end of your billing cycle.'
-            }
-          },
-          {
-            '@type': 'Question',
-            name: 'Does ReplySuite offer a free trial?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Yes. All new verified accounts automatically receive a 30-day free month so you can experience ReplySuite risk-free. No credit card is required for the Free plan.'
-            }
-          },
-          {
-            '@type': 'Question',
-            name: 'What happens if I exceed my monthly conversation limit on ReplySuite?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'ReplySuite will notify you when you reach 80% and 100% of your monthly conversation limit. You can upgrade your plan at any time to continue service without interruption.'
-            }
-          },
-          {
-            '@type': 'Question',
             name: 'How much does ReplySuite cost?',
             acceptedAnswer: {
               '@type': 'Answer',

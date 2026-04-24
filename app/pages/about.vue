@@ -83,15 +83,29 @@ const values = [
         </div>
       </section>
 
-      <!-- Values -->
-      <section class="max-w-7xl mx-auto px-6 py-32 grid md:grid-cols-3 gap-12">
-        <div v-for="val in values" :key="val.title" class="glass-card p-12 border-white/5 hover:border-primary/30 transition-all group relative overflow-hidden">
-          <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all"></div>
-          <div class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-10 group-hover:bg-primary group-hover:text-black transition-all">
-            <component :is="val.icon" class="w-8 h-8" />
+      <!-- Vision 2026 -->
+      <section class="max-w-7xl mx-auto px-6 py-40 border-t border-white/5 relative overflow-hidden">
+        <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10 translate-y-1/2"></div>
+        <div class="grid lg:grid-cols-2 gap-20 items-center">
+          <div class="order-2 lg:order-1">
+             <div class="grid grid-cols-2 gap-4">
+                <div v-for="i in 4" :key="i" class="h-40 rounded-3xl bg-white/[0.02] border border-white/5 overflow-hidden group">
+                   <div class="w-full h-full bg-primary/5 group-hover:bg-primary/10 transition-all flex items-center justify-center">
+                      <Zap class="w-8 h-8 text-gray-800" />
+                   </div>
+                </div>
+             </div>
           </div>
-          <h3 class="text-2xl font-bold mb-6 tracking-tight text-white">{{ val.title }}</h3>
-          <p class="text-sm text-gray-500 leading-relaxed font-medium">{{ val.desc }}</p>
+          <div class="order-1 lg:order-2">
+            <span class="badge-gradient mb-8 uppercase tracking-[0.2em] text-[10px]">Strategic Vision</span>
+            <h2 class="text-5xl md:text-7xl font-extrabold mb-10 tracking-tighter leading-tight text-white">
+              The Infrastructure <br />
+              of <span class="text-gradient">Tomorrow.</span>
+            </h2>
+            <p class="text-lg text-gray-400 leading-relaxed font-medium mb-12">
+              By 2026, we aim to be the silent engine behind every major D2C brand on Earth. Our goal isn't just to automate chats, but to provide the **Infrastructure of AI Conversation**—a seamless layer where brand and customer meet with zero friction and absolute trust.
+            </p>
+          </div>
         </div>
       </section>
 

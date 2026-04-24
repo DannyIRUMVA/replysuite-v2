@@ -116,6 +116,42 @@ const features = [
           </p>
         </section>
 
+        <section class="mb-24">
+          <h2 class="text-3xl font-bold text-white mb-8 tracking-tight flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+              <Globe class="w-5 h-5" />
+            </div>
+            EU AI Act & Regional Sovereignty
+          </h2>
+          <p>
+            In alignment with the 2026 <strong>EU AI Act</strong>, ReplySuite provides industry-leading transparency and data sovereignty features. We leverage Cloudflare Regional Services to ensure that data for our European clients is processed and stored exclusively within EU boundaries.
+          </p>
+          <ul class="space-y-4 not-prose mt-8">
+            <li v-for="item in ['Regional Data Residency (EU-only processing)', 'Mandatory AI Transparency Labeling', 'Privacy-First Training Protocols', 'GDPR/EU-AI-Act Certified Infrastructure']" :key="item" class="flex items-center gap-4 text-gray-400 font-medium">
+              <CheckCircle2 class="w-5 h-5 text-primary flex-shrink-0" />
+              {{ item }}
+            </li>
+          </ul>
+        </section>
+
+        <section class="mb-24">
+          <h2 class="text-3xl font-bold text-white mb-8 tracking-tight flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+              <Shield class="w-5 h-5" />
+            </div>
+            U.S. Enterprise Standards
+          </h2>
+          <p>
+            ReplySuite is fully compliant with United States data privacy and security standards. Our infrastructure is designed to meet the rigorous requirements of the most demanding U.S. sectors, from FinTech to Healthcare.
+          </p>
+          <ul class="space-y-4 not-prose mt-8">
+            <li v-for="item in ['CCPA/CPRA Compliant (California Privacy)', 'SOC 2 Type II Aligned Infrastructure', 'California B.O.T. Act (Disclosure Compliant)', 'HIPAA & GLBA Ready Controls']" :key="item" class="flex items-center gap-4 text-gray-400 font-medium">
+              <CheckCircle2 class="w-5 h-5 text-primary flex-shrink-0" />
+              {{ item }}
+            </li>
+          </ul>
+        </section>
+
         <!-- CTA -->
         <div class="mt-40 p-16 rounded-[48px] bg-white/[0.02] border border-white/5 text-center">
           <h3 class="text-3xl font-bold text-white mb-6 tracking-tight">Need a full security audit?</h3>

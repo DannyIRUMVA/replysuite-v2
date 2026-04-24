@@ -105,11 +105,20 @@ const principles = [
             <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
               <Scale class="w-5 h-5" />
             </div>
-            Responsible Automation
+            Global Compliance & Transparency
           </h2>
           <p>
-            Automation should never be deceptive. We recommend all our users include clear labeling (e.g., "Powered by ReplySuite AI") to ensure transparency with their end-users. Our tools are designed to handle routine inquiries, freeing up human staff for complex, high-empathy tasks.
+            Automation should never be deceptive. In alignment with the <strong>2026 EU AI Act</strong>, the <strong>California B.O.T. Act</strong>, and global transparency standards, ReplySuite provides built-in tools for mandatory AI disclosure. 
           </p>
+          <div class="bg-white/[0.03] border border-white/10 p-8 rounded-[32px] my-10">
+             <h4 class="text-white font-bold mb-4 flex items-center gap-2">
+                <CheckCircle2 class="w-4 h-4 text-primary" />
+                Mandatory AI Labeling
+             </h4>
+             <p class="text-gray-400 text-sm mb-0">
+                Whether it is a legal requirement in the EU, California, or Brazil, all AI-generated text must be identifiable. Our platform includes an "AI Disclosure Toggle" that automatically appends transparency metadata or visible labels to bot responses, ensuring your brand stays compliant across all jurisdictions.
+             </p>
+          </div>
         </section>
 
         <!-- CTA -->

@@ -23,7 +23,7 @@ const isMounted = ref(false)
 onMounted(() => { isMounted.value = true })
 
 // Async stats fetching with real data from multiple tables
-const { data: realStats, pending: statsLoading } = useAsyncData('dashboard-metrics-v3', async () => {
+const { data: realStats, pending: statsLoading } = useAsyncData('dashboard-metrics-v4', async () => {
   if (!userId.value) return []
   
   // Get user's chatbot IDs first for scoped queries
@@ -49,6 +49,37 @@ const { data: realStats, pending: statsLoading } = useAsyncData('dashboard-metri
   ]
 }, { watch: [userId] })
 
+// Fetch Recent Sessions
+const { data: recentSessions, pending: sessionsLoading } = useAsyncData('dashboard-sessions', async () => {
+  if (!userId.value) return []
+  const { data: bots } = await supabase.from('chatbots').select('id, name').eq('user_id', userId.value).is('deleted_at', null)
+  const botIds = (bots || []).map((b: any) => b.id)
+  
+  if (botIds.length === 0) return []
+
+  const { data } = await supabase
+    .from('chat_sessions')
+    .select('*, chatbots(name)')
+    .in('chatbot_id', botIds)
+    .order('created_at', { ascending: false })
+    .limit(5)
+  
+  return data || []
+}, { watch: [userId] })
+
+// Fetch Recent Activity
+const { data: activities, pending: activitiesLoading } = useAsyncData('dashboard-activity', async () => {
+  if (!userId.value) return []
+  const { data } = await supabase
+    .from('user_activity')
+    .select('*')
+    .eq('user_id', userId.value)
+    .order('created_at', { ascending: false })
+    .limit(5)
+  
+  return data || []
+}, { watch: [userId] })
+
 // Helper to get icons without putting them in reactive objects
 const getIcon = (id: string) => {
   switch (id) {
@@ -70,9 +101,24 @@ const stats = computed(() => {
   ]
 })
 
+// Local timeAgo helper
+const timeAgo = (date: Date) => {
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
+  let interval = seconds / 31536000
+  if (interval > 1) return Math.floor(interval) + ' years ago'
+  interval = seconds / 2592000
+  if (interval > 1) return Math.floor(interval) + ' months ago'
+  interval = seconds / 86400
+  if (interval > 1) return Math.floor(interval) + ' days ago'
+  interval = seconds / 3600
+  if (interval > 1) return Math.floor(interval) + ' hours ago'
+  interval = seconds / 60
+  if (interval > 1) return Math.floor(interval) + ' minutes ago'
+  return Math.floor(seconds) + ' seconds ago'
+}
+
 // Unified loading state
-// Unified loading state - ensure we show skeletons until mounted and data is ready
-const loading = computed(() => !isMounted.value || isLoading.value || statsLoading.value)
+const loading = computed(() => !isMounted.value || isLoading.value || statsLoading.value || sessionsLoading.value || activitiesLoading.value)
 </script>
 
 <template>
@@ -128,6 +174,24 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
         </div>
      </div>
 
+     <!-- Global Monitoring Status -->
+     <div v-if="isVerified" class="mb-8 p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+           <div class="flex -space-x-2">
+              <div v-for="flag in ['🇮🇳', '🇧🇷', '🇮🇩', '🇪🇺', '🇷🇼']" :key="flag" class="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs shadow-xl">
+                 {{ flag }}
+              </div>
+           </div>
+           <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+              Global Edge Presence: <span class="text-white">Active</span>
+           </div>
+        </div>
+        <div class="flex items-center gap-2">
+           <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+           <span class="text-[9px] font-black text-gray-500 uppercase tracking-tighter">EU AI Act Compliant</span>
+        </div>
+     </div>
+
      <!-- Main content area -->
      <div v-if="loading" class="grid lg:grid-cols-3 gap-10">
         <div class="lg:col-span-2 glass-card p-10 min-h-[400px]">
@@ -155,18 +219,67 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
      </div>
 
      <div v-else-if="isVerified" class="grid lg:grid-cols-3 gap-10">
-        <div class="lg:col-span-2 glass-card p-10 min-h-[400px] border-white/5 flex flex-col items-center justify-center text-center">
-           <div class="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-8">
-              <TrendingUp class="w-12 h-12 text-primary opacity-30" />
+        <!-- Conversations List -->
+        <div class="lg:col-span-2 glass-card p-10 min-h-[400px] border-white/5 flex flex-col">
+           <div class="flex items-center justify-between mb-10">
+              <h3 class="text-xl font-bold tracking-tight uppercase italic-none">Live Conversions</h3>
+              <NuxtLink to="/dashboard/conversations" class="text-xs font-bold text-primary tracking-widest uppercase hover:underline">View All</NuxtLink>
            </div>
-           <h2 class="text-3xl font-bold mb-4 tracking-tighter">No Conversation Data</h2>
-           <p class="text-gray-500 max-w-sm font-medium mb-10">Deploy your first AI agent to start collecting elite behavioral data and conversation insights.</p>
-           <NuxtLink to="/dashboard/agents" class="bg-primary text-black px-8 py-4 font-bold tracking-widest text-sm rounded-xl hover:bg-primary-accent transition-all">Forge Your First Agent</NuxtLink>
+
+           <div v-if="recentSessions && recentSessions.length > 0" class="space-y-4 w-full">
+              <div v-for="session in recentSessions" :key="session.id" class="flex items-center justify-between p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/20 transition-all group">
+                 <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-black transition-all">
+                       <MessageSquare class="w-6 h-6" />
+                    </div>
+                    <div>
+                       <p class="font-bold text-sm tracking-tight text-white capitalize">{{ (session as any).chatbots?.name || 'Autonomous Agent' }}</p>
+                       <p class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mt-1">{{ timeAgo(new Date(session.created_at)) }}</p>
+                    </div>
+                 </div>
+                 <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    <span class="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Active</span>
+                 </div>
+              </div>
+           </div>
+
+           <div v-else class="flex-1 flex flex-col items-center justify-center text-center">
+              <div class="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                 <TrendingUp class="w-10 h-10 text-primary opacity-30" />
+              </div>
+              <h2 class="text-2xl font-bold mb-3 tracking-tighter">No Conversation Data</h2>
+              <p class="text-gray-500 max-w-sm text-sm font-medium mb-8">Deploy your first AI agent to start collecting elite behavioral data and conversation insights.</p>
+              <NuxtLink to="/dashboard/agents" class="bg-primary text-black px-6 py-3 font-bold tracking-widest text-xs rounded-xl hover:bg-primary-accent transition-all uppercase">Forge Your First Agent</NuxtLink>
+           </div>
         </div>
         
-        <div class="glass-card p-10 border-white/5 text-center flex flex-col justify-center">
-           <h3 class="text-lg font-bold mb-6 tracking-tight capitalize">Recent Activity</h3>
-           <p class="text-gray-600">No activity yet. Let's get started!</p>
+        <!-- Recent Activity Feed -->
+        <div class="glass-card p-10 border-white/5 flex flex-col">
+           <h3 class="text-lg font-bold mb-8 tracking-tight uppercase italic-none text-center">Protocol Logs</h3>
+           
+           <div v-if="activities && activities.length > 0" class="space-y-8 flex-1">
+              <div v-for="activity in activities" :key="activity.id" class="flex gap-4 relative">
+                 <div class="flex flex-col items-center">
+                    <div class="w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_rgba(212,175,55,0.5)]"></div>
+                    <div class="w-px flex-1 bg-white/10 my-2"></div>
+                 </div>
+                 <div class="pb-2">
+                    <p class="text-xs font-bold text-white leading-tight tracking-tight capitalize">{{ activity.type.replace('_', ' ') }}</p>
+                    <p class="text-[9px] font-medium text-gray-500 mt-1 uppercase tracking-widest">{{ timeAgo(new Date(activity.created_at)) }} • {{ activity.source || 'System' }}</p>
+                 </div>
+              </div>
+           </div>
+
+           <div v-else class="flex-1 flex flex-col items-center justify-center text-center py-10">
+              <Activity class="w-12 h-12 text-gray-800 mb-4 opacity-20" />
+              <p class="text-gray-600 text-xs font-bold tracking-widest uppercase">System Idle</p>
+              <p class="text-gray-800 text-[10px] mt-2">No activity recorded</p>
+           </div>
+
+           <button class="mt-8 py-3 w-full border border-white/5 rounded-xl text-[10px] font-bold text-gray-500 tracking-[0.2em] uppercase hover:border-primary/30 hover:text-primary transition-all">
+              Initialize Audit
+           </button>
         </div>
      </div>
   </div>

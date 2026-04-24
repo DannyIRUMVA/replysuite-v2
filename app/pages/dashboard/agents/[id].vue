@@ -47,6 +47,7 @@ const form = ref({
   widget_position: 'bottom-right',
   welcome_message: 'Hello! How can I help you today?',
   allowed_domains: [] as string[],
+  ai_disclosure: true,
 })
 
 const languageOptions = [
@@ -122,6 +123,7 @@ const fetchData = async () => {
         widget_position: data.widget_position || 'bottom-right',
         welcome_message: data.welcome_message || 'Hello! How can I help you today?',
         allowed_domains: data.allowed_domains || [],
+        ai_disclosure: data.ai_disclosure ?? true,
       }
     }
   } catch (err) {
@@ -152,6 +154,7 @@ const handleSave = async () => {
         widget_position: form.value.widget_position,
         welcome_message: form.value.welcome_message,
         allowed_domains: form.value.allowed_domains,
+        ai_disclosure: form.value.ai_disclosure,
       })
       .eq('id', chatbotId)
 
@@ -344,6 +347,32 @@ const resetDesign = () => {
           <CustomSelect v-model="form.default_language" :options="languageOptions" placeholder="Select Language" />
           <p class="text-[9px] text-gray-500 leading-relaxed uppercase tracking-wider mt-4">
             Your agent will strictly adhere to this language for native interactions.
+          </p>
+        </div>
+
+        <!-- Global Compliance -->
+        <div class="glass-card">
+          <div class="flex items-center justify-between mb-6">
+            <h4 class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Compliance (EU/Global)</h4>
+            <ShieldCheck class="w-4 h-4 text-primary opacity-50" />
+          </div>
+          <button 
+            @click="form.ai_disclosure = !form.ai_disclosure"
+            :class="[
+              'w-full p-4 rounded-2xl border transition-all flex items-center justify-between text-left',
+              form.ai_disclosure ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-white/5 border-white/5 text-gray-500'
+            ]"
+          >
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-widest mb-1">AI Disclosure Label</p>
+              <p class="text-[9px] opacity-60">{{ form.ai_disclosure ? 'Mandatory labeling active.' : 'Labeling disabled.' }}</p>
+            </div>
+            <div :class="['w-10 h-5 rounded-full relative transition-colors p-1', form.ai_disclosure ? 'bg-primary' : 'bg-gray-800']">
+              <div :class="['w-3 h-3 bg-white rounded-full transition-all', form.ai_disclosure ? 'translate-x-5' : 'translate-x-0']" />
+            </div>
+          </button>
+          <p class="mt-4 text-[9px] text-gray-600 leading-relaxed uppercase tracking-wider">
+            In the EU and Brazil, AI-generated content must be identifiable. This toggle appends transparency metadata to all responses.
           </p>
         </div>
 

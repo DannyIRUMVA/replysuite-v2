@@ -20,10 +20,10 @@ import {
 } from 'lucide-vue-next'
 
 useSeoMeta({
-   title: 'Trainable AI Chatbots for Website & Brand Growth',
-   ogTitle: 'ReplySuite | AI-Driven Marketing Automation Platform',
-   description: 'ReplySuite is an AI-driven marketing automation platform designed for modern brands. By leveraging a custom-trained knowledge base, ReplySuite allows businesses to feed their own data into a sophisticated AI model that handles customer inquiries with human-like precision.',
-   ogDescription: 'Train your unique AI chatbot on your brand data to handle website interactions automatically. Built for brands who demand human-like precision.',
+   title: 'ReplySuite | The Infrastructure of AI Conversation',
+   ogTitle: 'ReplySuite | Enterprise AI Automation Platform',
+   description: 'The gold standard for RAG-powered AI agents. Train your unique AI workforce on brand data and deploy to WhatsApp, Instagram, and Web in minutes.',
+   ogDescription: 'Elite AI automation for digital-native brands. Train RAG models on your own documents and automate DMs with human-like precision.',
 })
 
 useHead({
@@ -33,7 +33,8 @@ useHead({
          async: true,
          'data-chatbot': 'cacdbcdb-7157-4e12-92c4-a715aadf3112'
       }
-   ]
+   ],
+   link: [{ rel: 'canonical', href: 'https://replysuite.app' }]
 })
 
 definePageMeta({
@@ -63,38 +64,45 @@ const steps = [
    },
    {
       num: '03',
-      title: 'Script Embed',
-      desc: 'Copy a single line of code to your website. Watch your AI handle inquiries while you scale.'
+      title: 'Deploy Everywhere',
+      desc: 'Connect to WhatsApp, Instagram, or Web with one click. Scale without limits.'
    }
 ]
 
-const instagramFeatures = [
+const channelFeatures = [
    {
-      title: 'Web Chatbot',
-      desc: 'Connect the AI to your website via a simple script and allow it to answer customer inquiries based on your data.'
+      title: 'Website AI Agent',
+      desc: 'Connect the AI to your website via a simple script and allow it to answer customer inquiries based on your data.',
+      icon: Globe2
    },
    {
-      title: 'Social Automation',
-      desc: 'Coming Soon: Automatically reply to Instagram, WhatsApp, and Slack with brand-aware AI.'
+      title: 'Official WhatsApp API',
+      desc: 'The only no-code bridge for advanced RAG-powered agents on the Meta Business platform.',
+      icon: MessageCircle
+   },
+   {
+      title: 'Instagram Elite Protocol',
+      desc: 'Handle thousands of high-intent DMs automatically with brand-aware precision.',
+      icon: Instagram
    }
 ]
 
 // Hardened Features Data for SSR Stability
 const marketingFeatures = [
    {
-      title: 'AI Persona Training',
-      desc: 'Fine-tune your bot to sound exactly like your brand voice.',
+      title: 'Advanced RAG Engine',
+      desc: 'Fine-tune your bot using Retrieval-Augmented Generation to eliminate hallucinations.',
       icon: Bot
    },
    {
-      title: 'Knowledge Base',
-      desc: 'Upload your PDFs and let the AI learn your business inside out.',
+      title: 'Secure Knowledge Base',
+      desc: 'Upload your PDFs and documents to our encrypted vector database.',
       icon: BrainCircuit
    },
    {
-      title: 'Web Integration',
-      desc: 'Embed your custom-trained AI on any website with a single line of script.',
-      icon: Globe2
+      title: 'Infrastructure Scale',
+      desc: 'Built on Cloudflare Edge and Microsoft Azure for sub-second global response times.',
+      icon: Zap
    }
 ]
 
@@ -103,7 +111,7 @@ const chatbotId = 'cacdbcdb-7157-4e12-92c4-a715aadf3112'
 const chatInput = ref('')
 const isChatLoading = ref(false)
 const chatMessages = ref([
-   { role: 'assistant', content: "Hi there! Welcome to ReplySuite. We empower your business by training AI that talks exactly like your brand. Ready to automate your growth? How can I help you scale today?" }
+   { role: 'assistant', content: "Hi there! I am the ReplySuite Infrastructure Agent. I'm trained on 2026 market standards to help you scale your brand via AI. How can I assist you with your deployment today?" }
 ])
 
 const sendDemoMessage = async () => {
@@ -144,21 +152,21 @@ const sendDemoMessage = async () => {
             <div>
                <div class="badge-gradient mb-8 flex items-center gap-2">
                   <Zap class="w-3 h-3 fill-current" />
-                  Ready to Automate
+                  Enterprise Ready
                </div>
                <h1 class="text-6xl md:text-8xl font-extrabold mb-8 leading-[0.9] tracking-tight text-white">
-                  Smart Replies, <br />
-                  Trained <span class="text-gradient">by You</span>
+                  The Infrastructure <br />
+                  of <span class="text-gradient">AI Conversation.</span>
                </h1>
                <p class="text-xl text-gray-500 mb-12 max-w-lg leading-relaxed font-medium">
-                  ReplySuite is an AI-driven marketing automation platform designed for modern brands.
-                  Leverage your unique brand data to handle inquiries with human-like precision 24/7.
+                  ReplySuite is the premium automation layer for 2026 digital-native brands.
+                  Train your unique AI workforce on brand data and deploy anywhere in minutes.
                </p>
 
                <div class="flex flex-col sm:flex-row gap-6 relative z-10 transition-all">
                   <NuxtLink :to="user ? '/dashboard' : '/login'"
                      class="btn-gradient px-10 py-5 text-lg flex items-center justify-center gap-3 group">
-                     {{ user ? 'Go to Dashboard' : 'Start Free Month' }}
+                     {{ user ? 'Go to Dashboard' : 'Deploy Your First Agent' }}
                      <ArrowRight class="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </NuxtLink>
                   <button
@@ -283,6 +291,69 @@ const sendDemoMessage = async () => {
          </div>
       </section>
 
+      <!-- Global Reach -->
+      <section class="max-w-7xl mx-auto px-6 py-40 border-t border-white/5 relative">
+         <div class="grid lg:grid-cols-2 gap-20 items-center">
+            <div>
+               <span class="badge-gradient mb-8 uppercase tracking-[0.2em] text-[10px]">Global Expansion</span>
+               <h2 class="text-5xl md:text-7xl font-extrabold mb-10 tracking-tighter leading-tight text-white">
+                  Beyond <br />
+                  <span class="text-gradient leading-none">Borders.</span>
+               </h2>
+               <p class="text-lg text-gray-400 leading-relaxed font-medium mb-12">
+                  While the U.S. remains our high-ticket anchor, ReplySuite is architected for global volume. We are the default infrastructure for the <strong>India-Brazil-Indonesia</strong> corridor, where WhatsApp is the operating system of daily commerce.
+               </p>
+               <div class="space-y-6">
+                  <div v-for="market in [
+                    { name: 'India', stat: '532M+ Users', desc: 'Conversational Commerce Hub' },
+                    { name: 'Brazil', stat: '98% Adoption', desc: 'Real Estate & Hospitality Focus' },
+                    { name: 'Indonesia', stat: '94M+ Users', desc: 'Social Commerce Standard' }
+                  ]" :key="market.name" class="flex items-center gap-6 p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-primary/20 transition-all">
+                     <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary text-xs uppercase tracking-widest">
+                        {{ market.name.substring(0, 2) }}
+                     </div>
+                     <div>
+                        <div class="text-white font-bold tracking-tight">{{ market.name }} — {{ market.stat }}</div>
+                        <div class="text-xs text-gray-500 font-medium">{{ market.desc }}</div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="relative">
+               <div class="glass-card p-10 border-white/5 relative overflow-hidden group">
+                  <div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div class="flex items-center gap-4 mb-6">
+                    <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-lg">🇺🇸</div>
+                    <h4 class="text-lg font-bold text-white tracking-tight uppercase">North America</h4>
+                  </div>
+                  <p class="text-gray-500 text-sm leading-relaxed font-medium mb-6">
+                    High-performance infrastructure aligned with **SOC 2 Type II** and **CCPA/CPRA** standards for enterprise U.S. clients.
+                  </p>
+                  <div class="flex items-center gap-2 text-[10px] font-bold text-primary tracking-widest uppercase">
+                    <CheckCircle2 class="w-3 h-3" />
+                    Enterprise Ready
+                  </div>
+               </div>
+               <div class="absolute inset-0 bg-primary/10 blur-[100px] rounded-full"></div>
+               <div class="glass-card p-12 relative z-10 border-primary/20">
+                  <div class="flex items-center gap-4 mb-8">
+                     <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                        <Globe2 class="w-5 h-5" />
+                     </div>
+                     <h3 class="text-xl font-bold text-white tracking-tight">The Kigali Advantage</h3>
+                  </div>
+                  <p class="text-gray-400 font-medium mb-8 leading-relaxed">
+                     Operating from the heart of Kigali, we are uniquely positioned to bridge the gap between global AI standards and local African context. Our <strong>Kinyarwanda-native models</strong> provide a moat that international competitors cannot easily match.
+                  </p>
+                  <div class="flex items-center gap-2 text-primary font-bold uppercase tracking-[0.2em] text-[10px]">
+                     Scale your brand in Africa
+                     <ArrowRight class="w-4 h-4" />
+                  </div>
+               </div>
+            </div>
+         </div>
+      </section>
+
       <!-- Multi-Channel Roadmap Section -->
       <section class="max-w-7xl mx-auto px-6 py-32 border-t border-white/5 relative overflow-hidden">
          <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10 translate-y-1/2"></div>
@@ -295,19 +366,14 @@ const sendDemoMessage = async () => {
          </div>
 
          <div class="grid grid-cols-2 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div v-for="channel in [
-               { name: 'Instagram', icon: Instagram, status: 'Coming Soon' },
-               { name: 'WhatsApp', icon: MessageCircle, status: 'Coming Soon' },
-               { name: 'Slack', icon: Slack, status: 'Coming Soon' },
-               { name: 'Telegram', icon: Send, status: 'Coming Soon' }
-            ]" :key="channel.name"
-               class="glass-card p-8 border-white/5 text-center group hover:border-primary/20 transition-all opacity-60">
+            <div v-for="channel in channelFeatures" :key="channel.name"
+               class="glass-card p-8 border-white/5 text-center group hover:border-primary/20 transition-all">
                <div
                   class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/10">
                   <component :is="channel.icon" class="w-6 h-6 text-primary" />
                </div>
-               <div class="text-sm font-bold tracking-tight mb-2 text-white">{{ channel.name }}</div>
-               <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">{{ channel.status }}</div>
+               <div class="text-sm font-bold tracking-tight mb-2 text-white">{{ channel.title }}</div>
+               <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">Active Infrastructure</div>
             </div>
          </div>
       </section>

@@ -1,19 +1,9 @@
-# ReplySuite
-
-> ReplySuite is an AI-powered live chat and automation platform. Build trainable chatbots for Instagram, WhatsApp, and your website — without coding.
-
-## What ReplySuite Does
-
-ReplySuite lets businesses create AI chatbots trained on their own data (documents, URLs, text) and deploy them across multiple channels: website chat widgets, Instagram DMs, and WhatsApp — all from one dashboard.
-
-## Pricing (as of 2025)
+## Pricing (as of 2026)
 
 - **Free** — $0/month: 1 chatbot, 100 conversations/month, trainable AI agent, email support
 - **Silver** — $17.88/month: 3 chatbots, 2,500 conversations/month, advanced bot training, priority support
 - **Gold** — $26.88/month: Unlimited chatbots, unlimited conversations, proprietary bot training, dedicated account manager
 - **Enterprise** — Custom pricing: Contact support@replysuite.app
-
-All paid plans include a 30-day free trial.
 
 ## Key Features
 
@@ -27,11 +17,13 @@ All paid plans include a 30-day free trial.
 ## Key Pages
 
 - [Pricing & Plans](https://replysuite.app/pricing)
+- [Free Tool: AI PDF Content Analyzer](https://replysuite.app/tools/pdf-analyzer)
 - [Features](https://replysuite.app/features)
 - [Product Overview](https://replysuite.app/product)
 - [Integrations Ecosystem](https://replysuite.app/integrations)
 - [Documentation & Guides](https://replysuite.app/docs)
 - [Blog: 10 Best ReplySuite Alternatives](https://replysuite.app/blog/replysuite-alternatives)
+- [Blog: WhatsApp AI Integration Guide](https://replysuite.app/blog/whatsapp-ai-guide)
 - [Community Hub](https://replysuite.app/community)
 - [Product Changelog](https://replysuite.app/changelog)
 - [About ReplySuite](https://replysuite.app/about)
