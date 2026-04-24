@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { Copy, Check, Code2, Globe, ShieldCheck, Terminal, Bot, ChevronDown, Loader2 } from 'lucide-vue-next'
+import { 
+  Copy, Check, Code2, Globe, ShieldCheck, Terminal, Bot, ChevronDown, Loader2, 
+  Settings, Shield, Palette, ExternalLink, MessageSquare, Sparkles, Zap, Info 
+} from 'lucide-vue-next'
 
 definePageMeta({
   middleware: 'auth',
@@ -26,7 +29,11 @@ const fetchChatbots = async () => {
   if (!userId.value) return
   isLoading.value = true
   try {
-    const { data } = await supabase.from('chatbots').select('id, name').order('name')
+    const { data } = await supabase
+      .from('chatbots')
+      .select('id, name, launcher_color, launcher_icon, launcher_style, allowed_domains, primary_color')
+      .order('name')
+    
     chatbots.value = data || []
     if (chatbots.value.length > 0) {
       selectedChatbotId.value = chatbots.value[0].id
@@ -37,6 +44,16 @@ const fetchChatbots = async () => {
   } finally {
     isLoading.value = false
   }
+}
+
+const selectedChatbot = computed(() => chatbots.value.find(c => c.id === selectedChatbotId.value))
+
+const launcherIconsMap: any = {
+  MessageSquare,
+  Bot,
+  Sparkles,
+  Zap,
+  HelpCircle: Info
 }
 
 onMounted(fetchChatbots)
@@ -171,27 +188,63 @@ const playgroundHtml = computed(() => {
         <!-- Left Column: technical details & embed -->
         <div class="space-y-8">
           <!-- Direct Embed -->
-          <section class="glass-card h-full p-8 bg-[#0a0a0a] border-white/5">
-            <div class="flex items-center gap-4 mb-8">
-              <div class="p-3 rounded-xl bg-primary/10 text-primary">
-                <Code2 class="w-6 h-6" />
+          <section class="glass-card h-full p-8 bg-[#0a0a0a] border-white/5 flex flex-col">
+            <div class="flex items-center justify-between mb-8">
+              <div class="flex items-center gap-4">
+                <div class="p-3 rounded-xl bg-primary/10 text-primary">
+                  <Code2 class="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">Widget Embedding</h3>
+                  <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Add this autonomous script to your website's <code class="text-primary">&lt;head&gt;</code>.</p>
+                </div>
               </div>
-              <div>
-                <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">Widget Embedding</h3>
-                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Add this autonomous script to your website's <code class="text-primary">&lt;head&gt;</code> component.</p>
-              </div>
+              
+              <NuxtLink 
+                v-if="selectedChatbotId"
+                :to="`/dashboard/agents/${selectedChatbotId}?tab=design`"
+                class="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-primary transition-all border border-white/5"
+              >
+                <Palette class="w-3 h-3" />
+                Customize
+              </NuxtLink>
             </div>
 
-            <div class="relative group">
-              <div class="absolute -inset-1 bg-gradient-to-r from-primary/20 to-cyan-400/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000"></div>
-              <div class="relative flex items-center gap-4 p-6 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto overflow-y-hidden">
-                <pre class="text-gray-400 text-[11px] flex-1 leading-relaxed">{{ scriptTag }}</pre>
-                <button 
-                  @click="copyText(scriptTag, 'Embed Script')"
-                  class="shrink-0 p-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 transition-all hover:text-white"
-                >
-                  <Copy class="w-4 h-4" />
-                </button>
+            <div class="flex-1 space-y-6">
+              <div class="relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-primary/20 to-cyan-400/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000"></div>
+                <div class="relative flex items-center gap-4 p-6 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto overflow-y-hidden">
+                  <pre class="text-gray-400 text-[11px] flex-1 leading-relaxed">{{ scriptTag }}</pre>
+                  <button 
+                    @click="copyText(scriptTag, 'Embed Script')"
+                    class="shrink-0 p-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 transition-all hover:text-white"
+                  >
+                    <Copy class="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <!-- Preview section -->
+              <div v-if="selectedChatbot" class="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center gap-6">
+                <div class="relative group flex items-center justify-center p-4">
+                  <div class="absolute inset-0 bg-primary/5 rounded-full blur-xl scale-75 group-hover:scale-100 transition-transform"></div>
+                  <div 
+                    class="w-12 h-12 flex items-center justify-center shadow-2xl relative z-10 transition-transform group-hover:scale-110"
+                    :style="{ 
+                      backgroundColor: selectedChatbot.launcher_color || selectedChatbot.primary_color || '#D4AF37',
+                      borderRadius: selectedChatbot.launcher_style === 'circle' ? '50%' : selectedChatbot.launcher_style === 'square' ? '0px' : selectedChatbot.launcher_style === 'rounded-square' ? '12px' : '9999px'
+                    }"
+                  >
+                    <component 
+                      :is="launcherIconsMap[selectedChatbot.launcher_icon] || MessageSquare" 
+                      class="w-6 h-6 text-black" 
+                    />
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <h4 class="text-[10px] font-black uppercase tracking-widest text-white mb-1">Live Launcher Preview</h4>
+                  <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">This is exactly how your chatbot button will appear on your domain.</p>
+                </div>
               </div>
             </div>
           </section>
@@ -261,25 +314,49 @@ const playgroundHtml = computed(() => {
         </section>
 
         <!-- Domain Protection -->
-        <section class="glass-card p-8 bg-[#0a0a0a] border-white/5 opacity-50">
-          <div class="flex items-center gap-4 mb-8">
-            <div class="p-3 rounded-xl bg-white/5 text-gray-500">
-              <Globe class="w-6 h-6" />
+        <section class="glass-card p-8 bg-[#0a0a0a] border-white/5">
+          <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
+              <div class="p-3 rounded-xl bg-white/5 text-primary">
+                <Shield class="w-6 h-6" />
+              </div>
+              <div>
+                <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">Domain Protection</h3>
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Active restrictions for selected intelligence source.</p>
+              </div>
             </div>
-            <div>
-              <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">Security Layers</h3>
-              <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Limit interaction to whitelisted domains.</p>
-            </div>
+
+            <NuxtLink 
+              v-if="selectedChatbotId"
+              :to="`/dashboard/agents/${selectedChatbotId}?tab=security`"
+              class="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-primary transition-all border border-white/5"
+            >
+              <ShieldCheck class="w-3 h-3" />
+              Manage
+            </NuxtLink>
           </div>
 
-          <div class="flex gap-4">
-              <input 
-                type="text" 
-                placeholder="e.g. dev.yourdomain.com"
-                disabled
-                class="flex-1 bg-white/5 border border-white/10 rounded-xl px-5 py-3 focus:outline-none text-[11px] font-bold tracking-widest uppercase italic-none text-gray-700 placeholder:text-gray-800"
-              />
-              <button class="bg-white/5 text-gray-700 px-8 py-3 rounded-xl font-black text-xs tracking-widest uppercase cursor-not-allowed">active</button>
+          <div class="space-y-3">
+            <div v-if="selectedChatbot?.allowed_domains?.length > 0" class="flex flex-wrap gap-2">
+              <div 
+                v-for="domain in selectedChatbot.allowed_domains" 
+                :key="domain"
+                class="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-lg text-[10px] font-bold text-primary uppercase tracking-widest"
+              >
+                <Globe class="w-3 h-3" />
+                {{ domain }}
+              </div>
+            </div>
+            <div v-else class="p-6 bg-white/[0.02] border border-dashed border-white/10 rounded-2xl text-center">
+              <p class="text-[9px] text-gray-600 font-bold uppercase tracking-widest">No domain restrictions active. Your widget will work on any site.</p>
+            </div>
+            
+            <div class="flex items-center gap-2 mt-4 pt-4 border-t border-white/5">
+              <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+              <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
+                System Status: <span class="text-white">Active Enforcement</span>
+              </span>
+            </div>
           </div>
         </section>
       </div>

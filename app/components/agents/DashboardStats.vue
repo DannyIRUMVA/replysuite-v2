@@ -11,33 +11,36 @@ const props = defineProps<{
     maxEmbeddingMb: number
     maxTrainingUnits: number
     maxTrainings: number
+    maxReplies: number
   }
 }>()
 
 // Ability Score Calculation (Knowledge Intelligence Score)
 const intelligenceScore = computed(() => {
-  if (props.sourcesCount === 0) return 0
-  // Base 20 pts per source + linear usage points (max 100)
-  const base = props.sourcesCount * 20
-  const bonus = Math.floor(props.monthlyUsage / 50)
-  return Math.min(100, base + bonus)
+  const count = props.chatbot?.embeddings_count || 0
+  if (count === 0) return 0
+  // Dynamic scale: 200 embeddings = 100% capacity for baseline expert
+  // We use a non-linear feel to make it more rewarding
+  return Math.min(100, Math.floor(Math.sqrt(count / 200) * 100))
 })
 
 const intelligenceLabel = computed(() => {
   const score = intelligenceScore.value
   if (score === 0) return 'Dormant'
-  if (score < 30) return 'Novice'
-  if (score < 60) return 'Intermediate'
-  if (score < 90) return 'Expert'
+  if (score < 25) return 'Learning'
+  if (score < 50) return 'Capable'
+  if (score < 75) return 'Advanced'
+  if (score < 95) return 'Expert'
   return 'Superhuman'
 })
 
 const intelligenceColor = computed(() => {
   const score = intelligenceScore.value
-  if (score < 30) return 'text-orange-500'
-  if (score < 60) return 'text-cyan-400'
-  if (score < 90) return 'text-primary'
-  return 'text-primary shadow-primary'
+  if (score < 25) return 'text-gray-500'
+  if (score < 50) return 'text-cyan-500'
+  if (score < 75) return 'text-primary'
+  if (score < 95) return 'text-primary-accent'
+  return 'text-white shadow-[0_0_15px_rgba(255,255,255,0.5)]'
 })
 
 const usagePercent = computed(() => {
@@ -90,64 +93,39 @@ const isOverTrainingLimit = computed(() => props.totalTrainings >= props.limits.
         </div>
       </div>
 
-      <!-- Usage Meter -->
+      <!-- Vector Usage & Replies -->
       <div class="p-6 sm:p-8 space-y-6">
         <div class="flex items-center justify-between">
-          <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Vector Capacity</h4>
-          <Database class="w-4 h-4 text-gray-700" />
-        </div>
-        
-        <div class="space-y-4">
-          <div class="flex items-end justify-between font-bold italic-none">
-            <p class="text-2xl text-white">{{ chatbot?.current_embedding_mb || 0 }}<span class="text-xs text-gray-600 ml-1">MB</span></p>
-            <p class="text-[11px] text-gray-500 uppercase tracking-widest italic-none">LIMIT: {{ limits.maxEmbeddingMb }} MB</p>
-          </div>
-          
-          <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-            <div 
-              class="h-full bg-primary shadow-[0_0_12px_rgba(var(--primary),0.3)] transition-all duration-1000"
-              :style="{ width: `${usagePercent}%` }"
-            ></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bot Replies Quota Meter -->
-      <div class="p-6 sm:p-8 space-y-6">
-        <div class="flex items-center justify-between">
-          <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Bot Replies ({{ planSlug }})</h4>
+          <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Vector Output Capacity</h4>
           <LucideActivity class="w-4 h-4 text-gray-700" />
         </div>
         
         <div class="space-y-4">
           <div class="flex items-end justify-between font-bold italic-none">
-            <p class="text-2xl text-white">{{ monthlyUsage }}<span class="text-xs text-gray-600 ml-1">REPLIES</span></p>
+            <p class="text-2xl text-white">{{ monthlyUsage }} <span class="text-xs text-gray-600 ml-1">USED REPLIES</span></p>
             <p class="text-[11px] text-gray-500 uppercase tracking-widest italic-none">LIMIT: {{ limits.maxReplies === -1 ? '∞' : limits.maxReplies }}</p>
           </div>
           
           <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
             <div 
-              class="h-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.3)] transition-all duration-1000"
+              class="h-full bg-primary shadow-[0_0_12px_rgba(var(--primary),0.3)] transition-all duration-1000"
               :style="{ width: limits.maxReplies === -1 ? '0%' : `${Math.min(100, (monthlyUsage / (limits.maxReplies || 1)) * 100)}%` }"
             ></div>
           </div>
-
-          <p class="text-[10px] text-gray-600 leading-relaxed uppercase tracking-widest italic-none">
-            {{ (limits.maxReplies !== -1 && monthlyUsage >= (limits.maxReplies || 0)) ? 'Quota exceeded. Upgrade to unlock unlimited replies.' : 'You have remaining reply quotas for this agent.' }}
-          </p>
         </div>
       </div>
 
-      <!-- Knowledge Training Meter -->
+
+      <!-- Training Intelligence Sessions -->
       <div class="p-6 sm:p-8 space-y-6">
         <div class="flex items-center justify-between">
-          <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Training Limit ({{ planSlug }})</h4>
+          <h4 class="text-[11px] font-bold tracking-widest text-gray-500 uppercase italic-none">Training Sessions ({{ planSlug }})</h4>
           <Database class="w-4 h-4 text-gray-700" />
         </div>
         
         <div class="space-y-4">
           <div class="flex items-end justify-between font-bold italic-none">
-            <p class="text-2xl text-white">{{ totalTrainings }}<span class="text-xs text-gray-600 ml-1">DOCS</span></p>
+            <p class="text-2xl text-white">{{ totalTrainings }}<span class="text-xs text-gray-600 ml-1">SESSIONS</span></p>
             <p class="text-[11px] text-gray-500 uppercase tracking-widest italic-none">LIMIT: {{ limits.maxTrainings === -1 ? '∞' : limits.maxTrainings }}</p>
           </div>
           
@@ -159,7 +137,7 @@ const isOverTrainingLimit = computed(() => props.totalTrainings >= props.limits.
           </div>
 
           <p class="text-[10px] text-gray-600 leading-relaxed uppercase tracking-widest italic-none">
-            {{ isOverTrainingLimit ? 'Quota exceeded. Upgrade to unlock unlimited trainings.' : 'You have remaining document trainings for this agent.' }}
+            {{ isOverTrainingLimit ? 'Quota exceeded. Upgrade to unlock unlimited trainings.' : 'Active learning sessions for the current month.' }}
           </p>
         </div>
       </div>

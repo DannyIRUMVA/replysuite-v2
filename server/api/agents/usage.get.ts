@@ -1,4 +1,4 @@
-import { serverSupabaseClient, serverSupabaseUser } from '#supabase/server'
+import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
@@ -11,25 +11,37 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Missing chatbotId' })
   }
 
-  const supabase = await serverSupabaseClient(event)
+  const supabase = serverSupabaseServiceRole(event)
   
   // Get current month start
   const now = new Date()
   now.setUTCDate(1)
   now.setUTCHours(0, 0, 0, 0)
+  const monthStart = now.toISOString()
 
-  const { count, error } = await supabase
-    .from('instagram_message_jobs')
-    .select('*', { count: 'exact', head: true })
-    .eq('chatbot_id', chatbotId)
-    .neq('status', 'skipped')
-    .gte('created_at', now.toISOString())
+  // Parallel fetch counts from all sources of truth
+  const [igRes, waRes, webRes] = await Promise.all([
+    supabase.from('instagram_message_jobs')
+      .select('*', { count: 'exact', head: true })
+      .eq('chatbot_id', chatbotId)
+      .neq('status', 'skipped')
+      .gte('created_at', monthStart),
+      
+    supabase.from('whatsapp_message_jobs')
+      .select('*', { count: 'exact', head: true })
+      .eq('chatbot_id', chatbotId)
+      .gte('created_at', monthStart),
 
-  if (error) {
-    console.error('Error fetching usage:', error)
-  }
+    supabase.from('chat_messages')
+      .select('id, chat_sessions!inner(chatbot_id)', { count: 'exact', head: true })
+      .eq('chat_sessions.chatbot_id', chatbotId)
+      .eq('role', 'assistant')
+      .gte('created_at', monthStart)
+  ])
+
+  const totalUsage = (igRes.count || 0) + (waRes.count || 0) + (webRes.count || 0)
 
   return {
-    usage: count || 0
+    usage: totalUsage
   }
 })

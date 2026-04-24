@@ -53,11 +53,12 @@ const fetchData = async () => {
   if (!chatbotId || !userId.value) return
 
   try {
-    const [chatbotRes, sourcesRes, jobsRes, usageRes] = await Promise.all([
+    const [chatbotRes, sourcesRes, jobsRes, usageRes, embeddingsRes] = await Promise.all([
       supabase.from('chatbots').select('*').eq('id', chatbotId).single(),
       supabase.from('data_sources').select('*').eq('chatbot_id', chatbotId),
       supabase.from('training_jobs').select('*').eq('chatbot_id', chatbotId),
-      $fetch(`/api/agents/usage?chatbotId=${chatbotId}`)
+      $fetch(`/api/agents/usage?chatbotId=${chatbotId}`),
+      supabase.from('embeddings').select('*', { count: 'exact', head: true }).eq('chatbot_id', chatbotId)
     ])
 
     if (chatbotRes.error) throw chatbotRes.error
@@ -66,6 +67,7 @@ const fetchData = async () => {
     trainingJobs.value = (jobsRes.data || []).reverse()
     totalTrainings.value = trainingJobs.value.length
     monthlyUsage.value = (usageRes as any).usage || 0
+    chatbot.value.embeddings_count = embeddingsRes.count || 0
   } catch (err) {
     console.error('Error fetching training data:', err)
   } finally {
@@ -108,7 +110,7 @@ const viewExtraction = (job: any) => {
 }
 
 const handleUrlTrain = async () => {
-  if (!urlForm.value.url) return
+  if (!urlForm.value.url || isOverTrainingLimit.value) return
   isProcessing.value = true
 
   try {
@@ -134,7 +136,7 @@ const handleUrlTrain = async () => {
 }
 
 const handleTextTrain = async () => {
-  if (!textForm.value.content) return
+  if (!textForm.value.content || isOverTrainingLimit.value) return
   isProcessing.value = true
 
   try {
@@ -167,7 +169,7 @@ const handleFileChange = (e: Event) => {
 }
 
 const handleFileTrain = async () => {
-  if (!selectedFile.value) return
+  if (!selectedFile.value || isOverTrainingLimit.value) return
   isProcessing.value = true
 
   try {
@@ -210,7 +212,11 @@ const handleDeleteSource = async (id: string) => {
 }
 
 // UI Helper
-const isOverTrainingLimit = computed(() => trainingJobs.value.length >= (limits.value.maxTrainings || 10))
+const isOverTrainingLimit = computed(() => {
+  if (!limits.value?.maxTrainings) return false
+  if (limits.value.maxTrainings === -1) return false
+  return trainingJobs.value.length >= limits.value.maxTrainings
+})
 
 // Chat Test State
 const showChatTest = ref(false)
@@ -233,6 +239,7 @@ const handleTestChat = async () => {
     })
     if (res.success) {
       testMessages.value.push({ role: 'assistant', content: res.response })
+      await fetchData() // Refresh usage stats
     }
   } catch (err: any) {
     testMessages.value.push({ role: 'assistant', content: `Error: ${err.message || 'Brain connection failed'}` })
@@ -310,7 +317,7 @@ const handleTestChat = async () => {
                 </div>
                 <p v-if="isOverTrainingLimit"
                   class="text-[10px] text-red-500 mt-2 font-bold uppercase tracking-widest italic-none">
-                  Training limit reached for {{ planSlug }} plan. Upgrade for unlimited training.
+                  Training limit reached for {{ planSlug }} plan. Upgrade for more intelligence sessions.
                 </p>
                 <p
                   class="text-[10px] text-gray-600 mt-3 flex items-center gap-2 italic-none uppercase tracking-widest font-bold">
@@ -348,7 +355,7 @@ const handleTestChat = async () => {
                 </div>
                 <p v-if="isOverTrainingLimit"
                   class="text-[10px] text-red-500 mt-4 font-bold uppercase tracking-widest italic-none text-center">
-                  Training limit reached. Upgrade to continue adding documents.
+                  Training limit reached. Upgrade to continue adding intelligence sessions.
                 </p>
               </div>
             </div>
@@ -378,7 +385,7 @@ const handleTestChat = async () => {
                 </button>
                 <p v-if="isOverTrainingLimit"
                   class="text-[10px] text-red-500 mt-2 font-bold uppercase tracking-widest italic-none text-center px-8">
-                  User on {{ planSlug }} plan has reached the maximum of 10 trainings.
+                  User on {{ planSlug }} plan has reached the maximum of {{ limits.maxTrainings }} sessions.
                 </p>
               </div>
             </div>

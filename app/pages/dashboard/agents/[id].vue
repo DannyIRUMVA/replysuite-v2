@@ -9,11 +9,15 @@ import {
   Lock,
   MessageSquare,
   Shield,
+  ShieldCheck,
   Trash2,
   Palette,
   Monitor,
   Pipette,
-  RotateCcw
+  RotateCcw,
+  Sparkles,
+  Zap,
+  ExternalLink
 } from 'lucide-vue-next'
 import CustomSelect from '~~/app/components/CustomSelect.vue'
 
@@ -34,6 +38,7 @@ const isLoading = ref(true)
 const isSaving = ref(false)
 const agent = ref<any>(null)
 const activeTab = ref<'identity' | 'design' | 'security'>('identity')
+const newDomainInput = ref<string>('')
 
 // Forms
 const form = ref({
@@ -48,6 +53,12 @@ const form = ref({
   welcome_message: 'Hello! How can I help you today?',
   allowed_domains: [] as string[],
   ai_disclosure: true,
+  launcher_color: '#D4AF37',
+  launcher_icon: 'MessageSquare',
+  launcher_style: 'circle',
+  launcher_icon_color: '',
+  chat_icon: 'Bot',
+  chat_icon_color: '',
 })
 
 const languageOptions = [
@@ -124,6 +135,12 @@ const fetchData = async () => {
         welcome_message: data.welcome_message || 'Hello! How can I help you today?',
         allowed_domains: data.allowed_domains || [],
         ai_disclosure: data.ai_disclosure ?? true,
+        launcher_color: data.launcher_color || data.primary_color || '#D4AF37',
+        launcher_icon: data.launcher_icon || 'MessageSquare',
+        launcher_style: data.launcher_style || 'circle',
+        launcher_icon_color: data.launcher_icon_color || '',
+        chat_icon: data.chat_icon || 'Bot',
+        chat_icon_color: data.chat_icon_color || '',
       }
     }
   } catch (err) {
@@ -134,7 +151,14 @@ const fetchData = async () => {
   }
 }
 
-onMounted(fetchData)
+onMounted(async () => {
+  // Handle tab routing
+  if (route.query.tab && ['identity', 'design', 'security'].includes(route.query.tab as string)) {
+    activeTab.value = route.query.tab as any
+  }
+  
+  await fetchData()
+})
 
 // Save
 const handleSave = async () => {
@@ -155,6 +179,12 @@ const handleSave = async () => {
         welcome_message: form.value.welcome_message,
         allowed_domains: form.value.allowed_domains,
         ai_disclosure: form.value.ai_disclosure,
+        launcher_color: form.value.launcher_color,
+        launcher_icon: form.value.launcher_icon,
+        launcher_style: form.value.launcher_style,
+        launcher_icon_color: form.value.launcher_icon_color,
+        chat_icon: form.value.chat_icon,
+        chat_icon_color: form.value.chat_icon_color,
       })
       .eq('id', chatbotId)
 
@@ -190,16 +220,33 @@ const applyPreset = (preset: { primary: string; secondary: string }) => {
 }
 
 const resetDesign = () => {
-  form.value.primary_color = '#D4AF37'
-  form.value.secondary_color = '#1a1a1a'
-  form.value.chat_bubble_style = 'rounded'
-  form.value.widget_position = 'bottom-right'
   form.value.welcome_message = 'Hello! How can I help you today?'
+  form.value.launcher_color = '#D4AF37'
+  form.value.launcher_icon = 'MessageSquare'
+  form.value.launcher_style = 'circle'
 }
+
+const { planSlug } = useAuth()
+const isPremium = computed(() => ['silver', 'gold'].includes(planSlug.value || ''))
+
+const launcherIcons = [
+  { name: 'MessageSquare', icon: MessageSquare },
+  { name: 'Bot', icon: Bot },
+  { name: 'Sparkles', icon: Sparkles },
+  { name: 'Zap', icon: Zap },
+  { name: 'HelpCircle', icon: Info },
+]
+
+const launcherStyles = [
+  { label: 'Circle', value: 'circle' },
+  { label: 'Square', value: 'square' },
+  { label: 'Rounded', value: 'rounded-square' },
+  { label: 'Pill', value: 'pill' },
+]
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto space-y-8 pb-24">
+  <div class="max-w-[1400px] mx-auto space-y-8 pb-24">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-4">
@@ -257,8 +304,8 @@ const resetDesign = () => {
     </div>
 
     <!-- ─── IDENTITY TAB ─────────────────────────────────────── -->
-    <div v-else-if="activeTab === 'identity'" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div class="lg:col-span-2 space-y-8">
+    <div v-else-if="activeTab === 'identity'" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div class="lg:col-span-8 space-y-8">
 
         <!-- Core Identity -->
         <section class="glass-card">
@@ -309,7 +356,7 @@ const resetDesign = () => {
       </div>
 
       <!-- Right Sidebar -->
-      <div class="space-y-6">
+      <div class="lg:col-span-4 space-y-6">
 
         <!-- Visibility Toggle -->
         <div class="glass-card">
@@ -400,10 +447,10 @@ const resetDesign = () => {
     </div>
 
     <!-- ─── DESIGN TAB ─────────────────────────────────────────── -->
-    <div v-else-if="activeTab === 'design'" class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+    <div v-else-if="activeTab === 'design'" class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
 
-      <!-- Left: Controls (3/5) -->
-      <div class="lg:col-span-3 space-y-6">
+      <!-- Left: Controls (8/12) -->
+      <div class="lg:col-span-8 space-y-8">
 
         <!-- Color Presets -->
         <section class="glass-card">
@@ -416,7 +463,7 @@ const resetDesign = () => {
               <RotateCcw class="w-3 h-3" />Reset
             </button>
           </div>
-          <div class="grid grid-cols-4 gap-3">
+          <div class="grid grid-cols-4 sm:grid-cols-8 gap-3">
             <button
               v-for="preset in colorPresets"
               :key="preset.name"
@@ -554,6 +601,7 @@ const resetDesign = () => {
             </div>
           </div>
 
+
           <!-- Welcome Message -->
           <div class="space-y-3">
             <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">Welcome Message</label>
@@ -564,15 +612,153 @@ const resetDesign = () => {
             />
           </div>
         </section>
+
+        <!-- Launcher Customization (Premium) -->
+        <section class="glass-card relative overflow-hidden" :class="{ 'opacity-50 pointer-events-none': !isPremium }">
+          <div v-if="!isPremium" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
+            <div class="p-3 bg-primary/20 rounded-2xl mb-3">
+              <Lock class="w-6 h-6 text-primary" />
+            </div>
+            <p class="text-xs font-bold text-white uppercase tracking-widest">Premium Customization</p>
+            <p class="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Upgrade to Silver or Gold to unlock</p>
+          </div>
+
+          <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-6 flex items-center justify-between">
+            Launcher Customization
+            <span v-if="isPremium" class="bg-primary/20 text-primary px-2 py-0.5 rounded text-[8px]">PREMIUM ACTIVE</span>
+          </h3>
+
+          <div class="space-y-8">
+            <!-- Launcher Color -->
+            <div class="grid grid-cols-2 gap-6">
+              <div class="space-y-3">
+                <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">
+                  <Pipette class="w-3 h-3 inline-block mr-1 text-primary" />Launcher Color
+                </label>
+                <div class="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
+                  <div class="relative">
+                    <input
+                      type="color"
+                      v-model="form.launcher_color"
+                      class="absolute inset-0 opacity-0 cursor-pointer w-full h-full rounded-xl"
+                    />
+                    <div class="w-10 h-10 rounded-xl border-2 border-white/10 shadow-lg cursor-pointer transition-transform hover:scale-110"
+                      :style="{ backgroundColor: form.launcher_color }" />
+                  </div>
+                  <div class="flex-1">
+                    <input
+                      v-model="form.launcher_color"
+                      type="text"
+                      maxlength="7"
+                      class="w-full bg-transparent text-white font-mono text-xs focus:outline-none uppercase tracking-widest"
+                      placeholder="#D4AF37"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Launcher Icon Color -->
+              <div class="space-y-3">
+                <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">
+                  <Pipette class="w-3 h-3 inline-block mr-1 text-primary" />Icon Color
+                </label>
+                <div class="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
+                  <div class="relative">
+                    <input
+                      type="color"
+                      v-model="form.launcher_icon_color"
+                      @input="form.chat_icon_color = form.launcher_icon_color"
+                      class="absolute inset-0 opacity-0 cursor-pointer w-full h-full rounded-xl"
+                    />
+                    <div class="w-10 h-10 rounded-xl border-2 border-white/10 shadow-lg cursor-pointer transition-transform hover:scale-110 flex items-center justify-center overflow-hidden"
+                      :style="{ backgroundColor: form.launcher_icon_color || '#ffffff' }" >
+                      <div v-if="!form.launcher_icon_color" class="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+                        <span class="text-[8px] font-black text-white uppercase">AUTO</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                      <input
+                        v-model="form.launcher_icon_color"
+                        @input="form.chat_icon_color = form.launcher_icon_color"
+                        type="text"
+                        maxlength="7"
+                        class="w-full bg-transparent text-white font-mono text-xs focus:outline-none uppercase tracking-widest"
+                        placeholder="AUTO"
+                      />
+                      <button 
+                        v-if="form.launcher_icon_color" 
+                        @click="form.launcher_icon_color = ''; form.chat_icon_color = ''"
+                        class="text-[8px] font-bold text-primary hover:underline uppercase"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Widget Icon -->
+            <div class="space-y-3">
+              <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">Widget Icon (Launcher & Chat)</label>
+              <div class="grid grid-cols-5 gap-3">
+                <button
+                  v-for="item in launcherIcons"
+                  :key="item.name"
+                  @click="form.launcher_icon = item.name; form.chat_icon = item.name"
+                  :class="[
+                    'p-3 rounded-xl border transition-all flex items-center justify-center',
+                    form.launcher_icon === item.name
+                      ? 'bg-primary/10 border-primary/40 text-primary'
+                      : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:border-white/10'
+                  ]"
+                >
+                  <component :is="item.icon" class="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Launcher Style -->
+            <div class="space-y-3">
+              <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">Launcher Button Shape</label>
+              <div class="grid grid-cols-2 gap-3">
+                <button
+                  v-for="style in launcherStyles"
+                  :key="style.value"
+                  @click="form.launcher_style = style.value"
+                  :class="[
+                    'p-3 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all',
+                    form.launcher_style === style.value
+                      ? 'bg-primary/10 border-primary/40 text-primary'
+                      : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:border-white/10'
+                  ]"
+                >
+                  <div class="mb-2 h-8 flex items-center justify-center">
+                    <div class="w-6 h-6 border-2"
+                      :style="{ 
+                        borderColor: form.launcher_style === style.value ? form.primary_color : '#444',
+                        borderRadius: style.value === 'circle' ? '50%' : style.value === 'square' ? '0px' : style.value === 'rounded-square' ? '6px' : '9999px'
+                      }" 
+                    />
+                  </div>
+                  {{ style.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <!-- Right: Live Preview (2/5) -->
-      <div class="lg:col-span-2">
-        <div class="sticky top-6">
-          <div class="glass-card">
+      <!-- Right: Live Preview (4/12) -->
+      <div class="lg:col-span-4 sticky top-10">
+        <div class="glass-card">
             <div class="flex items-center justify-between mb-5">
               <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Live Preview</h3>
-              <Monitor class="w-4 h-4 text-gray-600" />
+              <a :href="`/widget/${chatbotId}`" target="_blank" class="p-2 hover:bg-white/5 rounded-lg transition-all text-gray-500 hover:text-primary" title="Open Full Preview">
+                <ExternalLink class="w-4 h-4" />
+              </a>
             </div>
 
             <!-- Mockup Widget -->
@@ -663,15 +849,33 @@ const resetDesign = () => {
             </div>
 
             <!-- Position indicator -->
-            <div class="mt-4 p-3 bg-white/[0.03] rounded-xl border border-white/[0.06] flex items-center justify-between">
-              <p class="text-[9px] text-gray-600 uppercase tracking-widest font-black">Position</p>
-              <div class="flex items-center gap-1.5">
-                <div class="w-2 h-2 rounded-full" :style="{ backgroundColor: form.primary_color }" />
-                <span class="text-[9px] text-white font-black uppercase tracking-wider">{{ form.widget_position }}</span>
+            <div class="mt-4 p-4 bg-white/[0.03] rounded-2xl border border-white/[0.06] space-y-4">
+              <div class="flex items-center justify-between">
+                <p class="text-[9px] text-gray-600 uppercase tracking-widest font-black">Position</p>
+                <div class="flex items-center gap-1.5">
+                  <div class="w-2 h-2 rounded-full" :style="{ backgroundColor: form.primary_color }" />
+                  <span class="text-[9px] text-white font-black uppercase tracking-wider">{{ form.widget_position }}</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <p class="text-[9px] text-gray-600 uppercase tracking-widest font-black">Launcher Preview</p>
+                <div 
+                  class="w-10 h-10 flex items-center justify-center shadow-lg transition-all duration-300"
+                  :style="{ 
+                    backgroundColor: form.launcher_color, 
+                    borderRadius: form.launcher_style === 'circle' ? '50%' : form.launcher_style === 'square' ? '0px' : form.launcher_style === 'rounded-square' ? '10px' : '9999px'
+                  }"
+                >
+                  <component 
+                    :is="launcherIcons.find(i => i.name === form.launcher_icon)?.icon || MessageSquare" 
+                    class="w-5 h-5"
+                    :style="{ color: (parseInt(form.launcher_color.slice(1,3), 16) * 299 + parseInt(form.launcher_color.slice(3,5), 16) * 587 + parseInt(form.launcher_color.slice(5,7), 16) * 114) / 1000 > 125 ? '#000' : '#fff' }"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
       </div>
     </div>
     <!-- ─── SECURITY TAB ────────────────────────────────────────── -->
@@ -722,23 +926,21 @@ const resetDesign = () => {
               <div class="flex items-center gap-3 mt-4">
                 <input 
                   type="text"
-                  id="new-domain-input"
+                  v-model="newDomainInput"
                   class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors text-xs"
                   placeholder="e.g. example.com"
                   @keypress.enter.prevent="() => {
-                    const el = document.getElementById('new-domain-input') as HTMLInputElement
-                    if (el && el.value) {
-                      form.allowed_domains.push(el.value.trim().replace(/^https?:\/\//, '').split('/')[0])
-                      el.value = ''
+                    if (newDomainInput) {
+                      form.allowed_domains.push(newDomainInput.trim().replace(/^https?:\/\//, '').split('/')[0])
+                      newDomainInput = ''
                     }
                   }"
                 />
                 <button 
                   @click="() => {
-                    const el = document.getElementById('new-domain-input') as HTMLInputElement
-                    if (el && el.value) {
-                      form.allowed_domains.push(el.value.trim().replace(/^https?:\/\//, '').split('/')[0])
-                      el.value = ''
+                    if (newDomainInput) {
+                      form.allowed_domains.push(newDomainInput.trim().replace(/^https?:\/\//, '').split('/')[0])
+                      newDomainInput = ''
                     }
                   }"
                   class="px-5 py-3 bg-white/5 border border-white/10 text-white rounded-xl font-bold text-[10px] tracking-widest uppercase hover:bg-white/10 transition-all"

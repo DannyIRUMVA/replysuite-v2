@@ -22,16 +22,20 @@
     .then(function (r) { return r.json(); })
     .then(function (config) {
       var primaryColor = config.primaryColor || '#D4AF37';
+      var launcherColor = config.launcherColor || primaryColor;
+      var launcherIcon = config.launcherIcon || 'MessageSquare';
+      var launcherStyle = config.launcherStyle || 'circle';
+      var launcherIconColor = config.launcherIconColor;
       var position = config.widgetPosition || 'bottom-right';
       var isRight = position !== 'bottom-left';
 
       injectStyles(primaryColor);
-      buildLauncher(chatbotId, primaryColor, isRight, BASE_URL);
+      buildLauncher(chatbotId, launcherColor, launcherIcon, launcherStyle, isRight, BASE_URL, launcherIconColor);
     })
     .catch(function () {
       // Fallback with defaults if config fetch fails
       injectStyles('#D4AF37');
-      buildLauncher(chatbotId, '#D4AF37', true, BASE_URL);
+      buildLauncher(chatbotId, '#D4AF37', 'MessageSquare', 'circle', true, BASE_URL);
     });
 
   // ── Inject keyframe CSS ──────────────────────────────────────────────────────
@@ -54,8 +58,24 @@
   }
 
   // ── Build the floating launcher button and iframe ────────────────────────────
-  function buildLauncher(id, color, isRight, base) {
+  function buildLauncher(id, color, iconName, styleName, isRight, base, iconColor) {
     var isOpen = false;
+
+    var icons = {
+      'MessageSquare': '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+      'Bot': '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="10" x="3" y="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>',
+      'Sparkles': '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>',
+      'Zap': '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+      'HelpCircle': '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+    };
+
+    var borderRadius = '50%';
+    if (styleName === 'square') borderRadius = '0px';
+    if (styleName === 'rounded-square') borderRadius = '16px';
+    if (styleName === 'pill') borderRadius = '9999px';
+
+    var closeIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    var activeIcon = icons[iconName] || icons['MessageSquare'];
 
     // ── Launcher Button ──
     var btn = document.createElement('button');
@@ -67,7 +87,7 @@
       'bottom:24px',
       'width:56px',
       'height:56px',
-      'border-radius:50%',
+      'border-radius:' + borderRadius,
       'background:' + color,
       'border:none',
       'cursor:pointer',
@@ -76,12 +96,22 @@
       'align-items:center',
       'justify-content:center',
       'box-shadow:0 8px 24px ' + hexToRgba(color, 0.45) + ',0 2px 8px rgba(0,0,0,0.3)',
-      'transition:transform 0.2s,box-shadow 0.2s',
+      'transition:transform 0.2s,box-shadow 0.2s,border-radius 0.3s',
       'outline:none',
     ].join(';');
 
-    // Chat icon SVG (message bubble)
-    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+    // Icon color logic: use provided color or auto-calculate based on brightness
+    if (iconColor) {
+      btn.style.color = iconColor;
+    } else {
+      var r = parseInt(color.slice(1,3), 16);
+      var g = parseInt(color.slice(3,5), 16);
+      var b = parseInt(color.slice(5,7), 16);
+      var brightness = (r * 299 + g * 587 + b * 114) / 1000;
+      btn.style.color = brightness > 125 ? '#000' : '#fff';
+    }
+
+    btn.innerHTML = activeIcon;
 
     // ── Notification dot ──
     var dot = document.createElement('span');
@@ -137,10 +167,10 @@
           container.style.opacity = '1';
           container.style.transform = 'translateY(0) scale(1)';
         }, 10);
-        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        btn.innerHTML = closeIcon;
       } else {
         container.style.display = 'none';
-        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+        btn.innerHTML = activeIcon;
         btn.appendChild(dot);
       }
     });
@@ -150,7 +180,7 @@
       if (e.data && e.data.type === 'replysuite-minimize') {
         isOpen = false;
         container.style.display = 'none';
-        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+        btn.innerHTML = activeIcon;
         btn.appendChild(dot);
       }
     });
