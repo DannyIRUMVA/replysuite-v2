@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Zap, Instagram, Twitter, Globe2, Github, Mail } from 'lucide-vue-next'
+
+const { openFeedback } = useFeedback()
 </script>
 
 <template>
@@ -69,6 +71,9 @@ import { Zap, Instagram, Twitter, Globe2, Github, Mail } from 'lucide-vue-next'
             { name: 'Brand Assets', to: '/brand' }
           ]" :key="link.name">
             <NuxtLink :to="link.to" class="text-sm text-gray-500 hover:text-white transition-colors font-medium">{{ link.name }}</NuxtLink>
+          </li>
+          <li>
+            <button @click="openFeedback('Guest Footer')" class="text-sm text-gray-500 hover:text-white transition-colors font-medium">Share Feedback</button>
           </li>
         </ul>
       </div>

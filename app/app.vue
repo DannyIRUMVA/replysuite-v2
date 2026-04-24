@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import '~/assets/css/main.css'
+
+const { showFeedback, feedbackSource, closeFeedback } = useFeedback()
 </script>
 
 <template>
@@ -12,6 +14,14 @@ import '~/assets/css/main.css'
     <!-- Global UI Providers -->
     <ToastProvider />
     <ConfirmModal />
+
+    <!-- Global Feedback -->
+    <Teleport to="body">
+      <div v-if="showFeedback" class="fixed inset-0 z-[1000] flex items-center justify-center p-6">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" @click="closeFeedback"></div>
+        <FeedbackForm :source="feedbackSource" @close="closeFeedback" class="relative z-10" />
+      </div>
+    </Teleport>
   </div>
 </template>
 

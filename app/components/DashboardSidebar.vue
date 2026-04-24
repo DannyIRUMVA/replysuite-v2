@@ -13,8 +13,11 @@ import {
   Megaphone,
   Lock,
   X,
-  MessageCircle
+  MessageCircle,
+  HelpCircle
 } from 'lucide-vue-next'
+
+const { openFeedback } = useFeedback()
 
 // Map strings to components to avoid serialization of functions
 const iconMap: Record<string, any> = {
@@ -27,7 +30,8 @@ const iconMap: Record<string, any> = {
   Code2,
   Settings,
   Lock,
-  MessageCircle
+  MessageCircle,
+  HelpCircle
 }
 
 const { user, profile, membership, isVerified, isLoading } = useAuth()
@@ -73,6 +77,12 @@ const sections = [
     links: [
       { name: 'Settings', href: '/dashboard/settings', icon: 'Settings' },
     ]
+  },
+  {
+    title: 'Support',
+    links: [
+      { name: 'Share Feedback', action: () => openFeedback('Dashboard Sidebar'), icon: 'HelpCircle' },
+    ]
   }
 ]
 
@@ -100,7 +110,7 @@ const handleLogout = async () => {
           <template v-for="link in section.links" :key="link.name">
             <!-- Normal Link -->
             <NuxtLink 
-              v-if="!link.locked"
+              v-if="link.href && !link.locked"
               :to="link.href"
               class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group"
               :class="[
@@ -113,6 +123,16 @@ const handleLogout = async () => {
               <span class="flex-1 text-sm tracking-tight capitalize">{{ link.name }}</span>
               <ChevronRight v-if="route.path === link.href" class="w-3 h-3" />
             </NuxtLink>
+
+            <!-- Action Button -->
+            <button 
+              v-else-if="link.action"
+              @click="link.action()"
+              class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-gray-500 hover:text-white hover:bg-white/5 group cursor-pointer"
+            >
+              <component :is="iconMap[link.icon]" class="w-4 h-4 group-hover:scale-110 transition-transform" />
+              <span class="flex-1 text-sm tracking-tight text-left capitalize">{{ link.name }}</span>
+            </button>
 
             <!-- Locked Link -->
             <button 
@@ -206,6 +226,7 @@ const handleLogout = async () => {
         </div>
       </div>
     </Transition>
+
   </aside>
 </template>
 

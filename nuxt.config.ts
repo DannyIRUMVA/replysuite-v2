@@ -149,6 +149,7 @@ export default defineNuxtConfig({
     azureOpenAiKey: process.env.AZURE_OPENAI_KEY,
     azureOpenAiEndpoint: process.env.AZURE_OPENAI_ENDPOINT,
     azureOpenAiDeploymentName: process.env.AZURE_OPENAI_DEPLOYMENT_NAME,
+    slackWebhookUrl: process.env.SLACK_WEBHOOK_URL,
   },
   vite: {
     server: {
