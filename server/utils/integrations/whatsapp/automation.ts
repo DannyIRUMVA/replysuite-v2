@@ -94,10 +94,11 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
     ${contextText || 'No specific background knowledge found for this query.'}
     
     IMPORTANT INSTRUCTIONS:
-    1. Be concise, direct, and conversational.
+    1. Be extremely concise, direct, and conversational (Max 160 characters).
     2. Format specifically for WhatsApp. You can use standard formatting like *bold* or _italics_ natively.
     3. Do not include markdown headers (#) or markdown horizontal lines (---).
-    4. Prioritize [ADDITIONAL CONTEXT] for factual accuracy over base instructions.
+    4. DO NOT provide long explanations. Get straight to the point.
+    5. Prioritize [ADDITIONAL CONTEXT] for factual accuracy over base instructions.
   `
 
   let replyText = ''

@@ -16,7 +16,9 @@ import {
    Slack,
    MessageCircle,
    Send,
-   Globe2
+   Globe2,
+   Check,
+   Loader2
 } from 'lucide-vue-next'
 
 useSeoMeta({
@@ -139,6 +141,90 @@ const sendDemoMessage = async () => {
    } finally {
       isChatLoading.value = false
    }
+}
+const { isAuthenticated, refreshAuth, syncWithPolar } = useAuth()
+const notify = useNotify()
+const isProcessing = ref<string | null>(null)
+
+const plans = [
+  {
+    name: 'Free',
+    id: 'starter',
+    price: '0.00',
+    desc: 'Experience the gold standard risk-free.',
+    features: ['1 website chatbot', '100 AI replies / mo', '10 training sessions', 'Trainable AI agent', 'Email support'],
+    popular: false
+  },
+  {
+    name: 'Silver',
+    id: 'silver',
+    productId: 'dc070937-6444-40a6-8a02-fd8b25df7aae',
+    price: '17.88',
+    desc: 'The best value for growing elite brands.',
+    features: ['3 website chatbots', '4,000 AI replies / mo', '30 training sessions', 'Advanced bot training', 'Priority support'],
+    popular: true
+  },
+  {
+    name: 'Gold',
+    id: 'gold',
+    productId: 'd0493f6f-16bc-4d3c-97bb-7be920840f12',
+    price: '26.88',
+    desc: 'Elite power for high-volume experts.',
+    features: ['5 website chatbots', '10,000 AI replies / mo', '100 training sessions', 'WhatsApp integration', 'Dedicated manager'],
+    popular: false
+  }
+]
+
+onMounted(() => {
+  if (window.PolarEmbedCheckout) {
+    window.PolarEmbedCheckout.init()
+  }
+
+  // Listen for successful checkout
+  window.addEventListener("polar:checkout:confirmed", async (event) => {
+    console.log("[Index] Checkout confirmed:", event)
+    notify.success('Payment successful! Redirecting to your dashboard...')
+    await syncWithPolar()
+    setTimeout(() => {
+      navigateTo('/dashboard/analytics')
+    }, 1500)
+  })
+})
+
+const handleSelect = async (plan: any) => {
+  if (!isAuthenticated.value) {
+    return navigateTo(`/register?plan=${plan.id}`)
+  }
+
+  isProcessing.value = plan.id
+  
+  try {
+    if (plan.id === 'starter') {
+      const res = await $fetch('/api/billing/onboard-free', { method: 'POST' })
+      if (res.success) {
+        await refreshAuth()
+        return navigateTo('/dashboard/analytics')
+      }
+    } else {
+      const res = await $fetch('/api/billing/checkout', {
+        method: 'POST',
+        body: { productId: plan.productId }
+      })
+
+      if (res.url) {
+        if (window.PolarEmbedCheckout) {
+          window.PolarEmbedCheckout.open(res.url)
+        } else {
+          window.location.href = res.url
+        }
+      }
+    }
+  } catch (err: any) {
+    console.error('[Index Pricing] Action failed:', err)
+    notify.error('Failed to process request. Please try again.')
+  } finally {
+    isProcessing.value = null
+  }
 }
 </script>
 
@@ -374,6 +460,64 @@ const sendDemoMessage = async () => {
                </div>
                <div class="text-sm font-bold tracking-tight mb-2 text-white">{{ channel.title }}</div>
                <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">Active Infrastructure</div>
+            </div>
+         </div>
+      </section>
+
+      <!-- Pricing Section -->
+      <section id="pricing" class="max-w-7xl mx-auto px-6 py-32 border-t border-white/5">
+         <div class="text-center mb-24">
+            <span class="badge-gradient mb-6">Investment</span>
+            <h2 class="text-5xl md:text-7xl font-extrabold tracking-tighter text-white">
+               Choose your <span class="text-gradient">Empire Class.</span>
+            </h2>
+            <p class="text-gray-500 mt-6 max-w-xl mx-auto font-medium">Choose the perfect plan for your brand growth. From startups to high-volume global brands.</p>
+         </div>
+
+         <div class="grid lg:grid-cols-3 gap-8">
+            <div 
+               v-for="plan in plans" 
+               :key="plan.name"
+               class="glass-card p-10 flex flex-col relative transition-all duration-500 hover:-translate-y-4 border-white/5"
+               :class="plan.popular ? 'border-primary/40 !bg-primary/[0.03]' : ''"
+            >
+               <div v-if="plan.popular" class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-black text-[10px] font-bold tracking-widest rounded-full uppercase">
+                  Elite Choice
+               </div>
+
+               <div class="mb-8">
+                  <h3 class="text-2xl font-bold mb-2 tracking-tight">{{ plan.name }}</h3>
+                  <p class="text-xs text-gray-500 font-medium">{{ plan.desc }}</p>
+               </div>
+
+               <div class="mb-10 flex items-baseline gap-2">
+                  <span class="text-5xl font-extrabold tracking-tighter text-white">${{ plan.price }}</span>
+                  <span class="text-gray-500 font-bold tracking-widest text-[10px] uppercase">/mo</span>
+               </div>
+
+               <button 
+                  @click="handleSelect(plan)"
+                  :disabled="isProcessing === plan.id"
+                  class="w-full py-5 rounded-full font-bold text-center mb-10 transition-all tracking-widest text-xs flex items-center justify-center gap-2"
+                  :class="plan.popular ? 'btn-gradient' : 'bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20'"
+               >
+                  <template v-if="isProcessing === plan.id">
+                     <Loader2 class="w-4 h-4 animate-spin" />
+                     Processing...
+                  </template>
+                  <template v-else>
+                     {{ isAuthenticated ? (plan.id === 'starter' ? 'Activate Free' : 'Select Plan') : (plan.id === 'gold' ? 'Get Started' : 'Start Free Month') }}
+                  </template>
+               </button>
+
+               <div class="space-y-4 flex-grow">
+                  <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-3 text-xs font-medium text-gray-400">
+                     <div class="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Check class="w-2.5 h-2.5 text-primary" />
+                     </div>
+                     {{ feat }}
+                  </div>
+               </div>
             </div>
          </div>
       </section>

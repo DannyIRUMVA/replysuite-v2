@@ -1,4 +1,6 @@
 <script setup lang="ts">
+useHead({ title: 'Verify Your Account | ReplySuite' })
+
 import { AlertCircle, ArrowRight, Zap, LogOut } from 'lucide-vue-next'
 
 definePageMeta({

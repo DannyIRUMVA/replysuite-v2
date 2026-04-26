@@ -9,6 +9,10 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({
+  title: 'Account Settings'
+})
+
 const { user } = useAuth()
 const notify = useNotify()
 

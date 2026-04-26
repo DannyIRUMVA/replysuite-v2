@@ -77,7 +77,7 @@ definePageMeta({
   layout: 'default'
 })
 
-const { isAuthenticated, refreshAuth } = useAuth()
+const { isAuthenticated, refreshAuth, syncWithPolar } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()
 const isProcessing = ref<string | null>(null)
@@ -93,9 +93,28 @@ const getPlanId = (name: string) => {
   return dbPlans.value?.find(p => p.internal_slug === slug)?.polar_product_id
 }
 
+// Watch for polar script
+onMounted(() => {
+  if (window.PolarEmbedCheckout) {
+    window.PolarEmbedCheckout.init()
+  }
+
+  // Listen for successful checkout
+  window.addEventListener("polar:checkout:confirmed", async (event) => {
+    console.log("[Public Pricing] Checkout confirmed:", event)
+    notify.success('Payment successful! Redirecting to your dashboard...')
+    // Sync briefly and then move to dashboard
+    await syncWithPolar()
+    setTimeout(() => {
+      navigateTo('/dashboard/analytics')
+    }, 1500)
+  })
+})
+
 const handleSelect = async (plan: any) => {
   if (!isAuthenticated.value) {
-    return navigateTo('/register')
+    // If not authenticated, store plan choice and redirect to register
+    return navigateTo(`/register?plan=${plan.name.toLowerCase()}`)
   }
 
   isProcessing.value = plan.name
@@ -122,7 +141,11 @@ const handleSelect = async (plan: any) => {
       })
 
       if (res.url) {
-        window.location.href = res.url
+        if (window.PolarEmbedCheckout) {
+          window.PolarEmbedCheckout.open(res.url)
+        } else {
+          window.location.href = res.url
+        }
       }
     }
   } catch (err: any) {

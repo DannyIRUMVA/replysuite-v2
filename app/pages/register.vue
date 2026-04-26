@@ -6,6 +6,10 @@ definePageMeta({
   layout: false
 })
 
+useHead({
+  title: 'Create Your Account'
+})
+
 const supabase = useSupabaseClient()
 const email = ref('')
 const password = ref('')

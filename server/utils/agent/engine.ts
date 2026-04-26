@@ -65,10 +65,11 @@ You have access to the following tools:
 ${availableToolsList}
 
 CRITICAL RULES FOR TOOLS:
-1. Keep all responses EXTREMELY BRIEF and CONCISE. Sound like a human, not a bot.
+1. Keep all responses EXTREMELY BRIEF and CONCISE (Preferably under 160 characters). Sound like a human, not a bot.
 2. If a tool requires parameters (like phone number, quantity, date, etc.) that the user hasn't provided, you MUST ask the user for them FIRST before trying to call the tool.
-2. For place_order: You need the exact 'product_id' (from get_menu), the 'qty' (quantity), and the 'customer_phone'. If the user says "I want to order X", reply by asking: "How many would you like, and what is your phone number for the order?"
-3. For request_payment: Always ensure you have the order_id from place_order and the user's phone number.`
+3. For place_order: You need the exact 'product_id' (from get_menu), the 'qty' (quantity), and the 'customer_phone'. If the user says "I want to order X", reply by asking: "How many would you like, and what is your phone number for the order?"
+4. For request_payment: Always ensure you have the order_id from place_order and the user's phone number.
+5. DO NOT provide long explanations unless explicitly asked. Keep it snappy and natural.`
   }
 
   while (iterations < MAX_ITERATIONS) {
@@ -168,7 +169,14 @@ const azureTools = allFunctionDeclarations.map((fd: any) => ({
   let finalSystemPrompt = options.systemPrompt
   if (azureTools.length > 0) {
     const availableToolsList = allFunctionDeclarations.map((fd: any) => `- **${fd.name}**: ${fd.description}`).join('\n')
-    finalSystemPrompt += `\n\n[ACTIVATED AGENT TOOLS]\nYou have access to the following tools. Use them when requested or when it helps answer the user's query:\n${availableToolsList}`
+    finalSystemPrompt += `\n\n[ACTIVATED AGENT TOOLS]
+You have access to the following tools:
+${availableToolsList}
+
+CRITICAL RULES FOR TOOLS:
+1. Keep all responses EXTREMELY BRIEF and CONCISE (Preferably under 160 characters). Sound like a human, not a bot.
+2. If a tool requires parameters (like phone number, quantity, date, etc.) that the user hasn't provided, you MUST ask the user for them FIRST before trying to call the tool.
+3. DO NOT provide long explanations unless explicitly asked. Keep it snappy and natural.`
   }
 
   let azureMessages = [

@@ -21,6 +21,18 @@ const isLoading = computed(() => !isMounted.value || isAuthLoading.value)
 // Automatically sync with Polar on mount if identity is missing or to verify deep status
 onMounted(async () => {
   isMounted.value = true
+  
+  if (window.PolarEmbedCheckout) {
+    window.PolarEmbedCheckout.init()
+  }
+
+  // Listen for successful checkout
+  window.addEventListener("polar:checkout:confirmed", async (event) => {
+    console.log("[Pricing] Checkout confirmed:", event)
+    notify.success('Payment successful! Your empire class is being upgraded.')
+    await syncWithPolar()
+  })
+
   if (!polarCustomerId.value) {
     console.log('[Pricing] Missing Polar identity. Syncing...')
     await syncWithPolar()
@@ -51,7 +63,11 @@ const handleSelect = async (plan: any) => {
       })
 
       if (res.url) {
-        window.location.href = res.url
+        if (window.PolarEmbedCheckout) {
+          window.PolarEmbedCheckout.open(res.url)
+        } else {
+          window.location.href = res.url
+        }
       } else if (res.updated) {
         // Handle instant update (proration)
         notify.success('Plan updated successfully! Your new limits are active.')

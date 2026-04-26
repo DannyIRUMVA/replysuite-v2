@@ -117,11 +117,14 @@ export default defineEventHandler(async (event) => {
 
     if (sourceError) throw sourceError
 
-    // 4. Process Embeddings for each chunk sequentially (to avoid rate limits)
+    // 4. Process Embeddings for each chunk sequentially
+    let processed = 0
     let totalSize = 0
     for (const chunk of chunks) {
+      processed++
       const vector = await getEmbeddings(chunk)
       totalSize += new TextEncoder().encode(chunk).length
+      console.log(`[URL Training] Processing chunk ${processed}/${chunks.length}`)
       
       const { error: insertError } = await supabaseAdmin
         .from('embeddings')

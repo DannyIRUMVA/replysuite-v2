@@ -31,6 +31,10 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({
+  title: computed(() => agent.value?.name ? `${agent.value.name} | Agent Settings` : 'Agent Settings | ReplySuite'),
+})
+
 const route = useRoute()
 const chatbotId = route.params.id as string
 const { userId } = useAuth()

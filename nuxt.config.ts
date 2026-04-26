@@ -26,6 +26,10 @@ export default defineNuxtConfig({
       ],
       script: [
         {
+          src: 'https://cdn.jsdelivr.net/npm/@polar-sh/checkout/embed.js',
+          defer: true
+        },
+        {
           type: 'application/ld+json',
           children: JSON.stringify({
             '@context': 'https://schema.org',

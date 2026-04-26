@@ -150,23 +150,24 @@ export default defineEventHandler(async (event) => {
         }
       }
 
-      console.log(`[Polar Upgrade] Triggering direct update: ${activeSubscription.id} -> ${productId}`)
+      console.log(`[Polar Upgrade] Generating upgrade checkout for: ${activeSubscription.id} -> ${productId}`)
       try {
-        const updated = await polar.subscriptions.update(activeSubscription.id, {
-          productId,
-          prorationBehavior: 'invoice' // Ensure immediate transition and billing
-        })
-        
-        await syncLocalMembership(adminClient, userId, productId, updated.id, polarCustomerId)
-
-        return { 
-          upgraded: true, 
-          message: 'Plan successfully updated!',
-          subscriptionId: updated.id 
+        const checkoutPayload: any = {
+          products: [productId],
+          successUrl: `${siteUrl}/dashboard/settings/billing?success=true`,
+          customerId: polarCustomerId,
+          customerMetadata: { 
+            supabase_user_id: userId,
+            subscription_id: activeSubscription.id,
+            source: 'upgrade_endpoint_overlay'
+          },
         }
+
+        const checkout = await polar.checkouts.create(checkoutPayload)
+        return { url: checkout.url }
       } catch (updateErr: any) {
-          console.error('[Polar Upgrade] Direct update API error:', updateErr.message)
-          // Fallback to checkout if direct update fails
+          console.error('[Polar Upgrade] Upgrade checkout failed:', updateErr.message)
+          // Fallback to fresh checkout below
       }
     }
 

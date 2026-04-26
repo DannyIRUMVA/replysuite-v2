@@ -20,6 +20,10 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({
+  title: 'Intelligence Analytics'
+})
+
 // ── Supabase client + auth ─────────────────────────────────
 const supabase = useSupabaseClient()
 const notify = useNotify()

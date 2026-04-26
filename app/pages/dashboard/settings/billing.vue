@@ -15,6 +15,10 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({
+  title: 'Billing'
+})
+
 const { userId, membership, planSlug, isLoading: isAuthLoading, refreshAuth, syncWithPolar, polarCustomerId } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()
@@ -28,6 +32,18 @@ const checkoutLoading = ref<string | null>(null)
 // Automatically sync with Polar on mount if identity exists but status might be stale
 onMounted(async () => {
   isMounted.value = true
+
+  if (window.PolarEmbedCheckout) {
+    window.PolarEmbedCheckout.init()
+  }
+
+  // Listen for successful checkout
+  window.addEventListener("polar:checkout:confirmed", async (event) => {
+    console.log("[Billing] Checkout confirmed:", event)
+    notify.success('Payment successful! Your subscription is being updated.')
+    await syncWithPolar()
+  })
+
   if (polarCustomerId.value) {
     console.log('[Billing] Verification check...')
     await syncWithPolar()
@@ -129,8 +145,12 @@ const handleUpgrade = async (plan: any) => {
     }
 
     if (response?.url) {
-      // New subscription — redirect to Polar checkout
-      window.location.href = response.url
+      // New subscription — open Polar checkout overlay
+      if (window.PolarEmbedCheckout) {
+        window.PolarEmbedCheckout.open(response.url)
+      } else {
+        window.location.href = response.url
+      }
     }
   } catch (err: any) {
     console.error('Upgrade error:', err)

@@ -25,6 +25,10 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({
+  title: 'AI Agents'
+})
+
 const { userId, limits, isVerified, isLoading: authLoading } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()

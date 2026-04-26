@@ -7,7 +7,9 @@ import {
   Bot,
   Plus,
   TrendingUp,
-  Activity
+  Activity,
+  ChevronRight,
+  BarChart3
 } from 'lucide-vue-next'
 import Skeleton from '~~/app/components/Skeleton.vue'
 
@@ -16,10 +18,16 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({
+  title: 'Dashboard'
+})
+
 const { user, profile, isVerified, isLoading, userId } = useAuth()
 const supabase = useSupabaseClient()
 const isMounted = ref(false)
 onMounted(() => { isMounted.value = true })
+
+const sparkData = [45, 70, 55, 90, 65, 80, 50, 95, 75, 60, 85, 40]
 
 // Async stats fetching with real data from multiple tables
 const { data: realStats, pending: statsLoading } = useAsyncData('dashboard-metrics-v4', async () => {
@@ -60,7 +68,7 @@ const { data: recentSessions, pending: sessionsLoading } = useAsyncData('dashboa
     .select('*, chatbots(name)')
     .in('chatbot_id', botIds)
     .order('created_at', { ascending: false })
-    .limit(5)
+    .limit(10)
   
   return data || []
 }, { watch: [userId] })
@@ -73,7 +81,7 @@ const { data: activities, pending: activitiesLoading } = useAsyncData('dashboard
     .select('*')
     .eq('user_id', userId.value)
     .order('created_at', { ascending: false })
-    .limit(5)
+    .limit(10)
   
   return data || []
 }, { watch: [userId] })
@@ -217,39 +225,45 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
      </div>
 
      <div v-else-if="isVerified" class="grid lg:grid-cols-3 gap-10">
-        <!-- Conversations List -->
-        <div class="lg:col-span-2 glass-card p-10 min-h-[400px] border-white/5 flex flex-col">
-           <div class="flex items-center justify-between mb-10">
-              <h3 class="text-xl font-bold tracking-tight uppercase italic-none">Live Conversions</h3>
-              <NuxtLink to="/dashboard/conversations" class="text-xs font-bold text-primary tracking-widest uppercase hover:underline">View All</NuxtLink>
-           </div>
+        <div class="lg:col-span-2 glass-card p-10 min-h-[400px] border-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden group">
+            <!-- Background Glow -->
+            <div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all duration-700"></div>
+            
+            <div class="relative flex flex-col items-center">
+                <div class="w-24 h-24 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-8 shadow-2xl shadow-primary/5">
+                    <MessageSquare class="w-10 h-10 text-primary" />
+                </div>
+                
+                <h3 class="text-2xl font-black tracking-tighter text-white uppercase mb-2">Conversations Hub</h3>
+                <p class="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] mb-8 max-w-[200px] leading-relaxed">
+                    Real-time monitoring and management of all active AI sessions
+                </p>
 
-           <div v-if="recentSessions && recentSessions.length > 0" class="space-y-4 w-full">
-              <div v-for="session in recentSessions" :key="session.id" class="flex items-center justify-between p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/20 transition-all group">
-                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-black transition-all">
-                       <MessageSquare class="w-6 h-6" />
+                <div class="flex items-center gap-12 mb-10">
+                    <div class="flex flex-col">
+                        <span class="text-3xl font-black tracking-tighter text-white">{{ stats.find(s => s.id === 'messages')?.value || '0' }}</span>
+                        <span class="text-[9px] font-black text-gray-600 uppercase tracking-widest">Total Threads</span>
                     </div>
-                    <div>
-                       <p class="font-bold text-sm tracking-tight text-white capitalize">{{ (session as any).chatbots?.name || 'Autonomous Agent' }}</p>
-                       <p class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mt-1">{{ timeAgo(new Date(session.created_at)) }}</p>
+                    <div class="w-px h-10 bg-white/5"></div>
+                    <div class="flex flex-col">
+                        <span class="text-3xl font-black tracking-tighter text-primary">{{ recentSessions?.length || 0 }}</span>
+                        <span class="text-[9px] font-black text-gray-600 uppercase tracking-widest">Recent Activity</span>
                     </div>
-                 </div>
-                 <div class="flex items-center gap-3">
-                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                    <span class="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Active</span>
-                 </div>
-              </div>
-           </div>
+                </div>
 
-           <div v-else class="flex-1 flex flex-col items-center justify-center text-center">
-              <div class="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                 <TrendingUp class="w-10 h-10 text-primary opacity-30" />
-              </div>
-              <h2 class="text-2xl font-bold mb-3 tracking-tighter">No Conversation Data</h2>
-              <p class="text-gray-500 max-w-sm text-sm font-medium mb-8">Deploy your first AI agent to start collecting elite behavioral data and conversation insights.</p>
-              <NuxtLink to="/dashboard/agents" class="bg-primary text-black px-6 py-3 font-bold tracking-widest text-xs rounded-xl hover:bg-primary-accent transition-all uppercase">Forge Your First Agent</NuxtLink>
-           </div>
+                <NuxtLink to="/dashboard/conversations" class="group/btn relative px-10 py-4 rounded-xl bg-primary text-black font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-[0_0_50px_rgba(var(--primary),0.2)] flex items-center gap-3">
+                    View more
+                    <ChevronRight class="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                </NuxtLink>
+            </div>
+
+            <!-- Cloudflare-Compatible CSS Bar Chart -->
+            <div class="absolute bottom-0 left-0 right-0 h-24 flex items-end justify-around px-10 opacity-[0.03] pointer-events-none">
+                <div v-for="(val, idx) in sparkData" :key="idx" 
+                     class="w-full mx-1 bg-primary rounded-t-sm transition-all duration-1000"
+                     :style="{ height: `${val}%` }">
+                </div>
+            </div>
         </div>
         
         <!-- Recent Activity Feed -->
@@ -269,14 +283,17 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
               </div>
            </div>
 
-           <div v-else class="flex-1 flex flex-col items-center justify-center text-center py-10">
-              <Activity class="w-12 h-12 text-gray-800 mb-4 opacity-20" />
-              <p class="text-gray-600 text-xs font-bold tracking-widest uppercase">System Idle</p>
-              <p class="text-gray-800 text-[10px] mt-2">No activity recorded</p>
-           </div>
+            <div v-else-if="activitiesLoading" class="flex-1 flex flex-col items-center justify-center py-12">
+               <div class="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+            </div>
+            <div v-else class="flex-1 flex flex-col items-center justify-center text-center py-12">
+               <Activity class="w-12 h-12 text-gray-800 mb-4 opacity-20" />
+               <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Protocol Logs Empty</p>
+               <p class="text-gray-800 text-[9px] mt-2 tracking-tighter italic">System standby: awaiting events</p>
+            </div>
 
            <button class="mt-8 py-3 w-full border border-white/5 rounded-xl text-[10px] font-bold text-gray-500 tracking-[0.2em] uppercase hover:border-primary/30 hover:text-primary transition-all">
-              Initialize Audit
+              View more
            </button>
         </div>
      </div>
@@ -285,7 +302,7 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
 
 <style scoped>
 .glass-card {
-  @apply bg-[#111111]/40 backdrop-blur-xl border border-white/5 p-8 rounded-[2rem];
+  @apply bg-[#111111]/40 backdrop-blur-xl border border-white/5 p-8 rounded-[20px];
 }
 .italic-none {
   font-style: normal !important;

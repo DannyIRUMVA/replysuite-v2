@@ -204,7 +204,7 @@ const handleLogout = async () => {
     >
       <div v-if="showComingSoon" class="fixed inset-0 z-[200] flex items-center justify-center p-6">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-md" @click="showComingSoon = false"></div>
-        <div class="relative w-full max-w-sm bg-[#0d0d0e] border border-white/10 rounded-[2.5rem] p-10 shadow-2xl text-center">
+        <div class="relative w-full max-w-sm bg-[#0d0d0e] border border-white/10 rounded-[24px] p-10 shadow-2xl text-center">
             <button @click="showComingSoon = false" class="absolute top-6 right-6 p-2 text-gray-500 hover:text-white transition-colors">
                 <X class="w-5 h-5" />
             </button>
@@ -217,7 +217,7 @@ const handleLogout = async () => {
             </p>
             <button 
                 @click="showComingSoon = false"
-                class="w-full py-4 bg-primary text-black font-bold rounded-2xl hover:bg-primary-accent transition-all shadow-lg shadow-primary/10"
+                class="w-full py-4 bg-primary text-black font-bold rounded-xl hover:bg-primary-accent transition-all shadow-lg shadow-primary/10"
             >
                 Understood
             </button>
@@ -230,6 +230,6 @@ const handleLogout = async () => {
 
 <style scoped>
 .glass-card {
-  @apply bg-[#111111]/40 backdrop-blur-xl border border-white/5 rounded-[2rem];
+  @apply bg-[#111111]/40 backdrop-blur-xl border border-white/5 rounded-[20px];
 }
 </style>

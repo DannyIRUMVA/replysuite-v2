@@ -29,56 +29,45 @@ export default defineEventHandler(async (event) => {
     const user = await serverSupabaseUser(event)
     const userEmail = user?.email
 
+    const polar = new Polar({
+      accessToken: polarAccessToken,
+      server: (polarServer?.toLowerCase() as any) || 'sandbox',
+    })
+
     // 1. Detection: Check if the user already has an active Polar subscription
     // If they do, we should UPDATE it instead of creating a NEW checkout session.
     // This solves the "AlreadyActiveSubscriptionError" and handles proration.
     const adminClient = serverSupabaseServiceRole(event)
     const { data: membership } = await adminClient
       .from('user_memberships')
-      .select('polar_subscription_id, plan_id')
+      .select('polar_subscription_id, polar_customer_id, plan_id')
       .eq('user_id', userId)
       .eq('is_active', true)
       .not('polar_subscription_id', 'is', null)
       .maybeSingle()
 
     if (membership?.polar_subscription_id) {
-      console.log(`[Polar Checkout] User ${userId} has active sub ${membership.polar_subscription_id}. Performing update instead...`)
+      console.log(`[Polar Checkout] User ${userId} has active sub ${membership.polar_subscription_id}. Generating upgrade checkout for overlay...`)
       
       try {
-        await updatePolarSubscription(membership.polar_subscription_id, productId)
-        
-        // Instant Sync: Reconcile local DB immediately
-        const config = useRuntimeConfig()
-        let polarId = membership.polar_customer_id
-        if (!polarId) {
-          // Fetch from profile if missing in membership
-          const { data: profile } = await adminClient
-            .from('profiles')
-            .select('polar_customer_id')
-            .eq('id', userId)
-            .single()
-          polarId = profile?.polar_customer_id
+        const checkoutPayload: any = {
+          products: [productId],
+          successUrl: `${config.public.siteUrl}/dashboard/settings/billing?success=true`,
+          customerId: membership.polar_customer_id,
+          customerMetadata: { 
+            supabase_user_id: userId,
+            subscription_id: membership.polar_subscription_id,
+            source: 'checkout_endpoint_overlay'
+          },
         }
 
-        if (polarId) {
-          await syncUserSubscriptions(event, userId, polarId)
-        }
-
-        return { success: true, updated: true }
+        const checkout = await polar.checkouts.create(checkoutPayload)
+        return { url: checkout.url }
       } catch (updateErr: any) {
-        console.error('[Polar Checkout] Update failed:', updateErr.message)
-        // If update fails (e.g. payment issue), we throw but with a better message
-        throw createError({ 
-          statusCode: 400, 
-          message: updateErr.message || 'Failed to update plan. Please check your payment method.' 
-        })
+        console.error('[Polar Checkout] Upgrade checkout failed:', updateErr.message)
+        // Fallback to fresh checkout below if upgrade checkout fails
       }
     }
-
-    const polar = new Polar({
-      accessToken: polarAccessToken,
-      server: (polarServer?.toLowerCase() as any) || 'sandbox',
-    })
 
     const checkoutPayload: Record<string, any> = {
       products: [productId],

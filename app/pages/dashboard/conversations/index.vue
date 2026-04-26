@@ -6,8 +6,11 @@ import {
   User,
   Clock,
   ChevronRight,
+  ChevronLeft,
   MoreVertical,
-  Activity
+  Activity,
+  Download,
+  FileSpreadsheet
 } from 'lucide-vue-next'
 
 definePageMeta({
@@ -15,17 +18,35 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-const { userId } = useAuth()
+useHead({
+  title: 'Conversations'
+})
+
+const { userId, planSlug } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()
 
-const selectedChatbotId = ref<string>('')
-const activeSessionId = ref<string>('')
+const selectedChatbotId = useState<string>('selected-chatbot-id', () => '')
+const activeSessionId = useState<string>('active-session-id', () => '')
+
+// Pagination state
+const currentPage = useState<number>('conv-current-page', () => 1)
+const pageSize = ref(10)
+const totalPages = useState<number>('conv-total-pages', () => 0)
+
+const isMounted = ref(false)
+onMounted(() => { isMounted.value = true })
 
 // Fetch user's chatbots
 const { data: chatbots } = await useAsyncData('user-chatbots-conv', async () => {
     if (!userId.value) return []
     const { data } = await supabase.from('chatbots').select('id, name').eq('user_id', userId.value).is('deleted_at', null)
+    
+    // Auto-select first chatbot on server
+    if (data && data.length > 0 && !selectedChatbotId.value) {
+        selectedChatbotId.value = data[0].id
+    }
+    
     return data || []
 }, { watch: [userId] })
 
@@ -36,28 +57,32 @@ const botOptions = computed(() => {
     }))
 })
 
-// Watch for chatbots loaded to auto-select first one natively
-watchEffect(() => {
-    if (chatbots.value && chatbots.value.length > 0 && !selectedChatbotId.value) {
-        selectedChatbotId.value = chatbots.value[0].id
-    }
+// Removed watchEffect for initial selection - now handled in useAsyncData for SSR safety
+
+// Reset to first page when changing chatbots
+watch(selectedChatbotId, () => {
+    currentPage.value = 1
 })
 
 // Fetch Sessions securely mapping internal messages on join
-const { data: rawSessions, pending: loadingSessions } = useAsyncData(`sessions-${selectedChatbotId.value}`, async () => {
+const { data: rawSessions, pending: loadingSessions, refresh: refreshSessions } = await useAsyncData(`sessions-${selectedChatbotId.value}-${currentPage.value}`, async () => {
     if (!selectedChatbotId.value) return []
     
+    const start = (currentPage.value - 1) * pageSize.value
+    const end = start + pageSize.value - 1
+
     // We want the sessions with their nested messages using robust query selection
-    const { data, error } = await supabase
+    const { data, error, count } = await supabase
         .from('chat_sessions')
         .select(`
             *,
             chat_messages (
                 *
             )
-        `)
+        `, { count: 'exact' })
         .eq('chatbot_id', selectedChatbotId.value)
         .order('created_at', { ascending: false })
+        .range(start, end)
 
     if (error) {
         console.error('Error fetching sessions:', error)
@@ -65,23 +90,26 @@ const { data: rawSessions, pending: loadingSessions } = useAsyncData(`sessions-$
         return []
     }
     
+    // Update total pages on server so it hydrates correctly
+    totalPages.value = Math.ceil((count || 0) / pageSize.value)
+    
     // Sort chat_messages by created_at asc inside each session to show natural timeline progression
     const sortedData = data?.map(session => {
         const sortedMessages = (session.chat_messages || []).sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
         return { ...session, chat_messages: sortedMessages }
     })
     
+    // Auto-select first session on server
+    if (sortedData && sortedData.length > 0 && (!activeSessionId.value || !sortedData.find(s => s.id === activeSessionId.value))) {
+        activeSessionId.value = sortedData[0].id
+    }
+    
     return sortedData || []
-}, { watch: [selectedChatbotId] })
+}, { watch: [selectedChatbotId, currentPage] })
 
 const sessions = computed(() => rawSessions.value || [])
 
-// Auto-select first active thread session 
-watchEffect(() => {
-    if (sessions.value && sessions.value.length > 0 && (!activeSessionId.value || !sessions.value.find(s => s.id === activeSessionId.value))) {
-        activeSessionId.value = sessions.value[0].id
-    }
-})
+// Removed watch for initial selection - now handled in useAsyncData for SSR safety
 
 const activeSession = computed(() => {
     return sessions.value.find(s => s.id === activeSessionId.value) || null
@@ -90,6 +118,87 @@ const activeSession = computed(() => {
 const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', month: 'short', day: 'numeric' }).format(date)
+}
+
+// Export Logic
+const isExporting = ref(false)
+const exportToCSV = async () => {
+    // Check membership (Silver or Gold)
+    const allowedPlans = ['silver', 'gold']
+    if (!allowedPlans.includes(planSlug.value || '')) {
+        notify.error('Exporting is a premium feature. Please upgrade to Silver or Gold.')
+        return
+    }
+
+    if (!selectedChatbotId.value) return
+
+    isExporting.value = true
+    try {
+        // Fetch ALL data for this chatbot for export
+        const { data, error } = await supabase
+            .from('chat_sessions')
+            .select(`
+                id,
+                created_at,
+                metadata,
+                chat_messages (
+                    role,
+                    content,
+                    created_at
+                )
+            `)
+            .eq('chatbot_id', selectedChatbotId.value)
+            .order('created_at', { ascending: false })
+
+        if (error) throw error
+
+        if (!data || data.length === 0) {
+            notify.error('No data found to export.')
+            return
+        }
+
+        // CSV Generation
+        const headers = ['Session ID', 'Session Date', 'User/Contact', 'Platform', 'Role', 'Message', 'Message Date']
+        const csvRows = [headers.join(',')]
+
+        data.forEach(session => {
+            const contact = session.metadata?.username || session.metadata?.phone || 'Anonymous'
+            const platform = session.metadata?.type || 'Web'
+            const sessionDate = new Date(session.created_at).toLocaleString()
+
+            session.chat_messages.forEach((msg: any) => {
+                const row = [
+                    `"${session.id}"`,
+                    `"${sessionDate}"`,
+                    `"${contact}"`,
+                    `"${platform}"`,
+                    `"${msg.role}"`,
+                    `"${msg.content.replace(/"/g, '""')}"`,
+                    `"${new Date(msg.created_at).toLocaleString()}"`
+                ]
+                csvRows.push(row.join(','))
+            })
+        })
+
+        const csvContent = csvRows.join('\n')
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        const link = document.createElement('a')
+        const url = URL.createObjectURL(blob)
+        
+        link.setAttribute('href', url)
+        link.setAttribute('download', `replysuite_conversations_${new Date().toISOString().split('T')[0]}.csv`)
+        link.style.visibility = 'hidden'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        
+        notify.success('Log export initiated successfully.')
+    } catch (err: any) {
+        console.error('Export error:', err)
+        notify.error('Failed to generate export file.')
+    } finally {
+        isExporting.value = false
+    }
 }
 </script>
 
@@ -102,13 +211,25 @@ const formatDate = (dateString: string) => {
         <p class="text-gray-500 text-sm">Analyze raw engagement threads generated by your AI counterparts.</p>
       </div>
 
-      <div class="flex items-center gap-4 relative min-w-[250px]">
-          <CustomSelect 
-            v-model="selectedChatbotId"
-            :options="botOptions"
-            placeholder="Select Chatbot Agent"
-            class="w-full"
-          />
+      <div class="flex items-center gap-3">
+        <button 
+          @click="exportToCSV"
+          :disabled="isExporting"
+          class="flex items-center gap-2 px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-white hover:bg-white/10 hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+        >
+          <Download v-if="!isExporting" class="w-3.5 h-3.5 text-primary group-hover:scale-110 transition-transform" />
+          <div v-else class="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          {{ isExporting ? 'Preparing...' : 'Export Logs' }}
+        </button>
+
+        <div class="flex items-center gap-4 relative min-w-[250px]">
+            <CustomSelect 
+              v-model="selectedChatbotId"
+              :options="botOptions"
+              placeholder="Select Chatbot Agent"
+              class="w-full"
+            />
+        </div>
       </div>
     </div>
 
@@ -125,7 +246,7 @@ const formatDate = (dateString: string) => {
             </div>
 
             <div class="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2 custom-scrollbar">
-                <div v-if="loadingSessions" class="flex flex-col items-center justify-center h-40 text-gray-600 space-y-4">
+                <div v-if="loadingSessions && sessions.length === 0" class="flex flex-col items-center justify-center h-40 text-gray-600 space-y-4">
                     <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                     <span class="text-[10px] uppercase tracking-widest font-bold">Decrypting Logs...</span>
                 </div>
@@ -145,18 +266,47 @@ const formatDate = (dateString: string) => {
                      ]">
                      <div class="flex items-center justify-between mb-3">
                          <span class="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                            <span v-if="session.metadata?.type === 'whatsapp'" class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(22,163,74,0.5)]"></span>
-                            <span v-else class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></span>
+                            <span v-if="session.metadata?.type === 'whatsapp'" class="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(22,163,74,0.5)]"></span>
+                            <span v-else class="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]"></span>
                             <span class="truncate w-32 block">{{ session.metadata?.username || session.metadata?.phone || 'Anonymous Session' }}</span>
                          </span>
-                         <span class="text-[9px] text-gray-600 tracking-widest whitespace-nowrap font-black">{{ formatDate(session.created_at) }}</span>
+                         <span class="text-[9px] text-gray-600 tracking-widest whitespace-nowrap font-black">
+                            <template v-if="isMounted">{{ formatDate(session.created_at) }}</template>
+                            <template v-else>Loading...</template>
+                         </span>
                      </div>
                      <p class="text-[11px] text-gray-500 line-clamp-1 italic-none truncate w-full flex items-center gap-2">
-                        <span class="uppercase tracking-widest text-[8px] opacity-70 bg-black border border-white/5 px-1.5 py-0.5 rounded font-bold">{{ session.metadata?.type || 'Chat' }}</span>
-                        <span class="truncate">{{ session.chat_messages && session.chat_messages.length > 0 ? session.chat_messages[session.chat_messages.length - 1].content : 'Initialization phase...' }}</span>
+                        <span class="uppercase tracking-[0.1em] text-[8px] opacity-70 bg-black border border-white/5 px-1.5 py-0.5 rounded font-black">{{ session.metadata?.type || 'Web' }}</span>
+                        <span class="truncate opacity-80 group-hover:opacity-100 transition-opacity">{{ session.chat_messages && session.chat_messages.length > 0 ? session.chat_messages[session.chat_messages.length - 1].content : 'Initialization phase...' }}</span>
                      </p>
                 </div>
             </div>
+
+            <!-- Sidebar Pagination -->
+            <ClientOnly>
+                <div v-if="totalPages > 1" class="p-4 border-t border-white/5 bg-[#080808] flex items-center justify-between">
+                    <button 
+                    @click="currentPage > 1 ? currentPage-- : null"
+                    :disabled="currentPage === 1"
+                    class="p-2.5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 disabled:opacity-20 transition-all"
+                    >
+                    <ChevronLeft class="w-4 h-4 text-white" />
+                    </button>
+
+                    <div class="flex flex-col items-center">
+                        <span class="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1">Grid Page</span>
+                        <span class="text-xs font-bold text-white tracking-tighter">{{ currentPage }} <span class="text-gray-600 mx-1">/</span> {{ totalPages }}</span>
+                    </div>
+
+                    <button 
+                    @click="currentPage < totalPages ? currentPage++ : null"
+                    :disabled="currentPage === totalPages"
+                    class="p-2.5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 disabled:opacity-20 transition-all"
+                    >
+                    <ChevronRight class="w-4 h-4 text-white" />
+                    </button>
+                </div>
+            </ClientOnly>
         </div>
 
         <!-- Conversation Details -->

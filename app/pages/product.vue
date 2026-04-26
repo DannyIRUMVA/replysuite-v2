@@ -1,4 +1,6 @@
 <script setup lang="ts">
+useHead({ title: 'The Platform | ReplySuite AI' })
+
 import { Play, ShieldCheck, Database, Layers, Smartphone, Layout, UserPlus, Zap, Globe2, ArrowRight } from 'lucide-vue-next'
 
 definePageMeta({

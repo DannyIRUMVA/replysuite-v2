@@ -14,6 +14,10 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({
+  title: 'Account Settings | ReplySuite',
+})
+
 const { user, userId, profile: authProfile, setInteracting } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()

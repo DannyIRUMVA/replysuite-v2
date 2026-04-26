@@ -1,4 +1,6 @@
 <script setup lang="ts">
+useHead({ title: 'Confirming Identity | ReplySuite' })
+
 const user = useSupabaseUser()
 
 // Handle redirect after session is established

@@ -7,6 +7,10 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({
+  title: 'Payment Successful'
+})
+
 onMounted(async () => {
   // Automatically trigger a deep sync when arriving on this page
   try {

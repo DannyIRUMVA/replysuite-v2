@@ -25,12 +25,6 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-const renderMarkdown = (text: string) => {
-  if (!text) return ''
-  const rawHtml = marked.parse(text, { async: false, breaks: true }) as string
-  return xss(rawHtml)
-}
-
 const route = useRoute()
 const chatbotId = route.query.id as string
 const { userId, limits, planSlug } = useAuth()
@@ -46,6 +40,16 @@ const sources = ref<any[]>([])
 const trainingJobs = ref<any[]>([])
 const monthlyUsage = ref(0)
 const totalTrainings = ref(0)
+
+const renderMarkdown = (text: string) => {
+  if (!text) return ''
+  const rawHtml = marked.parse(text, { async: false, breaks: true }) as string
+  return xss(rawHtml)
+}
+
+useHead({
+  title: computed(() => chatbot.value?.name ? `${chatbot.value.name} | Knowledge Ops` : 'Knowledge Ops | ReplySuite'),
+})
 
 // Form States
 const urlForm = ref({ url: '' })

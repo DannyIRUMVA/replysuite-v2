@@ -10,6 +10,9 @@ const pageContext = computed(() => {
   if (path === '/dashboard/settings') return { title: 'Elite Settings', subtitle: 'Refining your identity and operations.' }
   if (path.includes('/agents')) return { title: 'Agent Forge', subtitle: 'Crafting intelligent conversation rules.' }
   if (path.includes('/analytics')) return { title: 'Insight Engine', subtitle: 'Visualizing your data performance.' }
+  if (path.includes('/integrations/whatsapp')) return { title: 'WhatsApp Hub', subtitle: 'Global API Cluster Control' }
+  if (path.includes('/integrations/website')) return { title: 'Website Console', subtitle: 'Embed intelligence into any digital interface.' }
+  if (path.includes('/conversations')) return { title: 'Comms Center', subtitle: 'Managing live interaction streams.' }
   return { title: 'Dashboard', subtitle: 'Welcome back to ReplySuite.' }
 })
 

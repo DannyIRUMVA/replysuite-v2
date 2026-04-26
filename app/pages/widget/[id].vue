@@ -1,4 +1,6 @@
 <script setup lang="ts">
+useHead({ title: 'Chat Widget | ReplySuite' })
+
 import { Send, Bot, User, Loader2, Sparkles, X, MessageSquare, Zap, Info as HelpCircle, Maximize2, Minimize2, RotateCcw, Paperclip, Smile } from 'lucide-vue-next'
 import { marked } from 'marked'
 

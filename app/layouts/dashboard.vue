@@ -63,6 +63,6 @@ watch([polarCustomerId, planSlug, isLoading, isMounted], ([polarId, slug, loadin
 <style>
 /* Dashboard specific global overrides */
 .glass-card {
-  @apply bg-[#0a0a0a] border border-white/5 rounded-24 transition-all;
+  @apply bg-[#0a0a0a] border border-white/5 rounded-16 transition-all;
 }
 </style>
