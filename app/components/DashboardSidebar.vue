@@ -61,7 +61,6 @@ const sections = computed(() => [
     links: [
       { name: 'Website', href: '/dashboard/integrations/website', icon: 'Code2' },
       { name: 'WhatsApp', href: '/dashboard/integrations/whatsapp', icon: 'MessageCircle', locked: planSlug.value === 'starter' || !planSlug.value },
-      { name: 'Automations', href: '/dashboard/automation', icon: 'Megaphone', locked: true },
     ]
   },
   {

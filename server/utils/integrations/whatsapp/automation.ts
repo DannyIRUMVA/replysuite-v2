@@ -1,4 +1,5 @@
 import { searchKnowledge, getChatCompletion } from '../../ai'
+import { runAgentCycle } from '../../agent/engine'
 
 export const processWhatsappMessage = async (supabase: any, messageData: any) => {
   const { phone_number_id, from_number, text, customer_name, message_id } = messageData
@@ -85,7 +86,7 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
     console.error('❌ [WhatsApp AI Error] RAG Retrieval Failed:', err)
   }
 
-  // 4. Generate AI Reply
+  // 4. Generate AI Reply (Agentic Loop)
   const systemPrompt = `
     ${baseInstructions}
 
@@ -101,22 +102,58 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
 
   let replyText = ''
   try {
-    const tempReply = await getChatCompletion([
-      { role: 'user', content: text }
-    ], { 
-      systemPrompt, 
-      useAzure: plan.name === 'Gold' 
-    })
+    const { data: chatbot } = await supabase
+      .from('chatbots')
+      .select('enabled_tools, tools_config')
+      .eq('id', waAccount.chatbot_id)
+      .single()
+
+    // Find existing session to get history
+    let session;
+    let messagesHistory: any[] = []
     
-    // Clean reply (remove # or > or generic markdown usually reserved for rich web)
-    replyText = tempReply
-      .replace(/[#>|]/g, '')
-      .replace(/^-{2,}/gm, '')
-      .trim()
+    const { data: existingSessions } = await supabase
+      .from('chat_sessions')
+      .select('id')
+      .eq('chatbot_id', waAccount.chatbot_id)
+      .contains('metadata', { phone: from_number })
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (existingSessions && existingSessions.length > 0) {
+      session = existingSessions[0]
+      
+      const { data: history } = await supabase
+        .from('chat_messages')
+        .select('role, content')
+        .eq('session_id', session.id)
+        .order('created_at', { ascending: true })
+        .limit(20)
+        
+      if (history && history.length > 0) {
+        messagesHistory = history.map(msg => ({ role: msg.role === 'assistant' ? 'assistant' : 'user', content: msg.content }))
+      }
+    }
+    
+    // Add current message
+    messagesHistory.push({ role: 'user', content: text })
+
+    replyText = await runAgentCycle(messagesHistory, { 
+      systemPrompt, 
+      chatbotId: waAccount.chatbot_id,
+      enabledTools: chatbot?.enabled_tools || [],
+      event: (messageData as any)._event,
+      context: {
+        platform: 'whatsapp',
+        customerPhone: from_number,
+        whatsappToken: waAccount.access_token,
+        phoneId: phone_number_id
+      }
+    })
 
     console.log(`   🤖 AI Response Generated: "${replyText.substring(0, 50)}..."`)
   } catch (err) {
-    console.error('❌ [WhatsApp AI Error] LLM generation failed:', err)
+    console.error('❌ [WhatsApp AI Error] Agent cycle failed:', err)
     return
   }
 
@@ -124,19 +161,7 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
   if (replyText) {
     console.log(`\n[WhatsApp Debug] Saving chat into chat_sessions...`)
     try {
-      // Find existing active session for this specific phone number to maintain timeline
-      let session;
-      const { data: existingSessions, error: findErr } = await supabase
-        .from('chat_sessions')
-        .select('id')
-        .eq('chatbot_id', waAccount.chatbot_id)
-        .contains('metadata', { phone: from_number })
-        .order('created_at', { ascending: false })
-        .limit(1)
-
-      if (existingSessions && existingSessions.length > 0) {
-        session = existingSessions[0]
-      } else {
+      if (!session) {
         const { data: newSession, error: sessErr } = await supabase.from('chat_sessions').insert({
           chatbot_id: waAccount.chatbot_id,
           metadata: { type: 'whatsapp', phone: from_number, username: customer_name }

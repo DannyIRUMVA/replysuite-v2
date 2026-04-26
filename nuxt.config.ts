@@ -177,10 +177,16 @@ export default defineNuxtConfig({
       ]
     },
     routeRules: {
-      // Broadcast ReplySuite tech fingerprint — picked up by Wappalyzer server-side
+      '/widget/**': {
+        headers: {
+          'Content-Security-Policy': "frame-ancestors * http: https: localhost:* file:;",
+          'X-Frame-Options': 'ALLOWALL'
+        }
+      },
       '/**': {
         headers: {
-          'X-Powered-By': 'ReplySuite-AI'
+          'Content-Security-Policy': "frame-ancestors * http: https: localhost:* file:;",
+          'X-Frame-Options': 'ALLOWALL'
         }
       }
     }

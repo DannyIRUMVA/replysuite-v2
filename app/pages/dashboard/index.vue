@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { 
-  Instagram, 
   MessageSquare, 
   Zap, 
   Target,
@@ -30,16 +29,15 @@ const { data: realStats, pending: statsLoading } = useAsyncData('dashboard-metri
   const { data: bots } = await supabase.from('chatbots').select('id').eq('user_id', userId.value).is('deleted_at', null)
   const botIds = (bots || []).map((b: any) => b.id)
 
-  const [sessionsRes, agentsRes, whatsappRes, igRes] = await Promise.all([
+  const [sessionsRes, agentsRes, whatsappRes] = await Promise.all([
     botIds.length > 0
       ? supabase.from('chat_sessions').select('*', { count: 'exact', head: true }).in('chatbot_id', botIds)
       : Promise.resolve({ count: 0 }),
     supabase.from('chatbots').select('*', { count: 'exact', head: true }).eq('user_id', userId.value).is('deleted_at', null),
     supabase.from('whatsapp_accounts').select('*', { count: 'exact', head: true }).eq('user_id', userId.value),
-    supabase.from('instagram_accounts').select('*', { count: 'exact', head: true }).eq('user_id', userId.value),
   ])
 
-  const totalChannels = (whatsappRes.count || 0) + (igRes.count || 0)
+  const totalChannels = whatsappRes.count || 0
 
   return [
     { id: 'messages', name: 'Total Conversations', value: (sessionsRes.count || 0).toLocaleString(), change: 'Live', changeType: 'increase' },

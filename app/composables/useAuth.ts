@@ -41,8 +41,6 @@ export const useAuth = () => {
   const planSlug = computed(() => plan.value?.internal_slug || null)
   
   const limits = computed(() => ({
-    maxAccounts: plan.value?.max_instagram_accounts || 0,
-    maxRules: plan.value?.max_triggers || 0,
     maxAgents: plan.value?.max_chatbots || 0,
     maxDms: plan.value?.max_auto_dms_per_month || 0,
     maxTrainings: plan.value?.max_training_units || 0,
@@ -127,14 +125,7 @@ export const useAuth = () => {
   }
 
 
-  /**
-   * Helper to check if a specific action is allowed based on current counts.
-   */
-  const canAdd = (type: 'accounts' | 'rules', currentCount: number) => {
-    if (type === 'accounts') return currentCount < limits.value.maxAccounts
-    if (type === 'rules') return currentCount < limits.value.maxRules
-    return false
-  }
+
 
   /**
    * Force a deep-sync with Polar subscription data.
@@ -164,7 +155,6 @@ export const useAuth = () => {
     isLoading,
     isAuthenticated,
     isVerified,
-    canAdd,
     refreshAuth,
     syncWithPolar,
     setInteracting

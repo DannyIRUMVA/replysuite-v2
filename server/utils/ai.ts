@@ -11,27 +11,43 @@ export const getEmbeddings = async (text: string) => {
 
   const input = text.replace(/\n/g, ' ').substring(0, 8000)
 
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2-preview:embedContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        content: { parts: [{ text: input }] },
-        output_dimensionality: 1536
-      })
-    })
+  // 1. Try Gemini Embeddings with different model aliases
+  const models = ['text-embedding-004', 'embedding-001', 'gemini-embedding-2', 'gemini-embedding-001']
+  let lastError = ''
 
-    const data = await response.json()
-    if (data.error) throw new Error(data.error.message)
-    
-    // Normalize vectors
-    const values = data.embedding.values
-    const magnitude = Math.sqrt(values.reduce((acc: number, val: number) => acc + val * val, 0))
-    return values.map((val: number) => val / magnitude)
-  } catch (error) {
-    console.error('[AI Error] Embeddings failed:', error)
-    throw error
+  for (const model of models) {
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: { parts: [{ text: input }] },
+          output_dimensionality: 1536
+        })
+      })
+
+      if (!response.ok) {
+        lastError = `HTTP ${response.status}: ${response.statusText}`
+        try {
+          const errData = await response.json()
+          if (errData.error?.message) lastError = errData.error.message
+        } catch(e) { /* ignore JSON parsing error on 404s */ }
+        continue
+      }
+
+      const data = await response.json()
+      if (!data.error && data.embedding) {
+        const values = data.embedding.values
+        const magnitude = Math.sqrt(values.reduce((acc: number, val: number) => acc + val * val, 0))
+        return values.map((val: number) => val / magnitude)
+      }
+      lastError = data.error?.message || 'Unknown embedding error'
+    } catch (err: any) {
+      lastError = err.message
+    }
   }
+
+  throw new Error(`Embedding generation failed: ${lastError}. NOTE: Azure fallback is disabled for embeddings to prevent vector mismatches with the database.`)
 }
 
 export type ChatMessage = {
@@ -52,18 +68,32 @@ export const getChatCompletion = async (messages: ChatMessage[], options: { syst
       parts: [{ text: m.content }]
     }))
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: sys ? { parts: [{ text: sys }] } : undefined,
-        contents
-      })
-    })
+    const models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-exp']
+    let lastError = ''
 
-    const data = await response.json()
-    if (data.error) throw new Error(data.error.message)
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    for (const model of models) {
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: sys ? { parts: [{ text: sys }] } : undefined,
+            contents
+          })
+        })
+
+        const data = await response.json()
+        if (!data.error) {
+          return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+        }
+        lastError = data.error.message
+        console.warn(`[AI Utils] Model ${model} failed:`, lastError)
+      } catch (err: any) {
+        lastError = err.message
+      }
+    }
+
+    throw new Error(`Gemini Error: ${lastError}`)
   }
 
   // Helper for Azure

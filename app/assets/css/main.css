@@ -31,4 +31,14 @@
   .badge-gradient {
     @apply px-4 py-1.5 rounded-full bg-primary/5 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.2em];
   }
+
+  /* Widget / Chatbot Markdown Rendering */
+  .widget-markdown p { @apply my-1; }
+  .widget-markdown p:first-child { @apply mt-0; }
+  .widget-markdown p:last-child { @apply mb-0; }
+  .widget-markdown ul { @apply list-disc ml-5 my-1; }
+  .widget-markdown ol { @apply list-decimal ml-5 my-1; }
+  .widget-markdown li { @apply mt-0.5; }
+  .widget-markdown strong { @apply font-bold text-current opacity-90; }
+  .widget-markdown a { @apply underline underline-offset-2 hover:opacity-80 transition-opacity; }
 }

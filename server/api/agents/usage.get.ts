@@ -20,13 +20,7 @@ export default defineEventHandler(async (event) => {
   const monthStart = now.toISOString()
 
   // Parallel fetch counts from all sources of truth
-  const [igRes, waRes, webRes] = await Promise.all([
-    supabase.from('instagram_message_jobs')
-      .select('*', { count: 'exact', head: true })
-      .eq('chatbot_id', chatbotId)
-      .neq('status', 'skipped')
-      .gte('created_at', monthStart),
-      
+  const [waRes, webRes] = await Promise.all([
     supabase.from('whatsapp_message_jobs')
       .select('*', { count: 'exact', head: true })
       .eq('chatbot_id', chatbotId)
@@ -39,7 +33,7 @@ export default defineEventHandler(async (event) => {
       .gte('created_at', monthStart)
   ])
 
-  const totalUsage = (igRes.count || 0) + (waRes.count || 0) + (webRes.count || 0)
+  const totalUsage = (waRes.count || 0) + (webRes.count || 0)
 
   return {
     usage: totalUsage

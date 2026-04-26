@@ -6,7 +6,8 @@ import {
   Settings, 
   TrendingUp,
   Zap,
-  Bot
+  Bot,
+  MessageCircle
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -17,7 +18,8 @@ const iconMap: Record<string, any> = {
   Instagram,
   Bot,
   TrendingUp,
-  Zap
+  Zap,
+  MessageCircle
 }
 
 const navLinks = [
@@ -25,7 +27,7 @@ const navLinks = [
   { name: 'Web', href: '/dashboard/integrations/website', icon: 'Zap' },
   { name: 'Forge', href: '/dashboard/agents', icon: 'Bot' },
   { name: 'Stats', href: '/dashboard/analytics', icon: 'TrendingUp' },
-  { name: 'Rules', href: '/dashboard/automation', icon: 'Zap' },
+  { name: 'Chat', href: '/dashboard/conversations', icon: 'MessageCircle' },
 ]
 </script>
 

@@ -8,7 +8,6 @@ const pageContext = computed(() => {
   const path = route.path
   if (path === '/dashboard') return { title: 'Executive Hub', subtitle: "Checking your AI workforce's pulse." }
   if (path === '/dashboard/settings') return { title: 'Elite Settings', subtitle: 'Refining your identity and operations.' }
-  if (path.includes('/instagram')) return { title: 'Social Pulse', subtitle: 'Managing Instagram automation flow.' }
   if (path.includes('/agents')) return { title: 'Agent Forge', subtitle: 'Crafting intelligent conversation rules.' }
   if (path.includes('/analytics')) return { title: 'Insight Engine', subtitle: 'Visualizing your data performance.' }
   return { title: 'Dashboard', subtitle: 'Welcome back to ReplySuite.' }

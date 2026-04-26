@@ -17,7 +17,12 @@ import {
   RotateCcw,
   Sparkles,
   Zap,
-  ExternalLink
+  ExternalLink,
+  ShoppingBag,
+  CreditCard,
+  Calendar,
+  FileSpreadsheet,
+  Plus
 } from 'lucide-vue-next'
 import CustomSelect from '~~/app/components/CustomSelect.vue'
 
@@ -37,8 +42,16 @@ const notify = useNotify()
 const isLoading = ref(true)
 const isSaving = ref(false)
 const agent = ref<any>(null)
-const activeTab = ref<'identity' | 'design' | 'security'>('identity')
+const activeTab = ref<'identity' | 'design' | 'security' | 'tools'>('identity')
 const newDomainInput = ref<string>('')
+
+const launcherIcons = [
+  { name: 'Bot', icon: Bot, label: 'Robot' },
+  { name: 'MessageSquare', icon: MessageSquare, label: 'Message' },
+  { name: 'Sparkles', icon: Sparkles, label: 'Sparkles' },
+  { name: 'Zap', icon: Zap, label: 'Lightning' },
+  { name: 'HelpCircle', icon: Info, label: 'Help' }
+]
 
 // Forms
 const form = ref({
@@ -59,6 +72,8 @@ const form = ref({
   launcher_icon_color: '',
   chat_icon: 'Bot',
   chat_icon_color: '',
+  enabled_tools: [] as string[],
+  tools_config: {} as any,
 })
 
 const languageOptions = [
@@ -141,7 +156,10 @@ const fetchData = async () => {
         launcher_icon_color: data.launcher_icon_color || '',
         chat_icon: data.chat_icon || 'Bot',
         chat_icon_color: data.chat_icon_color || '',
+        enabled_tools: data.enabled_tools || [],
+        tools_config: data.tools_config || {},
       }
+      if (activeTab.value === 'tools') fetchCatalog()
     }
   } catch (err) {
     console.error('Error fetching agent:', err)
@@ -185,6 +203,8 @@ const handleSave = async () => {
         launcher_icon_color: form.value.launcher_icon_color,
         chat_icon: form.value.chat_icon,
         chat_icon_color: form.value.chat_icon_color,
+        enabled_tools: form.value.enabled_tools,
+        tools_config: form.value.tools_config,
       })
       .eq('id', chatbotId)
 
@@ -217,6 +237,7 @@ const handleDelete = async () => {
 const applyPreset = (preset: { primary: string; secondary: string }) => {
   form.value.primary_color = preset.primary
   form.value.secondary_color = preset.secondary
+  form.value.launcher_color = preset.primary
 }
 
 const resetDesign = () => {
@@ -229,20 +250,68 @@ const resetDesign = () => {
 const { planSlug } = useAuth()
 const isPremium = computed(() => ['silver', 'gold'].includes(planSlug.value || ''))
 
-const launcherIcons = [
-  { name: 'MessageSquare', icon: MessageSquare },
-  { name: 'Bot', icon: Bot },
-  { name: 'Sparkles', icon: Sparkles },
-  { name: 'Zap', icon: Zap },
-  { name: 'HelpCircle', icon: Info },
-]
-
 const launcherStyles = [
   { label: 'Circle', value: 'circle' },
   { label: 'Square', value: 'square' },
   { label: 'Rounded', value: 'rounded-square' },
   { label: 'Pill', value: 'pill' },
 ]
+
+// Tools & Catalog Logic
+const catalog = ref<any[]>([])
+const isCatalogLoading = ref(false)
+const fetchCatalog = async () => {
+  if (!chatbotId) return
+  isCatalogLoading.value = true
+  const { data } = await supabase
+    .from('chatbot_catalog')
+    .select('*')
+    .eq('chatbot_id', chatbotId)
+    .order('created_at', { ascending: false })
+  catalog.value = data || []
+  isCatalogLoading.value = false
+}
+
+const newProduct = ref({ name: '', description: '', price: 0, category: '' })
+const isAddingProduct = ref(false)
+const handleAddProduct = async () => {
+  if (!newProduct.value.name || newProduct.value.price <= 0) return
+  isAddingProduct.value = true
+  try {
+    const { data, error } = await supabase
+      .from('chatbot_catalog')
+      .insert([{
+        chatbot_id: chatbotId,
+        name: newProduct.value.name,
+        description: newProduct.value.description,
+        price: newProduct.value.price,
+        category: newProduct.value.category
+      }])
+      .select()
+      .single()
+    if (error) throw error
+    catalog.value.unshift(data)
+    newProduct.value = { name: '', description: '', price: 0, category: '' }
+    notify.success('Product added to catalog.')
+  } catch (err) {
+    notify.error('Failed to add product.')
+  } finally {
+    isAddingProduct.value = false
+  }
+}
+
+const removeProduct = async (id: string) => {
+  if (!(await notify.confirm('Remove this product?'))) return
+  const { error } = await supabase.from('chatbot_catalog').delete().eq('id', id)
+  if (!error) {
+    catalog.value = catalog.value.filter(p => p.id !== id)
+    notify.success('Product removed.')
+  }
+}
+
+watch(activeTab, (newTab) => {
+  if (newTab === 'tools') fetchCatalog()
+})
 </script>
 
 <template>
@@ -282,6 +351,7 @@ const launcherStyles = [
         v-for="tab in [
           { id: 'identity', label: 'Core Identity', icon: Bot }, 
           { id: 'design', label: 'Design & Colors', icon: Palette },
+          { id: 'tools', label: 'Tools & Skills', icon: Zap },
           { id: 'security', label: 'Domain Security', icon: Shield }
         ]"
         :key="tab.id"
@@ -870,12 +940,192 @@ const launcherStyles = [
                   <component 
                     :is="launcherIcons.find(i => i.name === form.launcher_icon)?.icon || MessageSquare" 
                     class="w-5 h-5"
-                    :style="{ color: (parseInt(form.launcher_color.slice(1,3), 16) * 299 + parseInt(form.launcher_color.slice(3,5), 16) * 587 + parseInt(form.launcher_color.slice(5,7), 16) * 114) / 1000 > 125 ? '#000' : '#fff' }"
+                    :style="{ color: form.launcher_icon_color || ((parseInt(form.launcher_color.slice(1,3), 16) * 299 + parseInt(form.launcher_color.slice(3,5), 16) * 587 + parseInt(form.launcher_color.slice(5,7), 16) * 114) / 1000 > 125 ? '#000' : '#fff') }"
                   />
                 </div>
               </div>
             </div>
           </div>
+      </div>
+    </div>
+
+    <!-- ─── TOOLS TAB ─────────────────────────────────────────── -->
+    <div v-else-if="activeTab === 'tools'" class="space-y-10">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div class="lg:col-span-8 space-y-8">
+            
+            <!-- Tool Selection -->
+            <section class="glass-card">
+              <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-8">Agent Capabilities (Tools)</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div v-for="tool in [
+                    { id: 'orders', name: 'Order Management', desc: 'Allow users to browse catalog and place orders.', icon: ShoppingBag, pro: true },
+                    { id: 'appointments', name: 'Appointment Setter', desc: 'Schedule meetings and consultations.', icon: Calendar, pro: true },
+                    { id: 'payments', name: 'MTN/Airtel Payments', desc: 'Accept local payments via Paypack.', icon: CreditCard, pro: true },
+                    { id: 'invoices', name: 'Automated Invoices', desc: 'Generate printable web invoices.', icon: FileSpreadsheet, pro: true },
+                ]" :key="tool.id" 
+                @click="() => {
+                    if (tool.pro && !isPremium) {
+                        return 
+                    }
+                    const idx = form.enabled_tools.indexOf(tool.id)
+                    if (idx > -1) form.enabled_tools.splice(idx, 1)
+                    else form.enabled_tools.push(tool.id)
+                    handleSave()
+                }"
+                :class="[
+                    'p-5 rounded-2xl border transition-all group relative',
+                    (tool.pro && !isPremium) ? 'opacity-50 grayscale cursor-not-allowed border-white/5' : 'cursor-pointer',
+                    form.enabled_tools.includes(tool.id) ? 'bg-primary/10 border-primary/30' : 'bg-white/5 border-white/5 hover:border-white/10'
+                ]">
+                    <!-- Pro Badge -->
+                    <div v-if="tool.pro && !isPremium" class="absolute top-2 right-2 bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1">
+                        <Lock class="w-2.5 h-2.5 text-yellow-500" />
+                        <span class="text-[8px] font-bold text-white uppercase tracking-tighter">Pro Only</span>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <div :class="[
+                            'p-3 rounded-xl transition-all',
+                            form.enabled_tools.includes(tool.id) ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'bg-white/5 text-gray-500 group-hover:text-white'
+                        ]">
+                            <component :is="tool.icon" class="w-5 h-5" />
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-white mb-1">{{ tool.name }}</p>
+                            <p class="text-[9px] text-gray-500 uppercase tracking-widest">{{ tool.desc }}</p>
+                        </div>
+                    </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Catalog Management (Only if orders enabled) -->
+            <section v-if="form.enabled_tools.includes('orders')" class="glass-card">
+              <div class="flex items-center justify-between mb-8">
+                <div>
+                  <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-1">Product Catalog</h3>
+                  <p class="text-[9px] text-gray-600 uppercase tracking-wider">Inventory managed by this agent</p>
+                </div>
+                <button 
+                  @click="handleAddProduct"
+                  :disabled="isAddingProduct"
+                  class="px-5 py-2 bg-primary text-black font-bold rounded-xl text-[10px] uppercase tracking-widest flex items-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-primary/20"
+                >
+                  <Plus v-if="!isAddingProduct" class="w-3.5 h-3.5" />
+                  <Loader2 v-else class="w-3.5 h-3.5 animate-spin" />
+                  Deploy Product
+                </button>
+              </div>
+
+              <!-- Add Product Form -->
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-10 p-6 rounded-2xl bg-white/[0.02] border border-white/5">
+                <div class="sm:col-span-2">
+                    <label class="block text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-2">Product Name</label>
+                    <input v-model="newProduct.name" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary/50" placeholder="e.g. Classic Burger" />
+                </div>
+                <div>
+                    <label class="block text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-2">Price (RWF)</label>
+                    <input v-model.number="newProduct.price" type="number" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary/50" placeholder="5000" />
+                </div>
+                <div>
+                    <label class="block text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-2">Category</label>
+                    <input v-model="newProduct.category" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary/50" placeholder="Food" />
+                </div>
+                <div class="sm:col-span-4">
+                    <label class="block text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-2">Brief Description</label>
+                    <input v-model="newProduct.description" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary/50" placeholder="A juicy beef burger with cheese..." />
+                </div>
+              </div>
+
+              <!-- Catalog List -->
+              <div v-if="isCatalogLoading" class="flex justify-center py-10">
+                <Loader2 class="w-6 h-6 text-primary animate-spin" />
+              </div>
+              <div v-else-if="catalog.length === 0" class="text-center py-20 border-2 border-dashed border-white/5 rounded-[2rem]">
+                <ShoppingBag class="w-12 h-12 text-gray-800 mx-auto mb-4 opacity-20" />
+                <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em]">Empty Inventory</p>
+              </div>
+              <div v-else class="space-y-3">
+                <div v-for="product in catalog" :key="product.id" class="flex items-center justify-between p-5 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all group">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-500 font-black text-[10px]">
+                            {{ product.category?.substring(0, 3).toUpperCase() || 'ITM' }}
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-white">{{ product.name }}</p>
+                            <p class="text-[9px] text-gray-500 uppercase tracking-widest mt-0.5">{{ product.description || 'No description' }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <div class="text-right">
+                            <p class="text-xs font-bold text-white">{{ product.price.toLocaleString() }} RWF</p>
+                            <p class="text-[8px] text-primary uppercase font-bold tracking-tighter mt-0.5">Verified</p>
+                        </div>
+                        <button @click="removeProduct(product.id)" class="p-2 text-gray-700 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                            <Trash2 class="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+              </div>
+            </section>
+        </div>
+
+        <div class="lg:col-span-4 space-y-6">
+            <!-- Paypack Configuration -->
+            <section v-if="form.enabled_tools.includes('payments')" class="glass-card">
+              <div class="flex items-center justify-between mb-8">
+                <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Paypack Setup</h3>
+                <CreditCard class="w-4 h-4 text-primary opacity-50" />
+              </div>
+              <div class="space-y-6">
+                <div>
+                  <label class="block text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-2">Application Client ID</label>
+                  <input 
+                    v-model="form.tools_config.paypack_client_id" 
+                    type="password"
+                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                    placeholder="pp_..." 
+                  />
+                </div>
+                <div>
+                  <label class="block text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-2">Application Client Secret</label>
+                  <input 
+                    v-model="form.tools_config.paypack_client_secret" 
+                    type="password"
+                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                    placeholder="••••••••••••" 
+                  />
+                </div>
+                <div class="p-4 rounded-xl bg-orange-500/5 border border-orange-500/10">
+                    <p class="text-[9px] text-orange-500/70 leading-relaxed uppercase tracking-wider">
+                        Credentials are encrypted and used only for processing customer payments.
+                    </p>
+                </div>
+              </div>
+            </section>
+
+            <!-- Stats & Insights -->
+            <section class="glass-card">
+                <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-8">Intelligence Overlook</h3>
+                <div class="space-y-5">
+                    <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <ShoppingBag class="w-5 h-5 text-gray-600" />
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Active Inventory</p>
+                        </div>
+                        <p class="text-xl font-bold text-white">{{ catalog.length }}</p>
+                    </div>
+                    <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <Zap class="w-5 h-5 text-gray-600" />
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tools Enabled</p>
+                        </div>
+                        <p class="text-xl font-bold text-white">{{ form.enabled_tools.length }}</p>
+                    </div>
+                </div>
+            </section>
+        </div>
       </div>
     </div>
     <!-- ─── SECURITY TAB ────────────────────────────────────────── -->

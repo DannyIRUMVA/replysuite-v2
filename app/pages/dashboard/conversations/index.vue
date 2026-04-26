@@ -146,7 +146,6 @@ const formatDate = (dateString: string) => {
                      <div class="flex items-center justify-between mb-3">
                          <span class="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
                             <span v-if="session.metadata?.type === 'whatsapp'" class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(22,163,74,0.5)]"></span>
-                            <span v-else-if="session.metadata?.type === 'instagram'" class="w-2 h-2 rounded-full bg-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]"></span>
                             <span v-else class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></span>
                             <span class="truncate w-32 block">{{ session.metadata?.username || session.metadata?.phone || 'Anonymous Session' }}</span>
                          </span>

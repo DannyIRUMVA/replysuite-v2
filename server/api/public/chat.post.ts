@@ -1,5 +1,6 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
-import { searchKnowledge, getChatCompletion } from '~~/server/utils/ai'
+import { searchKnowledge } from '~~/server/utils/ai'
+import { runAgentCycle } from '~~/server/utils/agent/engine'
 
 export default defineEventHandler(async (event) => {
   // Handle CORS
@@ -16,14 +17,14 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const { chatbotId, message, sessionId: providedSessionId } = body
 
-  if (!chatbotId || !message) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing chatbotId or message' })
+  if (!chatbotId || !message || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(chatbotId)) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid or missing chatbotId/message' })
   }
 
   // 1. Fetch Chatbot (Public Info)
   const { data: chatbot, error: chatbotError } = await supabase
     .from('chatbots')
-    .select('id, name, system_prompt, user_id')
+    .select('id, name, system_prompt, user_id, enabled_tools')
     .eq('id', chatbotId)
     .single()
 
@@ -40,6 +41,9 @@ export default defineEventHandler(async (event) => {
       .select('id')
       .single()
     sessionId = newSession?.id
+    if (!sessionId) {
+      throw createError({ statusCode: 500, statusMessage: 'Failed to initialize session' })
+    }
   }
 
   try {
@@ -53,10 +57,13 @@ export default defineEventHandler(async (event) => {
     console.log(`[Public Chat] Starting request for chatbot: ${chatbot.name} (${chatbotId})`)
 
     // 4. Search Knowledge Base (RAG)
-    console.log('[Public Chat] Searching knowledge base...')
     const contextResults = await searchKnowledge(supabase, chatbotId, message, 3)
-    const contextText = contextResults.map((r: any) => r.content).join('\n\n---\n\n')
-    console.log(`[Public Chat] Context found: ${contextResults.length} chunks`)
+    const chunks = contextResults.map((r: any) => r.content)
+    const contextText = chunks.join('\n\n---\n\n')
+
+    if (process.dev) {
+      console.log(`[Public Chat Debug] RAG Chunks retrieved: ${chunks.length} chunks`)
+    }
 
     // 5. Construct Final System Prompt
     const baseInstructions = chatbot.system_prompt || `You are an AI assistant for ${chatbot.name}.`
@@ -68,26 +75,48 @@ export default defineEventHandler(async (event) => {
       ${contextText || 'No specific background knowledge found for this query.'}
       
       IMPORTANT INSTRUCTIONS:
-      1. Be EXTREMELY CONCISE. Provide short, direct answers.
-      2. Use ONLY PLAIN TEXT. Do NOT use Markdown (no headers #, no bold **, no horizontal lines ---, no tables, no lists).
-      3. If the [ADDITIONAL CONTEXT] contradicts your base instructions, prioritize the [ADDITIONAL CONTEXT] for factual accuracy.
+      1. Keep your responses EXTREMELY BRIEF and CONCISE (Max 2-3 sentences unless listing products).
+      2. Sound like a real human. Be warm, natural, and conversational. Get straight to the point.
+      3. Use PLAIN, CLEAN language. DO NOT use marketing buzzwords or corporate jargon.
+      4. Always format your responses using clean Markdown.
+         - Use standard bullet points (-) for lists.
+         - Use **bold text** sparingly to highlight key concepts.
+      5. If the [ADDITIONAL CONTEXT] contradicts your base instructions, prioritize the [ADDITIONAL CONTEXT] for factual accuracy.
+      6. DO NOT blindly recite lists of services or generic company descriptions unless explicitly asked.
     `
 
-    // 6. Get AI Response
-    console.log('[Public Chat] Requesting AI completion...')
-    let response = await getChatCompletion([
-      { role: 'user', content: message }
-    ], { systemPrompt })
+    // 6. Get AI Response (Agentic Loop)
+    console.log('[Public Chat] Requesting Agent cycle...')
+    
+    // Fetch conversation history
+    let messagesHistory: any[] = []
+    if (sessionId) {
+      const { data: history } = await supabase
+        .from('chat_messages')
+        .select('role, content')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true })
+        .limit(20) // Give the AI the last 20 messages for context
+        
+      if (history && history.length > 0) {
+        messagesHistory = history.map(msg => ({ role: msg.role === 'assistant' ? 'assistant' : 'user', content: msg.content }))
+      }
+    }
+    
+    // If we couldn't fetch history, fallback to just the current message
+    if (messagesHistory.length === 0) {
+      messagesHistory = [{ role: 'user', content: message }]
+    }
 
-    // 7. Extract/Clean text (Remove Markdown characters #, *, -, _, |, >)
-    // This handles cases where the AI might still include them despite instructions.
-    response = response
-      .replace(/[#*|_>~]/g, '') // Remove #, *, |, _, >, ~
-      .replace(/^-{2,}/gm, '')  // Remove lines like -- or ---
-      .replace(/(\r\n|\n|\r){3,}/g, '\n\n') // Remove excessive newlines
-      .trim()
+    const response = await runAgentCycle(messagesHistory, { 
+      systemPrompt, 
+      chatbotId: chatbot.id,
+      enabledTools: chatbot.enabled_tools || [],
+      event,
+      context: { platform: 'web' }
+    })
 
-    // 8. Save Assistant Reply
+    // 7. Save Assistant Reply
     await supabase.from('chat_messages').insert({
       session_id: sessionId,
       role: 'assistant',
@@ -104,10 +133,9 @@ export default defineEventHandler(async (event) => {
   } catch (err: any) {
     console.error('[Public Chat Error Handled]', err)
     
-    // In development mode, return the actual error message to help the user debug
     const errorMessage = process.dev 
       ? `Error: ${err.message || 'Unknown processing error'}` 
-      : 'I apologize, but I encountered an internal error. Please check your AI configuration.'
+      : 'I apologize, but I encountered an internal error.'
 
     throw createError({ 
       statusCode: 500, 
@@ -116,3 +144,4 @@ export default defineEventHandler(async (event) => {
     })
   }
 })
+

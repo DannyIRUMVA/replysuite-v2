@@ -1,7 +1,25 @@
 <script setup lang="ts">
-import { Send, Bot, User, Loader2, Sparkles, X, MessageSquare, Zap, Info as HelpCircle } from 'lucide-vue-next'
+import { Send, Bot, User, Loader2, Sparkles, X, MessageSquare, Zap, Info as HelpCircle, Maximize2, Minimize2, RotateCcw, Paperclip, Smile } from 'lucide-vue-next'
+import { marked } from 'marked'
+
 
 definePageMeta({ layout: false })
+
+import xss from 'xss'
+
+const renderMarkdown = (text: string) => {
+  if (!text) return ''
+  try {
+    // Force standard sync behavior
+    const html = marked.parse(text, { breaks: true, gfm: true })
+    // If for some reason it returns a promise (it shouldn't here), return original text
+    if (typeof html !== 'string') return text
+    return xss(html)
+  } catch (e) {
+    console.error('Markdown error:', e)
+    return text
+  }
+}
 
 const route = useRoute()
 const chatbotId = route.params.id as string
@@ -19,6 +37,16 @@ const design = ref({
   chatIcon: 'Bot',
   chatIconColor: ''
 })
+const isExpanded = ref(false)
+const toggleExpand = () => {
+  isExpanded.value = !isExpanded.value
+  if (window.parent) {
+    window.parent.postMessage({ 
+      type: 'replysuite-resize', 
+      expanded: isExpanded.value 
+    }, '*')
+  }
+}
 
 const isPremium = computed(() => design.value.planSlug !== 'starter')
 
@@ -57,6 +85,12 @@ const scrollToBottom = () => {
   nextTick(() => {
     if (container.value) container.value.scrollTop = container.value.scrollHeight
   })
+}
+
+const clearChat = () => {
+  if (confirm('Are you sure you want to clear this conversation?')) {
+    messages.value = []
+  }
 }
 
 const minimize = () => {
@@ -175,13 +209,29 @@ onMounted(async () => {
         </div>
       </div>
 
-      <button
-        @click="minimize"
-        class="p-2.5 hover:bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all active:scale-90"
-        title="Minimize Chat"
-      >
-        <X class="w-4 h-4" />
-      </button>
+      <div class="flex items-center gap-1">
+        <button
+          @click="clearChat"
+          class="p-2.5 hover:bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all active:scale-90"
+          title="Reset Conversation"
+        >
+          <RotateCcw class="w-4 h-4" />
+        </button>
+        <button
+          @click="toggleExpand"
+          class="p-2.5 hover:bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all active:scale-90"
+          :title="isExpanded ? 'Shrink' : 'Expand'"
+        >
+          <component :is="isExpanded ? Minimize2 : Maximize2" class="w-4 h-4" />
+        </button>
+        <button
+          @click="minimize"
+          class="p-2.5 hover:bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all active:scale-90"
+          title="Minimize Chat"
+        >
+          <X class="w-4 h-4" />
+        </button>
+      </div>
     </header>
 
     <!-- Messages -->
@@ -207,7 +257,7 @@ onMounted(async () => {
 
         <!-- Bubble -->
         <div
-          class="max-w-[85%] px-4 py-3 text-[13px] leading-relaxed shadow-sm transition-all hover:shadow-md"
+          class="max-w-[85%] px-4 py-3 text-[13px] leading-relaxed shadow-sm transition-all hover:shadow-md prose-sm prose-p:my-1 prose-ul:my-1 prose-li:ml-4 prose-li:list-disc widget-markdown"
           :style="msg.role === 'user'
             ? { 
                 backgroundColor: design.primaryColor, 
@@ -224,7 +274,7 @@ onMounted(async () => {
                 backdropFilter: isPremium ? 'blur(12px)' : 'none'
               }"
         >
-          {{ msg.content }}
+          <div v-html="renderMarkdown(msg.content)"></div>
           <div v-if="msg.role === 'assistant' && design.aiDisclosure && idx === messages.length - 1" class="mt-2 pt-2 border-t border-white/5 flex items-center gap-1 opacity-40 text-[9px] uppercase tracking-tighter font-bold">
             <Sparkles class="w-2 h-2" />
             AI Generated Response
@@ -257,11 +307,15 @@ onMounted(async () => {
           class="absolute -inset-0.5 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500 pointer-events-none"
           :style="{ background: `linear-gradient(90deg, ${design.primaryColor}30, ${design.primaryColor}10)` }"
         />
+        <div class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-gray-600">
+          <button type="button" class="hover:text-primary transition-colors p-1"><Paperclip class="w-4 h-4" /></button>
+          <button type="button" class="hover:text-primary transition-colors p-1"><Smile class="w-4 h-4" /></button>
+        </div>
         <input
           v-model="input"
           type="text"
           placeholder="Type your message..."
-          class="widget-input w-full border rounded-2xl px-5 py-4 text-sm font-medium placeholder:text-gray-600 focus:outline-none transition-all text-white pr-14"
+          class="widget-input w-full border rounded-2xl px-5 py-4 pl-20 pr-14 text-sm font-medium placeholder:text-gray-600 focus:outline-none transition-all text-white"
           :style="{
             backgroundColor: 'rgba(255,255,255,0.03)',
             borderColor: 'rgba(255,255,255,0.08)',
@@ -296,4 +350,46 @@ body { margin: 0; padding: 0; }
   visibility: hidden !important;
   pointer-events: none !important;
 }
+
+/* Markdown Styles for Chat Bubbles */
+.widget-markdown p {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+.widget-markdown p:first-child {
+  margin-top: 0;
+}
+.widget-markdown p:last-child {
+  margin-bottom: 0;
+}
+.widget-markdown ul {
+  list-style-type: disc;
+  margin-left: 1.25rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+.widget-markdown ol {
+  list-style-type: decimal;
+  margin-left: 1.25rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+.widget-markdown li {
+  margin-top: 0.125rem;
+}
+.widget-markdown strong {
+  font-weight: 700;
+}
+.widget-markdown a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.widget-markdown :deep(h1) { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+.widget-markdown :deep(h2) { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+.widget-markdown :deep(p) { margin-bottom: 0.5rem; }
+.widget-markdown :deep(strong) { font-weight: 800; color: white; }
+.widget-markdown :deep(ul) { list-style-type: disc; margin-left: 1.25rem; margin-bottom: 0.5rem; }
+.widget-markdown :deep(ol) { list-style-type: decimal; margin-left: 1.25rem; margin-bottom: 0.5rem; }
+.widget-markdown :deep(code) { background-color: rgba(255,255,255,0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: monospace; }
 </style>

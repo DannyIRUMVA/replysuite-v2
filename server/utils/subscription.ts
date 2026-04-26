@@ -3,8 +3,6 @@ import { serverSupabaseClient, serverSupabaseUser } from '#supabase/server'
 import { z } from 'zod'
 
 export const SubscriptionLimitSchema = z.object({
-  max_instagram_accounts: z.number().default(1),
-  max_triggers: z.number().default(1),
   max_chatbots: z.number().default(1),
   max_replies_per_month: z.number().default(100),
   max_training_units: z.number().default(10),
@@ -38,8 +36,6 @@ export async function getUserSubscriptionLimits(event: H3Event, userId?: string 
       .single()
 
     return SubscriptionLimitSchema.parse({
-      max_instagram_accounts: freePlan?.max_instagram_accounts || 1,
-      max_triggers: freePlan?.max_triggers || 1,
       max_chatbots: freePlan?.max_chatbots || 1,
       max_replies_per_month: freePlan?.max_replies_per_month || 100,
       max_training_units: freePlan?.max_training_units || 10,
@@ -69,8 +65,6 @@ export async function getUserSubscriptionLimits(event: H3Event, userId?: string 
       .single()
 
     return SubscriptionLimitSchema.parse({
-      max_instagram_accounts: freePlan?.max_instagram_accounts || 1,
-      max_triggers: freePlan?.max_triggers || 1,
       max_chatbots: freePlan?.max_chatbots || 1,
       max_replies_per_month: freePlan?.max_replies_per_month || 100,
       max_training_units: freePlan?.max_training_units || 10,
@@ -79,8 +73,6 @@ export async function getUserSubscriptionLimits(event: H3Event, userId?: string 
   }
 
   return SubscriptionLimitSchema.parse({
-    max_instagram_accounts: membership.plans.max_instagram_accounts,
-    max_triggers: membership.plans.max_triggers,
     max_chatbots: membership.plans.max_chatbots || 1,
     max_replies_per_month: membership.plans.max_replies_per_month,
     max_training_units: (membership.plans as any).max_training_units || 10,
@@ -140,47 +132,3 @@ export async function recordTrainingUsage(event: H3Event, chatbotId: string, use
   }
 }
 
-/**
- * Checks if the user can perform an action based on their limits.
- */
-export async function checkLimit(event: H3Event, type: 'accounts' | 'triggers', userId?: string | null): Promise<boolean> {
-  const client = await serverSupabaseClient(event)
-  
-  let finalUserId = userId
-  if (!finalUserId || finalUserId === 'undefined') {
-    const user = await serverSupabaseUser(event)
-    finalUserId = user?.id
-  }
-
-  if (!finalUserId || finalUserId === 'undefined') return false
-
-  const limits = await getUserSubscriptionLimits(event, finalUserId)
-
-  if (type === 'accounts') {
-    const { count } = await client
-      .from('instagram_accounts')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', finalUserId)
-
-    return (count || 0) < limits.max_instagram_accounts
-  }
-
-  if (type === 'triggers') {
-    const { data: chatbots } = await client
-      .from('chatbots')
-      .select('id')
-      .eq('user_id', finalUserId)
-
-    if (!chatbots || chatbots.length === 0) return true
-
-    const chatbotIds = chatbots.map(c => c.id)
-    const { count } = await client
-      .from('instagram_comment_triggers')
-      .select('*', { count: 'exact', head: true })
-      .in('chatbot_id', chatbotIds)
-
-    return (count || 0) < limits.max_triggers
-  }
-
-  return false
-}

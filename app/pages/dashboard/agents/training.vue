@@ -17,11 +17,19 @@ import {
 import HistoryTable from '~/components/agents/HistoryTable.vue'
 import DashboardStats from '~/components/agents/DashboardStats.vue'
 import ExtractionModal from '~/components/agents/ExtractionModal.vue'
+import { marked } from 'marked'
+import xss from 'xss'
 
 definePageMeta({
   middleware: 'auth',
   layout: 'dashboard'
 })
+
+const renderMarkdown = (text: string) => {
+  if (!text) return ''
+  const rawHtml = marked.parse(text, { async: false, breaks: true }) as string
+  return xss(rawHtml)
+}
 
 const route = useRoute()
 const chatbotId = route.query.id as string
@@ -472,9 +480,10 @@ const handleTestChat = async () => {
               'max-w-[85%] p-4 text-xs italic-none',
               msg.role === 'user'
                 ? 'bg-primary text-black rounded-2xl rounded-tr-sm font-medium'
-                : 'bg-white/5 text-gray-300 border border-white/5 rounded-2xl rounded-tl-sm leading-relaxed'
+                : 'bg-white/5 text-gray-300 border border-white/5 rounded-2xl rounded-tl-sm leading-relaxed widget-markdown'
             ]">
-              {{ msg.content }}
+              <div v-if="msg.role === 'assistant'" v-html="renderMarkdown(msg.content)"></div>
+              <div v-else>{{ msg.content }}</div>
             </div>
           </div>
 

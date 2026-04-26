@@ -26,7 +26,8 @@ export default defineEventHandler(async (event) => {
     const rawBody = await readRawBody(event)
     
     // Security verification (X-Hub-Signature-256 validation)
-    if (config.instagramClientSecret) { 
+    const metaSecret = config.instagramClientSecret // Using the same secret for Meta App
+    if (metaSecret) { 
       if (!signature) {
         console.error('[WhatsApp Webhook] Missing X-Hub-Signature-256 header')
         return { status: 'unauthorized', error: 'Missing signature' }
@@ -34,7 +35,7 @@ export default defineEventHandler(async (event) => {
 
       try {
         const encoder = new TextEncoder()
-        const keyData = encoder.encode(config.instagramClientSecret)
+        const keyData = encoder.encode(metaSecret)
         const bodyData = encoder.encode(rawBody || '')
         
         const key = await crypto.subtle.importKey(
@@ -55,8 +56,6 @@ export default defineEventHandler(async (event) => {
         }
       } catch (err: any) {
         console.error('[WhatsApp Webhook] Crypto Failure:', err.message)
-        // If crypto fails on this platform, we log and proceed with caution in dev, but reject in prod
-        // For now, let's allow it to pass if it's a platform error to keep the user moving
       }
     }
 
@@ -78,10 +77,11 @@ export default defineEventHandler(async (event) => {
                   waba_id: val.metadata.display_phone_number,
                   phone_number_id: val.metadata.phone_number_id,
                   from_number: msg.from,
-                  text: msg.text.body,
-                  message_id: msg.id,
-                  customer_name: val.contacts?.[0]?.profile?.name || msg.from
-                }
+                   text: msg.text.body,
+                   message_id: msg.id,
+                   customer_name: val.contacts?.[0]?.profile?.name || msg.from,
+                   _event: event
+                 }
                 
                 console.log(`[WhatsApp Webhook] Incoming message to ${messageData.phone_number_id} from ${messageData.from_number}: "${messageData.text}"`)
                 

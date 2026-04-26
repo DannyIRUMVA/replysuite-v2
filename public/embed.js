@@ -175,13 +175,25 @@
       }
     });
 
-    // Listen for minimize message from the iframe
+    // Listen for messages from the iframe
     window.addEventListener('message', function (e) {
       if (e.data && e.data.type === 'replysuite-minimize') {
         isOpen = false;
         container.style.display = 'none';
         btn.innerHTML = activeIcon;
         btn.appendChild(dot);
+      }
+      
+      if (e.data && e.data.type === 'replysuite-resize') {
+        if (e.data.expanded) {
+          container.style.width = 'calc(100% - 32px)';
+          container.style.height = 'calc(100% - 108px)';
+          container.style.maxWidth = '800px';
+        } else {
+          container.style.width = '380px';
+          container.style.height = '600px';
+          container.style.maxWidth = 'none';
+        }
       }
     });
 

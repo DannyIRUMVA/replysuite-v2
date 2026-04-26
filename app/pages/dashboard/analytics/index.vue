@@ -8,7 +8,6 @@ import {
   AlertCircle,
   RefreshCw,
   Phone,
-  Instagram,
   Globe,
   Database,
   CheckCircle2
@@ -112,11 +111,10 @@ const areaPath = computed(() => {
 
 // ── Channel bars ─────────────────────────────────────────────
 const channelBars = computed(() => {
-  const c = analytics.value?.channels || { whatsapp: 0, instagram: 0, web: 0 }
-  const total = Math.max(c.whatsapp + c.instagram + c.web, 1)
+  const c = analytics.value?.channels || { whatsapp: 0, web: 0 }
+  const total = Math.max(c.whatsapp + c.web, 1)
   return [
     { label: 'WhatsApp', count: c.whatsapp, pct: Math.round((c.whatsapp / total) * 100), color: '#22c55e', icon: Phone },
-    { label: 'Instagram', count: c.instagram, pct: Math.round((c.instagram / total) * 100), color: '#ec4899', icon: Instagram },
     { label: 'Web Chat', count: c.web, pct: Math.round((c.web / total) * 100), color: '#3b82f6', icon: Globe },
   ]
 })
@@ -395,11 +393,7 @@ const formatDate = (d: string) => {
           <p class="text-2xl font-black text-white tabular-nums">{{ analytics.summary.totalDataSources }}</p>
           <p class="text-[9px] text-gray-500 uppercase tracking-widest mt-1 font-black">Data Sources</p>
         </div>
-        <div class="bg-white/[0.03] border border-white/[0.06] rounded-[2rem] p-6 text-center hover:border-white/10 transition-all">
-          <Instagram class="w-5 h-5 text-pink-500 mx-auto mb-3" />
-          <p class="text-2xl font-black text-white tabular-nums">{{ analytics.summary.totalIgAccounts }}</p>
-          <p class="text-[9px] text-gray-500 uppercase tracking-widest mt-1 font-black">IG Accounts</p>
-        </div>
+
         <div class="bg-white/[0.03] border border-white/[0.06] rounded-[2rem] p-6 text-center hover:border-white/10 transition-all">
           <Phone class="w-5 h-5 text-green-500 mx-auto mb-3" />
           <p class="text-2xl font-black text-white tabular-nums">{{ analytics.summary.totalWhatsappAccounts }}</p>

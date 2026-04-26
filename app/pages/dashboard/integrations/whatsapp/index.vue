@@ -165,6 +165,10 @@ const submitManualSetup = async () => {
         })
         
         console.log('Manual Connect Response:', response)
+        
+        // Refresh accounts first to ensure they are available in the state
+        await fetchAccounts()
+        
         notify.success(response.message || 'Manual Activation Successful!')
         
         // Reset all states that might block the stepper
@@ -172,12 +176,7 @@ const submitManualSetup = async () => {
         isAddingNew.value = false
         isConnecting.value = false
         
-        // Await the fetch to ensure reactive state updates before the user looks at the screen
-        await fetchAccounts()
         console.log('Accounts after refresh:', accounts.value.length)
-
-        // If the number is already there, it should have a chatbot_id or be in Step 2.
-        // We force a UI update by ensuring the list is visible.
     } catch (err: any) {
         console.error('Manual activation error:', err)
         notify.error(`Manual Activation Failed: ${err.data?.statusMessage || err.message}`)

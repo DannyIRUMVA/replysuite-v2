@@ -1,5 +1,12 @@
 /*
   X-Powered-By: ReplySuite
-  X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff
+  Content-Security-Policy: frame-ancestors * http: https: localhost:* file:;
   Referrer-Policy: strict-origin-when-cross-origin
+
+/widget/*
+  X-Frame-Options: 
+  Content-Security-Policy: frame-ancestors * http: https: localhost:* file:;
+
+
+

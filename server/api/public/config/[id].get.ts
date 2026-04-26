@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
     return 'OK'
   }
 
-  if (!id) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing chatbot ID' })
+  if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid or missing chatbot ID' })
   }
 
   const { data, error } = await supabase
@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
     .single()
 
   if (error || !data) {
+    console.error(`[Config API] Chatbot not found or error for ID ${id}:`, error)
     throw createError({ statusCode: 404, statusMessage: 'Chatbot not found' })
   }
 
@@ -63,9 +64,11 @@ export default defineEventHandler(async (event) => {
       console.warn(`[Security] Failed to parse origin/referer for chatbot ${id}:`, { origin, referer })
     }
     
-    // Always allow localhost for development convenience
+    // Security Policy: Always allow localhost and the main platform domain
+    const isMainDomain = requestHost === 'replysuite.app' || requestHost.endsWith('.replysuite.app')
     const isLocal = requestHost === 'localhost' || requestHost === '127.0.0.1' || !requestHost
-    const isAllowed = isLocal || allowedDomains.some(domain => {
+    
+    const isAllowed = isMainDomain || isLocal || allowedDomains.some(domain => {
       const cleanDomain = domain.replace(/^https?:\/\//, '').split('/')[0]
       return requestHost === cleanDomain || requestHost.endsWith(`.${cleanDomain}`)
     })

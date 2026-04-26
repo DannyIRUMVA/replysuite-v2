@@ -147,7 +147,7 @@ export async function sendVerificationEmail(email: string, code: string) {
         </div>
         <div class="footer">
           <p>&copy; 2026 ReplySuite Automation. All rights reserved.</p>
-          <p>Deploy high-performance AI agents natively on Instagram and WhatsApp.</p>
+          <p>Deploy high-performance AI agents natively on WhatsApp and Web.</p>
         </div>
       </div>
     </body>

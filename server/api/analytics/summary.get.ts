@@ -45,24 +45,18 @@ export default defineEventHandler(async (event) => {
   // ── Step 3: parallel fetches ─────────────────────────────
   const [
     messagesRes,
-    igAccountsRes,
-    igTriggersRes,
     whatsappAccountsRes,
     dataSourcesRes,
     whatsappJobsRes,
-    igJobsRes,
   ] = await Promise.all([
     sessionIds.length > 0
       ? supabase.from('chat_messages').select('role, created_at, session_id').in('session_id', sessionIds)
       : Promise.resolve({ data: [] }),
 
-    supabase.from('instagram_accounts').select('id', { count: 'exact', head: true }).eq('user_id', userId),
-    supabase.from('instagram_comment_triggers').select('id, is_active').in('chatbot_id', activeBotIds),
     supabase.from('whatsapp_accounts').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     supabase.from('data_sources').select('id', { count: 'exact', head: true }).eq('user_id', userId),
 
     supabase.from('whatsapp_message_jobs').select('status, created_at').in('chatbot_id', activeBotIds),
-    supabase.from('instagram_message_jobs').select('status, created_at').in('chatbot_id', activeBotIds),
   ])
 
   const messages = messagesRes.data || []
@@ -75,15 +69,12 @@ export default defineEventHandler(async (event) => {
 
   const allJobs = [
     ...(whatsappJobsRes.data || []).map((j: any) => ({ ...j, channel: 'whatsapp' })),
-    ...(igJobsRes.data || []).map((j: any) => ({ ...j, channel: 'instagram' })),
   ]
   const totalJobs = allJobs.length
   const sentJobs = allJobs.filter((j: any) => ['sent', 'completed', 'delivered'].includes(j.status)).length
   const failedJobs = allJobs.filter((j: any) => j.status === 'failed').length
   const successRate = totalJobs > 0 ? Math.round((sentJobs / totalJobs) * 100) : 100
 
-  const triggers = igTriggersRes.data || []
-  const activeTriggers = triggers.filter((t: any) => t.is_active).length
 
   // ── Step 5: timeline (14 days) ───────────────────────────
   const timeline = buildTimeline(sessions, 14)
@@ -100,8 +91,7 @@ export default defineEventHandler(async (event) => {
 
   // ── Step 7: channel breakdown ─────────────────────────────
   const whatsappSessions = sessions.filter((s: any) => s.metadata?.type === 'whatsapp').length
-  const igSessions = sessions.filter((s: any) => s.metadata?.type === 'instagram').length
-  const webSessions = totalSessions - whatsappSessions - igSessions
+  const webSessions = totalSessions - whatsappSessions
 
   return {
     summary: {
@@ -110,20 +100,17 @@ export default defineEventHandler(async (event) => {
       userMessages,
       botMessages,
       totalAgents: allBots.length,
-      totalIgAccounts: igAccountsRes.count || 0,
       totalWhatsappAccounts: whatsappAccountsRes.count || 0,
       totalDataSources: dataSourcesRes.count || 0,
       sentJobs,
       failedJobs,
       successRate,
-      activeTriggers,
     },
     timeline,
     topAgents,
     chatbots: allBots,
     channels: {
       whatsapp: whatsappSessions,
-      instagram: igSessions,
       web: webSessions,
     },
   }
@@ -136,7 +123,7 @@ function buildTimeline(sessions: any[], days: number) {
     const d = new Date()
     d.setDate(d.getDate() - i)
     const dateStr = d.toISOString().split('T')[0]
-    const count = sessions.filter(s => s.created_at?.startsWith(dateStr)).length
+    const count = sessions.filter(s => s.created_at && s.created_at.startsWith(dateStr)).length
     result.push({ date: dateStr, count })
   }
   return result
@@ -146,12 +133,12 @@ function emptyResponse(bots: any[]) {
   return {
     summary: {
       totalSessions: 0, totalMessages: 0, userMessages: 0, botMessages: 0,
-      totalAgents: bots.length, totalIgAccounts: 0, totalWhatsappAccounts: 0,
-      totalDataSources: 0, sentJobs: 0, failedJobs: 0, successRate: 100, activeTriggers: 0,
+      totalAgents: bots.length, totalWhatsappAccounts: 0,
+      totalDataSources: 0, sentJobs: 0, failedJobs: 0, successRate: 100,
     },
     timeline: buildTimeline([], 14),
     topAgents: bots.map((b: any) => ({ name: b.name, id: b.id, count: 0 })),
     chatbots: bots,
-    channels: { whatsapp: 0, instagram: 0, web: 0 },
+    channels: { whatsapp: 0, web: 0 },
   }
 }
