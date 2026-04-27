@@ -55,6 +55,10 @@ const languageOptions = [
   { label: 'German', value: 'German' }
 ]
 
+const agents = computed(() => pageData.value?.agents || [])
+const stats = computed(() => pageData.value?.stats || { totalChats: 0, totalDataSources: 0 })
+const isLoading = computed(() => authLoading.value || dataLoading.value)
+
 // UI State
 const canCreateAgent = computed(() => {
   return agents.value.length < (limits.value.maxAgents || 1)
@@ -107,9 +111,6 @@ const { data: pageData, pending: dataLoading, refresh: refreshAgents } = useAsyn
   watch: [userId]
 })
 
-const agents = computed(() => pageData.value?.agents || [])
-const stats = computed(() => pageData.value?.stats || { totalChats: 0, totalDataSources: 0 })
-const isLoading = computed(() => authLoading.value || dataLoading.value)
 
 const handleCreate = async () => {
   if (!userId.value || !newAgent.value.name) return

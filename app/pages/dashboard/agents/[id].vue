@@ -31,10 +31,6 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-useHead({
-  title: computed(() => agent.value?.name ? `${agent.value.name} | Agent Settings` : 'Agent Settings | ReplySuite'),
-})
-
 const route = useRoute()
 const chatbotId = route.params.id as string
 const { userId } = useAuth()
@@ -48,6 +44,10 @@ const isSaving = ref(false)
 const agent = ref<any>(null)
 const activeTab = ref<'identity' | 'design' | 'security' | 'tools'>('identity')
 const newDomainInput = ref<string>('')
+
+useHead({
+  title: computed(() => agent.value?.name ? `${agent.value.name} | Agent Settings` : 'Agent Settings | ReplySuite'),
+})
 
 const launcherIcons = [
   { name: 'Bot', icon: Bot, label: 'Robot' },
