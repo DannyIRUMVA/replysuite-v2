@@ -267,21 +267,21 @@ const handleTestChat = async () => {
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-4">
         <NuxtLink to="/dashboard/agents"
-          class="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all text-gray-500 hover:text-white">
+          class="p-2.5 bg-foreground/5 hover:bg-foreground/10 rounded-xl border border-foreground/5 transition-all text-foreground/40 hover:text-foreground">
           <ArrowLeft class="w-5 h-5" />
         </NuxtLink>
         <div>
-          <h2 class="text-xl font-bold tracking-tight text-white mb-1 uppercase italic-none">Knowledge Ops</h2>
+          <h2 class="text-xl font-bold tracking-tight text-foreground mb-1 uppercase italic-none">Knowledge Ops</h2>
           <div v-if="chatbot" class="flex items-center gap-2">
             <Bot class="w-3.5 h-3.5 text-primary" />
-            <span class="text-[10px] font-bold tracking-widest text-gray-500 uppercase italic-none">{{ chatbot.name
+            <span class="text-[10px] font-bold tracking-widest text-foreground/40 uppercase italic-none">{{ chatbot.name
               }}</span>
           </div>
         </div>
       </div>
 
       <button @click="showChatTest = true"
-        class="group flex items-center gap-3 px-6 py-3 bg-white/5 hover:bg-primary hover:text-black border border-white/10 rounded-2xl transition-all shadow-xl">
+        class="group flex items-center gap-3 px-6 py-3 bg-foreground/5 hover:bg-primary hover:text-black border border-foreground/10 rounded-2xl transition-all shadow-xl">
         <LucideSparkles class="w-4 h-4 text-primary group-hover:text-black" />
         <span class="text-[11px] font-bold tracking-widest uppercase italic-none">Test Agent Ability</span>
       </button>
@@ -294,16 +294,16 @@ const handleTestChat = async () => {
     <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Left: Training Interface -->
       <div class="lg:col-span-2 space-y-6 min-w-0">
-        <div class="glass-card !bg-white/[0.01]">
+        <div class="glass-card !bg-foreground/[0.01]">
           <!-- Tabs -->
-          <div class="flex items-center gap-1 p-1 bg-white/5 rounded-2xl mb-8">
+          <div class="flex items-center gap-1 p-1 bg-foreground/5 rounded-2xl mb-8">
             <button v-for="tab in [
               { id: 'url', label: 'Website URL', icon: Globe },
               { id: 'file', label: 'PDF Document', icon: FileText },
               { id: 'text', label: 'Custom Text', icon: Type }
             ] as const" :key="tab.id" @click="activeTab = tab.id" :class="[
               'flex-1 flex items-center justify-center gap-2 py-2.5 text-[10px] font-bold tracking-widest rounded-xl transition-all uppercase italic-none',
-              activeTab === tab.id ? 'bg-primary text-black shadow-lg shadow-primary/10' : 'text-gray-500 hover:text-white hover:bg-white/5'
+              activeTab === tab.id ? 'bg-primary text-black shadow-lg shadow-primary/10' : 'text-foreground/40 hover:text-foreground hover:bg-foreground/5'
             ]">
               <component :is="tab.icon" class="w-3.5 h-3.5" />
               {{ tab.label }}
@@ -316,11 +316,11 @@ const handleTestChat = async () => {
             <div v-if="activeTab === 'url'" class="space-y-6">
               <div>
                 <label
-                  class="block text-[11px] font-bold tracking-widest text-gray-500 uppercase mb-3 italic-none">Target
+                  class="block text-[11px] font-bold tracking-widest text-foreground/40 uppercase mb-3 italic-none">Target
                   URL</label>
                 <div class="flex gap-3">
                   <input v-model="urlForm.url" placeholder="https://example.com/docs"
-                    class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-700 focus:outline-none focus:border-primary/50 transition-colors italic-none" />
+                    class="flex-1 bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors italic-none" />
                   <button @click="handleUrlTrain" :disabled="isProcessing || !urlForm.url || isOverTrainingLimit"
                     class="px-6 bg-primary text-black font-bold tracking-widest text-[11px] rounded-xl hover:bg-primary-accent transition-all disabled:opacity-50 flex items-center gap-2 uppercase italic-none">
                     <Loader2 v-if="isProcessing" class="w-4 h-4 animate-spin" />
@@ -332,7 +332,7 @@ const handleTestChat = async () => {
                   Training limit reached for {{ planSlug }} plan. Upgrade for more intelligence sessions.
                 </p>
                 <p
-                  class="text-[10px] text-gray-600 mt-3 flex items-center gap-2 italic-none uppercase tracking-widest font-bold">
+                  class="text-[10px] text-foreground/30 mt-3 flex items-center gap-2 italic-none uppercase tracking-widest font-bold">
                   <Search class="w-3 h-3" />
                   Autonomous extraction & vectorization active.
                 </p>
@@ -342,16 +342,16 @@ const handleTestChat = async () => {
             <!-- File Form -->
             <div v-if="activeTab === 'file'" class="space-y-6">
               <div
-                class="border-2 border-dashed border-white/10 rounded-3xl p-10 text-center hover:border-primary/30 transition-all cursor-pointer bg-white/[0.01]"
+                class="border-2 border-dashed border-foreground/10 rounded-3xl p-10 text-center hover:border-primary/30 transition-all cursor-pointer bg-foreground/[0.01]"
                 @click="$refs.fileInput.click()">
                 <input type="file" ref="fileInput" class="hidden" accept=".pdf" @change="handleFileChange" />
                 <div v-if="!selectedFile" class="space-y-4">
-                  <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <FileText class="w-8 h-8 text-gray-600" />
+                  <div class="w-16 h-16 bg-foreground/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <FileText class="w-8 h-8 text-foreground/30" />
                   </div>
-                  <p class="text-xs font-bold text-white uppercase tracking-widest italic-none">DRAG & DROP OR CLICK TO
+                  <p class="text-xs font-bold text-foreground uppercase tracking-widest italic-none">DRAG & DROP OR CLICK TO
                     SELECT PDF</p>
-                  <p class="text-[10px] text-gray-600 uppercase tracking-widest italic-none">Max File Size: 10MB</p>
+                  <p class="text-[10px] text-foreground/30 uppercase tracking-widest italic-none">Max File Size: 10MB</p>
                 </div>
                 <div v-else class="space-y-4">
                   <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -377,17 +377,17 @@ const handleTestChat = async () => {
               <div class="space-y-4">
                 <div>
                   <label
-                    class="block text-[11px] font-bold tracking-widest text-gray-500 uppercase mb-2 italic-none">Subject
+                    class="block text-[11px] font-bold tracking-widest text-foreground/40 uppercase mb-2 italic-none">Subject
                     / Title</label>
                   <input v-model="textForm.title" placeholder="e.g. Return Policy"
-                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-700 focus:outline-none focus:border-primary/50 transition-colors italic-none" />
+                    class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors italic-none" />
                 </div>
                 <div>
                   <label
-                    class="block text-[11px] font-bold tracking-widest text-gray-500 uppercase mb-2 italic-none">Knowledge
+                    class="block text-[11px] font-bold tracking-widest text-foreground/40 uppercase mb-2 italic-none">Knowledge
                     Content</label>
                   <textarea v-model="textForm.content" rows="8" placeholder="Paste your knowledge content here..."
-                    class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-gray-700 focus:outline-none focus:border-primary/50 transition-colors resize-none mb-2 italic-none"></textarea>
+                    class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-4 py-3 text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors resize-none mb-2 italic-none"></textarea>
                 </div>
                 <button @click="handleTextTrain" :disabled="isProcessing || !textForm.content || isOverTrainingLimit"
                   class="w-full py-3.5 bg-primary text-black font-bold tracking-widest text-[11px] rounded-xl hover:bg-primary-accent transition-all disabled:opacity-50 flex items-center justify-center gap-2 uppercase shadow-lg shadow-primary/10 italic-none">
@@ -421,7 +421,7 @@ const handleTestChat = async () => {
             <LucideSparkles class="w-5 h-5 text-primary" />
             <h4 class="text-[11px] font-bold tracking-widest text-primary uppercase italic-none">Expert Strategy</h4>
           </div>
-          <p class="text-[11px] text-gray-400 leading-relaxed mb-6 italic-none">
+          <p class="text-[11px] text-foreground/40 leading-relaxed mb-6 italic-none">
             Your agent uses **RAG (Retrieval Augmented Generation)**. It will search this knowledge base before
             replying.
           </p>
@@ -429,18 +429,18 @@ const handleTestChat = async () => {
             <div v-for="tip in ['Keep text clear and distinct', 'Add FAQs as line entries', 'Avoid overly large PDFs']"
               :key="tip" class="flex items-center gap-2">
               <div class="w-1 h-1 rounded-full bg-primary/40"></div>
-              <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest italic-none">{{ tip }}</span>
+              <span class="text-[10px] font-bold text-foreground/30 uppercase tracking-widest italic-none">{{ tip }}</span>
             </div>
           </div>
         </div>
 
         <!-- Help box -->
-        <div class="glass-card border-dashed border-white/5 opacity-60">
+        <div class="glass-card border-dashed border-foreground/5 opacity-60">
           <div class="flex items-center gap-3 mb-3">
             <AlertTriangle class="w-4 h-4 text-orange-400/50" />
-            <p class="text-[9px] font-bold text-gray-500 uppercase tracking-widest italic-none">System Note</p>
+            <p class="text-[9px] font-bold text-foreground/40 uppercase tracking-widest italic-none">System Note</p>
           </div>
-          <p class="text-[10px] text-gray-600 italic-none">Training is irreversible for the current session. Deleting a
+          <p class="text-[10px] text-foreground/30 italic-none">Training is irreversible for the current session. Deleting a
             source clears indexed context immediately.</p>
         </div>
       </div>
@@ -448,24 +448,24 @@ const handleTestChat = async () => {
 
     <!-- Chat Test Modal/Drawer -->
     <div v-if="showChatTest" class="fixed inset-0 z-50 flex items-center justify-end">
-      <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showChatTest = false"></div>
+      <div class="absolute inset-0 bg-background/60 backdrop-blur-sm" @click="showChatTest = false"></div>
 
       <div
-        class="relative w-full max-w-lg h-full bg-[#0a0a0a] border-l border-white/10 shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
+        class="relative w-full max-w-lg h-full bg-background border-l border-foreground/10 shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
         <!-- Close button -->
-        <div class="p-8 border-b border-white/5 flex items-center justify-between">
+        <div class="p-8 border-b border-foreground/5 flex items-center justify-between">
           <div class="flex items-center gap-4">
             <div class="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
               <LucideSparkles class="w-5 h-5" />
             </div>
             <div>
-              <h3 class="text-sm font-bold text-white uppercase tracking-widest italic-none">Ability Sandbox</h3>
-              <p class="text-[9px] text-gray-600 font-bold uppercase tracking-widest italic-none">Test trained knowledge
+              <h3 class="text-sm font-bold text-foreground uppercase tracking-widest italic-none">Ability Sandbox</h3>
+              <p class="text-[9px] text-foreground/40 font-bold uppercase tracking-widest italic-none">Test trained knowledge
                 in real-time</p>
             </div>
           </div>
-          <button @click="showChatTest = false" class="p-2 hover:bg-white/5 rounded-xl transition-all">
-            <Plus class="w-5 h-5 rotate-45 text-gray-500" />
+          <button @click="showChatTest = false" class="p-2 hover:bg-foreground/5 rounded-xl transition-all">
+            <Plus class="w-5 h-5 rotate-45 text-foreground/40" />
           </button>
         </div>
 
@@ -473,8 +473,8 @@ const handleTestChat = async () => {
         <div class="flex-1 overflow-y-auto p-8 space-y-6">
           <div v-if="testMessages.length === 0"
             class="h-full flex flex-col items-center justify-center text-center opacity-40">
-            <Bot class="w-12 h-12 mb-4 text-gray-600" />
-            <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest max-w-[200px]">Ask your agent
+            <Bot class="w-12 h-12 mb-4 text-foreground/30" />
+            <p class="text-[11px] font-bold text-foreground/40 uppercase tracking-widest max-w-[200px]">Ask your agent
               anything based on the data you provided.</p>
           </div>
 
@@ -484,7 +484,7 @@ const handleTestChat = async () => {
               'max-w-[85%] p-4 text-xs italic-none',
               msg.role === 'user'
                 ? 'bg-primary text-black rounded-2xl rounded-tr-sm font-medium'
-                : 'bg-white/5 text-gray-300 border border-white/5 rounded-2xl rounded-tl-sm leading-relaxed widget-markdown'
+                : 'bg-foreground/5 text-foreground/80 border border-foreground/5 rounded-2xl rounded-tl-sm leading-relaxed widget-markdown'
             ]">
               <div v-if="msg.role === 'assistant'" v-html="renderMarkdown(msg.content)"></div>
               <div v-else>{{ msg.content }}</div>
@@ -492,7 +492,7 @@ const handleTestChat = async () => {
           </div>
 
           <div v-if="isTestLoading" class="flex justify-start">
-            <div class="bg-white/5 border border-white/5 p-4 rounded-2xl rounded-tl-sm">
+            <div class="bg-foreground/5 border border-foreground/5 p-4 rounded-2xl rounded-tl-sm">
               <div class="flex gap-1">
                 <div class="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce"></div>
                 <div class="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce delay-100"></div>
@@ -503,10 +503,10 @@ const handleTestChat = async () => {
         </div>
 
         <!-- Input Area -->
-        <div class="p-8 border-t border-white/5 bg-[#080808]">
+        <div class="p-8 border-t border-foreground/5 bg-background">
           <div class="relative">
             <input v-model="testInput" @keyup.enter="handleTestChat" placeholder="Query the agent knowledge..."
-              class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-xs text-white placeholder:text-gray-700 focus:outline-none focus:border-primary/50 transition-all italic-none" />
+              class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-6 py-4 text-xs text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-all italic-none" />
             <button @click="handleTestChat" :disabled="!testInput || isTestLoading"
               class="absolute right-2 top-2 bottom-2 px-4 bg-primary text-black rounded-xl hover:bg-primary-accent transition-all disabled:opacity-30 disabled:hover:bg-primary">
               <LucideZap class="w-4 h-4" />
@@ -523,7 +523,7 @@ const handleTestChat = async () => {
 
 <style scoped>
 .glass-card {
-  @apply bg-[#111111]/40 backdrop-blur-xl border border-white/5 p-8 rounded-[2rem];
+  @apply bg-foreground/[0.03] backdrop-blur-xl border border-foreground/5 p-8 rounded-[2rem];
 }
 
 .italic-none {

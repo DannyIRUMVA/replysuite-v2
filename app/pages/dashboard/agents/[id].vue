@@ -325,12 +325,12 @@ watch(activeTab, (newTab) => {
       <div class="flex items-center gap-4">
         <NuxtLink 
           to="/dashboard/agents"
-          class="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all text-gray-500 hover:text-white"
+          class="p-2.5 bg-foreground/5 hover:bg-foreground/10 rounded-xl border border-foreground/5 transition-all text-foreground/50 hover:text-foreground"
         >
           <ArrowLeft class="w-5 h-5" />
         </NuxtLink>
         <div>
-          <h2 class="text-xl font-bold tracking-tight text-white mb-1 uppercase">Agent Intelligence</h2>
+          <h2 class="text-xl font-bold tracking-tight text-foreground mb-1 uppercase">Agent Intelligence</h2>
           <div v-if="agent" class="flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-[10px]">
             <Bot class="w-3.5 h-3.5" />
             <span>{{ agent.name }}</span>
@@ -350,7 +350,7 @@ watch(activeTab, (newTab) => {
     </div>
 
     <!-- Tab Switcher -->
-    <div class="flex gap-2 p-1.5 bg-white/[0.03] border border-white/[0.06] rounded-2xl w-fit">
+    <div class="flex gap-2 p-1.5 bg-foreground/[0.02] border border-foreground/5 rounded-2xl w-fit">
       <button
         v-for="tab in [
           { id: 'identity', label: 'Core Identity', icon: Bot }, 
@@ -364,7 +364,7 @@ watch(activeTab, (newTab) => {
           'flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
           activeTab === tab.id
             ? 'bg-primary text-black shadow-lg shadow-primary/20'
-            : 'text-gray-500 hover:text-white hover:bg-white/5'
+            : 'text-foreground/50 hover:text-foreground hover:bg-foreground/5'
         ]"
       >
         <component :is="tab.icon" class="w-3.5 h-3.5" />
@@ -383,27 +383,27 @@ watch(activeTab, (newTab) => {
 
         <!-- Core Identity -->
         <section class="glass-card">
-          <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-8">Core Identity</h3>
+          <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-8">Core Identity</h3>
           <div class="space-y-6">
             <div>
-              <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase mb-3">Agent Designation</label>
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-3">Agent Designation</label>
               <input 
                 v-model="form.name"
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors text-sm"
+                class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors text-sm placeholder:text-foreground/50"
                 placeholder="e.g. Sales Pilot"
               />
             </div>
             <div>
-              <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase mb-3">Behavioral Protocol (System Prompt)</label>
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-3">Behavioral Protocol (System Prompt)</label>
               <textarea 
                 v-model="form.system_prompt"
                 rows="10"
-                class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-xs text-gray-300 focus:outline-none focus:border-primary/50 transition-colors resize-none leading-relaxed"
+                class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-4 py-4 text-xs text-foreground/70 focus:outline-none focus:border-primary/50 transition-colors resize-none leading-relaxed placeholder:text-foreground/50"
                 placeholder="Give your agent a personality, goals, and constraints..."
               />
               <div class="mt-4 p-4 rounded-xl bg-primary/5 border border-primary/10 flex gap-3">
                 <Info class="w-4 h-4 text-primary shrink-0" />
-                <p class="text-[10px] text-gray-500 leading-relaxed uppercase tracking-wider">
+                <p class="text-[10px] text-foreground/50 leading-relaxed uppercase tracking-wider">
                   This protocol overrides default behaviors. Define exactly how you want the AI to represent your brand.
                 </p>
               </div>
@@ -414,14 +414,14 @@ watch(activeTab, (newTab) => {
         <!-- Danger Zone -->
         <section class="glass-card border-red-500/10 bg-red-500/[0.01]">
           <h3 class="text-[10px] font-bold text-red-500/50 tracking-widest uppercase mb-6">Critical Actions</h3>
-          <div class="flex items-center justify-between p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+          <div class="flex items-center justify-between p-5 rounded-2xl bg-foreground/[0.01] border border-foreground/5">
             <div>
-              <p class="text-sm font-bold text-white mb-1">Decommission Agent</p>
-              <p class="text-[10px] text-gray-500 uppercase tracking-widest">Permanently remove this intelligence from your fleet.</p>
+              <p class="text-sm font-bold text-foreground mb-1">Decommission Agent</p>
+              <p class="text-[10px] text-foreground/50 uppercase tracking-widest">Permanently remove this intelligence from your fleet.</p>
             </div>
             <button 
               @click="handleDelete"
-              class="px-5 py-2.5 bg-red-500/10 text-red-500 rounded-xl font-bold text-[10px] tracking-widest uppercase hover:bg-red-500 hover:text-white transition-all border border-red-500/20"
+              class="px-5 py-2.5 bg-red-500/10 text-red-500 rounded-xl font-bold text-[10px] tracking-widest uppercase hover:bg-red-500 hover:text-foreground transition-all border border-red-500/20"
             >
               <Trash2 class="w-4 h-4 inline-block mr-1.5" />Delete
             </button>
@@ -435,25 +435,25 @@ watch(activeTab, (newTab) => {
         <!-- Visibility Toggle -->
         <div class="glass-card">
           <div class="flex items-center justify-between mb-6">
-            <h4 class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Deployment Status</h4>
+            <h4 class="text-[10px] font-bold tracking-widest text-foreground/50 uppercase">Deployment Status</h4>
             <component :is="form.is_public ? Globe : Lock" class="w-4 h-4 text-primary opacity-50" />
           </div>
           <button 
             @click="form.is_public = !form.is_public"
             :class="[
               'w-full p-4 rounded-2xl border transition-all flex items-center justify-between text-left',
-              form.is_public ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-white/5 border-white/5 text-gray-500'
+              form.is_public ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-foreground/5 border-foreground/5 text-foreground/50'
             ]"
           >
             <div>
               <p class="text-[11px] font-bold uppercase tracking-widest mb-1">{{ form.is_public ? 'Public Mode Active' : 'Internal Only' }}</p>
               <p class="text-[9px] opacity-60">{{ form.is_public ? 'Token-free API access enabled.' : 'Authenticated access required.' }}</p>
             </div>
-            <div :class="['w-10 h-5 rounded-full relative transition-colors p-1', form.is_public ? 'bg-primary' : 'bg-gray-800']">
+            <div :class="['w-10 h-5 rounded-full relative transition-colors p-1', form.is_public ? 'bg-primary' : 'bg-foreground/10']">
               <div :class="['w-3 h-3 bg-white rounded-full transition-all', form.is_public ? 'translate-x-5' : 'translate-x-0']" />
             </div>
           </button>
-          <p class="mt-4 text-[9px] text-gray-600 leading-relaxed uppercase tracking-wider">
+          <p class="mt-4 text-[9px] text-foreground/50 leading-relaxed uppercase tracking-wider">
             Public mode allows your agent to be embedded on websites via the integration snippet.
           </p>
         </div>
@@ -461,12 +461,12 @@ watch(activeTab, (newTab) => {
         <!-- Linguistic Engine -->
         <div class="glass-card">
           <div class="flex items-center justify-between mb-6">
-            <h4 class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Linguistic Engine</h4>
+            <h4 class="text-[10px] font-bold tracking-widest text-foreground/50 uppercase">Linguistic Engine</h4>
             <Globe class="w-4 h-4 text-primary opacity-50" />
           </div>
-          <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase mb-2">Default Language</label>
+          <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-2">Default Language</label>
           <CustomSelect v-model="form.default_language" :options="languageOptions" placeholder="Select Language" />
-          <p class="text-[9px] text-gray-500 leading-relaxed uppercase tracking-wider mt-4">
+          <p class="text-[9px] text-foreground/50 leading-relaxed uppercase tracking-wider mt-4">
             Your agent will strictly adhere to this language for native interactions.
           </p>
         </div>
@@ -474,45 +474,45 @@ watch(activeTab, (newTab) => {
         <!-- Global Compliance -->
         <div class="glass-card">
           <div class="flex items-center justify-between mb-6">
-            <h4 class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Compliance (EU/Global)</h4>
+            <h4 class="text-[10px] font-bold tracking-widest text-foreground/50 uppercase">Compliance (EU/Global)</h4>
             <ShieldCheck class="w-4 h-4 text-primary opacity-50" />
           </div>
           <button 
             @click="form.ai_disclosure = !form.ai_disclosure"
             :class="[
               'w-full p-4 rounded-2xl border transition-all flex items-center justify-between text-left',
-              form.ai_disclosure ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-white/5 border-white/5 text-gray-500'
+              form.ai_disclosure ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-foreground/5 border-foreground/5 text-foreground/50'
             ]"
           >
             <div>
               <p class="text-[11px] font-bold uppercase tracking-widest mb-1">AI Disclosure Label</p>
               <p class="text-[9px] opacity-60">{{ form.ai_disclosure ? 'Mandatory labeling active.' : 'Labeling disabled.' }}</p>
             </div>
-            <div :class="['w-10 h-5 rounded-full relative transition-colors p-1', form.ai_disclosure ? 'bg-primary' : 'bg-gray-800']">
+            <div :class="['w-10 h-5 rounded-full relative transition-colors p-1', form.ai_disclosure ? 'bg-primary' : 'bg-foreground/10']">
               <div :class="['w-3 h-3 bg-white rounded-full transition-all', form.ai_disclosure ? 'translate-x-5' : 'translate-x-0']" />
             </div>
           </button>
-          <p class="mt-4 text-[9px] text-gray-600 leading-relaxed uppercase tracking-wider">
+          <p class="mt-4 text-[9px] text-foreground/50 leading-relaxed uppercase tracking-wider">
             In the EU and Brazil, AI-generated content must be identifiable. This toggle appends transparency metadata to all responses.
           </p>
         </div>
 
         <!-- Resource Summary -->
         <div class="glass-card">
-          <h4 class="text-[10px] font-bold tracking-widest text-gray-500 uppercase mb-6">Resource Summary</h4>
+          <h4 class="text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-6">Resource Summary</h4>
           <div class="space-y-5">
             <div class="flex items-center gap-4">
-              <div class="p-2 rounded-lg bg-white/5"><MessageSquare class="w-4 h-4 text-gray-500" /></div>
+              <div class="p-2 rounded-lg bg-foreground/5"><MessageSquare class="w-4 h-4 text-foreground/50" /></div>
               <div>
-                <p class="text-xs font-bold text-white">{{ agent?.session_count || 0 }} Conversations</p>
-                <p class="text-[9px] text-gray-600 uppercase tracking-widest">Lifetime interactions</p>
+                <p class="text-xs font-bold text-foreground">{{ agent?.session_count || 0 }} Conversations</p>
+                <p class="text-[9px] text-foreground/50 uppercase tracking-widest">Lifetime interactions</p>
               </div>
             </div>
             <div class="flex items-center gap-4">
-              <div class="p-2 rounded-lg bg-white/5"><Shield class="w-4 h-4 text-gray-500" /></div>
+              <div class="p-2 rounded-lg bg-foreground/5"><Shield class="w-4 h-4 text-foreground/50" /></div>
               <div>
-                <p class="text-xs font-bold text-white">Secure Vault</p>
-                <p class="text-[9px] text-gray-600 uppercase tracking-widest">Encryption layer active</p>
+                <p class="text-xs font-bold text-foreground">Secure Vault</p>
+                <p class="text-[9px] text-foreground/50 uppercase tracking-widest">Encryption layer active</p>
               </div>
             </div>
           </div>
@@ -530,10 +530,10 @@ watch(activeTab, (newTab) => {
         <section class="glass-card">
           <div class="flex items-center justify-between mb-6">
             <div>
-              <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-1">Color Presets</h3>
-              <p class="text-[9px] text-gray-600 uppercase tracking-wider">Quick-apply brand palettes</p>
+              <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-1">Color Presets</h3>
+              <p class="text-[9px] text-foreground/50 uppercase tracking-wider">Quick-apply brand palettes</p>
             </div>
-            <button @click="resetDesign" class="flex items-center gap-1.5 text-[9px] font-black text-gray-600 uppercase tracking-widest hover:text-white transition-colors">
+            <button @click="resetDesign" class="flex items-center gap-1.5 text-[9px] font-black text-foreground/50 uppercase tracking-widest hover:text-foreground transition-colors">
               <RotateCcw class="w-3 h-3" />Reset
             </button>
           </div>
@@ -545,12 +545,12 @@ watch(activeTab, (newTab) => {
               :title="preset.name"
               :class="[
                 'relative h-12 rounded-2xl border-2 transition-all overflow-hidden group',
-                form.primary_color === preset.primary ? 'border-white/50 scale-105' : 'border-transparent hover:border-white/20'
+                form.primary_color === preset.primary ? 'border-foreground/50 scale-105' : 'border-transparent hover:border-foreground/20'
               ]"
               :style="{ background: `linear-gradient(135deg, ${preset.secondary} 0%, ${preset.primary}40 100%)` }"
             >
-              <div class="absolute bottom-1.5 right-1.5 w-4 h-4 rounded-full border border-white/20" :style="{ backgroundColor: preset.primary }" />
-              <span class="absolute inset-0 flex items-center justify-center text-[8px] font-black text-white/40 group-hover:text-white/80 transition-colors uppercase tracking-wider">
+              <div class="absolute bottom-1.5 right-1.5 w-4 h-4 rounded-full border border-foreground/20" :style="{ backgroundColor: preset.primary }" />
+              <span class="absolute inset-0 flex items-center justify-center text-[8px] font-black text-foreground/50 group-hover:text-foreground/50 transition-colors uppercase tracking-wider">
                 {{ preset.name }}
               </span>
             </button>
@@ -559,21 +559,21 @@ watch(activeTab, (newTab) => {
 
         <!-- Custom Colors -->
         <section class="glass-card">
-          <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-6">Custom Colors</h3>
+          <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-6">Custom Colors</h3>
           <div class="grid grid-cols-2 gap-5">
             <!-- Primary Color -->
             <div class="space-y-3">
-              <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase">
                 <Pipette class="w-3 h-3 inline-block mr-1 text-primary" />Primary Color
               </label>
-              <div class="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
+              <div class="flex items-center gap-3 p-3 bg-foreground/[0.02] border border-foreground/5 rounded-2xl">
                 <div class="relative">
                   <input
                     type="color"
                     v-model="form.primary_color"
                     class="absolute inset-0 opacity-0 cursor-pointer w-full h-full rounded-xl"
                   />
-                  <div class="w-10 h-10 rounded-xl border-2 border-white/10 shadow-lg cursor-pointer transition-transform hover:scale-110"
+                  <div class="w-10 h-10 rounded-xl border-2 border-foreground/10 shadow-lg cursor-pointer transition-transform hover:scale-110"
                     :style="{ backgroundColor: form.primary_color }" />
                 </div>
                 <div class="flex-1">
@@ -581,27 +581,27 @@ watch(activeTab, (newTab) => {
                     v-model="form.primary_color"
                     type="text"
                     maxlength="7"
-                    class="w-full bg-transparent text-white font-mono text-xs focus:outline-none uppercase tracking-widest"
+                    class="w-full bg-transparent text-foreground font-mono text-xs focus:outline-none uppercase tracking-widest"
                     placeholder="#D4AF37"
                   />
-                  <p class="text-[8px] text-gray-600 uppercase tracking-wider mt-0.5">Buttons, accents, links</p>
+                  <p class="text-[8px] text-foreground/50 uppercase tracking-wider mt-0.5">Buttons, accents, links</p>
                 </div>
               </div>
             </div>
 
             <!-- Secondary Color (Background) -->
             <div class="space-y-3">
-              <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">
-                <Pipette class="w-3 h-3 inline-block mr-1 text-gray-500" />Background Color
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase">
+                <Pipette class="w-3 h-3 inline-block mr-1 text-foreground/50" />Background Color
               </label>
-              <div class="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
+              <div class="flex items-center gap-3 p-3 bg-foreground/[0.02] border border-foreground/5 rounded-2xl">
                 <div class="relative">
                   <input
                     type="color"
                     v-model="form.secondary_color"
                     class="absolute inset-0 opacity-0 cursor-pointer w-full h-full rounded-xl"
                   />
-                  <div class="w-10 h-10 rounded-xl border-2 border-white/10 shadow-lg cursor-pointer transition-transform hover:scale-110"
+                  <div class="w-10 h-10 rounded-xl border-2 border-foreground/10 shadow-lg cursor-pointer transition-transform hover:scale-110"
                     :style="{ backgroundColor: form.secondary_color }" />
                 </div>
                 <div class="flex-1">
@@ -609,10 +609,10 @@ watch(activeTab, (newTab) => {
                     v-model="form.secondary_color"
                     type="text"
                     maxlength="7"
-                    class="w-full bg-transparent text-white font-mono text-xs focus:outline-none uppercase tracking-widest"
+                    class="w-full bg-transparent text-foreground font-mono text-xs focus:outline-none uppercase tracking-widest"
                     placeholder="#1a1a1a"
                   />
-                  <p class="text-[8px] text-gray-600 uppercase tracking-wider mt-0.5">Widget background</p>
+                  <p class="text-[8px] text-foreground/50 uppercase tracking-wider mt-0.5">Widget background</p>
                 </div>
               </div>
             </div>
@@ -621,11 +621,11 @@ watch(activeTab, (newTab) => {
 
         <!-- Style & Layout -->
         <section class="glass-card space-y-6">
-          <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Style & Layout</h3>
+          <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase">Style & Layout</h3>
 
           <!-- Bubble Style -->
           <div class="space-y-3">
-            <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">Chat Bubble Style</label>
+            <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase">Chat Bubble Style</label>
             <div class="grid grid-cols-3 gap-3">
               <button
                 v-for="style in bubbleStyleOptions"
@@ -635,11 +635,11 @@ watch(activeTab, (newTab) => {
                   'p-3 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all',
                   form.chat_bubble_style === style.value
                     ? 'bg-primary/10 border-primary/40 text-primary'
-                    : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:border-white/10'
+                    : 'bg-foreground/[0.02] border-foreground/5 text-foreground/50 hover:border-foreground/10'
                 ]"
               >
                 <div class="mb-2 h-5 flex items-center justify-center">
-                  <div class="h-4 w-16 bg-white/10"
+                  <div class="h-4 w-16 bg-foreground/10"
                     :style="{ borderRadius: style.value === 'pill' ? '9999px' : style.value === 'sharp' ? '2px' : '8px' }" />
                 </div>
                 {{ style.label.split(' ')[0] }}
@@ -649,7 +649,7 @@ watch(activeTab, (newTab) => {
 
           <!-- Widget Position -->
           <div class="space-y-3">
-            <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">Widget Position</label>
+            <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase">Widget Position</label>
             <div class="grid grid-cols-2 gap-3">
               <button
                 v-for="pos in positionOptions"
@@ -659,11 +659,11 @@ watch(activeTab, (newTab) => {
                   'p-4 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-2',
                   form.widget_position === pos.value
                     ? 'bg-primary/10 border-primary/40 text-primary'
-                    : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:border-white/10'
+                    : 'bg-foreground/[0.02] border-foreground/5 text-foreground/50 hover:border-foreground/10'
                 ]"
               >
                 <!-- Mini screen mockup -->
-                <div class="w-16 h-10 bg-white/5 rounded-lg relative border border-white/10">
+                <div class="w-16 h-10 bg-foreground/5 rounded-lg relative border border-foreground/10">
                   <div 
                     class="absolute bottom-1 w-3 h-3 rounded-full"
                     :class="pos.value === 'bottom-right' ? 'right-1' : 'left-1'"
@@ -678,10 +678,10 @@ watch(activeTab, (newTab) => {
 
           <!-- Welcome Message -->
           <div class="space-y-3">
-            <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">Welcome Message</label>
+            <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase">Welcome Message</label>
             <input
               v-model="form.welcome_message"
-              class="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors"
+              class="w-full bg-foreground/[0.02] border border-foreground/5 rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:border-primary/50 transition-colors placeholder:text-foreground/50"
               placeholder="Hello! How can I help you today?"
             />
           </div>
@@ -689,15 +689,15 @@ watch(activeTab, (newTab) => {
 
         <!-- Launcher Customization (Premium) -->
         <section class="glass-card relative overflow-hidden" :class="{ 'opacity-50 pointer-events-none': !isPremium }">
-          <div v-if="!isPremium" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
+          <div v-if="!isPremium" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/40 backdrop-blur-[2px]">
             <div class="p-3 bg-primary/20 rounded-2xl mb-3">
               <Lock class="w-6 h-6 text-primary" />
             </div>
-            <p class="text-xs font-bold text-white uppercase tracking-widest">Premium Customization</p>
-            <p class="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Upgrade to Silver or Gold to unlock</p>
+            <p class="text-xs font-bold text-foreground uppercase tracking-widest">Premium Customization</p>
+            <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-1">Upgrade to Silver or Gold to unlock</p>
           </div>
 
-          <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-6 flex items-center justify-between">
+          <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-6 flex items-center justify-between">
             Launcher Customization
             <span v-if="isPremium" class="bg-primary/20 text-primary px-2 py-0.5 rounded text-[8px]">PREMIUM ACTIVE</span>
           </h3>
@@ -706,17 +706,17 @@ watch(activeTab, (newTab) => {
             <!-- Launcher Color -->
             <div class="grid grid-cols-2 gap-6">
               <div class="space-y-3">
-                <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">
+                <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase">
                   <Pipette class="w-3 h-3 inline-block mr-1 text-primary" />Launcher Color
                 </label>
-                <div class="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
+                <div class="flex items-center gap-3 p-3 bg-foreground/[0.02] border border-foreground/5 rounded-2xl">
                   <div class="relative">
                     <input
                       type="color"
                       v-model="form.launcher_color"
                       class="absolute inset-0 opacity-0 cursor-pointer w-full h-full rounded-xl"
                     />
-                    <div class="w-10 h-10 rounded-xl border-2 border-white/10 shadow-lg cursor-pointer transition-transform hover:scale-110"
+                    <div class="w-10 h-10 rounded-xl border-2 border-foreground/10 shadow-lg cursor-pointer transition-transform hover:scale-110"
                       :style="{ backgroundColor: form.launcher_color }" />
                   </div>
                   <div class="flex-1">
@@ -724,7 +724,7 @@ watch(activeTab, (newTab) => {
                       v-model="form.launcher_color"
                       type="text"
                       maxlength="7"
-                      class="w-full bg-transparent text-white font-mono text-xs focus:outline-none uppercase tracking-widest"
+                      class="w-full bg-transparent text-foreground font-mono text-xs focus:outline-none uppercase tracking-widest"
                       placeholder="#D4AF37"
                     />
                   </div>
@@ -733,10 +733,10 @@ watch(activeTab, (newTab) => {
 
               <!-- Launcher Icon Color -->
               <div class="space-y-3">
-                <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">
+                <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase">
                   <Pipette class="w-3 h-3 inline-block mr-1 text-primary" />Icon Color
                 </label>
-                <div class="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
+                <div class="flex items-center gap-3 p-3 bg-foreground/[0.02] border border-foreground/5 rounded-2xl">
                   <div class="relative">
                     <input
                       type="color"
@@ -744,10 +744,10 @@ watch(activeTab, (newTab) => {
                       @input="form.chat_icon_color = form.launcher_icon_color"
                       class="absolute inset-0 opacity-0 cursor-pointer w-full h-full rounded-xl"
                     />
-                    <div class="w-10 h-10 rounded-xl border-2 border-white/10 shadow-lg cursor-pointer transition-transform hover:scale-110 flex items-center justify-center overflow-hidden"
+                    <div class="w-10 h-10 rounded-xl border-2 border-foreground/10 shadow-lg cursor-pointer transition-transform hover:scale-110 flex items-center justify-center overflow-hidden"
                       :style="{ backgroundColor: form.launcher_icon_color || '#ffffff' }" >
-                      <div v-if="!form.launcher_icon_color" class="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-                        <span class="text-[8px] font-black text-white uppercase">AUTO</span>
+                      <div v-if="!form.launcher_icon_color" class="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-sm">
+                        <span class="text-[8px] font-black text-foreground uppercase">AUTO</span>
                       </div>
                     </div>
                   </div>
@@ -758,7 +758,7 @@ watch(activeTab, (newTab) => {
                         @input="form.chat_icon_color = form.launcher_icon_color"
                         type="text"
                         maxlength="7"
-                        class="w-full bg-transparent text-white font-mono text-xs focus:outline-none uppercase tracking-widest"
+                        class="w-full bg-transparent text-foreground font-mono text-xs focus:outline-none uppercase tracking-widest"
                         placeholder="AUTO"
                       />
                       <button 
@@ -776,7 +776,7 @@ watch(activeTab, (newTab) => {
 
             <!-- Widget Icon -->
             <div class="space-y-3">
-              <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">Widget Icon (Launcher & Chat)</label>
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase">Widget Icon (Launcher & Chat)</label>
               <div class="grid grid-cols-5 gap-3">
                 <button
                   v-for="item in launcherIcons"
@@ -786,7 +786,7 @@ watch(activeTab, (newTab) => {
                     'p-3 rounded-xl border transition-all flex items-center justify-center',
                     form.launcher_icon === item.name
                       ? 'bg-primary/10 border-primary/40 text-primary'
-                      : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:border-white/10'
+                      : 'bg-foreground/[0.02] border-foreground/5 text-foreground/50 hover:border-foreground/10'
                   ]"
                 >
                   <component :is="item.icon" class="w-5 h-5" />
@@ -796,7 +796,7 @@ watch(activeTab, (newTab) => {
 
             <!-- Launcher Style -->
             <div class="space-y-3">
-              <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">Launcher Button Shape</label>
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase">Launcher Button Shape</label>
               <div class="grid grid-cols-2 gap-3">
                 <button
                   v-for="style in launcherStyles"
@@ -806,7 +806,7 @@ watch(activeTab, (newTab) => {
                     'p-3 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all',
                     form.launcher_style === style.value
                       ? 'bg-primary/10 border-primary/40 text-primary'
-                      : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:border-white/10'
+                      : 'bg-foreground/[0.02] border-foreground/5 text-foreground/50 hover:border-foreground/10'
                   ]"
                 >
                   <div class="mb-2 h-8 flex items-center justify-center">
@@ -829,8 +829,8 @@ watch(activeTab, (newTab) => {
       <div class="lg:col-span-4 sticky top-10">
         <div class="glass-card">
             <div class="flex items-center justify-between mb-5">
-              <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Live Preview</h3>
-              <a :href="`/widget/${chatbotId}`" target="_blank" class="p-2 hover:bg-white/5 rounded-lg transition-all text-gray-500 hover:text-primary" title="Open Full Preview">
+              <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase">Live Preview</h3>
+              <a :href="`/widget/${chatbotId}`" target="_blank" class="p-2 hover:bg-foreground/5 rounded-lg transition-all text-foreground/50 hover:text-primary" title="Open Full Preview">
                 <ExternalLink class="w-4 h-4" />
               </a>
             </div>
@@ -848,7 +848,7 @@ watch(activeTab, (newTab) => {
                   AI
                 </div>
                 <div>
-                  <p class="text-[11px] font-black text-white">{{ form.name || 'Your Agent' }}</p>
+                  <p class="text-[11px] font-black text-foreground">{{ form.name || 'Your Agent' }}</p>
                   <div class="flex items-center gap-1.5 mt-0.5">
                     <div class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
                     <span class="text-[9px] text-green-400 font-bold uppercase tracking-wider">Online</span>
@@ -864,7 +864,7 @@ watch(activeTab, (newTab) => {
                     :style="{ backgroundColor: form.primary_color, color: form.secondary_color }">
                     AI
                   </div>
-                  <div class="max-w-[75%] px-3 py-2 text-[10px] text-white/90 leading-relaxed"
+                  <div class="max-w-[75%] px-3 py-2 text-[10px] text-foreground/80 leading-relaxed"
                     :style="{
                       backgroundColor: form.primary_color + '22',
                       border: `1px solid ${form.primary_color}30`,
@@ -891,7 +891,7 @@ watch(activeTab, (newTab) => {
                     :style="{ backgroundColor: form.primary_color, color: form.secondary_color }">
                     AI
                   </div>
-                  <div class="max-w-[75%] px-3 py-2 text-[10px] text-white/90 leading-relaxed"
+                  <div class="max-w-[75%] px-3 py-2 text-[10px] text-foreground/80 leading-relaxed"
                     :style="{
                       backgroundColor: form.primary_color + '22',
                       border: `1px solid ${form.primary_color}30`,
@@ -905,7 +905,7 @@ watch(activeTab, (newTab) => {
               <!-- Input Bar -->
               <div class="px-4 py-3 flex items-center gap-2"
                 :style="{ borderTop: `1px solid ${form.primary_color}20` }">
-                <div class="flex-1 bg-white/5 rounded-xl px-3 py-2 text-[10px] text-gray-600">
+                <div class="flex-1 bg-foreground/5 rounded-xl px-3 py-2 text-[10px] text-foreground/30">
                   Type a message...
                 </div>
                 <div class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
@@ -918,22 +918,22 @@ watch(activeTab, (newTab) => {
 
               <!-- Powered by tag -->
               <div class="text-center py-2 border-t border-white/5">
-                <span class="text-[8px] text-gray-700 uppercase tracking-widest font-bold">Powered by ReplySuite</span>
+                <span class="text-[8px] text-foreground/30 uppercase tracking-widest font-bold">Powered by ReplySuite</span>
               </div>
             </div>
 
             <!-- Position indicator -->
-            <div class="mt-4 p-4 bg-white/[0.03] rounded-2xl border border-white/[0.06] space-y-4">
+            <div class="mt-4 p-4 bg-foreground/[0.02] rounded-2xl border border-foreground/5 space-y-4">
               <div class="flex items-center justify-between">
-                <p class="text-[9px] text-gray-600 uppercase tracking-widest font-black">Position</p>
+                <p class="text-[9px] text-foreground/50 uppercase tracking-widest font-black">Position</p>
                 <div class="flex items-center gap-1.5">
                   <div class="w-2 h-2 rounded-full" :style="{ backgroundColor: form.primary_color }" />
-                  <span class="text-[9px] text-white font-black uppercase tracking-wider">{{ form.widget_position }}</span>
+                  <span class="text-[9px] text-foreground font-black uppercase tracking-wider">{{ form.widget_position }}</span>
                 </div>
               </div>
 
               <div class="flex items-center justify-between">
-                <p class="text-[9px] text-gray-600 uppercase tracking-widest font-black">Launcher Preview</p>
+                <p class="text-[9px] text-foreground/50 uppercase tracking-widest font-black">Launcher Preview</p>
                 <div 
                   class="w-10 h-10 flex items-center justify-center shadow-lg transition-all duration-300"
                   :style="{ 
@@ -960,7 +960,7 @@ watch(activeTab, (newTab) => {
             
             <!-- Tool Selection -->
             <section class="glass-card">
-              <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-8">Agent Capabilities (Tools)</h3>
+              <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-8">Agent Capabilities (Tools)</h3>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div v-for="tool in [
                     { id: 'orders', name: 'Order Management', desc: 'Allow users to browse catalog and place orders.', icon: ShoppingBag, pro: true },
@@ -979,25 +979,25 @@ watch(activeTab, (newTab) => {
                 }"
                 :class="[
                     'p-5 rounded-2xl border transition-all group relative',
-                    (tool.pro && !isPremium) ? 'opacity-50 grayscale cursor-not-allowed border-white/5' : 'cursor-pointer',
-                    form.enabled_tools.includes(tool.id) ? 'bg-primary/10 border-primary/30' : 'bg-white/5 border-white/5 hover:border-white/10'
+                    (tool.pro && !isPremium) ? 'opacity-50 grayscale cursor-not-allowed border-foreground/5' : 'cursor-pointer',
+                    form.enabled_tools.includes(tool.id) ? 'bg-primary/10 border-primary/30' : 'bg-foreground/[0.02] border-foreground/5 hover:border-foreground/10'
                 ]">
                     <!-- Pro Badge -->
-                    <div v-if="tool.pro && !isPremium" class="absolute top-2 right-2 bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1">
+                    <div v-if="tool.pro && !isPremium" class="absolute top-2 right-2 bg-background/50 backdrop-blur-md px-2 py-0.5 rounded-full border border-foreground/10 flex items-center gap-1">
                         <Lock class="w-2.5 h-2.5 text-yellow-500" />
-                        <span class="text-[8px] font-bold text-white uppercase tracking-tighter">Pro Only</span>
+                        <span class="text-[8px] font-bold text-foreground uppercase tracking-tighter">Pro Only</span>
                     </div>
 
                     <div class="flex items-center gap-4">
                         <div :class="[
                             'p-3 rounded-xl transition-all',
-                            form.enabled_tools.includes(tool.id) ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'bg-white/5 text-gray-500 group-hover:text-white'
+                            form.enabled_tools.includes(tool.id) ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'bg-foreground/5 text-foreground/50 group-hover:text-foreground'
                         ]">
                             <component :is="tool.icon" class="w-5 h-5" />
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-white mb-1">{{ tool.name }}</p>
-                            <p class="text-[9px] text-gray-500 uppercase tracking-widest">{{ tool.desc }}</p>
+                            <p class="text-sm font-bold text-foreground mb-1">{{ tool.name }}</p>
+                            <p class="text-[9px] text-foreground/50 uppercase tracking-widest">{{ tool.desc }}</p>
                         </div>
                     </div>
                 </div>
@@ -1008,8 +1008,8 @@ watch(activeTab, (newTab) => {
             <section v-if="form.enabled_tools.includes('orders')" class="glass-card">
               <div class="flex items-center justify-between mb-8">
                 <div>
-                  <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-1">Product Catalog</h3>
-                  <p class="text-[9px] text-gray-600 uppercase tracking-wider">Inventory managed by this agent</p>
+                  <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-1">Product Catalog</h3>
+                  <p class="text-[9px] text-foreground/50 uppercase tracking-wider">Inventory managed by this agent</p>
                 </div>
                 <button 
                   @click="handleAddProduct"
@@ -1023,22 +1023,22 @@ watch(activeTab, (newTab) => {
               </div>
 
               <!-- Add Product Form -->
-              <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-10 p-6 rounded-2xl bg-white/[0.02] border border-white/5">
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-10 p-6 rounded-2xl bg-foreground/[0.01] border border-foreground/5">
                 <div class="sm:col-span-2">
-                    <label class="block text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-2">Product Name</label>
-                    <input v-model="newProduct.name" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary/50" placeholder="e.g. Classic Burger" />
+                    <label class="block text-[8px] font-bold text-foreground/50 uppercase tracking-widest mb-2">Product Name</label>
+                    <input v-model="newProduct.name" class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-foreground/50" placeholder="e.g. Classic Burger" />
                 </div>
                 <div>
-                    <label class="block text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-2">Price (RWF)</label>
-                    <input v-model.number="newProduct.price" type="number" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary/50" placeholder="5000" />
+                    <label class="block text-[8px] font-bold text-foreground/50 uppercase tracking-widest mb-2">Price (RWF)</label>
+                    <input v-model.number="newProduct.price" type="number" class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-foreground/50" placeholder="5000" />
                 </div>
                 <div>
-                    <label class="block text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-2">Category</label>
-                    <input v-model="newProduct.category" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary/50" placeholder="Food" />
+                    <label class="block text-[8px] font-bold text-foreground/50 uppercase tracking-widest mb-2">Category</label>
+                    <input v-model="newProduct.category" class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-foreground/50" placeholder="Food" />
                 </div>
                 <div class="sm:col-span-4">
-                    <label class="block text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-2">Brief Description</label>
-                    <input v-model="newProduct.description" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary/50" placeholder="A juicy beef burger with cheese..." />
+                    <label class="block text-[8px] font-bold text-foreground/50 uppercase tracking-widest mb-2">Brief Description</label>
+                    <input v-model="newProduct.description" class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-foreground/50" placeholder="A juicy beef burger with cheese..." />
                 </div>
               </div>
 
@@ -1046,27 +1046,27 @@ watch(activeTab, (newTab) => {
               <div v-if="isCatalogLoading" class="flex justify-center py-10">
                 <Loader2 class="w-6 h-6 text-primary animate-spin" />
               </div>
-              <div v-else-if="catalog.length === 0" class="text-center py-20 border-2 border-dashed border-white/5 rounded-[2rem]">
-                <ShoppingBag class="w-12 h-12 text-gray-800 mx-auto mb-4 opacity-20" />
-                <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em]">Empty Inventory</p>
+              <div v-else-if="catalog.length === 0" class="text-center py-20 border-2 border-dashed border-foreground/5 rounded-[2rem]">
+                <ShoppingBag class="w-12 h-12 text-foreground/10 mx-auto mb-4" />
+                <p class="text-[10px] text-foreground/50 uppercase tracking-[0.2em]">Empty Inventory</p>
               </div>
               <div v-else class="space-y-3">
-                <div v-for="product in catalog" :key="product.id" class="flex items-center justify-between p-5 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all group">
+                <div v-for="product in catalog" :key="product.id" class="flex items-center justify-between p-5 rounded-2xl bg-foreground/[0.01] border border-foreground/5 hover:border-foreground/10 transition-all group">
                     <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-500 font-black text-[10px]">
+                        <div class="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center text-foreground/50 font-black text-[10px]">
                             {{ product.category?.substring(0, 3).toUpperCase() || 'ITM' }}
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-white">{{ product.name }}</p>
-                            <p class="text-[9px] text-gray-500 uppercase tracking-widest mt-0.5">{{ product.description || 'No description' }}</p>
+                            <p class="text-sm font-bold text-foreground">{{ product.name }}</p>
+                            <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-0.5">{{ product.description || 'No description' }}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-6">
                         <div class="text-right">
-                            <p class="text-xs font-bold text-white">{{ product.price.toLocaleString() }} RWF</p>
+                            <p class="text-xs font-bold text-foreground">{{ product.price.toLocaleString() }} RWF</p>
                             <p class="text-[8px] text-primary uppercase font-bold tracking-tighter mt-0.5">Verified</p>
                         </div>
-                        <button @click="removeProduct(product.id)" class="p-2 text-gray-700 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                        <button @click="removeProduct(product.id)" class="p-2 text-foreground/50 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
                             <Trash2 class="w-4 h-4" />
                         </button>
                     </div>
@@ -1079,25 +1079,25 @@ watch(activeTab, (newTab) => {
             <!-- Paypack Configuration -->
             <section v-if="form.enabled_tools.includes('payments')" class="glass-card">
               <div class="flex items-center justify-between mb-8">
-                <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Paypack Setup</h3>
+                <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase">Paypack Setup</h3>
                 <CreditCard class="w-4 h-4 text-primary opacity-50" />
               </div>
               <div class="space-y-6">
                 <div>
-                  <label class="block text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-2">Application Client ID</label>
+                  <label class="block text-[8px] font-bold text-foreground/50 uppercase tracking-widest mb-2">Application Client ID</label>
                   <input 
                     v-model="form.tools_config.paypack_client_id" 
                     type="password"
-                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                    class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-foreground/50" 
                     placeholder="pp_..." 
                   />
                 </div>
                 <div>
-                  <label class="block text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-2">Application Client Secret</label>
+                  <label class="block text-[8px] font-bold text-foreground/50 uppercase tracking-widest mb-2">Application Client Secret</label>
                   <input 
                     v-model="form.tools_config.paypack_client_secret" 
                     type="password"
-                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                    class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-foreground/50" 
                     placeholder="••••••••••••" 
                   />
                 </div>
@@ -1111,21 +1111,21 @@ watch(activeTab, (newTab) => {
 
             <!-- Stats & Insights -->
             <section class="glass-card">
-                <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-8">Intelligence Overlook</h3>
+                <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-8">Intelligence Overlook</h3>
                 <div class="space-y-5">
-                    <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                    <div class="p-5 rounded-2xl bg-foreground/[0.01] border border-foreground/5 flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <ShoppingBag class="w-5 h-5 text-gray-600" />
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Active Inventory</p>
+                            <ShoppingBag class="w-5 h-5 text-foreground/50" />
+                            <p class="text-[10px] font-bold text-foreground/50 uppercase tracking-widest">Active Inventory</p>
                         </div>
-                        <p class="text-xl font-bold text-white">{{ catalog.length }}</p>
+                        <p class="text-xl font-bold text-foreground">{{ catalog.length }}</p>
                     </div>
-                    <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                    <div class="p-5 rounded-2xl bg-foreground/[0.01] border border-foreground/5 flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <Zap class="w-5 h-5 text-gray-600" />
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tools Enabled</p>
+                            <Zap class="w-5 h-5 text-foreground/50" />
+                            <p class="text-[10px] font-bold text-foreground/50 uppercase tracking-widest">Tools Enabled</p>
                         </div>
-                        <p class="text-xl font-bold text-white">{{ form.enabled_tools.length }}</p>
+                        <p class="text-xl font-bold text-foreground">{{ form.enabled_tools.length }}</p>
                     </div>
                 </div>
             </section>
@@ -1140,18 +1140,18 @@ watch(activeTab, (newTab) => {
             <Shield class="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h3 class="text-lg font-bold text-white tracking-tight uppercase">Domain Whitelisting</h3>
-            <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Prevent unauthorized websites from embedding your widget</p>
+            <h3 class="text-lg font-bold text-foreground tracking-tight uppercase">Domain Whitelisting</h3>
+            <p class="text-[10px] text-foreground/50 uppercase tracking-widest mt-1">Prevent unauthorized websites from embedding your widget</p>
           </div>
         </div>
 
         <div class="space-y-6">
-          <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4">
+          <div class="p-5 rounded-2xl bg-foreground/[0.01] border border-foreground/5 space-y-4">
             <div class="flex items-start gap-4">
               <Info class="w-4 h-4 text-primary shrink-0 mt-1" />
               <div class="space-y-1">
-                <p class="text-xs font-bold text-white uppercase tracking-tight">Security Protocol</p>
-                <p class="text-[10px] text-gray-500 leading-relaxed uppercase tracking-wider">
+                <p class="text-xs font-bold text-foreground uppercase tracking-tight">Security Protocol</p>
+                <p class="text-[10px] text-foreground/50 leading-relaxed uppercase tracking-wider">
                   If this list is empty, your widget can be embedded on any website. Once you add a domain, all other origins (except localhost) will be blocked.
                 </p>
               </div>
@@ -1159,19 +1159,19 @@ watch(activeTab, (newTab) => {
           </div>
 
           <div class="space-y-4">
-            <label class="block text-[10px] font-bold tracking-widest text-gray-600 uppercase">Authorized Origins</label>
+            <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase">Authorized Origins</label>
             
             <div class="space-y-3">
               <div 
                 v-for="(domain, index) in form.allowed_domains" 
                 :key="index"
-                class="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl group"
+                class="flex items-center gap-3 p-3 bg-foreground/5 border border-foreground/10 rounded-xl group"
               >
-                <Globe class="w-4 h-4 text-gray-500" />
-                <span class="flex-1 text-xs text-white">{{ domain }}</span>
+                <Globe class="w-4 h-4 text-foreground/50" />
+                <span class="flex-1 text-xs text-foreground">{{ domain }}</span>
                 <button 
                   @click="form.allowed_domains.splice(index, 1)"
-                  class="p-2 text-gray-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                  class="p-2 text-foreground/50 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                 >
                   <Trash2 class="w-4 h-4" />
                 </button>
@@ -1181,7 +1181,7 @@ watch(activeTab, (newTab) => {
                 <input 
                   type="text"
                   v-model="newDomainInput"
-                  class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors text-xs"
+                  class="flex-1 bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors text-xs placeholder:text-foreground/50"
                   placeholder="e.g. example.com"
                   @keypress.enter.prevent="() => {
                     if (newDomainInput) {
@@ -1197,7 +1197,7 @@ watch(activeTab, (newTab) => {
                       newDomainInput = ''
                     }
                   }"
-                  class="px-5 py-3 bg-white/5 border border-white/10 text-white rounded-xl font-bold text-[10px] tracking-widest uppercase hover:bg-white/10 transition-all"
+                  class="px-5 py-3 bg-foreground/5 border border-foreground/10 text-foreground rounded-xl font-bold text-[10px] tracking-widest uppercase hover:bg-foreground/10 transition-all"
                 >
                   Add Domain
                 </button>
@@ -1209,26 +1209,26 @@ watch(activeTab, (newTab) => {
 
       <!-- Advanced Options -->
       <section class="glass-card opacity-50 grayscale pointer-events-none">
-        <h3 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-6 flex items-center gap-2">
+        <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-6 flex items-center gap-2">
           Advanced Security <span class="bg-primary/20 text-primary px-2 py-0.5 rounded text-[8px]">PRO</span>
         </h3>
         <div class="space-y-4">
-          <div class="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5">
+          <div class="flex items-center justify-between p-4 rounded-xl bg-foreground/[0.01] border border-foreground/5">
             <div>
-              <p class="text-xs font-bold text-white">Rate Limiting</p>
-              <p class="text-[9px] text-gray-600 uppercase tracking-widest">Limit requests per session</p>
+              <p class="text-xs font-bold text-foreground">Rate Limiting</p>
+              <p class="text-[9px] text-foreground/50 uppercase tracking-widest">Limit requests per session</p>
             </div>
-            <div class="w-10 h-5 bg-gray-800 rounded-full relative p-1">
-              <div class="w-3 h-3 bg-white/20 rounded-full" />
+            <div class="w-10 h-5 bg-foreground/10 rounded-full relative p-1">
+              <div class="w-3 h-3 bg-foreground/20 rounded-full" />
             </div>
           </div>
-          <div class="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5">
+          <div class="flex items-center justify-between p-4 rounded-xl bg-foreground/[0.01] border border-foreground/5">
             <div>
-              <p class="text-xs font-bold text-white">Data Anonymization</p>
-              <p class="text-[9px] text-gray-600 uppercase tracking-widest">Strip PII from chat history</p>
+              <p class="text-xs font-bold text-foreground">Data Anonymization</p>
+              <p class="text-[9px] text-foreground/50 uppercase tracking-widest">Strip PII from chat history</p>
             </div>
-            <div class="w-10 h-5 bg-gray-800 rounded-full relative p-1">
-              <div class="w-3 h-3 bg-white/20 rounded-full" />
+            <div class="w-10 h-5 bg-foreground/10 rounded-full relative p-1">
+              <div class="w-3 h-3 bg-foreground/20 rounded-full" />
             </div>
           </div>
         </div>
@@ -1240,6 +1240,6 @@ watch(activeTab, (newTab) => {
 
 <style scoped>
 .glass-card {
-  @apply bg-[#111111]/40 backdrop-blur-xl border border-white/5 p-8 rounded-[2rem];
+  @apply bg-foreground/[0.02] backdrop-blur-xl border border-foreground/5 p-8 rounded-[2rem];
 }
 </style>

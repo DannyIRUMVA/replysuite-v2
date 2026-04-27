@@ -5,21 +5,21 @@ export default <Partial<Config>>{
     extend: {
       colors: {
         primary: {
-          DEFAULT: 'var(--primary)',
-          accent: 'var(--primary-accent)',
+          DEFAULT: 'rgb(var(--primary) / <alpha-value>)',
+          accent: 'rgb(var(--primary-accent) / <alpha-value>)',
         },
         background: {
-          DEFAULT: 'var(--background)',
-          card: 'var(--background-card)',
-          accent: 'var(--background-accent)',
+          DEFAULT: 'rgb(var(--background) / <alpha-value>)',
+          card: 'rgb(var(--background-card) / <alpha-value>)',
+          accent: 'rgb(var(--background-accent) / <alpha-value>)',
         },
         surface: {
           DEFAULT: 'rgb(var(--surface) / <alpha-value>)',
           border: 'rgb(var(--surface-border) / <alpha-value>)',
         },
         foreground: {
-          DEFAULT: 'var(--text-base)',
-          muted: 'var(--text-muted)'
+          DEFAULT: 'rgb(var(--text-base) / <alpha-value>)',
+          muted: 'rgb(var(--text-muted) / <alpha-value>)'
         }
       },
       fontFamily: {

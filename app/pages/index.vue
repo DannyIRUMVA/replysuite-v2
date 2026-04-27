@@ -147,84 +147,84 @@ const notify = useNotify()
 const isProcessing = ref<string | null>(null)
 
 const plans = [
-  {
-    name: 'Free',
-    id: 'starter',
-    price: '0.00',
-    desc: 'Experience the gold standard risk-free.',
-    features: ['1 website chatbot', '100 AI replies / mo', '10 training sessions', 'Trainable AI agent', 'Email support'],
-    popular: false
-  },
-  {
-    name: 'Silver',
-    id: 'silver',
-    productId: 'dc070937-6444-40a6-8a02-fd8b25df7aae',
-    price: '17.88',
-    desc: 'The best value for growing elite brands.',
-    features: ['3 website chatbots', '4,000 AI replies / mo', '30 training sessions', 'Advanced bot training', 'Priority support'],
-    popular: true
-  },
-  {
-    name: 'Gold',
-    id: 'gold',
-    productId: 'd0493f6f-16bc-4d3c-97bb-7be920840f12',
-    price: '26.88',
-    desc: 'Elite power for high-volume experts.',
-    features: ['5 website chatbots', '10,000 AI replies / mo', '100 training sessions', 'WhatsApp integration', 'Dedicated manager'],
-    popular: false
-  }
+   {
+      name: 'Free',
+      id: 'starter',
+      price: '0.00',
+      desc: 'Experience the gold standard risk-free.',
+      features: ['1 website chatbot', '100 AI replies / mo', '10 training sessions', 'Trainable AI agent', 'Email support'],
+      popular: false
+   },
+   {
+      name: 'Silver',
+      id: 'silver',
+      productId: 'dc070937-6444-40a6-8a02-fd8b25df7aae',
+      price: '17.88',
+      desc: 'The best value for growing elite brands.',
+      features: ['3 website chatbots', '4,000 AI replies / mo', '30 training sessions', 'Advanced bot training', 'Priority support'],
+      popular: true
+   },
+   {
+      name: 'Gold',
+      id: 'gold',
+      productId: 'd0493f6f-16bc-4d3c-97bb-7be920840f12',
+      price: '26.88',
+      desc: 'Elite power for high-volume experts.',
+      features: ['5 website chatbots', '10,000 AI replies / mo', '100 training sessions', 'WhatsApp integration', 'Dedicated manager'],
+      popular: false
+   }
 ]
 
 onMounted(() => {
-  if (window.PolarEmbedCheckout) {
-    window.PolarEmbedCheckout.init()
-  }
+   if (window.PolarEmbedCheckout) {
+      window.PolarEmbedCheckout.init()
+   }
 
-  // Listen for successful checkout
-  window.addEventListener("polar:checkout:confirmed", async (event) => {
-    console.log("[Index] Checkout confirmed:", event)
-    notify.success('Payment successful! Redirecting to your dashboard...')
-    await syncWithPolar()
-    setTimeout(() => {
-      navigateTo('/dashboard/analytics')
-    }, 1500)
-  })
+   // Listen for successful checkout
+   window.addEventListener("polar:checkout:confirmed", async (event) => {
+      console.log("[Index] Checkout confirmed:", event)
+      notify.success('Payment successful! Redirecting to your dashboard...')
+      await syncWithPolar()
+      setTimeout(() => {
+         navigateTo('/dashboard/analytics')
+      }, 1500)
+   })
 })
 
 const handleSelect = async (plan: any) => {
-  if (!isAuthenticated.value) {
-    return navigateTo(`/register?plan=${plan.id}`)
-  }
+   if (!isAuthenticated.value) {
+      return navigateTo(`/register?plan=${plan.id}`)
+   }
 
-  isProcessing.value = plan.id
-  
-  try {
-    if (plan.id === 'starter') {
-      const res = await $fetch('/api/billing/onboard-free', { method: 'POST' })
-      if (res.success) {
-        await refreshAuth()
-        return navigateTo('/dashboard/analytics')
-      }
-    } else {
-      const res = await $fetch('/api/billing/checkout', {
-        method: 'POST',
-        body: { productId: plan.productId }
-      })
+   isProcessing.value = plan.id
 
-      if (res.url) {
-        if (window.PolarEmbedCheckout) {
-          window.PolarEmbedCheckout.open(res.url)
-        } else {
-          window.location.href = res.url
-        }
+   try {
+      if (plan.id === 'starter') {
+         const res = await $fetch('/api/billing/onboard-free', { method: 'POST' })
+         if (res.success) {
+            await refreshAuth()
+            return navigateTo('/dashboard/analytics')
+         }
+      } else {
+         const res = await $fetch('/api/billing/checkout', {
+            method: 'POST',
+            body: { productId: plan.productId }
+         })
+
+         if (res.url) {
+            if (window.PolarEmbedCheckout) {
+               window.PolarEmbedCheckout.open(res.url)
+            } else {
+               window.location.href = res.url
+            }
+         }
       }
-    }
-  } catch (err: any) {
-    console.error('[Index Pricing] Action failed:', err)
-    notify.error('Failed to process request. Please try again.')
-  } finally {
-    isProcessing.value = null
-  }
+   } catch (err: any) {
+      console.error('[Index Pricing] Action failed:', err)
+      notify.error('Failed to process request. Please try again.')
+   } finally {
+      isProcessing.value = null
+   }
 }
 </script>
 
@@ -237,14 +237,14 @@ const handleSelect = async (plan: any) => {
          <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
             <div>
                <div class="badge-gradient mb-8 flex items-center gap-2">
-                  <Zap class="w-3 h-3 fill-current" />
+                  <Zap class="w-1 h-3 fill-current" />
                   Enterprise Ready
                </div>
-               <h1 class="text-6xl md:text-8xl font-extrabold mb-8 leading-[0.9] tracking-tight text-white">
+               <h1 class="text-6xl md:text-6xl font-extrabold mb-8 leading-[0.9] tracking-tight text-foreground">
                   The Infrastructure <br />
                   of <span class="text-gradient">AI Conversation.</span>
                </h1>
-               <p class="text-xl text-gray-500 mb-12 max-w-lg leading-relaxed font-medium">
+               <p class="text-xl text-foreground/50 mb-12 max-w-lg leading-relaxed font-medium">
                   ReplySuite is the premium automation layer for 2026 digital-native brands.
                   Train your unique AI workforce on brand data and deploy anywhere in minutes.
                </p>
@@ -256,7 +256,7 @@ const handleSelect = async (plan: any) => {
                      <ArrowRight class="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </NuxtLink>
                   <button
-                     class="px-10 py-5 rounded-full border border-white/10 hover:bg-white/5 transition-all text-lg font-bold flex items-center justify-center gap-3">
+                     class="px-10 py-5 rounded-full border border-foreground/10 hover:bg-foreground/5 transition-all text-lg font-bold flex items-center justify-center gap-3">
                      <Play class="w-5 h-5 fill-current" />
                      How it works
                   </button>
@@ -266,20 +266,20 @@ const handleSelect = async (plan: any) => {
                <div
                   class="mt-20 flex items-center gap-8 opacity-40 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-700">
                   <div v-for="logo in trustedLogos" :key="logo.name" class="flex items-center gap-2">
-                     <component :is="logo.icon" class="w-5 h-5 text-white" />
-                     <span class="text-sm font-bold tracking-tight">{{ logo.name }}</span>
+                     <component :is="logo.icon" class="w-5 h-5 text-foreground" />
+                     <span class="text-sm font-bold tracking-tight text-foreground/50">{{ logo.name }}</span>
                   </div>
                </div>
             </div>
 
             <!-- Visual Asset: Chat Simulation -->
-            <div class="relative perspective-1000 hidden lg:block">
+            <div class="relative perspective-1000 hidden lg:block :ml-28">
                <div
-                  class="glass-card p-2 border-white/10 rotate-y-[-10deg] rotate-x-[5deg] shadow-2xl skew-x-[-1deg] hover:rotate-0 transition-all duration-1000">
+                  class="glass-card p-2 border-foreground/10 rotate-y-[-10deg] rotate-x-[5deg] shadow-2xl skew-x-[-1deg] hover:rotate-0 transition-all duration-1000">
                   <div
-                     class="bg-black/40 rounded-3xl overflow-hidden aspect-[4/5] relative border border-white/5 backdrop-blur-md">
+                     class="bg-background/40 rounded-3xl overflow-hidden aspect-[4/5] relative border border-foreground/5 backdrop-blur-md">
                      <!-- Fake IG Header -->
-                     <div class="p-6 border-b border-white/5 flex items-center justify-between bg-black/20">
+                     <div class="p-6 border-b border-foreground/5 flex items-center justify-between bg-background/20">
                         <div class="flex items-center gap-3">
                            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-primary-accent p-0.5">
                               <div class="w-full h-full rounded-full bg-background flex items-center justify-center">
@@ -291,7 +291,7 @@ const handleSelect = async (plan: any) => {
                               <div class="text-[10px] text-green-500 font-medium animate-pulse">Active now</div>
                            </div>
                         </div>
-                        <Settings class="w-5 h-5 text-white/40" />
+                        <Settings class="w-5 h-5 text-foreground/50" />
                      </div>
 
                      <!-- Chat Messages -->
@@ -301,8 +301,8 @@ const handleSelect = async (plan: any) => {
                            <div :class="[
                               'p-4 rounded-2xl text-sm transition-all animate-in fade-in slide-in-from-bottom-2',
                               msg.role === 'user'
-                                 ? 'bg-white/5 border border-white/5 rounded-tl-none max-w-[80%]'
-                                 : 'bg-primary/10 border border-primary/20 rounded-tr-none max-w-[80%] text-white'
+                                 ? 'bg-foreground/5 border border-foreground/5 rounded-tl-none max-w-[80%] text-foreground'
+                                 : 'bg-primary/10 border border-primary/20 rounded-tr-none max-w-[80%] text-foreground'
                            ]">
                               {{ msg.content }}
                            </div>
@@ -323,7 +323,7 @@ const handleSelect = async (plan: any) => {
                      <form @submit.prevent="sendDemoMessage"
                         class="absolute bottom-6 left-6 right-6 flex gap-2 font-bold tracking-tight">
                         <input v-model="chatInput" placeholder="Ask me anything..."
-                           class="flex-grow bg-white/5 rounded-full px-6 py-3 border border-white/5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-primary/50 transition-all font-medium" />
+                           class="flex-grow bg-foreground/5 rounded-full px-6 py-3 border border-foreground/5 text-sm text-foreground placeholder:text-foreground/50 focus:outline-none focus:border-primary/50 transition-all font-medium" />
                         <button type="submit" :disabled="!chatInput.trim() || isChatLoading"
                            class="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 text-black hover:scale-105 active:scale-95 transition-all disabled:opacity-30 disabled:grayscale">
                            <ArrowRight class="w-6 h-6" />
@@ -335,27 +335,27 @@ const handleSelect = async (plan: any) => {
                <!-- Floating Badges -->
                <div class="absolute -top-10 -right-10 glass-card p-6 border-primary/20 animate-float backdrop-blur-xl">
                   <Bot class="text-primary w-8 h-8 mb-2" />
-                  <div class="text-[10px] font-bold tracking-widest uppercase text-white/80">AI Trained</div>
+                  <div class="text-[10px] font-bold tracking-widest uppercase text-foreground/80">AI Trained</div>
                </div>
                <div
                   class="absolute -top-10 -left-10 glass-card p-6 border-primary/20 animate-float-delayed backdrop-blur-xl">
                   <CheckCircle2 class="text-primary w-8 h-8 mb-2" />
-                  <div class="text-[10px] font-bold tracking-widest uppercase text-white/80">Verified Human</div>
+                  <div class="text-[10px] font-bold tracking-widest uppercase text-foreground/80">Verified Human</div>
                </div>
             </div>
          </div>
       </div>
 
       <!-- Features Section -->
-      <section id="features" class="max-w-7xl mx-auto px-6 py-32 border-t border-white/5">
+      <section id="features" class="max-w-7xl mx-auto px-6 py-32 border-t border-foreground/5">
          <div class="flex flex-col md:flex-row justify-between items-end mb-24 gap-8">
             <div class="max-w-2xl">
                <span class="badge-gradient mb-6">Features</span>
-               <h2 class="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none text-white">
+               <h2 class="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none text-foreground">
                   Automation for <br /> the <span class="text-gradient">Elite.</span>
                </h2>
             </div>
-            <p class="text-gray-500 max-w-sm text-right font-medium">
+            <p class="text-foreground/50 max-w-sm text-right font-medium">
                We've refined every interaction to feel premium. No bot-like responses, only sophisticated AI
                conversations.
             </p>
@@ -363,14 +363,14 @@ const handleSelect = async (plan: any) => {
 
          <div class="grid md:grid-cols-3 gap-8">
             <div v-for="feat in marketingFeatures" :key="feat.title"
-               class="glass-card p-10 border-white/5 group hover:border-primary/20 transition-all duration-500">
+               class="glass-card p-10 border-foreground/5 group hover:border-primary/20 transition-all duration-500">
                <div
-                  class="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-primary/10 transition-all">
+                  class="w-16 h-16 rounded-2xl bg-foreground/5 flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-primary/10 transition-all">
                   <component :is="feat.icon" class="text-primary w-8 h-8" />
                </div>
                <h3 class="text-2xl font-bold mb-4 tracking-tight">{{ feat.title }}</h3>
-               <p class="text-gray-500 text-sm leading-relaxed mb-8">{{ feat.desc }}</p>
-               <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+               <p class="text-foreground/50 text-sm leading-relaxed mb-8">{{ feat.desc }}</p>
+               <div class="w-full h-1 bg-foreground/5 rounded-full overflow-hidden">
                   <div class="h-full bg-primary w-0 group-hover:w-full transition-all duration-1000 ease-in-out"></div>
                </div>
             </div>
@@ -378,58 +378,68 @@ const handleSelect = async (plan: any) => {
       </section>
 
       <!-- Global Reach -->
-      <section class="max-w-7xl mx-auto px-6 py-40 border-t border-white/5 relative">
+      <section class="max-w-7xl mx-auto px-6 py-40 border-t border-foreground/5 relative">
          <div class="grid lg:grid-cols-2 gap-20 items-center">
             <div>
                <span class="badge-gradient mb-8 uppercase tracking-[0.2em] text-[10px]">Global Expansion</span>
-               <h2 class="text-5xl md:text-7xl font-extrabold mb-10 tracking-tighter leading-tight text-white">
+               <h2 class="text-5xl md:text-7xl font-extrabold mb-10 tracking-tighter leading-tight text-foreground">
                   Beyond <br />
                   <span class="text-gradient leading-none">Borders.</span>
                </h2>
-               <p class="text-lg text-gray-400 leading-relaxed font-medium mb-12">
-                  While the U.S. remains our high-ticket anchor, ReplySuite is architected for global volume. We are the default infrastructure for the <strong>India-Brazil-Indonesia</strong> corridor, where WhatsApp is the operating system of daily commerce.
+               <p class="text-lg text-foreground/50 leading-relaxed font-medium mb-12">
+                  While the U.S. remains our high-ticket anchor, ReplySuite is architected for global volume. We are the
+                  default infrastructure for the <strong>India-Brazil-Indonesia</strong> corridor, where WhatsApp is the
+                  operating system of daily commerce.
                </p>
                <div class="space-y-6">
                   <div v-for="market in [
-                    { name: 'India', stat: '532M+ Users', desc: 'Conversational Commerce Hub' },
-                    { name: 'Brazil', stat: '98% Adoption', desc: 'Real Estate & Hospitality Focus' },
-                    { name: 'Indonesia', stat: '94M+ Users', desc: 'Social Commerce Standard' }
-                  ]" :key="market.name" class="flex items-center gap-6 p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-primary/20 transition-all">
-                     <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary text-xs uppercase tracking-widest">
+                     { name: 'India', stat: '532M+ Users', desc: 'Conversational Commerce Hub' },
+                     { name: 'Brazil', stat: '98% Adoption', desc: 'Real Estate & Hospitality Focus' },
+                     { name: 'Indonesia', stat: '94M+ Users', desc: 'Social Commerce Standard' }
+                  ]" :key="market.name"
+                     class="flex items-center gap-6 p-6 rounded-3xl bg-foreground/[0.02] border border-foreground/5 group hover:border-primary/20 transition-all">
+                     <div
+                        class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary text-xs uppercase tracking-widest">
                         {{ market.name.substring(0, 2) }}
                      </div>
                      <div>
-                        <div class="text-white font-bold tracking-tight">{{ market.name }} — {{ market.stat }}</div>
-                        <div class="text-xs text-gray-500 font-medium">{{ market.desc }}</div>
+                        <div class="text-foreground font-bold tracking-tight">{{ market.name }} — {{ market.stat }}
+                        </div>
+                        <div class="text-xs text-foreground/50 font-medium">{{ market.desc }}</div>
                      </div>
                   </div>
                </div>
             </div>
             <div class="relative">
-               <div class="glass-card p-10 border-white/5 relative overflow-hidden group">
+               <div class="glass-card p-10 border-foreground/5 relative overflow-hidden group">
                   <div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   <div class="flex items-center gap-4 mb-6">
-                    <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-lg">🇺🇸</div>
-                    <h4 class="text-lg font-bold text-white tracking-tight uppercase">North America</h4>
+                     <div
+                        class="w-10 h-10 rounded-xl bg-foreground/5 border border-foreground/10 flex items-center justify-center text-lg">
+                        🇺🇸</div>
+                     <h4 class="text-lg font-bold text-foreground tracking-tight uppercase">North America</h4>
                   </div>
-                  <p class="text-gray-500 text-sm leading-relaxed font-medium mb-6">
-                    High-performance infrastructure aligned with **SOC 2 Type II** and **CCPA/CPRA** standards for enterprise U.S. clients.
+                  <p class="text-foreground/50 text-sm leading-relaxed font-medium mb-6">
+                     High-performance infrastructure aligned with **SOC 2 Type II** and **CCPA/CPRA** standards for
+                     enterprise U.S. clients.
                   </p>
                   <div class="flex items-center gap-2 text-[10px] font-bold text-primary tracking-widest uppercase">
-                    <CheckCircle2 class="w-3 h-3" />
-                    Enterprise Ready
+                     <CheckCircle2 class="w-3 h-3" />
+                     Enterprise Ready
                   </div>
                </div>
                <div class="absolute inset-0 bg-primary/10 blur-[100px] rounded-full"></div>
-               <div class="glass-card p-12 relative z-10 border-primary/20">
+               <div class="glass-card p-12 relative z-10 border-primary/20 mt-4">
                   <div class="flex items-center gap-4 mb-8">
                      <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
                         <Globe2 class="w-5 h-5" />
                      </div>
-                     <h3 class="text-xl font-bold text-white tracking-tight">The Kigali Advantage</h3>
+                     <h3 class="text-xl font-bold text-foreground tracking-tight">The Kigali Advantage</h3>
                   </div>
-                  <p class="text-gray-400 font-medium mb-8 leading-relaxed">
-                     Operating from the heart of Kigali, we are uniquely positioned to bridge the gap between global AI standards and local African context. Our <strong>Kinyarwanda-native models</strong> provide a moat that international competitors cannot easily match.
+                  <p class="text-foreground/50 font-medium mb-8 leading-relaxed">
+                     Operating from the heart of Kigali, we are uniquely positioned to bridge the gap between global AI
+                     standards and local African context. Our <strong>Kinyarwanda-native models</strong> provide a moat
+                     that international competitors cannot easily match.
                   </p>
                   <div class="flex items-center gap-2 text-primary font-bold uppercase tracking-[0.2em] text-[10px]">
                      Scale your brand in Africa
@@ -441,77 +451,76 @@ const handleSelect = async (plan: any) => {
       </section>
 
       <!-- Multi-Channel Roadmap Section -->
-      <section class="max-w-7xl mx-auto px-6 py-32 border-t border-white/5 relative overflow-hidden">
+      <section class="max-w-7xl mx-auto px-6 py-32 border-t border-foreground/5 relative overflow-hidden">
          <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10 translate-y-1/2"></div>
 
          <div class="text-center mb-20">
             <span class="badge-gradient mb-6">Roadmap</span>
-            <h2 class="text-5xl md:text-7xl font-extrabold tracking-tighter text-white">
+            <h2 class="text-5xl md:text-7xl font-extrabold tracking-tighter text-foreground">
                The future is <span class="text-gradient">Limitless.</span>
             </h2>
          </div>
 
          <div class="grid grid-cols-2 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div v-for="channel in channelFeatures" :key="channel.name"
-               class="glass-card p-8 border-white/5 text-center group hover:border-primary/20 transition-all">
+               class="glass-card p-8 border-foreground/5 text-center group hover:border-primary/20 transition-all">
                <div
-                  class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/10">
+                  class="w-12 h-12 rounded-2xl bg-foreground/5 flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/10">
                   <component :is="channel.icon" class="w-6 h-6 text-primary" />
                </div>
-               <div class="text-sm font-bold tracking-tight mb-2 text-white">{{ channel.title }}</div>
-               <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">Active Infrastructure</div>
+               <div class="text-sm font-bold tracking-tight mb-2 text-foreground">{{ channel.title }}</div>
+               <div class="text-[10px] font-semibold text-foreground/50 uppercase tracking-widest">Active Infrastructure
+               </div>
             </div>
          </div>
       </section>
 
       <!-- Pricing Section -->
-      <section id="pricing" class="max-w-7xl mx-auto px-6 py-32 border-t border-white/5">
+      <section id="pricing" class="max-w-7xl mx-auto px-6 py-32 border-t border-foreground/5">
          <div class="text-center mb-24">
             <span class="badge-gradient mb-6">Investment</span>
-            <h2 class="text-5xl md:text-7xl font-extrabold tracking-tighter text-white">
+            <h2 class="text-5xl md:text-7xl font-extrabold tracking-tighter text-foreground">
                Choose your <span class="text-gradient">Empire Class.</span>
             </h2>
-            <p class="text-gray-500 mt-6 max-w-xl mx-auto font-medium">Choose the perfect plan for your brand growth. From startups to high-volume global brands.</p>
+            <p class="text-foreground/50 mt-6 max-w-xl mx-auto font-medium">Choose the perfect plan for your brand
+               growth. From startups to high-volume global brands.</p>
          </div>
 
          <div class="grid lg:grid-cols-3 gap-8">
-            <div 
-               v-for="plan in plans" 
-               :key="plan.name"
-               class="glass-card p-10 flex flex-col relative transition-all duration-500 hover:-translate-y-4 border-white/5"
-               :class="plan.popular ? 'border-primary/40 !bg-primary/[0.03]' : ''"
-            >
-               <div v-if="plan.popular" class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-black text-[10px] font-bold tracking-widest rounded-full uppercase">
+            <div v-for="plan in plans" :key="plan.name"
+               class="glass-card p-10 flex flex-col relative transition-all duration-500 hover:-translate-y-4 border-foreground/5"
+               :class="plan.popular ? 'border-primary/40 !bg-primary/[0.03]' : ''">
+               <div v-if="plan.popular"
+                  class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-black text-[10px] font-bold tracking-widest rounded-full uppercase">
                   Elite Choice
                </div>
 
                <div class="mb-8">
                   <h3 class="text-2xl font-bold mb-2 tracking-tight">{{ plan.name }}</h3>
-                  <p class="text-xs text-gray-500 font-medium">{{ plan.desc }}</p>
+                  <p class="text-xs text-foreground/50 font-medium">{{ plan.desc }}</p>
                </div>
 
                <div class="mb-10 flex items-baseline gap-2">
-                  <span class="text-5xl font-extrabold tracking-tighter text-white">${{ plan.price }}</span>
-                  <span class="text-gray-500 font-bold tracking-widest text-[10px] uppercase">/mo</span>
+                  <span class="text-5xl font-extrabold tracking-tighter text-foreground">${{ plan.price }}</span>
+                  <span class="text-foreground/50 font-bold tracking-widest text-[10px] uppercase">/mo</span>
                </div>
 
-               <button 
-                  @click="handleSelect(plan)"
-                  :disabled="isProcessing === plan.id"
+               <button @click="handleSelect(plan)" :disabled="isProcessing === plan.id"
                   class="w-full py-5 rounded-full font-bold text-center mb-10 transition-all tracking-widest text-xs flex items-center justify-center gap-2"
-                  :class="plan.popular ? 'btn-gradient' : 'bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20'"
-               >
+                  :class="plan.popular ? 'btn-gradient' : 'bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10 hover:border-foreground/20'">
                   <template v-if="isProcessing === plan.id">
                      <Loader2 class="w-4 h-4 animate-spin" />
                      Processing...
                   </template>
                   <template v-else>
-                     {{ isAuthenticated ? (plan.id === 'starter' ? 'Activate Free' : 'Select Plan') : (plan.id === 'gold' ? 'Get Started' : 'Start Free Month') }}
+                     {{ isAuthenticated ? (plan.id === 'starter' ? 'Activate Free' : 'Select Plan') : (plan.id ===
+                        'gold' ? 'Get Started' : 'Start Free Month') }}
                   </template>
                </button>
 
                <div class="space-y-4 flex-grow">
-                  <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-3 text-xs font-medium text-gray-400">
+                  <div v-for="feat in plan.features" :key="feat"
+                     class="flex items-center gap-3 text-xs font-medium text-foreground/50">
                      <div class="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Check class="w-2.5 h-2.5 text-primary" />
                      </div>
@@ -525,20 +534,20 @@ const handleSelect = async (plan: any) => {
       <!-- Final CTA Section -->
       <section class="max-w-5xl mx-auto px-6 py-32">
          <div
-            class="bg-white/5 p-20 rounded-[40px] border border-white/5 text-center relative overflow-hidden backdrop-blur-sm">
+            class="bg-foreground/[0.03] p-20 rounded-[40px] border border-foreground/5 text-center relative overflow-hidden backdrop-blur-sm">
             <div class="absolute inset-0 bg-primary/5 blur-[120px]"></div>
 
-            <h2 class="text-5xl md:text-7xl font-extrabold mb-12 relative z-10 leading-tight text-white">
+            <h2 class="text-5xl md:text-7xl font-extrabold mb-12 relative z-10 leading-tight text-foreground">
                Ready to build your <br />
-               <span class="text-gray-400">AI Workforce?</span>
+               <span class="text-foreground/50">AI Workforce?</span>
             </h2>
 
             <NuxtLink to="/register"
-               class="bg-white text-black px-12 py-6 rounded-full font-bold text-xl inline-flex items-center gap-3 relative z-10 hover:bg-gray-200 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-white/10">
+               class="bg-foreground text-background px-12 py-6 rounded-full font-bold text-xl inline-flex items-center gap-3 relative z-10 hover:bg-foreground/90 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-foreground/10">
                Get Started Free
             </NuxtLink>
 
-            <p class="text-gray-500 mt-12 text-xs relative z-10 tracking-[0.2em] font-bold uppercase">
+            <p class="text-foreground/50 mt-12 text-xs relative z-10 tracking-[0.2em] font-bold uppercase">
                No credit card required • 30-day free month • Cancel anytime
             </p>
          </div>

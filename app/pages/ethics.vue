@@ -41,10 +41,10 @@ const principles = [
       <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10"></div>
       <div class="text-center max-w-3xl mx-auto mb-20">
         <span class="badge-gradient mb-10">Our Commitment</span>
-        <h1 class="text-6xl md:text-8xl font-extrabold mb-8 tracking-tighter leading-[0.85] text-white">
+        <h1 class="text-6xl md:text-8xl font-extrabold mb-8 tracking-tighter leading-[0.85] text-foreground">
           AI <span class="text-gradient">Ethics.</span>
         </h1>
-        <p class="text-xl text-gray-400 font-medium leading-relaxed">
+        <p class="text-xl text-foreground/40 font-medium leading-relaxed">
           Building the gold standard in automation requires more than code—it requires a foundation of trust and responsibility.
         </p>
       </div>
@@ -53,19 +53,19 @@ const principles = [
     <!-- Content -->
     <div class="max-w-7xl mx-auto px-6 py-20">
       <div class="grid md:grid-cols-2 gap-8 mb-32">
-        <div v-for="p in principles" :key="p.title" class="glass-card p-12 border-white/5 hover:border-primary/20 transition-all group">
+        <div v-for="p in principles" :key="p.title" class="glass-card p-12 border-foreground/10 hover:border-primary/20 transition-all group">
           <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
             <component :is="p.icon" class="w-6 h-6 text-primary" />
           </div>
-          <h3 class="text-2xl font-bold text-white mb-4 tracking-tight">{{ p.title }}</h3>
-          <p class="text-gray-400 leading-relaxed font-medium">{{ p.desc }}</p>
+          <h3 class="text-2xl font-bold text-foreground mb-4 tracking-tight">{{ p.title }}</h3>
+          <p class="text-foreground/40 leading-relaxed font-medium">{{ p.desc }}</p>
         </div>
       </div>
 
       <!-- Detailed Statement -->
-      <main class="max-w-4xl mx-auto prose prose-invert prose-primary prose-lg">
+      <main class="max-w-4xl mx-auto prose dark:prose-invert prose-primary prose-lg text-foreground">
         <section class="mb-24">
-          <h2 class="text-3xl font-bold text-white mb-8 tracking-tight flex items-center gap-4">
+          <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight flex items-center gap-4">
             <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
               <Zap class="w-5 h-5 fill-current" />
             </div>
@@ -80,7 +80,7 @@ const principles = [
         </section>
 
         <section class="mb-24">
-          <h2 class="text-3xl font-bold text-white mb-8 tracking-tight flex items-center gap-4">
+          <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight flex items-center gap-4">
             <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
               <ShieldCheck class="w-5 h-5" />
             </div>
@@ -91,7 +91,7 @@ const principles = [
               <Info class="w-3 h-3" />
               The Zero-Training Guarantee
             </h4>
-            <p class="text-white font-medium mb-0 leading-relaxed">
+            <p class="text-foreground font-medium mb-0 leading-relaxed">
               We guarantee that any data you upload to train your ReplySuite agent is used <strong>exclusively</strong> for your specific chatbot. We never contribute your proprietary data to train global or multi-tenant models.
             </p>
           </div>
@@ -101,7 +101,7 @@ const principles = [
         </section>
 
         <section class="mb-24">
-          <h2 class="text-3xl font-bold text-white mb-8 tracking-tight flex items-center gap-4">
+          <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight flex items-center gap-4">
             <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
               <Scale class="w-5 h-5" />
             </div>
@@ -110,21 +110,21 @@ const principles = [
           <p>
             Automation should never be deceptive. In alignment with the <strong>2026 EU AI Act</strong>, the <strong>California B.O.T. Act</strong>, and global transparency standards, ReplySuite provides built-in tools for mandatory AI disclosure. 
           </p>
-          <div class="bg-white/[0.03] border border-white/10 p-8 rounded-[32px] my-10">
-             <h4 class="text-white font-bold mb-4 flex items-center gap-2">
+          <div class="bg-foreground/[0.03] border border-foreground/10 p-8 rounded-[32px] my-10">
+             <h4 class="text-foreground font-bold mb-4 flex items-center gap-2">
                 <CheckCircle2 class="w-4 h-4 text-primary" />
                 Mandatory AI Labeling
              </h4>
-             <p class="text-gray-400 text-sm mb-0">
+             <p class="text-foreground/40 text-sm mb-0">
                 Whether it is a legal requirement in the EU, California, or Brazil, all AI-generated text must be identifiable. Our platform includes an "AI Disclosure Toggle" that automatically appends transparency metadata or visible labels to bot responses, ensuring your brand stays compliant across all jurisdictions.
              </p>
           </div>
         </section>
 
         <!-- CTA -->
-        <div class="mt-40 p-16 rounded-[48px] bg-white/[0.02] border border-white/5 text-center">
-          <h3 class="text-3xl font-bold text-white mb-6 tracking-tight">Have questions about our AI posture?</h3>
-          <p class="text-gray-400 mb-10 font-medium">Our security and ethics team is available for deep-dive consultations.</p>
+        <div class="mt-40 p-16 rounded-[48px] bg-foreground/[0.02] border border-foreground/10 text-center">
+          <h3 class="text-3xl font-bold text-foreground mb-6 tracking-tight">Have questions about our AI posture?</h3>
+          <p class="text-foreground/40 mb-10 font-medium">Our security and ethics team is available for deep-dive consultations.</p>
           <a href="mailto:security@replysuite.app" class="btn-gradient px-10 py-5 inline-flex items-center gap-4 group">
             Contact Ethics Team
             <ArrowRight class="w-5 h-5 group-hover:translate-x-2 transition-transform" />

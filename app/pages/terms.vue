@@ -22,15 +22,15 @@ const sections = [
 </script>
 
 <template>
-  <div class="relative min-h-screen bg-background text-gray-400">
+  <div class="relative min-h-screen bg-background text-foreground/50">
     <!-- Hero Header -->
-    <section class="max-w-7xl mx-auto px-6 pt-32 pb-20 border-b border-white/5 relative overflow-hidden">
+    <section class="max-w-7xl mx-auto px-6 pt-32 pb-20 border-b border-foreground/5 relative overflow-hidden">
        <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10 animate-pulse"></div>
        <span class="badge-gradient mb-10">Legal Framework</span>
-       <h1 class="text-5xl md:text-8xl font-extrabold mb-8 tracking-tighter text-white">
+       <h1 class="text-5xl md:text-8xl font-extrabold mb-8 tracking-tighter text-foreground">
          Terms of <span class="text-gradient">Service.</span>
        </h1>
-       <p class="text-gray-500 font-bold uppercase tracking-[0.2em] text-xs">Last updated: April 10, 2026</p>
+       <p class="text-foreground/50 font-bold uppercase tracking-[0.2em] text-xs">Last updated: April 10, 2026</p>
     </section>
 
     <!-- Content -->
@@ -38,7 +38,7 @@ const sections = [
       <!-- Sticky Nav -->
       <aside class="hidden lg:block">
         <div class="sticky top-32 space-y-2">
-          <a v-for="s in sections" :key="s.id" :href="`#${s.id}`" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition-all group text-gray-500 hover:text-white">
+          <a v-for="s in sections" :key="s.id" :href="`#${s.id}`" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-foreground/5 transition-all group text-foreground/50 hover:text-foreground">
             <component :is="s.icon" class="w-5 h-5 group-hover:text-primary transition-colors" />
             <span class="text-sm font-bold tracking-widest uppercase">{{ s.title }}</span>
           </a>
@@ -46,11 +46,11 @@ const sections = [
       </aside>
 
       <!-- Main Text -->
-      <main class="lg:col-span-3 prose prose-invert prose-primary max-w-none">
+      <main class="lg:col-span-3 prose dark:prose-invert prose-primary max-w-none">
         <p class="text-primary font-bold mb-12 tracking-widest uppercase text-xs">Sophisticated AI Infrastructure</p>
         
         <section id="introduction" class="mb-20">
-          <h2 class="text-3xl font-bold mb-8 tracking-tight flex items-center gap-4 text-white">
+          <h2 class="text-3xl font-bold mb-8 tracking-tight flex items-center gap-4 text-foreground">
              <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <FileText class="w-5 h-5" />
              </div>
@@ -65,7 +65,7 @@ const sections = [
         </section>
 
         <section id="accounts" class="mb-20">
-          <h2 class="text-3xl font-bold mb-8 tracking-tight flex items-center gap-4 text-white">
+          <h2 class="text-3xl font-bold mb-8 tracking-tight flex items-center gap-4 text-foreground">
              <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <Lock class="w-5 h-5" />
              </div>
@@ -82,7 +82,7 @@ const sections = [
         </section>
 
         <section id="subscriptions" class="mb-20">
-          <h2 class="text-3xl font-bold mb-8 tracking-tight flex items-center gap-4 text-white">
+          <h2 class="text-3xl font-bold mb-8 tracking-tight flex items-center gap-4 text-foreground">
              <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <Scale class="w-5 h-5" />
              </div>
@@ -96,12 +96,12 @@ const sections = [
                <Zap class="w-3 h-3 fill-current" />
                Elite Trial Period
              </h4>
-             <p class="text-gray-300 text-sm">New accounts are granted a 30-day "Free Month" period. After this period, you must select a paid tier to continue using automation features.</p>
+             <p class="text-foreground/70 text-sm">New accounts are granted a 30-day "Free Month" period. After this period, you must select a paid tier to continue using automation features.</p>
           </div>
         </section>
 
         <section id="usage" class="mb-20">
-          <h2 class="text-3xl font-bold mb-8 tracking-tight flex items-center gap-4 text-white">
+          <h2 class="text-3xl font-bold mb-8 tracking-tight flex items-center gap-4 text-foreground">
              <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <ShieldCheck class="w-5 h-5" />
              </div>
@@ -113,7 +113,7 @@ const sections = [
         </section>
 
         <section id="contact" class="mb-20">
-           <h2 class="text-3xl font-bold mb-8 tracking-tight flex items-center gap-4 text-white">
+           <h2 class="text-3xl font-bold mb-8 tracking-tight flex items-center gap-4 text-foreground">
              <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <Mail class="w-5 h-5" />
              </div>
@@ -129,7 +129,7 @@ const sections = [
 </template>
 
 <style scoped>
-.prose h2 { @apply text-white border-b border-white/5 pb-6 mt-20; }
-.prose p { @apply text-gray-400 leading-loose; }
+.prose h2 { @apply text-foreground border-b border-foreground/5 pb-6 mt-20; }
+.prose p { @apply text-foreground/50 leading-loose; }
 .prose ul { @apply list-disc list-inside; }
 </style>

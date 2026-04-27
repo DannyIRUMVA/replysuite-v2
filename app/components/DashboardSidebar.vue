@@ -103,7 +103,7 @@ const handleLogout = async () => {
     <!-- Navigation -->
     <nav class="flex-1 space-y-8">
       <div v-for="section in sections" :key="section.title" class="space-y-3">
-        <h5 class="px-4 text-[10px] font-bold tracking-[0.2em] text-gray-600 uppercase">{{ section.title }}</h5>
+        <h5 class="px-4 text-[10px] font-bold tracking-[0.2em] text-foreground/50 uppercase">{{ section.title }}</h5>
         <div class="space-y-1">
           <template v-for="link in section.links" :key="link.name">
             <!-- Normal Link -->
@@ -136,11 +136,11 @@ const handleLogout = async () => {
             <button 
               v-else
               @click="showComingSoon = true"
-              class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-foreground/30 hover:text-foreground/60 group cursor-pointer"
+              class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-foreground/50 hover:text-foreground/80 group cursor-pointer"
             >
-              <component :is="iconMap[link.icon]" class="w-4 h-4 grayscale opacity-30 group-hover:opacity-100 transition-all" />
+              <component :is="iconMap[link.icon]" class="w-4 h-4 grayscale opacity-50 group-hover:opacity-100 transition-all" />
               <span class="flex-1 text-sm tracking-tight text-left">{{ link.name }}</span>
-              <Lock class="w-3 h-3 opacity-30 group-hover:opacity-100 transition-all" />
+              <Lock class="w-3 h-3 opacity-50 group-hover:opacity-100 transition-all" />
             </button>
           </template>
         </div>
@@ -204,7 +204,7 @@ const handleLogout = async () => {
     >
       <div v-if="showComingSoon" class="fixed inset-0 z-[200] flex items-center justify-center p-6">
         <div class="absolute inset-0 bg-background/80 backdrop-blur-md" @click="showComingSoon = false"></div>
-        <div class="relative w-full max-w-sm bg-background-card border border-foreground/10 rounded-[24px] p-10 shadow-2xl text-center">
+        <div class="relative w-full max-w-sm bg-background border border-foreground/10 rounded-[24px] p-10 shadow-2xl text-center">
             <button @click="showComingSoon = false" class="absolute top-6 right-6 p-2 text-foreground/50 hover:text-foreground transition-colors">
                 <X class="w-5 h-5" />
             </button>
@@ -230,6 +230,6 @@ const handleLogout = async () => {
 
 <style scoped>
 .glass-card {
-  @apply bg-background-card/40 backdrop-blur-xl border border-foreground/5 rounded-[20px];
+  @apply bg-background/40 backdrop-blur-xl border border-foreground/5 rounded-[20px];
 }
 </style>

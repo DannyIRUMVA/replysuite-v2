@@ -98,7 +98,7 @@ const timezoneOptions = [
       <SettingsNavigation />
 
       <!-- Main Section -->
-      <main class="flex-1 glass-card p-10 border-white/5 bg-[#0a0a0a] min-h-[600px] relative z-50 overflow-hidden pointer-events-auto">
+      <main class="flex-1 glass-card p-10 border-foreground/10 bg-background min-h-[600px] relative z-50 overflow-hidden pointer-events-auto">
         <div class="absolute -right-20 -top-20 w-80 h-80 bg-primary/5 rounded-full blur-[100px] -z-10"></div>
 
         <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -107,13 +107,13 @@ const timezoneOptions = [
               <img :src="profile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (user?.email || 'default')"
                 class="w-full h-full rounded-[20px] object-cover" />
               <div
-                class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                <Save class="w-6 h-6 text-white" />
+                class="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                <Save class="w-6 h-6 text-foreground" />
               </div>
             </div>
             <div>
               <h3 class="text-xl font-black tracking-wide text-primary leading-tight">Identity</h3>
-              <p class="text-gray-500 text-sm font-medium">Your brand avatar and display information.</p>
+              <p class="text-foreground/50 text-sm font-medium">Your brand avatar and display information.</p>
             </div>
           </div>
 
@@ -165,7 +165,7 @@ const timezoneOptions = [
               />
             </div>
 
-            <div class="col-span-2 pt-10 flex items-center justify-between border-t border-white/5 mt-4">
+            <div class="col-span-2 pt-10 flex items-center justify-between border-t border-foreground/10 mt-4">
               <div></div>
 
               <button type="submit" :disabled="loading"
@@ -183,11 +183,11 @@ const timezoneOptions = [
 
 <style scoped>
 .setting-input {
-  @apply w-full bg-background border border-white/5 rounded-full px-8 py-5 focus:outline-none focus:border-primary/50 transition-all text-white placeholder-gray-700 font-medium;
+  @apply w-full bg-background border border-foreground/10 rounded-full px-8 py-5 focus:outline-none focus:border-primary/50 transition-all text-foreground placeholder-foreground/20 font-medium;
 }
 
 .input-label {
-  @apply flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-gray-600 mb-4 ml-4;
+  @apply flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-foreground/50 mb-4 ml-4;
 }
 
 .glass-card {

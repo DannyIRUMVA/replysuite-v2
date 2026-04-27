@@ -24,7 +24,7 @@ const style = computed(() => ({
 
 <template>
   <div 
-    class="skeleton-loader bg-white/[0.03] overflow-hidden relative"
+    class="skeleton-loader bg-foreground/[0.05] overflow-hidden relative"
     :class="{ 'pulse-anim': pulse }"
     :style="style"
   >
@@ -35,7 +35,7 @@ const style = computed(() => ({
 
 <style scoped>
 .skeleton-loader {
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(var(--border-color), 0.05);
 }
 
 .pulse-anim {
@@ -55,7 +55,7 @@ const style = computed(() => ({
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.03),
+    rgba(var(--text-base), 0.05),
     transparent
   );
   animation: shimmer 2s infinite;

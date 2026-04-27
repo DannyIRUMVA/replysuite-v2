@@ -29,22 +29,22 @@ const alternatives = [
     <!-- Hero -->
     <section class="max-w-4xl mx-auto px-6 pt-32 pb-20 relative overflow-hidden">
       <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10"></div>
-      <NuxtLink to="/blog" class="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors mb-12 font-bold text-xs uppercase tracking-widest group">
+      <NuxtLink to="/blog" class="flex items-center gap-2 text-foreground/50 hover:text-primary transition-colors mb-12 font-bold text-xs uppercase tracking-widest group">
         <ArrowLeft class="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
         Back to Insights
       </NuxtLink>
       
       <span class="badge-gradient mb-8">Comparison Guide</span>
-      <h1 class="text-5xl md:text-7xl font-extrabold mb-8 tracking-tighter leading-[0.9] text-white">
+      <h1 class="text-5xl md:text-7xl font-extrabold mb-8 tracking-tighter leading-[0.9] text-foreground">
         10 Best <span class="text-gradient">ReplySuite Alternatives</span> in 2026.
       </h1>
       
-      <div class="flex flex-wrap items-center gap-8 pt-8 border-t border-white/5">
+      <div class="flex flex-wrap items-center gap-8 pt-8 border-t border-foreground/5">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center font-bold text-xs">RS</div>
-          <span class="text-white font-bold text-sm">ReplySuite Editorial</span>
+          <span class="text-foreground font-bold text-sm">ReplySuite Editorial</span>
         </div>
-        <div class="flex items-center gap-6 text-xs text-gray-600 font-bold uppercase tracking-widest">
+        <div class="flex items-center gap-6 text-xs text-foreground/40 font-bold uppercase tracking-widest">
            <div class="flex items-center gap-2"><Calendar class="w-3 h-3" /> May 05, 2026</div>
            <div class="flex items-center gap-2"><Clock class="w-3 h-3" /> 12 min read</div>
         </div>
@@ -52,38 +52,38 @@ const alternatives = [
     </section>
 
     <!-- Content -->
-    <article class="max-w-3xl mx-auto px-6 prose prose-invert prose-primary prose-lg">
-      <p class="text-xl text-gray-400 leading-relaxed font-medium mb-12">
+    <article class="max-w-3xl mx-auto px-6 prose dark:prose-invert prose-primary prose-lg">
+      <p class="text-xl text-foreground/70 leading-relaxed font-medium mb-12">
         The market for AI-driven automation is more crowded than ever. Choosing the right platform for your brand isn't just about features—it's about finding a tool that aligns with your technical maturity and growth goals.
       </p>
 
-      <h2 class="text-3xl font-bold text-white mb-8 tracking-tight">The Evolving Landscape</h2>
-      <p class="text-gray-500 mb-12">
+      <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight">The Evolving Landscape</h2>
+      <p class="text-foreground/50 mb-12">
         In 2026, "chatbots" are no longer simple decision trees. They are autonomous agents capable of complex reasoning, sentiment analysis, and multi-step problem solving. While ReplySuite focuses on **Elite Brand Engagement**, other platforms have taken different paths.
       </p>
 
       <!-- Comparison Grid -->
       <div class="not-prose grid gap-6 my-20">
-        <div v-for="alt in alternatives" :key="alt.name" class="p-8 rounded-[32px] bg-white/[0.02] border border-white/5 hover:border-primary/20 transition-all group">
+        <div v-for="alt in alternatives" :key="alt.name" class="p-8 rounded-[32px] bg-foreground/[0.02] border border-foreground/5 hover:border-primary/20 transition-all group">
           <div class="flex items-center justify-between mb-6">
-            <h3 class="text-2xl font-bold text-white tracking-tight group-hover:text-primary transition-colors">{{ alt.name }}</h3>
-            <span class="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest border border-white/10">{{ alt.focus }}</span>
+            <h3 class="text-2xl font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">{{ alt.name }}</h3>
+            <span class="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold text-foreground/70 uppercase tracking-widest border border-white/10">{{ alt.focus }}</span>
           </div>
           <div class="grid sm:grid-cols-2 gap-8">
             <div>
-              <div class="text-[10px] font-bold text-gray-600 uppercase tracking-[0.2em] mb-2">Primary Strength</div>
-              <p class="text-sm text-gray-400 font-medium">{{ alt.strength }}</p>
+              <div class="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] mb-2">Primary Strength</div>
+              <p class="text-sm text-foreground/70 font-medium">{{ alt.strength }}</p>
             </div>
             <div>
-              <div class="text-[10px] font-bold text-gray-600 uppercase tracking-[0.2em] mb-2">Notable Gap</div>
-              <p class="text-sm text-gray-400 font-medium">{{ alt.weakness }}</p>
+              <div class="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] mb-2">Notable Gap</div>
+              <p class="text-sm text-foreground/70 font-medium">{{ alt.weakness }}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <h2 class="text-3xl font-bold text-white mb-8 tracking-tight">Why ReplySuite Stands Apart</h2>
-      <p class="text-gray-500 mb-10">
+      <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight">Why ReplySuite Stands Apart</h2>
+      <p class="text-foreground/50 mb-10">
         While many of these alternatives are powerful, they often fall into the trap of "Feature Bloat" or remain stuck in the rule-based era. ReplySuite was built from the ground up to be **AI-Native**.
       </p>
 
@@ -97,23 +97,23 @@ const alternatives = [
              <component :is="point.icon" class="w-6 h-6" />
           </div>
           <div>
-            <h4 class="text-lg font-bold text-white tracking-tight mb-2">{{ point.title }}</h4>
-            <p class="text-sm text-gray-500 font-medium leading-relaxed">{{ point.desc }}</p>
+            <h4 class="text-lg font-bold text-foreground tracking-tight mb-2">{{ point.title }}</h4>
+            <p class="text-sm text-foreground/50 font-medium leading-relaxed">{{ point.desc }}</p>
           </div>
         </div>
       </div>
 
-      <h2 class="text-3xl font-bold text-white mb-8 tracking-tight">Final Verdict</h2>
-      <p class="text-gray-500 mb-12">
+      <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight">Final Verdict</h2>
+      <p class="text-foreground/50 mb-12">
         If you need a simple FAQ bot, **Tidio** or **ManyChat** might suffice. But if you are building an **Institutional Brand** that requires sophisticated data handling, premium aesthetics, and absolute AI precision, ReplySuite is the undisputed choice.
       </p>
 
       <!-- Bottom CTA -->
-      <div class="not-prose p-12 rounded-[48px] bg-white/[0.02] border border-white/5 text-center mt-32 relative overflow-hidden group">
+      <div class="not-prose p-12 rounded-[48px] bg-foreground/[0.02] border border-foreground/5 text-center mt-32 relative overflow-hidden group">
          <div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity blur-[80px]"></div>
          <Sparkles class="w-12 h-12 text-primary mx-auto mb-8" />
-         <h3 class="text-3xl font-bold text-white mb-6 tracking-tight">Experience the Gold Standard.</h3>
-         <p class="text-gray-500 mb-10 max-w-lg mx-auto font-medium">Ready to see why hundreds of brands are switching to ReplySuite?</p>
+         <h3 class="text-3xl font-bold text-foreground mb-6 tracking-tight">Experience the Gold Standard.</h3>
+         <p class="text-foreground/50 mb-10 max-w-lg mx-auto font-medium">Ready to see why hundreds of brands are switching to ReplySuite?</p>
          <NuxtLink to="/register" class="btn-gradient px-10 py-5 inline-flex items-center gap-4 group/btn">
             Start Your Free Trial
             <ArrowRight class="w-5 h-5 group-hover/btn:translate-x-2 transition-transform" />

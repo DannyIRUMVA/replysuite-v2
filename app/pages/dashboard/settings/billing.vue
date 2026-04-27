@@ -169,13 +169,13 @@ const handleUpgrade = async (plan: any) => {
       <SettingsNavigation />
 
       <!-- Main Section -->
-      <main class="flex-1 glass-card p-10 border-white/5 bg-[#0a0a0a] min-h-[600px] relative overflow-hidden">
+      <main class="flex-1 glass-card p-10 border-foreground/10 bg-background min-h-[600px] relative overflow-hidden">
         <div class="absolute -right-20 -top-20 w-80 h-80 bg-primary/5 rounded-full blur-[100px] -z-10"></div>
 
         <div v-if="isLoading" class="flex items-center justify-center h-[400px]">
           <div class="flex flex-col items-center gap-4">
             <Loader2 class="w-10 h-10 text-primary animate-spin" />
-            <p class="text-xs font-bold tracking-widest text-gray-600 uppercase">Synchronizing Billing...</p>
+            <p class="text-xs font-bold tracking-widest text-foreground/50 uppercase">Synchronizing Billing...</p>
           </div>
         </div>
 
@@ -183,7 +183,7 @@ const handleUpgrade = async (plan: any) => {
           <h3 class="text-xl font-black tracking-wide text-primary mb-6">Billing Hub</h3>
 
           <!-- Active Plan Badge -->
-          <div class="mb-12 flex flex-col md:flex-row items-start md:items-center justify-between p-6 gap-6 glass-card border-primary/20 bg-primary/5">
+          <div class="mb-12 flex flex-col md:flex-row items-start md:items-center justify-between p-6 gap-6 glass-card border-primary/30 bg-primary/10">
             <div class="flex items-center gap-4">
               <div class="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary">
                 <Crown v-if="planSlug === 'gold'" class="w-6 h-6" />
@@ -198,12 +198,12 @@ const handleUpgrade = async (plan: any) => {
             
             <div class="flex items-center gap-8 w-full md:w-auto justify-between md:justify-end">
               <div class="text-right">
-                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Next Billing Date</p>
-                <p class="text-sm font-bold text-white">{{ membership?.ends_at ? new Date(membership.ends_at).toLocaleDateString() : 'N/A' }}</p>
+                <p class="text-[10px] font-bold text-foreground/50 uppercase tracking-widest">Next Billing Date</p>
+                <p class="text-sm font-bold text-foreground">{{ membership?.ends_at ? new Date(membership.ends_at).toLocaleDateString() : 'N/A' }}</p>
               </div>
               <button @click="handleSync" 
                 :disabled="isSyncing"
-                class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50">
+                class="px-4 py-2 rounded-xl bg-foreground/5 border border-foreground/10 text-[9px] font-black uppercase tracking-widest text-foreground/50 hover:text-foreground hover:bg-foreground/10 transition-all disabled:opacity-50">
                 <span v-if="isSyncing" class="flex items-center gap-2 italic lowercase"><Loader2 class="w-3 h-3 animate-spin"/> syncing...</span>
                 <span v-else class="flex items-center gap-2"><TrendingUp class="w-3 h-3"/> Sync Status</span>
               </button>
@@ -213,7 +213,7 @@ const handleUpgrade = async (plan: any) => {
           <!-- Pricing Tiers Grid -->
           <div class="grid md:grid-cols-3 gap-6 mb-16">
             <div v-for="p in pricingPlans" :key="p.id"
-              class="glass-card p-8 border-white/5 bg-white/[0.02] flex flex-col relative overflow-hidden group hover:border-primary/20 transition-all"
+              class="glass-card p-8 border-foreground/10 bg-foreground/5 flex flex-col relative overflow-hidden group hover:border-primary/20 transition-all"
               :class="{ 'border-primary/30 !bg-primary/[0.03]': planSlug === p.id }">
               <!-- Popular Badge -->
               <div v-if="p.popular"
@@ -221,17 +221,17 @@ const handleUpgrade = async (plan: any) => {
                 Popular
               </div>
 
-              <h5 class="text-sm font-black uppercase tracking-widest text-gray-500 mb-1">{{ p.name }}</h5>
+              <h5 class="text-sm font-black uppercase tracking-widest text-foreground/50 mb-1">{{ p.name }}</h5>
               <div class="flex items-baseline gap-1 mb-4">
-                <span class="text-3xl font-black text-white">${{ p.price }}</span>
-                <span class="text-xs text-gray-600">/mo</span>
+                <span class="text-3xl font-black text-foreground">${{ p.price }}</span>
+                <span class="text-xs text-foreground/50">/mo</span>
               </div>
 
               <p class="text-[10px] text-primary/60 font-bold uppercase tracking-widest mb-8">{{ p.limitDesc }}</p>
 
               <ul class="space-y-4 mb-10 flex-grow">
                 <li v-for="feat in p.features" :key="feat"
-                  class="flex items-center gap-3 text-xs text-gray-400 font-medium">
+                  class="flex items-center gap-3 text-xs text-foreground/50 font-medium">
                   <Check class="w-4 h-4 text-primary shrink-0" />
                   {{ feat }}
                 </li>
@@ -240,7 +240,7 @@ const handleUpgrade = async (plan: any) => {
               <button @click="handleUpgrade(p)"
                 :disabled="planSlug === p.id || checkoutLoading === p.id"
                 class="w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all"
-                :class="planSlug === p.id ? 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/10' : 'bg-primary text-black hover:bg-primary-accent shadow-lg shadow-primary/10'">
+                :class="planSlug === p.id ? 'bg-foreground/5 text-foreground/50 cursor-not-allowed border border-foreground/10' : 'bg-primary text-black hover:bg-primary-accent shadow-lg shadow-primary/10'">
                 <span v-if="checkoutLoading === p.id" class="flex items-center justify-center gap-2">
                   <Loader2 class="w-3 h-3 animate-spin" /> processing
                 </span>
@@ -251,24 +251,24 @@ const handleUpgrade = async (plan: any) => {
           </div>
 
           <!-- Billing History -->
-          <h4 class="text-sm font-bold tracking-widest text-gray-500 mb-6 font-black uppercase">Payment History</h4>
+          <h4 class="text-sm font-bold tracking-widest text-foreground/50 mb-6 font-black uppercase">Payment History</h4>
           <div class="space-y-4">
             <div v-if="!payments?.length"
-              class="text-gray-600 italic py-10 border border-white/5 rounded-[32px] text-center bg-white/[0.01]">
+              class="text-foreground/50 italic py-10 border border-foreground/10 rounded-[32px] text-center bg-foreground/[0.01]">
               No transactions found on this account yet.
             </div>
             <div v-else v-for="pay in payments" :key="pay.id"
-              class="flex items-center justify-between p-6 rounded-[24px] border border-white/5 bg-white/[0.02] hover:bg-white/5 transition-colors">
+              class="flex items-center justify-between p-6 rounded-[24px] border border-foreground/10 bg-foreground/5 hover:bg-foreground/10 transition-colors">
               <div class="flex items-center gap-5">
                 <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500">
                   <CreditCard class="w-6 h-6" />
                 </div>
                 <div>
-                  <p class="font-bold text-gray-200">${{ pay.amount }} · {{ pay.status }}</p>
-                  <p class="text-xs text-gray-600">{{ pay.created_at ? new Date(pay.created_at).toLocaleDateString() : 'N/A' }}</p>
+                  <p class="font-bold text-foreground">${{ pay.amount }} · {{ pay.status }}</p>
+                  <p class="text-xs text-foreground/50">{{ pay.created_at ? new Date(pay.created_at).toLocaleDateString() : 'N/A' }}</p>
                 </div>
               </div>
-              <button class="text-gray-500 hover:text-white transition-colors">
+              <button class="text-foreground/50 hover:text-foreground transition-colors">
                 <ExternalLink class="w-5 h-5" />
               </button>
             </div>

@@ -5,35 +5,38 @@
 @tailwind utilities;
 
 :root {
-  --primary: #D4AF37;
-  --primary-accent: #C5A059;
-  --background: #FFFFFF;
-  --background-card: #F8F9FA;
-  --background-accent: #E9ECEF;
-  --surface: 248 249 250;
+  --primary: 212 175 55;
+  --primary-accent: 197 160 89;
+  --background: 245 245 247;
+  --background-card: 255 255 255;
+  --background-accent: 235 236 240;
+  --surface: 255 255 255;
   --surface-border: 0 0 0; /* Will be used with opacity / 0.1 */
-  --text-base: #1A1A1A;
-  --text-muted: #666666;
+  --text-base: 26 26 26;
+  --text-muted: 102 102 102;
   --border-color: 0 0 0;
 }
 
 .dark {
-  --primary: #D4AF37;
-  --primary-accent: #C5A059;
-  --background: #0A0A0B;
-  --background-card: #121214;
-  --background-accent: #18181B;
+  --primary: 212 175 55;
+  --primary-accent: 197 160 89;
+  --background: 10 10 11;
+  --background-card: 18 18 20;
+  --background-accent: 24 24 27;
   --surface: 18 18 20;
   --surface-border: 255 255 255;
-  --text-base: #FFFFFF;
-  --text-muted: #A1A1AA;
+  --text-base: 255 255 255;
+  --text-muted: 161 161 170;
   --border-color: 255 255 255;
 }
 
 @layer base {
   body {
-    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/30;
+    @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  ::selection {
+    @apply bg-primary/30;
   }
 }
 

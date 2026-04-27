@@ -83,18 +83,18 @@ const logout = async () => {
         <div class="w-10 h-10 bg-gradient-to-tr from-primary to-primary-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
           <Zap class="text-white w-6 h-6 fill-current" />
         </div>
-        <span class="text-xl font-bold tracking-tight text-white">replysuite</span>
+        <span class="text-xl font-bold tracking-tight text-foreground">replysuite</span>
       </div>
       
       <!-- Logout Button -->
-      <button @click="logout" class="absolute top-8 right-8 flex items-center gap-2 text-sm text-gray-500 hover:text-white transition-colors">
+      <button @click="logout" class="absolute top-8 right-8 flex items-center gap-2 text-sm text-foreground/40 hover:text-foreground transition-colors">
         <LogOut class="w-4 h-4" />
         Sign out
       </button>
 
       <!-- Main Content Box -->
       <div class="w-full max-w-lg">
-        <div class="glass-card p-10 md:p-14 bg-[#0a0a0a] border border-white/10 rounded-[2rem] shadow-2xl relative overflow-hidden group">
+        <div class="glass-card p-10 md:p-14 bg-background-card border border-foreground/10 rounded-[2rem] shadow-2xl relative overflow-hidden group">
           <div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-[100px] border border-primary/50 group-hover:bg-primary/20 transition-all pointer-events-none"></div>
           
           <div class="relative z-10 flex flex-col items-center text-center">
@@ -103,10 +103,10 @@ const logout = async () => {
               <AlertCircle class="w-10 h-10" />
             </div>
             
-            <h1 class="text-3xl font-bold tracking-tight text-white mb-3">Verify your email</h1>
-            <p class="text-gray-400 mb-8 leading-relaxed">
+            <h1 class="text-3xl font-bold tracking-tight text-foreground mb-3">Verify your email</h1>
+            <p class="text-foreground/50 mb-8 leading-relaxed">
               We sent a 6-digit verification code to <br>
-              <span class="text-white font-bold">{{ user?.email }}</span>.
+              <span class="text-foreground font-bold">{{ user?.email }}</span>.
             </p>
 
             <div class="w-full max-w-sm mx-auto space-y-6">
@@ -115,7 +115,7 @@ const logout = async () => {
                 type="text" 
                 placeholder="000000" 
                 maxlength="6"
-                class="w-full bg-black border border-white/10 rounded-2xl px-6 py-5 text-center text-3xl font-mono tracking-[0.5em] focus:border-primary focus:outline-none transition-all placeholder:text-gray-800 text-white"
+                class="w-full bg-background border border-foreground/10 rounded-2xl px-6 py-5 text-center text-3xl font-mono tracking-[0.5em] focus:border-primary focus:outline-none transition-all placeholder:text-foreground/10 text-foreground"
                 @keyup.enter="verifyCode"
               />
               
@@ -135,7 +135,7 @@ const logout = async () => {
               <button 
                 @click="resendVerification" 
                 :disabled="resendLoading" 
-                class="w-full py-4 text-sm font-bold text-gray-500 hover:text-white transition-colors border border-transparent hover:border-white/5 rounded-xl bg-transparent hover:bg-white/5"
+                class="w-full py-4 text-sm font-bold text-foreground/40 hover:text-foreground transition-colors border border-transparent hover:border-foreground/5 rounded-xl bg-transparent hover:bg-foreground/5"
               >
                 {{ resendLoading ? 'Sending new code...' : resendSuccess ? 'Code Sent!' : 'Didn\'t receive a code? Resend' }}
               </button>
@@ -143,7 +143,7 @@ const logout = async () => {
           </div>
         </div>
         
-        <p class="text-center mt-8 text-gray-600 text-xs font-semibold">
+        <p class="text-center mt-8 text-foreground/30 text-xs font-semibold">
           Need help? <a href="mailto:support@replysuite.com" class="hover:text-primary transition-colors">Contact Support</a>
         </p>
       </div>

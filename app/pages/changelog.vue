@@ -71,11 +71,11 @@ const updates = [
       <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10"></div>
       <div class="text-center max-w-3xl mx-auto">
         <span class="badge-gradient mb-10">Updates</span>
-        <h1 class="text-5xl sm:text-7xl md:text-8xl font-extrabold mb-8 tracking-tighter leading-[0.85] text-white">
+        <h1 class="text-5xl sm:text-7xl md:text-8xl font-extrabold mb-8 tracking-tighter leading-[0.85] text-foreground">
           Platform <br />
           <span class="text-gradient">Evolution.</span>
         </h1>
-        <p class="text-xl text-gray-400 font-medium leading-relaxed">
+        <p class="text-xl text-foreground/40 font-medium leading-relaxed">
           Tracking our journey as we build the gold standard in AI automation.
         </p>
       </div>
@@ -83,27 +83,27 @@ const updates = [
 
     <!-- Timeline -->
     <section class="max-w-4xl mx-auto px-6 py-20 relative">
-      <div class="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-white/5 -z-10"></div>
+      <div class="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-foreground/5 -z-10"></div>
       
       <div v-for="(update, index) in updates" :key="update.version" 
         class="mb-32 relative flex flex-col md:flex-row gap-12 group"
         :class="index % 2 === 0 ? 'md:flex-row-reverse' : ''">
         
         <!-- Icon/Point -->
-        <div class="absolute left-0 md:left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-black border border-white/10 flex items-center justify-center z-20 group-hover:border-primary/50 transition-colors">
+        <div class="absolute left-0 md:left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-background border border-foreground/10 flex items-center justify-center z-20 group-hover:border-primary/50 transition-colors">
           <component :is="update.icon" class="w-5 h-5 text-primary" />
         </div>
 
         <!-- Content Card -->
         <div class="flex-1">
-          <div class="glass-card p-10 border-white/5 hover:border-primary/20 transition-all">
+          <div class="glass-card p-10 border-foreground/10 hover:border-primary/20 transition-all">
             <div class="flex items-center justify-between mb-6">
               <span class="text-xs font-bold text-primary uppercase tracking-widest">{{ update.version }}</span>
-              <span class="text-xs text-gray-600 font-medium">{{ update.date }}</span>
+              <span class="text-xs text-foreground/30 font-medium">{{ update.date }}</span>
             </div>
-            <h3 class="text-2xl font-bold text-white mb-6 tracking-tight">{{ update.title }}</h3>
+            <h3 class="text-2xl font-bold text-foreground mb-6 tracking-tight">{{ update.title }}</h3>
             <ul class="space-y-4">
-              <li v-for="item in update.items" :key="item" class="flex items-start gap-3 text-gray-400 text-sm leading-relaxed font-medium">
+              <li v-for="item in update.items" :key="item" class="flex items-start gap-3 text-foreground/40 text-sm leading-relaxed font-medium">
                 <div class="w-1.5 h-1.5 rounded-full bg-primary/40 mt-2 shrink-0"></div>
                 {{ item }}
               </li>
@@ -116,9 +116,9 @@ const updates = [
       </div>
 
       <!-- Footer CTA -->
-      <div class="mt-40 p-16 rounded-[48px] bg-white/[0.02] border border-white/5 text-center">
-        <h3 class="text-3xl font-bold text-white mb-6 tracking-tight">Open Source Mindset</h3>
-        <p class="text-gray-400 mb-10 font-medium">Follow our development journey on GitHub for real-time commits.</p>
+      <div class="mt-40 p-16 rounded-[48px] bg-foreground/[0.02] border border-foreground/10 text-center">
+        <h3 class="text-3xl font-bold text-foreground mb-6 tracking-tight">Open Source Mindset</h3>
+        <p class="text-foreground/40 mb-10 font-medium">Follow our development journey on GitHub for real-time commits.</p>
         <a href="https://github.com/replysuite" class="btn-gradient px-10 py-5 inline-flex items-center gap-4 group">
           View on GitHub
           <Github class="w-5 h-5" />

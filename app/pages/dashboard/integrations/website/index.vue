@@ -104,21 +104,21 @@ const playgroundHtml = computed(() => {
 
 <template>
   <div class="w-full space-y-8 pb-20">
-    <NuxtLink to="/dashboard" class="flex items-center gap-2 text-gray-500 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest mb-2 group w-fit">
+    <NuxtLink to="/dashboard" class="flex items-center gap-2 text-foreground/50 hover:text-foreground transition-all text-[10px] font-black uppercase tracking-widest mb-2 group w-fit">
         <ArrowLeft class="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
         Back to Overview
     </NuxtLink>
 
     <div v-if="!isVerified" class="glass-card p-12 border-primary/20 bg-primary/5 text-center flex flex-col items-center">
       <ShieldCheck class="w-16 h-16 text-primary mb-6 opacity-30" />
-      <h2 class="text-2xl font-black mb-4 uppercase italic-none">Verification Required</h2>
-      <p class="text-gray-400 max-w-sm mb-8 font-bold uppercase tracking-widest text-[10px] italic-none">Please verify your account to unlock external embeddings and API access.</p>
+      <h2 class="text-2xl font-black mb-4 uppercase italic-none text-foreground">Verification Required</h2>
+      <p class="text-foreground/50 max-w-sm mb-8 font-bold uppercase tracking-widest text-[10px] italic-none">Please verify your account to unlock external embeddings and API access.</p>
       <NuxtLink to="/dashboard/settings" class="px-8 py-3 bg-primary text-black font-bold tracking-widest text-xs uppercase rounded-xl hover:scale-105 transition-all">go to settings</NuxtLink>
     </div>
 
     <div v-else-if="isLoading" class="space-y-8">
       <!-- Skeleton Header Sync -->
-      <section class="glass-card p-8 bg-[#0a0a0a] border-white/5 relative overflow-hidden">
+      <section class="glass-card p-8 bg-background border-foreground/5 relative overflow-hidden">
         <Skeleton width="180px" height="10px" class="mb-4" />
         <Skeleton width="320px" height="48px" radius="1rem" />
       </section>
@@ -165,19 +165,19 @@ const playgroundHtml = computed(() => {
 
     <div v-else class="space-y-8">
       <!-- Selector (Full Width for prominence, or can be grid-aligned) -->
-      <section class="glass-card p-8 bg-[#0a0a0a] border-white/5 relative overflow-hidden">
+      <section class="glass-card p-8 bg-background border-foreground/10 relative overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
         <div class="relative z-10">
-            <label class="block text-[11px] font-bold tracking-widest text-gray-500 uppercase mb-4 italic-none">Target Intelligence Source</label>
+            <label class="block text-[11px] font-bold tracking-widest text-foreground/50 uppercase mb-4 italic-none">Target Intelligence Source</label>
             <div class="relative max-w-md">
                 <select 
                     v-model="selectedChatbotId"
-                    class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-sm font-bold text-white appearance-none focus:outline-none focus:border-primary/40 transition-all cursor-pointer uppercase tracking-widest italic-none"
+                    class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-6 py-4 text-sm font-bold text-foreground appearance-none focus:outline-none focus:border-primary/40 transition-all cursor-pointer uppercase tracking-widest italic-none"
                 >
-                    <option v-for="bot in chatbots" :key="bot.id" :value="bot.id" class="bg-[#0a0a0a]">{{ bot.name }}</option>
+                    <option v-for="bot in chatbots" :key="bot.id" :value="bot.id" class="bg-background">{{ bot.name }}</option>
                 </select>
-                <ChevronDown class="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-                <div v-if="chatbots.length === 0" class="absolute inset-y-0 left-0 right-0 flex items-center px-6 bg-[#0a0a0a]/80 backdrop-blur-sm rounded-xl">
+                <ChevronDown class="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50 pointer-events-none" />
+                <div v-if="chatbots.length === 0" class="absolute inset-y-0 left-0 right-0 flex items-center px-6 bg-background/80 backdrop-blur-sm rounded-xl">
                     <NuxtLink to="/dashboard/agents" class="text-primary text-[10px] font-bold uppercase tracking-widest hover:underline"> Create your first agent to integrate</NuxtLink>
                 </div>
             </div>
@@ -188,22 +188,22 @@ const playgroundHtml = computed(() => {
         <!-- Left Column: technical details & embed -->
         <div class="space-y-8">
           <!-- Direct Embed -->
-          <section class="glass-card h-full p-8 bg-[#0a0a0a] border-white/5 flex flex-col">
+          <section class="glass-card h-full p-8 bg-background border-foreground/10 flex flex-col">
             <div class="flex items-center justify-between mb-8">
               <div class="flex items-center gap-4">
                 <div class="p-3 rounded-xl bg-primary/10 text-primary">
                   <Code2 class="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">Widget Embedding</h3>
-                  <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Add this autonomous script to your website's <code class="text-primary">&lt;head&gt;</code>.</p>
+                  <h3 class="text-xl font-bold tracking-tight text-foreground uppercase italic-none">Widget Embedding</h3>
+                  <p class="text-[10px] text-foreground/50 font-bold uppercase tracking-widest italic-none leading-relaxed">Add this autonomous script to your website's <code class="text-primary">&lt;head&gt;</code>.</p>
                 </div>
               </div>
               
               <NuxtLink 
                 v-if="selectedChatbotId"
                 :to="`/dashboard/agents/${selectedChatbotId}?tab=design`"
-                class="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-primary transition-all border border-white/5"
+                class="flex items-center gap-2 px-3 py-1.5 bg-foreground/5 hover:bg-foreground/10 rounded-lg text-[9px] font-black uppercase tracking-widest text-foreground/50 hover:text-primary transition-all border border-foreground/10"
               >
                 <Palette class="w-3 h-3" />
                 Customize
@@ -213,11 +213,11 @@ const playgroundHtml = computed(() => {
             <div class="flex-1 space-y-6">
               <div class="relative group">
                 <div class="absolute -inset-1 bg-gradient-to-r from-primary/20 to-cyan-400/20 rounded-xl blur opacity-10 group-hover:opacity-30 transition duration-1000"></div>
-                <div class="relative flex items-center gap-4 p-6 bg-black/40 border border-white/5 rounded-xl overflow-x-auto overflow-y-hidden">
-                  <pre class="text-gray-400 text-[11px] flex-1 leading-relaxed">{{ scriptTag }}</pre>
+                <div class="relative flex items-center gap-4 p-6 bg-foreground/[0.03] border border-foreground/10 rounded-xl overflow-x-auto overflow-y-hidden">
+                  <pre class="text-foreground/50 text-[11px] flex-1 leading-relaxed">{{ scriptTag }}</pre>
                   <button 
                     @click="copyText(scriptTag, 'Embed Script')"
-                    class="shrink-0 p-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 transition-all hover:text-white"
+                    class="shrink-0 p-4 rounded-xl bg-foreground/5 hover:bg-foreground/10 text-foreground/50 transition-all hover:text-foreground"
                   >
                     <Copy class="w-4 h-4" />
                   </button>
@@ -225,7 +225,7 @@ const playgroundHtml = computed(() => {
               </div>
 
               <!-- Preview section -->
-              <div v-if="selectedChatbot" class="p-4 bg-white/[0.02] border border-white/5 rounded-xl flex items-center gap-6">
+              <div v-if="selectedChatbot" class="p-4 bg-foreground/[0.02] border border-foreground/10 rounded-xl flex items-center gap-6">
                 <div class="relative group flex items-center justify-center p-4">
                   <div class="absolute inset-0 bg-primary/5 rounded-full blur-xl scale-75 group-hover:scale-100 transition-transform"></div>
                   <div 
@@ -242,8 +242,8 @@ const playgroundHtml = computed(() => {
                   </div>
                 </div>
                 <div class="flex-1">
-                  <h4 class="text-[10px] font-black uppercase tracking-widest text-white mb-1">Live Launcher Preview</h4>
-                  <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">This is exactly how your chatbot button will appear on your domain.</p>
+                  <h4 class="text-[10px] font-black uppercase tracking-widest text-foreground mb-1">Live Launcher Preview</h4>
+                  <p class="text-[9px] text-foreground/50 font-bold uppercase tracking-widest leading-relaxed">This is exactly how your chatbot button will appear on your domain.</p>
                 </div>
               </div>
             </div>
@@ -252,24 +252,24 @@ const playgroundHtml = computed(() => {
 
         <div class="space-y-8">
           <!-- API / Curl Test -->
-          <section class="glass-card h-full p-8 bg-[#0a0a0a] border-white/5">
+          <section class="glass-card h-full p-8 bg-background border-foreground/10">
             <div class="flex items-center gap-4 mb-8">
               <div class="p-3 rounded-xl bg-cyan-400/10 text-cyan-400">
                 <Terminal class="w-6 h-6" />
               </div>
               <div>
-                <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">CLI Connectivity Check</h3>
-                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Public-ready endpoint (no dashboard token required).</p>
+                <h3 class="text-xl font-bold tracking-tight text-foreground uppercase italic-none">CLI Connectivity Check</h3>
+                <p class="text-[10px] text-foreground/50 font-bold uppercase tracking-widest italic-none leading-relaxed">Public-ready endpoint (no dashboard token required).</p>
               </div>
             </div>
 
             <div class="relative group">
               <div class="absolute -inset-1 bg-cyan-400/10 rounded-xl blur opacity-0 group-hover:opacity-20 transition duration-1000"></div>
-              <div class="relative flex items-center gap-4 p-6 bg-black/40 border border-white/5 rounded-xl overflow-x-auto overflow-y-hidden">
-                <pre class="text-gray-400 text-[11px] flex-1 leading-loose">{{ curlCommand }}</pre>
+              <div class="relative flex items-center gap-4 p-6 bg-foreground/[0.03] border border-foreground/10 rounded-xl overflow-x-auto overflow-y-hidden">
+                <pre class="text-foreground/50 text-[11px] flex-1 leading-loose">{{ curlCommand }}</pre>
                 <button 
                   @click="copyText(curlCommand, 'CLI Command')"
-                  class="shrink-0 p-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 transition-all hover:text-white"
+                  class="shrink-0 p-4 rounded-xl bg-foreground/5 hover:bg-foreground/10 text-foreground/50 transition-all hover:text-foreground"
                 >
                   <Copy class="w-4 h-4" />
                 </button>
@@ -281,7 +281,7 @@ const playgroundHtml = computed(() => {
 
       <div class="grid lg:grid-cols-2 gap-8">
         <!-- Standalone Sandbox -->
-        <section class="glass-card p-8 bg-[#0a0a0a] border-white/5 relative overflow-hidden">
+        <section class="glass-card p-8 bg-background border-foreground/10 relative overflow-hidden">
           <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
           <div class="relative z-10">
             <div class="flex items-center gap-4 mb-8">
@@ -289,21 +289,21 @@ const playgroundHtml = computed(() => {
                 <Bot class="w-6 h-6" />
               </div>
               <div>
-                <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">Local Sandbox Tool</h3>
-                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Test the full widget experience in a clean environment.</p>
+                <h3 class="text-xl font-bold tracking-tight text-foreground uppercase italic-none">Local Sandbox Tool</h3>
+                <p class="text-[10px] text-foreground/50 font-bold uppercase tracking-widest italic-none leading-relaxed">Test the full widget experience in a clean environment.</p>
               </div>
             </div>
 
             <div class="space-y-4">
-              <p class="text-[10px] text-gray-400 leading-relaxed uppercase tracking-widest italic-none italic">
+              <p class="text-[10px] text-foreground/50 leading-relaxed uppercase tracking-widest italic-none italic">
                   Copy the code below, save it as <span class="text-primary italic-none">index.html</span> on your computer, and open it.
               </p>
               <div class="relative group">
-                  <div class="relative flex items-center gap-4 p-6 bg-black/40 border border-white/5 rounded-xl overflow-x-auto overflow-y-hidden">
-                      <pre class="text-gray-500 text-[9px] flex-1 leading-relaxed">{{ playgroundHtml }}</pre>
+                  <div class="relative flex items-center gap-4 p-6 bg-foreground/[0.03] border border-foreground/10 rounded-xl overflow-x-auto overflow-y-hidden">
+                      <pre class="text-foreground/50 text-[9px] flex-1 leading-relaxed">{{ playgroundHtml }}</pre>
                       <button 
                         @click="copyText(playgroundHtml, 'Sandbox HTML')"
-                        class="shrink-0 p-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 transition-all hover:text-white"
+                        class="shrink-0 p-4 rounded-xl bg-foreground/5 hover:bg-foreground/10 text-foreground/50 transition-all hover:text-foreground"
                       >
                         <Copy class="w-4 h-4" />
                       </button>
@@ -314,22 +314,22 @@ const playgroundHtml = computed(() => {
         </section>
 
         <!-- Domain Protection -->
-        <section class="glass-card p-8 bg-[#0a0a0a] border-white/5">
+        <section class="glass-card p-8 bg-background border-foreground/10">
           <div class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-4">
-              <div class="p-3 rounded-xl bg-white/5 text-primary">
+              <div class="p-3 rounded-xl bg-foreground/5 text-primary">
                 <Shield class="w-6 h-6" />
               </div>
               <div>
-                <h3 class="text-xl font-bold tracking-tight text-white uppercase italic-none">Domain Protection</h3>
-                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest italic-none leading-relaxed">Active restrictions for selected intelligence source.</p>
+                <h3 class="text-xl font-bold tracking-tight text-foreground uppercase italic-none">Domain Protection</h3>
+                <p class="text-[10px] text-foreground/50 font-bold uppercase tracking-widest italic-none leading-relaxed">Active restrictions for selected intelligence source.</p>
               </div>
             </div>
 
             <NuxtLink 
               v-if="selectedChatbotId"
               :to="`/dashboard/agents/${selectedChatbotId}?tab=security`"
-              class="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-primary transition-all border border-white/5"
+              class="flex items-center gap-2 px-3 py-1.5 bg-foreground/5 hover:bg-foreground/10 rounded-lg text-[9px] font-black uppercase tracking-widest text-foreground/50 hover:text-primary transition-all border border-foreground/10"
             >
               <ShieldCheck class="w-3 h-3" />
               Manage
@@ -347,14 +347,14 @@ const playgroundHtml = computed(() => {
                 {{ domain }}
               </div>
             </div>
-            <div v-else class="p-6 bg-white/[0.02] border border-dashed border-white/10 rounded-xl text-center">
-              <p class="text-[9px] text-gray-600 font-bold uppercase tracking-widest">No domain restrictions active. Your widget will work on any site.</p>
+            <div v-else class="p-6 bg-foreground/[0.02] border border-dashed border-foreground/10 rounded-xl text-center">
+              <p class="text-[9px] text-foreground/50 font-bold uppercase tracking-widest">No domain restrictions active. Your widget will work on any site.</p>
             </div>
             
-            <div class="flex items-center gap-2 mt-4 pt-4 border-t border-white/5">
+            <div class="flex items-center gap-2 mt-4 pt-4 border-t border-foreground/5">
               <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-              <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
-                System Status: <span class="text-white">Active Enforcement</span>
+              <span class="text-[9px] text-foreground/50 font-bold uppercase tracking-widest">
+                System Status: <span class="text-foreground">Active Enforcement</span>
               </span>
             </div>
           </div>
@@ -366,7 +366,7 @@ const playgroundHtml = computed(() => {
 
 <style scoped>
 .glass-card {
-  @apply bg-[#111111]/40 backdrop-blur-xl border border-white/5 p-8 rounded-[20px];
+  @apply bg-foreground/[0.03] backdrop-blur-xl border border-foreground/10 p-8 rounded-[20px];
 }
 .italic-none {
   font-style: normal !important;

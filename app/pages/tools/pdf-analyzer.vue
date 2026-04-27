@@ -34,18 +34,18 @@ const handleUpload = () => {
       <!-- Hero -->
       <div class="text-center max-w-3xl mx-auto mb-20">
         <span class="badge-gradient mb-8">Free Utility</span>
-        <h1 class="text-6xl md:text-8xl font-extrabold mb-10 tracking-tighter leading-[0.85] text-white">
+        <h1 class="text-6xl md:text-8xl font-extrabold mb-10 tracking-tighter leading-[0.85] text-foreground">
           PDF AI <br />
           <span class="text-gradient">Analyzer.</span>
         </h1>
-        <p class="text-xl text-gray-400 font-medium leading-relaxed mb-12">
+        <p class="text-xl text-foreground/70 font-medium leading-relaxed mb-12">
           Upload any business document to instantly extract key insights, generate summaries, and prepare it for your AI Agent training.
         </p>
 
         <!-- Dropzone -->
         <div 
           @click="$refs.fileInput.click()"
-          class="glass-card p-16 border-2 border-dashed border-white/10 hover:border-primary/40 transition-all cursor-pointer group relative overflow-hidden"
+          class="glass-card p-16 border-2 border-dashed border-foreground/10 hover:border-primary/40 transition-all cursor-pointer group relative overflow-hidden"
         >
           <input type="file" ref="fileInput" class="hidden" @change="e => file = e.target.files[0]" />
           
@@ -53,10 +53,10 @@ const handleUpload = () => {
             <div class="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500">
                <FileText class="w-10 h-10 text-primary" />
             </div>
-            <h3 class="text-2xl font-bold text-white mb-4">
+            <h3 class="text-2xl font-bold text-foreground mb-4">
               {{ file ? file.name : 'Drop your PDF here' }}
             </h3>
-            <p class="text-gray-500 font-medium mb-10">Max file size: 10MB. We support multi-page business reports.</p>
+            <p class="text-foreground/50 font-medium mb-10">Max file size: 10MB. We support multi-page business reports.</p>
             
             <button 
               v-if="file"
@@ -80,20 +80,20 @@ const handleUpload = () => {
           { title: 'Instant Extraction', desc: 'No more manual reading. Get the facts in seconds.', icon: Search },
           { title: 'Agent Ready', desc: 'Formatted perfectly for ReplySuite AI training.', icon: Cpu },
           { title: 'Secure & Private', desc: 'Files are processed at the edge and never stored.', icon: ShieldCheck },
-        ]" :key="feat.title" class="glass-card p-10 border-white/5">
-          <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-8">
-            <component :is="feat.icon" class="w-6 h-6 text-gray-400" />
+        ]" :key="feat.title" class="glass-card p-10 border-foreground/5">
+          <div class="w-12 h-12 rounded-2xl bg-foreground/5 flex items-center justify-center mb-8">
+            <component :is="feat.icon" class="w-6 h-6 text-foreground/70" />
           </div>
-          <h4 class="text-xl font-bold text-white mb-4 tracking-tight">{{ feat.title }}</h4>
-          <p class="text-gray-500 font-medium leading-relaxed">{{ feat.desc }}</p>
+          <h4 class="text-xl font-bold text-foreground mb-4 tracking-tight">{{ feat.title }}</h4>
+          <p class="text-foreground/50 font-medium leading-relaxed">{{ feat.desc }}</p>
         </div>
       </div>
 
       <!-- Conversion Footer -->
-      <section class="bg-white/[0.02] p-16 rounded-[48px] border border-white/5 flex flex-col md:flex-row items-center justify-between gap-12">
+      <section class="bg-foreground/[0.02] p-16 rounded-[48px] border border-foreground/5 flex flex-col md:flex-row items-center justify-between gap-12">
         <div class="max-w-xl">
-          <h2 class="text-4xl font-extrabold text-white mb-6 tracking-tight">Like the results?</h2>
-          <p class="text-gray-400 font-medium leading-relaxed">
+          <h2 class="text-4xl font-extrabold text-foreground mb-6 tracking-tight">Like the results?</h2>
+          <p class="text-foreground/70 font-medium leading-relaxed">
             Create your full AI Agent in under 2 minutes. Train it on your business data and deploy it to Instagram, WhatsApp, or your website today.
           </p>
         </div>

@@ -179,8 +179,8 @@ const formatDate = (d: string) => {
     <!-- Header + Filters -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-white uppercase">Intelligence Analytics</h2>
-        <p class="text-gray-500 text-sm mt-1">Real-time data across all your AI channels and agents.</p>
+        <h2 class="text-xl font-bold tracking-tight text-foreground uppercase">Intelligence Analytics</h2>
+        <p class="text-foreground/50 text-sm mt-1">Real-time data across all your AI channels and agents.</p>
       </div>
 
       <div class="flex items-center gap-3 flex-wrap">
@@ -196,10 +196,10 @@ const formatDate = (d: string) => {
         <button
           @click="refresh()"
           :disabled="isLoading"
-          class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-5 py-3 flex items-center gap-2 transition-all group active:scale-95"
+          class="bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 rounded-xl px-5 py-3 flex items-center gap-2 transition-all group active:scale-95"
         >
           <RefreshCw :class="['w-4 h-4 text-primary transition-transform duration-700', isLoading ? 'animate-spin' : 'group-hover:rotate-180']" />
-          <span class="text-[10px] font-bold text-white uppercase tracking-widest">Refresh</span>
+          <span class="text-[10px] font-bold text-foreground uppercase tracking-widest">Refresh</span>
         </button>
       </div>
     </div>
@@ -207,19 +207,19 @@ const formatDate = (d: string) => {
     <!-- LOADING -->
     <template v-if="isLoading && !analytics">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div v-for="i in 4" :key="i" class="bg-white/5 border border-white/10 p-7 rounded-[2rem]">
+        <div v-for="i in 4" :key="i" class="bg-foreground/5 border border-foreground/10 p-7 rounded-[2rem]">
           <Skeleton width="48px" height="48px" rounded="14px" class="mb-5" />
           <Skeleton width="100px" height="10px" class="mb-3" />
           <Skeleton width="130px" height="30px" />
         </div>
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 bg-white/5 border border-white/10 rounded-[2.5rem] p-10 min-h-[320px]">
+        <div class="lg:col-span-2 bg-foreground/5 border border-foreground/10 rounded-[2.5rem] p-10 min-h-[320px]">
           <Skeleton width="40%" height="2rem" class="mb-2" />
           <Skeleton width="60%" height="1rem" class="mb-10" />
           <Skeleton width="100%" height="12rem" rounded="1rem" />
         </div>
-        <div class="bg-white/5 border border-white/10 rounded-[2.5rem] p-10">
+        <div class="bg-foreground/5 border border-foreground/10 rounded-[2.5rem] p-10">
           <Skeleton width="50%" height="2rem" class="mb-8" />
           <div class="space-y-5">
             <div v-for="i in 3" :key="i" class="flex gap-4 items-center">
@@ -242,11 +242,11 @@ const formatDate = (d: string) => {
         <div
           v-for="card in statCards"
           :key="card.label"
-          class="bg-white/[0.03] border border-white/[0.06] rounded-[2rem] p-7 space-y-4 hover:border-white/10 transition-all group relative overflow-hidden"
+          class="bg-foreground/[0.02] border border-foreground/5 rounded-[2rem] p-7 space-y-4 hover:border-foreground/10 transition-all group relative overflow-hidden"
         >
           <div class="absolute -top-10 -right-10 w-28 h-28 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
           <div class="flex items-center justify-between relative">
-            <div class="bg-white/[0.06] p-3 rounded-2xl border border-white/[0.06]">
+            <div class="bg-foreground/5 p-3 rounded-2xl border border-foreground/5">
               <component :is="card.icon" class="w-5 h-5 text-primary" />
             </div>
             <span class="text-[9px] font-black uppercase tracking-widest flex items-center gap-1" :style="{ color: card.trendColor }">
@@ -254,9 +254,9 @@ const formatDate = (d: string) => {
             </span>
           </div>
           <div class="relative">
-            <p class="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">{{ card.label }}</p>
-            <h3 class="text-3xl font-black text-white tracking-tight tabular-nums">{{ card.value }}</h3>
-            <p class="text-[10px] text-gray-600 mt-1 font-medium">{{ card.sub }}</p>
+            <p class="text-[9px] font-black text-foreground/50 uppercase tracking-[0.2em] mb-1">{{ card.label }}</p>
+            <h3 class="text-3xl font-black text-foreground tracking-tight tabular-nums">{{ card.value }}</h3>
+            <p class="text-[10px] text-foreground/50 mt-1 font-medium">{{ card.sub }}</p>
           </div>
         </div>
       </div>
@@ -265,42 +265,42 @@ const formatDate = (d: string) => {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         <!-- Timeline Chart -->
-        <div class="lg:col-span-2 bg-white/[0.03] border border-white/[0.06] rounded-[2.5rem] p-10 space-y-8 relative overflow-hidden">
+        <div class="lg:col-span-2 bg-foreground/[0.02] border border-foreground/5 rounded-[2.5rem] p-10 space-y-8 relative overflow-hidden">
           <div class="absolute top-8 right-8 flex items-center gap-2">
             <div class="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Live Stream</span>
+            <span class="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Live Stream</span>
           </div>
           <div>
-            <h2 class="text-xl font-black text-white tracking-tight uppercase">Engagement Timeline</h2>
-            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Chat Sessions — Last 14 Days</p>
+            <h2 class="text-xl font-black text-foreground tracking-tight uppercase">Engagement Timeline</h2>
+            <p class="text-[10px] font-bold text-foreground/50 uppercase tracking-widest mt-1">Chat Sessions — Last 14 Days</p>
           </div>
 
           <!-- SVG -->
           <div class="relative h-48 w-full">
             <!-- Empty state for chart -->
             <div v-if="chartData.every((d: any) => d.count === 0)" class="absolute inset-0 flex flex-col items-center justify-center gap-3">
-              <Activity class="w-8 h-8 text-gray-700" />
-              <p class="text-[10px] text-gray-600 uppercase tracking-widest font-black">No session data in the last 14 days</p>
+              <Activity class="w-8 h-8 text-foreground/20" />
+              <p class="text-[10px] text-foreground/50 uppercase tracking-widest font-black">No session data in the last 14 days</p>
             </div>
             <svg v-else viewBox="0 0 100 100" preserveAspectRatio="none" class="w-full h-full overflow-visible">
               <defs>
                 <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#D4AF37" stop-opacity="0.25" />
-                  <stop offset="100%" stop-color="#D4AF37" stop-opacity="0" />
+                  <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.25" />
+                  <stop offset="100%" stop-color="var(--primary)" stop-opacity="0" />
                 </linearGradient>
               </defs>
               <path :d="areaPath" fill="url(#areaGrad)" />
-              <path :d="linePath" fill="none" stroke="#D4AF37" stroke-width="0.6" stroke-linecap="round" stroke-linejoin="round" />
+              <path :d="linePath" fill="none" stroke="var(--primary)" stroke-width="0.6" stroke-linecap="round" stroke-linejoin="round" />
               <g v-for="point in chartData" :key="point.date">
                 <title>{{ point.date }}: {{ point.count }} sessions</title>
-                <circle :cx="point.x" :cy="point.y" r="1.2" fill="#000" stroke="#D4AF37" stroke-width="0.4" class="cursor-pointer" />
+                <circle :cx="point.x" :cy="point.y" r="1.2" fill="var(--background)" stroke="var(--primary)" stroke-width="0.4" class="cursor-pointer" />
               </g>
             </svg>
             <div class="absolute -bottom-5 left-0 w-full flex justify-between px-1">
               <span
                 v-for="point in chartData.filter((_: any, i: number) => i % 3 === 0)"
                 :key="point.date"
-                class="text-[8px] font-black text-gray-600 uppercase"
+                class="text-[8px] font-black text-foreground/50 uppercase"
               >
                 {{ formatDate(point.date) }}
               </span>
@@ -308,18 +308,18 @@ const formatDate = (d: string) => {
           </div>
 
           <!-- Chart Footer -->
-          <div class="grid grid-cols-3 gap-4 pt-6 border-t border-white/[0.06]">
+          <div class="grid grid-cols-3 gap-4 pt-6 border-t border-foreground/5">
             <div class="text-center">
-              <p class="text-[9px] text-gray-500 uppercase tracking-widest font-black mb-1">Peak Day</p>
-              <p class="text-lg font-black text-white tabular-nums">{{ chartPeak }}</p>
+              <p class="text-[9px] text-foreground/50 uppercase tracking-widest font-black mb-1">Peak Day</p>
+              <p class="text-lg font-black text-foreground tabular-nums">{{ chartPeak }}</p>
             </div>
-            <div class="text-center border-x border-white/[0.06]">
-              <p class="text-[9px] text-gray-500 uppercase tracking-widest font-black mb-1">Total (14d)</p>
-              <p class="text-lg font-black text-white tabular-nums">{{ chartTotal }}</p>
+            <div class="text-center border-x border-foreground/5">
+              <p class="text-[9px] text-foreground/50 uppercase tracking-widest font-black mb-1">Total (14d)</p>
+              <p class="text-lg font-black text-foreground tabular-nums">{{ chartTotal }}</p>
             </div>
             <div class="text-center">
-              <p class="text-[9px] text-gray-500 uppercase tracking-widest font-black mb-1">Daily Avg</p>
-              <p class="text-lg font-black text-white tabular-nums">{{ chartAvg }}</p>
+              <p class="text-[9px] text-foreground/50 uppercase tracking-widest font-black mb-1">Daily Avg</p>
+              <p class="text-lg font-black text-foreground tabular-nums">{{ chartAvg }}</p>
             </div>
           </div>
         </div>
@@ -328,24 +328,24 @@ const formatDate = (d: string) => {
         <div class="space-y-5">
 
           <!-- Channel Breakdown -->
-          <div class="bg-white/[0.03] border border-white/[0.06] rounded-[2rem] p-7 space-y-5">
+          <div class="bg-foreground/[0.02] border border-foreground/5 rounded-[2rem] p-7 space-y-5">
             <div>
-              <h3 class="text-sm font-black text-white uppercase tracking-tight">Channel Breakdown</h3>
-              <p class="text-[9px] text-gray-500 uppercase tracking-widest mt-0.5">Sessions by source</p>
+              <h3 class="text-sm font-black text-foreground uppercase tracking-tight">Channel Breakdown</h3>
+              <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-0.5">Sessions by source</p>
             </div>
             <div class="space-y-4">
               <div v-for="ch in channelBars" :key="ch.label" class="space-y-1.5">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
                     <component :is="ch.icon" class="w-3.5 h-3.5" :style="{ color: ch.color }" />
-                    <span class="text-[10px] font-black text-white uppercase tracking-wider">{{ ch.label }}</span>
+                    <span class="text-[10px] font-black text-foreground uppercase tracking-wider">{{ ch.label }}</span>
                   </div>
                   <div class="flex items-center gap-1.5">
-                    <span class="text-[11px] font-black text-white tabular-nums">{{ ch.count }}</span>
-                    <span class="text-[9px] font-bold text-gray-600">{{ ch.pct }}%</span>
+                    <span class="text-[11px] font-black text-foreground tabular-nums">{{ ch.count }}</span>
+                    <span class="text-[9px] font-bold text-foreground/50">{{ ch.pct }}%</span>
                   </div>
                 </div>
-                <div class="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                <div class="w-full h-1.5 bg-foreground/5 rounded-full overflow-hidden">
                   <div
                     class="h-full rounded-full transition-all duration-700"
                     :style="{ width: `${ch.pct || 0}%`, backgroundColor: ch.color }"
@@ -356,12 +356,12 @@ const formatDate = (d: string) => {
           </div>
 
           <!-- Top Agents -->
-          <div class="bg-white/[0.03] border border-white/[0.06] rounded-[2rem] p-7 space-y-5">
+          <div class="bg-foreground/[0.02] border border-foreground/5 rounded-[2rem] p-7 space-y-5">
             <div>
-              <h3 class="text-sm font-black text-white uppercase tracking-tight">Top Agents</h3>
-              <p class="text-[9px] text-gray-500 uppercase tracking-widest mt-0.5">By conversation count</p>
+              <h3 class="text-sm font-black text-foreground uppercase tracking-tight">Top Agents</h3>
+              <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-0.5">By conversation count</p>
             </div>
-            <div v-if="!analytics.topAgents?.length" class="flex flex-col items-center py-6 text-gray-700">
+            <div v-if="!analytics.topAgents?.length" class="flex flex-col items-center py-6 text-foreground/30">
               <Bot class="w-7 h-7 opacity-20 mb-2" />
               <p class="text-[9px] uppercase tracking-widest font-black">No agent data yet</p>
             </div>
@@ -369,21 +369,21 @@ const formatDate = (d: string) => {
               <div
                 v-for="(agent, idx) in analytics.topAgents"
                 :key="agent.id"
-                class="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:border-primary/20 transition-all group"
+                class="flex items-center gap-3 p-3 rounded-2xl bg-foreground/[0.01] border border-foreground/[0.03] hover:border-primary/20 transition-all group"
               >
-                <div class="w-8 h-8 rounded-xl bg-white/[0.05] flex items-center justify-center text-[10px] font-black text-gray-500 group-hover:text-primary transition-colors shrink-0">
+                <div class="w-8 h-8 rounded-xl bg-foreground/5 flex items-center justify-center text-[10px] font-black text-foreground/50 group-hover:text-primary transition-colors shrink-0">
                   #{{ idx + 1 }}
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-[11px] font-black text-white uppercase truncate">{{ agent.name }}</p>
-                  <div class="w-full h-1 bg-white/[0.06] rounded-full mt-1.5 overflow-hidden">
+                  <p class="text-[11px] font-black text-foreground uppercase truncate">{{ agent.name }}</p>
+                  <div class="w-full h-1 bg-foreground/5 rounded-full mt-1.5 overflow-hidden">
                     <div
                       class="h-full bg-primary rounded-full"
                       :style="{ width: analytics.topAgents[0]?.count > 0 ? `${(agent.count / analytics.topAgents[0].count) * 100}%` : '0%' }"
                     />
                   </div>
                 </div>
-                <span class="text-[11px] font-black text-white shrink-0 tabular-nums">{{ agent.count }}</span>
+                <span class="text-[11px] font-black text-foreground shrink-0 tabular-nums">{{ agent.count }}</span>
               </div>
             </div>
           </div>
@@ -392,33 +392,33 @@ const formatDate = (d: string) => {
 
       <!-- Bottom Stats Row -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white/[0.03] border border-white/[0.06] rounded-[2rem] p-6 text-center hover:border-white/10 transition-all">
+        <div class="bg-foreground/[0.02] border border-foreground/5 rounded-[2rem] p-6 text-center hover:border-foreground/10 transition-all">
           <Database class="w-5 h-5 text-primary mx-auto mb-3" />
-          <p class="text-2xl font-black text-white tabular-nums">{{ analytics.summary.totalDataSources }}</p>
-          <p class="text-[9px] text-gray-500 uppercase tracking-widest mt-1 font-black">Data Sources</p>
+          <p class="text-2xl font-black text-foreground tabular-nums">{{ analytics.summary.totalDataSources }}</p>
+          <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-1 font-black">Data Sources</p>
         </div>
 
-        <div class="bg-white/[0.03] border border-white/[0.06] rounded-[2rem] p-6 text-center hover:border-white/10 transition-all">
+        <div class="bg-foreground/[0.02] border border-foreground/5 rounded-[2rem] p-6 text-center hover:border-foreground/10 transition-all">
           <Phone class="w-5 h-5 text-green-500 mx-auto mb-3" />
-          <p class="text-2xl font-black text-white tabular-nums">{{ analytics.summary.totalWhatsappAccounts }}</p>
-          <p class="text-[9px] text-gray-500 uppercase tracking-widest mt-1 font-black">WhatsApp Lines</p>
+          <p class="text-2xl font-black text-foreground tabular-nums">{{ analytics.summary.totalWhatsappAccounts }}</p>
+          <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-1 font-black">WhatsApp Lines</p>
         </div>
-        <div class="bg-white/[0.03] border border-white/[0.06] rounded-[2rem] p-6 text-center hover:border-white/10 transition-all">
+        <div class="bg-foreground/[0.02] border border-foreground/5 rounded-[2rem] p-6 text-center hover:border-foreground/10 transition-all">
           <Zap class="w-5 h-5 text-yellow-400 mx-auto mb-3" />
-          <p class="text-2xl font-black text-white tabular-nums">{{ analytics.summary.activeTriggers }}</p>
-          <p class="text-[9px] text-gray-500 uppercase tracking-widest mt-1 font-black">Active Rules</p>
+          <p class="text-2xl font-black text-foreground tabular-nums">{{ analytics.summary.activeTriggers }}</p>
+          <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-1 font-black">Active Rules</p>
         </div>
       </div>
 
     </template>
 
     <!-- Error State -->
-    <div v-else class="text-center py-36 bg-white/[0.03] rounded-[3rem] border border-dashed border-white/10">
+    <div v-else class="text-center py-36 bg-foreground/[0.02] rounded-[3rem] border border-dashed border-foreground/10">
       <div class="bg-red-500/10 text-red-500 w-16 h-16 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
         <AlertCircle class="w-8 h-8" />
       </div>
-      <h2 class="text-xl font-black text-white tracking-tight uppercase">Failed to Load Analytics</h2>
-      <p class="text-gray-500 text-xs font-bold tracking-widest uppercase mt-2">Unable to retrieve your intelligence data.</p>
+      <h2 class="text-xl font-black text-foreground tracking-tight uppercase">Failed to Load Analytics</h2>
+      <p class="text-foreground/50 text-xs font-bold tracking-widest uppercase mt-2">Unable to retrieve your intelligence data.</p>
       <button @click="refresh()" class="mt-6 bg-primary text-black text-[10px] font-black uppercase tracking-[0.2em] px-8 py-3.5 rounded-xl hover:opacity-90 transition-all">
         Retry
       </button>

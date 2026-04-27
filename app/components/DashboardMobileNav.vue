@@ -33,13 +33,13 @@ const navLinks = [
 
 <template>
   <nav class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-lg">
-    <div class="glass-dock flex items-center justify-around py-3 px-4 rounded-[2rem] border border-white/10 shadow-2xl shadow-black">
+    <div class="glass-dock flex items-center justify-around py-3 px-4 rounded-[2rem] border border-foreground/10 shadow-2xl shadow-foreground/20">
       <NuxtLink 
         v-for="link in navLinks" 
         :key="link.name" 
         :to="link.href"
         class="relative flex flex-col items-center gap-1 py-1 transition-all duration-300 group"
-        :class="[route.path === link.href ? 'text-primary' : 'text-gray-500']"
+        :class="[route.path === link.href ? 'text-primary' : 'text-foreground/40']"
       >
         <div class="relative flex items-center justify-center">
            <component 
@@ -70,9 +70,7 @@ const navLinks = [
 
 <style scoped>
 .glass-dock {
-  background: rgba(10, 10, 10, 0.85);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  @apply bg-background/80 backdrop-blur-2xl saturate-[180%];
 }
 
 .router-link-active span {

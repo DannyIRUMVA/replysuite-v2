@@ -28,7 +28,7 @@ const isActive = (href: string) => {
       :key="tab.id" 
       :to="tab.href"
       class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all group relative overflow-hidden"
-      :class="isActive(tab.href) ? 'bg-primary/10 text-primary font-bold shadow-lg shadow-primary/5' : 'text-gray-400 hover:text-white hover:bg-white/5'"
+      :class="isActive(tab.href) ? 'bg-primary/10 text-primary font-bold shadow-lg shadow-primary/5' : 'text-foreground/50 hover:text-foreground hover:bg-foreground/5'"
     >
       <div v-if="isActive(tab.href)" class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
       <component :is="tab.icon" class="w-5 h-5 group-hover:scale-110 transition-transform" />

@@ -177,7 +177,7 @@ useHead({
 
 <template>
   <div class="w-full space-y-12 pb-20">
-    <NuxtLink to="/dashboard/integrations/whatsapp" class="flex items-center gap-2 text-gray-500 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest mb-2 group w-fit">
+    <NuxtLink to="/dashboard/integrations/whatsapp" class="flex items-center gap-2 text-foreground/50 hover:text-foreground transition-all text-[10px] font-black uppercase tracking-widest mb-2 group w-fit">
         <ArrowLeft class="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
         Back to WhatsApp Hub
     </NuxtLink>
@@ -189,17 +189,17 @@ useHead({
           <MessageSquare class="w-8 h-8 text-primary" />
         </div>
         <div>
-          <h2 class="text-3xl font-black text-white tracking-tighter uppercase">{{ waAccount?.phone_number || 'Protocol Loading...' }}</h2>
-          <p class="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Live Node Configuration</p>
+          <h2 class="text-3xl font-black text-foreground tracking-tighter uppercase">{{ waAccount?.phone_number || 'Protocol Loading...' }}</h2>
+          <p class="text-xs text-foreground/50 font-bold uppercase tracking-widest mt-1">Live Node Configuration</p>
         </div>
       </div>
       
       <div class="flex items-center gap-4">
-        <button @click="sendTestMessage" class="px-8 py-4 rounded-xl bg-white/5 border border-white/5 text-white font-bold uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all flex items-center gap-3">
+        <button @click="sendTestMessage" class="px-8 py-4 rounded-xl bg-foreground/5 border border-foreground/10 text-foreground font-bold uppercase tracking-widest text-[10px] hover:bg-foreground/10 transition-all flex items-center gap-3">
           <Send class="w-3.5 h-3.5" />
           Quick Test
         </button>
-        <button @click="deleteAccount" class="px-8 py-4 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 font-bold uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-white transition-all flex items-center gap-3">
+        <button @click="deleteAccount" class="px-8 py-4 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 font-bold uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-foreground transition-all flex items-center gap-3">
           <Trash2 class="w-3.5 h-3.5" />
           Disconnect
         </button>
@@ -207,10 +207,10 @@ useHead({
     </div>
 
     <div v-if="isLoading" class="space-y-12">
-        <div class="h-64 bg-white/5 rounded-[3rem] animate-pulse"></div>
+        <div class="h-64 bg-foreground/5 rounded-[3rem] animate-pulse"></div>
         <div class="grid md:grid-cols-2 gap-8">
-            <div class="h-48 bg-white/5 rounded-[2rem] animate-pulse"></div>
-            <div class="h-48 bg-white/5 rounded-[2rem] animate-pulse"></div>
+            <div class="h-48 bg-foreground/5 rounded-[2rem] animate-pulse"></div>
+            <div class="h-48 bg-foreground/5 rounded-[2rem] animate-pulse"></div>
         </div>
     </div>
 
@@ -218,14 +218,14 @@ useHead({
       <!-- Node Configuration Section -->
       <section class="grid lg:grid-cols-3 gap-8">
         <!-- AI Brain Mapping -->
-        <div class="lg:col-span-2 glass-card p-10 bg-[#0a0a0a] border-white/5 relative overflow-hidden">
+        <div class="lg:col-span-2 glass-card p-10 bg-background border-foreground/10 relative overflow-hidden">
           <div class="flex items-center gap-4 mb-10">
             <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
               <Bot class="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h3 class="text-xl font-black text-white uppercase tracking-tighter">AI Agent Mapping</h3>
-              <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Connect an AI Mind to this number</p>
+              <h3 class="text-xl font-black text-foreground uppercase tracking-tighter">AI Agent Mapping</h3>
+              <p class="text-[10px] text-foreground/50 font-bold uppercase tracking-widest">Connect an AI Mind to this number</p>
             </div>
           </div>
 
@@ -234,10 +234,10 @@ useHead({
               <select 
                 :value="waAccount.chatbot_id"
                 @change="(e: any) => updateMapping(e.target.value || null)"
-                class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-sm font-black text-white focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer pr-12"
+                class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-6 py-5 text-sm font-black text-foreground focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer pr-12"
               >
-                <option :value="null" class="bg-[#0a0a0a]">Select Agent...</option>
-                <option v-for="agent in agents" :key="agent.id" :value="agent.id" class="bg-[#0a0a0a]">
+                <option :value="null" class="bg-background">Select Agent...</option>
+                <option v-for="agent in agents" :key="agent.id" :value="agent.id" class="bg-background">
                   {{ agent.name }}
                 </option>
               </select>
@@ -247,7 +247,7 @@ useHead({
             <div v-if="waAccount.chatbot_id" class="p-6 bg-green-500/10 border border-green-500/20 rounded-[2rem] flex items-center gap-4">
               <CheckCircle2 class="w-6 h-6 text-green-500" />
               <div>
-                <p class="text-[11px] font-black text-white uppercase tracking-widest">Connection Active</p>
+                <p class="text-[11px] font-black text-foreground uppercase tracking-widest">Connection Active</p>
                 <p class="text-[9px] font-bold text-green-500/60 uppercase tracking-tighter">Inbound traffic is now being routed to the AI agent.</p>
               </div>
             </div>
@@ -255,19 +255,19 @@ useHead({
         </div>
 
         <!-- Node Status -->
-        <div class="glass-card p-10 bg-white/[0.02] border-white/5 flex flex-col justify-between">
+        <div class="glass-card p-10 bg-foreground/[0.02] border-foreground/10 flex flex-col justify-between">
            <div class="space-y-6">
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Current Status</span>
+                <span class="text-[10px] font-black text-foreground/50 uppercase tracking-widest">Current Status</span>
                 <span :class="['px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest', 
                   waAccount.status === 'deployed' ? 'bg-green-500/20 text-green-500' : 'bg-orange-500/20 text-orange-500']">
                   {{ waAccount.status }}
                 </span>
               </div>
-              <div class="w-full h-px bg-white/5"></div>
+              <div class="w-full h-px bg-foreground/5"></div>
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Asset Category</span>
-                <span class="text-[10px] font-black text-white uppercase tracking-widest italic">Official WABA</span>
+                <span class="text-[10px] font-black text-foreground/50 uppercase tracking-widest">Asset Category</span>
+                <span class="text-[10px] font-black text-foreground uppercase tracking-widest italic">Official WABA</span>
               </div>
            </div>
 
@@ -287,25 +287,25 @@ useHead({
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <Terminal class="w-5 h-5 text-primary/60" />
-                <h2 class="text-2xl font-black text-white uppercase tracking-tighter">Meta Review Toolkit</h2>
+                <h2 class="text-2xl font-black text-foreground uppercase tracking-tighter">Meta Review Toolkit</h2>
             </div>
         </div>
 
         <div class="grid lg:grid-cols-2 gap-8">
             <!-- Test Messenger -->
-            <div class="glass-card p-10 bg-black/40 border-white/5 space-y-8">
+            <div class="glass-card p-10 bg-foreground/5 border-foreground/10 space-y-8">
                 <div class="flex items-center gap-3">
                     <Send class="w-5 h-5 text-primary/60" />
-                    <span class="text-[10px] font-black uppercase tracking-widest text-white">Live Message Testing</span>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-foreground">Live Message Testing</span>
                 </div>
                 <div class="space-y-4">
                     <div class="space-y-2">
-                      <label class="text-[9px] font-black text-gray-600 uppercase tracking-widest ml-1">Recipient Number</label>
-                      <input v-model="testPhone" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" placeholder="+123..." class="w-full bg-white/[0.02] border border-white/10 rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary/50 transition-all font-mono" />
+                      <label class="text-[9px] font-black text-foreground/50 uppercase tracking-widest ml-1">Recipient Number</label>
+                      <input v-model="testPhone" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" placeholder="+123..." class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-5 py-4 text-xs font-bold text-foreground focus:outline-none focus:border-primary/50 transition-all font-mono" />
                     </div>
                     <div class="space-y-2">
-                      <label class="text-[9px] font-black text-gray-600 uppercase tracking-widest ml-1">Message Payload</label>
-                      <textarea v-model="testMessage" @focus="setInteracting(true)" @blur="setInteracting(false)" rows="3" class="w-full bg-white/[0.02] border border-white/10 rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary/50 transition-all resize-none"></textarea>
+                      <label class="text-[9px] font-black text-foreground/50 uppercase tracking-widest ml-1">Message Payload</label>
+                      <textarea v-model="testMessage" @focus="setInteracting(true)" @blur="setInteracting(false)" rows="3" class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-5 py-4 text-xs font-bold text-foreground focus:outline-none focus:border-primary/50 transition-all resize-none"></textarea>
                     </div>
                     <button @click="sendTestMessage" :disabled="isSendingTest" class="w-full py-5 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 transition-all flex items-center justify-center gap-3 shadow-2xl shadow-primary/20">
                         <Loader2 v-if="isSendingTest" class="w-4 h-4 animate-spin" />
@@ -316,21 +316,21 @@ useHead({
             </div>
 
             <!-- Template Deployer -->
-            <div class="glass-card p-10 bg-black/40 border-white/5 space-y-8">
+            <div class="glass-card p-10 bg-foreground/5 border-foreground/10 space-y-8">
                 <div class="flex items-center gap-3">
                     <Layout class="w-5 h-5 text-primary/60" />
-                    <span class="text-[10px] font-black uppercase tracking-widest text-white">Review Template Proof</span>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-foreground">Review Template Proof</span>
                 </div>
                 <div class="space-y-4">
                     <div class="space-y-2">
-                      <label class="text-[9px] font-black text-gray-600 uppercase tracking-widest ml-1">Template Name</label>
-                      <input v-model="templateName" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" placeholder="meta_review_v1" class="w-full bg-white/[0.02] border border-white/10 rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary/50 transition-all font-mono" />
+                      <label class="text-[9px] font-black text-foreground/50 uppercase tracking-widest ml-1">Template Name</label>
+                      <input v-model="templateName" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" placeholder="meta_review_v1" class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-5 py-4 text-xs font-bold text-foreground focus:outline-none focus:border-primary/50 transition-all font-mono" />
                     </div>
                     <div class="space-y-2">
-                      <label class="text-[9px] font-black text-gray-600 uppercase tracking-widest ml-1">Template Body</label>
-                      <textarea v-model="templateBody" @focus="setInteracting(true)" @blur="setInteracting(false)" rows="3" class="w-full bg-white/[0.02] border border-white/10 rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary/50 transition-all resize-none"></textarea>
+                      <label class="text-[9px] font-black text-foreground/50 uppercase tracking-widest ml-1">Template Body</label>
+                      <textarea v-model="templateBody" @focus="setInteracting(true)" @blur="setInteracting(false)" rows="3" class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-5 py-4 text-xs font-bold text-foreground focus:outline-none focus:border-primary/50 transition-all resize-none"></textarea>
                     </div>
-                    <button @click="createReviewTemplate" :disabled="isCreatingTemplate" class="w-full py-5 bg-white/5 text-white border border-white/10 font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-white/10 transition-all flex items-center justify-center gap-3">
+                    <button @click="createReviewTemplate" :disabled="isCreatingTemplate" class="w-full py-5 bg-foreground/5 text-foreground border border-foreground/10 font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-foreground/10 transition-all flex items-center justify-center gap-3">
                         <Loader2 v-if="isCreatingTemplate" class="w-4 h-4 animate-spin" />
                         Deploy to Meta
                     </button>

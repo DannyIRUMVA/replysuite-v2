@@ -25,26 +25,26 @@ const colors = {
       <div 
         v-for="toast in toasts" 
         :key="toast.id"
-        class="pointer-events-auto group min-w-[320px] max-w-[450px] glass-card p-4 flex items-start gap-4 shadow-2xl relative overflow-hidden backdrop-blur-2xl bg-black/60 border-white/5"
+        class="pointer-events-auto group min-w-[320px] max-w-[450px] glass-card p-4 flex items-start gap-4 shadow-2xl relative overflow-hidden backdrop-blur-2xl bg-background/95 border-foreground/10"
       >
         <div class="flex-shrink-0 mt-1">
           <component :is="icons[toast.type]" :class="['w-5 h-5', colors[toast.type]]" />
         </div>
         
         <div class="flex-grow pr-6">
-          <p class="text-[11px] font-bold tracking-widest text-[#888] uppercase mb-0.5">
+          <p class="text-[11px] font-bold tracking-widest text-foreground/40 uppercase mb-0.5">
             {{ toast.type }}
           </p>
-          <p class="text-xs font-medium text-white/90 leading-relaxed">
+          <p class="text-xs font-medium text-foreground/90 leading-relaxed">
             {{ toast.message }}
           </p>
         </div>
 
         <button 
           @click="removeToast(toast.id)"
-          class="absolute top-4 right-4 p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-white/5 transition-all"
+          class="absolute top-4 right-4 p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-foreground/5 transition-all"
         >
-          <X class="w-3.5 h-3.5 text-gray-500" />
+          <X class="w-3.5 h-3.5 text-foreground/40" />
         </button>
 
         <!-- Progress bar decorator -->

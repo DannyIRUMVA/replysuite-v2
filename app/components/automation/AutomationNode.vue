@@ -18,7 +18,7 @@ defineProps<{
       v-if="!isFirst" 
       class="w-0.5 h-8 bg-gradient-to-b"
       :class="[
-        status === 'pending' ? 'from-white/5 to-white/5' : 
+        status === 'pending' ? 'from-foreground/5 to-foreground/5' : 
         status === 'active' ? 'from-primary/20 to-primary/50' : 
         'from-primary to-primary'
       ]"
@@ -34,7 +34,7 @@ defineProps<{
       <div 
         class="relative overflow-hidden glass-card p-6 border transition-all duration-500"
         :class="[
-          status === 'active' ? 'bg-primary/[0.03] border-primary/30 shadow-[0_0_30px_-10px_rgba(212,175,55,0.2)]' : 'bg-white/[0.02] border-white/10'
+          status === 'active' ? 'bg-primary/[0.03] border-primary/30 shadow-[0_0_30px_-10px_rgba(var(--primary),0.2)]' : 'bg-foreground/[0.02] border-foreground/10'
         ]"
       >
         <!-- Background Glow for Active Node -->
@@ -50,7 +50,7 @@ defineProps<{
             :class="[
               status === 'completed' ? 'bg-primary text-black' : 
               status === 'active' ? 'bg-primary/20 text-primary border border-primary/30' : 
-              'bg-white/5 text-gray-500 border border-white/10'
+              'bg-foreground/5 text-foreground/40 border border-foreground/10'
             ]"
           >
             <component :is="icon" class="w-6 h-6" />
@@ -61,7 +61,7 @@ defineProps<{
             <div class="flex items-center justify-between gap-4 mb-1">
               <h3 
                 class="text-sm font-black uppercase tracking-widest italic-none transition-colors"
-                :class="status === 'active' ? 'text-primary' : 'text-white'"
+                :class="status === 'active' ? 'text-primary' : 'text-foreground'"
               >
                 {{ title }}
               </h3>
@@ -70,7 +70,7 @@ defineProps<{
                 <Circle v-else-if="status === 'active'" class="w-5 h-5 text-primary/50 animate-pulse" />
               </div>
             </div>
-            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-4">
+            <p class="text-[10px] text-foreground/40 font-bold uppercase tracking-widest mb-4">
               {{ description }}
             </p>
 
@@ -89,8 +89,8 @@ defineProps<{
       class="w-0.5 h-8 bg-gradient-to-b"
       :class="[
         status === 'completed' ? 'from-primary to-primary' : 
-        status === 'active' ? 'from-primary/50 to-white/5' : 
-        'from-white/5 to-white/5'
+        status === 'active' ? 'from-primary/50 to-foreground/5' : 
+        'from-foreground/5 to-foreground/5'
       ]"
     ></div>
   </div>

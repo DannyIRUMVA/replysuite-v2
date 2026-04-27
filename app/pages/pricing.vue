@@ -190,13 +190,13 @@ const faqs = [
 <template>
   <div class="relative min-h-screen">
       <div class="max-w-7xl mx-auto px-6 py-32">
-        <div class="text-center max-w-3xl mx-auto mb-32 border-b border-white/5 pb-20">
+        <div class="text-center max-w-3xl mx-auto mb-32 border-b border-foreground/5 pb-20">
           <span class="badge-gradient mb-10">Investment</span>
-          <h1 class="text-6xl md:text-8xl font-extrabold mb-10 tracking-tighter leading-[0.85] text-white">
+          <h1 class="text-6xl md:text-8xl font-extrabold mb-10 tracking-tighter leading-[0.85] text-foreground">
             Choose your <br />
             <span class="text-gradient">Tier.</span>
           </h1>
-          <p class="text-xl text-gray-400 font-medium leading-relaxed">High-performance AI automation built for every stage of your growth.</p>
+          <p class="text-xl text-foreground/50 font-medium leading-relaxed">High-performance AI automation built for every stage of your growth.</p>
         </div>
 
         <!-- Pricing Cards -->
@@ -204,7 +204,7 @@ const faqs = [
           <div 
             v-for="plan in plans" 
             :key="plan.name"
-            class="glass-card p-12 flex flex-col relative transition-all duration-500 hover:-translate-y-4 border-white/5"
+            class="glass-card p-12 flex flex-col relative transition-all duration-500 hover:-translate-y-4 border-foreground/5"
             :class="plan.popular ? 'border-primary/40 !bg-primary/[0.03]' : ''"
           >
             <div v-if="plan.popular" class="absolute -top-5 left-1/2 -translate-x-1/2 px-6 py-2 bg-primary text-black text-[11px] font-bold tracking-[0.2em] rounded-full shadow-2xl shadow-primary/30 uppercase">
@@ -213,19 +213,19 @@ const faqs = [
 
             <div class="mb-10">
               <h3 class="text-3xl font-bold mb-3 tracking-tight tracking-widest">{{ plan.name }}</h3>
-              <p class="text-sm text-gray-500 font-medium">{{ plan.desc }}</p>
+              <p class="text-sm text-foreground/50 font-medium">{{ plan.desc }}</p>
             </div>
 
             <div class="mb-12 flex items-baseline gap-2">
-              <span class="text-6xl font-extrabold tracking-tighter text-white">${{ plan.price }}</span>
-              <span class="text-gray-500 font-bold tracking-[0.1em] text-[10px] uppercase">/month</span>
+              <span class="text-6xl font-extrabold tracking-tighter text-foreground">${{ plan.price }}</span>
+              <span class="text-foreground/50 font-bold tracking-[0.1em] text-[10px] uppercase">/month</span>
             </div>
 
             <button 
               @click="handleSelect(plan)"
               :disabled="isProcessing === plan.name"
               class="w-full py-5 rounded-full font-bold text-center mb-12 transition-all tracking-[0.1em] text-sm flex items-center justify-center gap-2"
-              :class="plan.popular ? 'btn-gradient' : 'bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20'"
+              :class="plan.popular ? 'btn-gradient' : 'bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10 hover:border-foreground/20'"
             >
               <template v-if="isProcessing === plan.name">
                 <Loader2 class="w-4 h-4 animate-spin" />
@@ -237,7 +237,7 @@ const faqs = [
             </button>
 
             <div class="space-y-6 flex-grow">
-              <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-4 text-sm font-medium text-gray-400">
+              <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-4 text-sm font-medium text-foreground/50">
                 <div class="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <Check class="w-3 h-3 text-primary" />
                 </div>
@@ -249,16 +249,16 @@ const faqs = [
 
         <!-- Plan Comparison Table — machine-readable for AI crawlers -->
         <section class="max-w-5xl mx-auto mb-32 overflow-x-auto">
-          <h2 class="text-3xl font-extrabold tracking-tight text-white text-center mb-12">
+          <h2 class="text-3xl font-extrabold tracking-tight text-foreground text-center mb-12">
             Compare <span class="text-gradient">Plans</span>
           </h2>
           <table class="w-full text-sm border-collapse" aria-label="ReplySuite pricing plan comparison">
             <thead>
-              <tr class="border-b border-white/10">
-                <th class="text-left py-4 px-6 text-gray-400 font-bold uppercase tracking-widest text-[10px]">Feature</th>
-                <th class="py-4 px-6 text-center font-bold text-white">Free<br /><span class="text-primary font-extrabold text-lg">$0</span><span class="text-gray-500 text-[10px]">/mo</span></th>
-                <th class="py-4 px-6 text-center font-bold text-white bg-primary/5 rounded-t-2xl">Silver<br /><span class="text-primary font-extrabold text-lg">$17.88</span><span class="text-gray-500 text-[10px]">/mo</span></th>
-                <th class="py-4 px-6 text-center font-bold text-white">Gold<br /><span class="text-primary font-extrabold text-lg">$26.88</span><span class="text-gray-500 text-[10px]">/mo</span></th>
+              <tr class="border-b border-foreground/10">
+                <th class="text-left py-4 px-6 text-foreground/40 font-bold uppercase tracking-widest text-[10px]">Feature</th>
+                <th class="py-4 px-6 text-center font-bold text-foreground">Free<br /><span class="text-primary font-extrabold text-lg">$0</span><span class="text-foreground/50 text-[10px]">/mo</span></th>
+                <th class="py-4 px-6 text-center font-bold text-foreground bg-primary/5 rounded-t-2xl">Silver<br /><span class="text-primary font-extrabold text-lg">$17.88</span><span class="text-foreground/50 text-[10px]">/mo</span></th>
+                <th class="py-4 px-6 text-center font-bold text-foreground">Gold<br /><span class="text-primary font-extrabold text-lg">$26.88</span><span class="text-foreground/50 text-[10px]">/mo</span></th>
               </tr>
             </thead>
             <tbody>
@@ -273,13 +273,13 @@ const faqs = [
                 { label: 'Priority support', free: '—', silver: '✓', gold: '✓' },
                 { label: 'Free trial', free: '30 days', silver: '30 days', gold: '30 days' },
               ]" :key="row.label"
-                :class="i % 2 === 0 ? 'bg-white/[0.01]' : ''"
-                class="border-b border-white/5 transition-colors hover:bg-white/[0.03]"
+                :class="i % 2 === 0 ? 'bg-foreground/[0.01]' : ''"
+                class="border-b border-foreground/5 transition-colors hover:bg-foreground/[0.03]"
               >
-                <td class="py-4 px-6 text-gray-400 font-medium">{{ row.label }}</td>
-                <td class="py-4 px-6 text-center text-gray-300">{{ row.free }}</td>
-                <td class="py-4 px-6 text-center text-white font-semibold bg-primary/[0.03]">{{ row.silver }}</td>
-                <td class="py-4 px-6 text-center text-gray-300">{{ row.gold }}</td>
+                <td class="py-4 px-6 text-foreground/50 font-medium">{{ row.label }}</td>
+                <td class="py-4 px-6 text-center text-foreground/70">{{ row.free }}</td>
+                <td class="py-4 px-6 text-center text-foreground font-semibold bg-primary/[0.03]">{{ row.silver }}</td>
+                <td class="py-4 px-6 text-center text-foreground/70">{{ row.gold }}</td>
               </tr>
             </tbody>
           </table>
@@ -287,28 +287,28 @@ const faqs = [
 
         <!-- FAQ Section -->
 
-        <section class="max-w-4xl mx-auto py-32 border-t border-white/5">
+        <section class="max-w-4xl mx-auto py-32 border-t border-foreground/5">
           <div class="text-center mb-24">
-             <h2 class="text-5xl font-extrabold mb-6 tracking-tight text-white">Common <span class="text-gradient">Inquiries.</span></h2>
+             <h2 class="text-5xl font-extrabold mb-6 tracking-tight text-foreground">Common <span class="text-gradient">Inquiries.</span></h2>
           </div>
           <div class="grid md:grid-cols-2 gap-8">
-            <div v-for="faq in faqs" :key="faq.q" class="glass-card p-10 border-white/5 bg-white/[0.01] hover:border-primary/20 transition-all">
+            <div v-for="faq in faqs" :key="faq.q" class="glass-card p-10 border-foreground/5 bg-foreground/[0.01] hover:border-primary/20 transition-all">
               <h4 class="text-xl font-bold mb-6 flex items-start gap-4 tracking-tight">
                 <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                    <HelpCircle class="w-5 h-5 text-primary" />
                 </div>
                 {{ faq.q }}
               </h4>
-              <p class="text-gray-500 font-medium leading-relaxed pl-14">{{ faq.a }}</p>
+              <p class="text-foreground/50 font-medium leading-relaxed pl-14">{{ faq.a }}</p>
             </div>
           </div>
         </section>
 
         <!-- Final CTA -->
-        <section class="mt-40 bg-white/[0.02] p-24 rounded-[64px] border border-white/5 text-center relative overflow-hidden group">
+        <section class="mt-40 bg-foreground/[0.02] p-24 rounded-[64px] border border-foreground/5 text-center relative overflow-hidden group">
           <div class="absolute inset-0 bg-primary/5 blur-[120px] group-hover:bg-primary/10 transition-all duration-1000"></div>
-          <h2 class="text-5xl md:text-7xl font-extrabold mb-10 relative z-10 tracking-tighter text-white">Bespoke <span class="text-gradient">Solutions.</span></h2>
-          <p class="text-gray-400 mb-16 max-w-xl mx-auto font-medium text-lg relative z-10">Tailored configurations for agencies and global enterprises demanding unlimited scale.</p>
+          <h2 class="text-5xl md:text-7xl font-extrabold mb-10 relative z-10 tracking-tighter text-foreground">Bespoke <span class="text-gradient">Solutions.</span></h2>
+          <p class="text-foreground/50 mb-16 max-w-xl mx-auto font-medium text-lg relative z-10">Tailored configurations for agencies and global enterprises demanding unlimited scale.</p>
           <NuxtLink to="mailto:support@replysuite.com" class="btn-gradient px-12 py-6 text-xl inline-flex items-center gap-4 group/btn relative z-10">
             Consult with Experts
             <ArrowRight class="w-6 h-6 group-hover/btn:translate-x-2 transition-transform" />

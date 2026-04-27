@@ -5,21 +5,21 @@ const { openFeedback } = useFeedback()
 </script>
 
 <template>
-  <footer class="max-w-7xl mx-auto px-6 py-24 border-t border-white/5">
+  <footer class="max-w-7xl mx-auto px-6 py-24 border-t border-foreground/5">
     <!-- Top Brand Row -->
-    <div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-20 pb-20 border-b border-white/5">
+    <div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-20 pb-20 border-b border-foreground/5">
       <div class="max-w-md">
         <div class="flex items-center gap-3 mb-8">
           <Zap class="text-primary w-8 h-8 fill-current" />
-          <span class="text-3xl font-bold tracking-tighter text-white">ReplySuite</span>
+          <span class="text-3xl font-bold tracking-tighter text-foreground">ReplySuite</span>
         </div>
-        <p class="text-gray-500 leading-relaxed font-medium">
+        <p class="text-foreground/50 leading-relaxed font-medium">
           The gold standard in AI automation and brand engagement. We provide the infrastructure for the next generation of digital-native brands.
         </p>
       </div>
       <div class="flex gap-4">
         <a v-for="icon in [Instagram, Twitter, Github, Mail]" :key="icon" href="#" 
-          class="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-gray-500 hover:text-primary hover:border-primary/20 transition-all hover:-translate-y-1">
+          class="p-4 rounded-2xl bg-foreground/[0.02] border border-foreground/5 text-foreground/50 hover:text-primary hover:border-primary/20 transition-all hover:-translate-y-1">
           <component :is="icon" class="w-5 h-5" />
         </a>
       </div>
@@ -38,7 +38,7 @@ const { openFeedback } = useFeedback()
             { name: 'Pricing & Plans', to: '/pricing' },
             { name: 'Product Changelog', to: '/changelog' }
           ]" :key="link.name">
-            <NuxtLink :to="link.to" class="text-sm text-gray-500 hover:text-white transition-colors font-medium">{{ link.name }}</NuxtLink>
+            <NuxtLink :to="link.to" class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}</NuxtLink>
           </li>
         </ul>
       </div>
@@ -54,7 +54,7 @@ const { openFeedback } = useFeedback()
             { name: 'Community Hub', to: '/community' },
             { name: 'API Reference', to: '/docs' }
           ]" :key="link.name">
-            <NuxtLink :to="link.to" class="text-sm text-gray-500 hover:text-white transition-colors font-medium">{{ link.name }}</NuxtLink>
+            <NuxtLink :to="link.to" class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}</NuxtLink>
           </li>
         </ul>
       </div>
@@ -70,10 +70,10 @@ const { openFeedback } = useFeedback()
             { name: 'Institutional Email', to: 'mailto:support@replysuite.app' },
             { name: 'Brand Assets', to: '/brand' }
           ]" :key="link.name">
-            <NuxtLink :to="link.to" class="text-sm text-gray-500 hover:text-white transition-colors font-medium">{{ link.name }}</NuxtLink>
+            <NuxtLink :to="link.to" class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}</NuxtLink>
           </li>
           <li>
-            <button @click="openFeedback('Guest Footer')" class="text-sm text-gray-500 hover:text-white transition-colors font-medium">Share Feedback</button>
+            <button @click="openFeedback('Guest Footer')" class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">Share Feedback</button>
           </li>
         </ul>
       </div>
@@ -89,24 +89,24 @@ const { openFeedback } = useFeedback()
             { name: 'Terms of Service', to: '/terms' },
             { name: 'Cookie Policy', to: '/cookie' }
           ]" :key="link.name">
-            <NuxtLink :to="link.to" class="text-sm text-gray-500 hover:text-white transition-colors font-medium">{{ link.name }}</NuxtLink>
+            <NuxtLink :to="link.to" class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}</NuxtLink>
           </li>
         </ul>
       </div>
     </div>
 
     <!-- Bottom Bar -->
-    <div class="pt-10 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
+    <div class="pt-10 border-t border-foreground/5 flex flex-col md:flex-row items-center justify-between gap-8">
       <div class="flex flex-col gap-2">
-        <div class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+        <div class="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">
           © 2026 ReplySuite AI. All rights reserved.
         </div>
         <div class="flex items-center gap-4 opacity-30 grayscale hover:grayscale-0 transition-all">
-           <span class="text-[9px] font-bold text-gray-500 uppercase tracking-tighter">Infrastructure:</span>
+           <span class="text-[9px] font-bold text-foreground/40 uppercase tracking-tighter">Infrastructure:</span>
            <div class="flex items-center gap-3">
-              <span class="text-[9px] font-bold text-white uppercase border border-white/20 px-1 rounded">Azure Security</span>
-              <span class="text-[9px] font-bold text-white uppercase border border-white/20 px-1 rounded">Cloudflare Edge</span>
-              <span class="text-[9px] font-bold text-white uppercase border border-white/20 px-1 rounded">Official Meta API</span>
+              <span class="text-[9px] font-bold text-foreground uppercase border border-foreground/20 px-1 rounded">Azure Security</span>
+              <span class="text-[9px] font-bold text-foreground uppercase border border-foreground/20 px-1 rounded">Cloudflare Edge</span>
+              <span class="text-[9px] font-bold text-foreground uppercase border border-foreground/20 px-1 rounded">Official Meta API</span>
            </div>
         </div>
       </div>
@@ -116,8 +116,8 @@ const { openFeedback } = useFeedback()
           <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
           All Systems Operational
         </div>
-        <div class="hidden md:flex items-center gap-6 text-[10px] text-gray-600 font-bold uppercase tracking-widest">
-          <div class="flex items-center gap-2 group cursor-pointer hover:text-white transition-colors">
+        <div class="hidden md:flex items-center gap-6 text-[10px] text-foreground/40 font-bold uppercase tracking-widest">
+          <div class="flex items-center gap-2 group cursor-pointer hover:text-foreground transition-colors">
             <Globe2 class="w-3 h-3 group-hover:text-primary" />
             <select class="bg-transparent border-none focus:ring-0 cursor-pointer appearance-none">
               <option value="en">English (US)</option>

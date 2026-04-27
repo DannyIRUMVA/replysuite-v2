@@ -60,24 +60,24 @@ const features = [
       <section class="max-w-7xl mx-auto px-6 py-32 text-center relative">
         <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10 animate-pulse"></div>
         <span class="badge-gradient mb-10">Capabilities</span>
-        <h1 class="text-6xl md:text-9xl font-extrabold mb-10 tracking-tighter leading-[0.85] text-white">
+        <h1 class="text-6xl md:text-9xl font-extrabold mb-10 tracking-tighter leading-[0.85] text-foreground">
           Powerful <br />
           <span class="text-gradient">Capabilities.</span>
         </h1>
-        <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed font-medium">
+        <p class="text-xl text-foreground/50 max-w-2xl mx-auto leading-relaxed font-medium">
           ReplySuite combines cutting-edge LLMs with sophisticated AI infrastructure to give you the ultimate edge in customer engagement.
         </p>
       </section>
 
       <!-- Feature Grid -->
       <section class="max-w-7xl mx-auto px-6 py-32 grid md:grid-cols-2 lg:grid-cols-3 gap-12 mb-40">
-        <div v-for="feat in features" :key="feat.title" class="glass-card p-12 border-white/5 group hover:border-primary/30 transition-all relative overflow-hidden">
+        <div v-for="feat in features" :key="feat.title" class="glass-card p-12 border-foreground/5 group hover:border-primary/30 transition-all relative overflow-hidden">
           <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all"></div>
-          <div class="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center text-primary mb-10 group-hover:bg-primary group-hover:text-black transition-all duration-500 border border-white/10 group-hover:border-primary/50 relative z-10">
+          <div class="w-20 h-20 rounded-3xl bg-foreground/5 flex items-center justify-center text-primary mb-10 group-hover:bg-primary group-hover:text-black transition-all duration-500 border border-foreground/10 group-hover:border-primary/50 relative z-10">
             <component :is="feat.icon" class="w-10 h-10" />
           </div>
-          <h3 class="text-2xl font-bold mb-6 tracking-tight text-white">{{ feat.title }}</h3>
-          <p class="text-sm text-gray-500 leading-relaxed font-medium relative z-10">{{ feat.desc }}</p>
+          <h3 class="text-2xl font-bold mb-6 tracking-tight text-foreground">{{ feat.title }}</h3>
+          <p class="text-sm text-foreground/50 leading-relaxed font-medium relative z-10">{{ feat.desc }}</p>
         </div>
       </section>
 
@@ -86,11 +86,11 @@ const features = [
         <!-- AI Deep Dive -->
         <div class="grid lg:grid-cols-2 gap-24 items-center">
           <div class="order-2 lg:order-1">
-            <h2 class="text-5xl md:text-7xl font-extrabold mb-10 tracking-tighter leading-none text-white transition-all">
+            <h2 class="text-5xl md:text-7xl font-extrabold mb-10 tracking-tighter leading-none text-foreground transition-all">
               Trained on <br />
               <span class="text-gradient">Your Data.</span>
             </h2>
-            <p class="text-gray-400 text-lg mb-12 leading-relaxed font-medium">
+            <p class="text-foreground/50 text-lg mb-12 leading-relaxed font-medium">
               Forget generic chatbots. ReplySuite learns from your PDFs, website, and past conversations to provide hyper-relevant answers that convert.
             </p>
             <div class="space-y-6">
@@ -103,7 +103,7 @@ const features = [
             </div>
           </div>
           <div class="order-1 lg:order-2">
-             <div class="aspect-video glass-card border-white/10 p-12 flex flex-col items-center justify-center relative group bg-black/40 overflow-hidden">
+             <div class="aspect-video glass-card border-foreground/10 p-12 flex flex-col items-center justify-center relative group bg-background/40 overflow-hidden">
                 <div class="absolute inset-0 bg-primary/5 blur-[100px] group-hover:bg-primary/10 transition-all duration-1000"></div>
                 <div class="absolute top-6 right-6 px-4 py-1 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-bold text-primary uppercase tracking-[0.2em] relative z-10">GPT-4o Ready</div>
                 <div class="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform shadow-2xl shadow-primary/20">
@@ -116,7 +116,7 @@ const features = [
         <!-- Instagram Deep Dive -->
         <div class="grid lg:grid-cols-2 gap-24 items-center">
           <div>
-             <div class="aspect-video glass-card border-white/10 p-12 flex flex-col items-center justify-center relative group bg-black/40 overflow-hidden">
+             <div class="aspect-video glass-card border-foreground/10 p-12 flex flex-col items-center justify-center relative group bg-background/40 overflow-hidden">
                 <div class="absolute inset-0 bg-primary/5 blur-[100px] group-hover:bg-primary/10 transition-all duration-1000"></div>
                 <div class="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform shadow-2xl shadow-primary/20">
                    <Instagram class="w-16 h-16 text-primary" />
@@ -124,11 +124,11 @@ const features = [
              </div>
           </div>
           <div>
-            <h2 class="text-5xl md:text-7xl font-extrabold mb-10 tracking-tighter leading-none text-white">
+            <h2 class="text-5xl md:text-7xl font-extrabold mb-10 tracking-tighter leading-none text-foreground">
               Channel <br />
               <span class="text-gradient">Mastery.</span>
             </h2>
-            <p class="text-gray-400 text-lg mb-12 leading-relaxed font-medium">
+            <p class="text-foreground/50 text-lg mb-12 leading-relaxed font-medium">
               Start with your website and scale to social channels as they launch. From reply triggers to direct sales, we handle it all with precision.
             </p>
              <NuxtLink to="/register" class="btn-gradient inline-flex items-center gap-4 px-10 py-5 text-lg group">
@@ -142,14 +142,14 @@ const features = [
       <!-- Bottom Banner -->
       <section class="max-w-5xl mx-auto px-6 py-40 text-center relative">
         <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full"></div>
-        <h2 class="text-5xl md:text-8xl font-extrabold mb-12 relative z-10 tracking-tighter leading-none text-white">
+        <h2 class="text-5xl md:text-8xl font-extrabold mb-12 relative z-10 tracking-tighter leading-none text-foreground">
           Ready to <span class="text-gradient">Dominate?</span>
         </h2>
-        <NuxtLink to="/register" class="bg-white text-black px-12 py-6 rounded-full font-bold text-xl inline-flex items-center gap-4 relative z-10 hover:bg-gray-200 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-white/10 uppercase tracking-[0.2em]">
+        <NuxtLink to="/register" class="bg-foreground text-background px-12 py-6 rounded-full font-bold text-xl inline-flex items-center gap-4 relative z-10 hover:opacity-90 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-foreground/10 uppercase tracking-[0.2em]">
           Get Started Free
           <ArrowRight class="w-6 h-6" />
         </NuxtLink>
-        <p class="text-gray-500 mt-12 text-xs uppercase tracking-widest font-bold">
+        <p class="text-foreground/50 mt-12 text-xs uppercase tracking-widest font-bold">
           No credit card required • 30-day free month
         </p>
       </section>
@@ -158,6 +158,6 @@ const features = [
 
 <style scoped>
 .glass-card {
-  @apply rounded-[48px] bg-white/[0.02];
+  @apply rounded-[48px] bg-foreground/[0.02];
 }
 </style>

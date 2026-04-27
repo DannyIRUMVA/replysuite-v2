@@ -53,7 +53,7 @@ watch([polarCustomerId, planSlug, isLoading, isMounted], ([polarId, slug, loadin
       leave-to-class="opacity-0"
     >
       <div v-if="showFeedback" class="fixed inset-0 z-[300] flex items-center justify-center p-6">
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" @click="closeFeedback"></div>
+        <div class="absolute inset-0 bg-background/80 backdrop-blur-md" @click="closeFeedback"></div>
         <FeedbackForm :source="feedbackSource" @close="closeFeedback" class="relative z-10" />
       </div>
     </Transition>
@@ -63,6 +63,6 @@ watch([polarCustomerId, planSlug, isLoading, isMounted], ([polarId, slug, loadin
 <style>
 /* Dashboard specific global overrides */
 .glass-card {
-  @apply bg-[#0a0a0a] border border-white/5 rounded-16 transition-all;
+  @apply bg-foreground/[0.02] border border-foreground/5 rounded-16 transition-all;
 }
 </style>

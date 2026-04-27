@@ -18,7 +18,7 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen bg-background text-white selection:bg-primary/30 selection:text-primary-accent">
+  <div class="min-h-screen bg-background text-foreground selection:bg-primary/30 selection:text-primary-accent">
     <GuestNavbar />
     <slot />
     <GuestFooter />

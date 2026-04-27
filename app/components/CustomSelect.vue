@@ -52,16 +52,16 @@ const currentLabel = computed(() => {
           type="button" 
           @click="toggleOpen"
           :disabled="disabled"
-          class="w-full bg-[#0a0a0a] border border-white/10 text-white rounded-xl px-4 py-3.5 text-[13px] font-bold text-left flex items-center justify-between transition-all outline-none"
+          class="w-full bg-background border border-foreground/10 text-foreground rounded-xl px-4 py-3.5 text-[13px] font-bold text-left flex items-center justify-between transition-all outline-none"
           :class="[
               disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary/50 cursor-pointer focus:border-primary/50 shadow-md',
               isOpen ? 'border-primary/50 ring-2 ring-primary/20' : ''
           ]"
       >
-          <span :class="modelValue ? 'text-white' : 'text-gray-500 uppercase tracking-widest text-[11px]'">
+          <span :class="modelValue ? 'text-foreground' : 'text-foreground/50 uppercase tracking-widest text-[11px]'">
               {{ currentLabel }}
           </span>
-          <ChevronDown class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180 text-primary': isOpen }" />
+          <ChevronDown class="w-4 h-4 text-foreground/40 transition-transform duration-200" :class="{ 'rotate-180 text-primary': isOpen }" />
       </button>
 
       <!-- Dropdown Menu -->
@@ -73,7 +73,7 @@ const currentLabel = computed(() => {
           leave-from-class="transform scale-100 opacity-100 translate-y-0"
           leave-to-class="transform scale-95 opacity-0 -translate-y-2"
       >
-          <div v-if="isOpen" class="absolute z-50 w-full mt-2 bg-[#141414] border border-white/10 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] overflow-hidden backdrop-blur-2xl">
+          <div v-if="isOpen" class="absolute z-50 w-full mt-2 bg-background border border-foreground/10 rounded-xl shadow-2xl overflow-hidden backdrop-blur-2xl">
               <div class="max-h-60 overflow-y-auto custom-scrollbar p-1">
                   <div 
                       v-for="option in options" 
@@ -83,7 +83,7 @@ const currentLabel = computed(() => {
                       :class="[
                           modelValue === option.value 
                             ? 'bg-primary/10 text-primary' 
-                            : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                            : 'text-foreground/60 hover:bg-foreground/5 hover:text-foreground'
                       ]"
                   >
                       <span>{{ option.label }}</span>
@@ -103,7 +103,7 @@ const currentLabel = computed(() => {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(var(--foreground) / 0.1);
   border-radius: 10px;
 }
 </style>

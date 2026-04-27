@@ -132,16 +132,16 @@ const openPortal = async () => {
       <span class="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary mb-4 inline-block tracking-wider">
         Subscription required
       </span>
-      <h1 class="text-4xl font-extrabold text-white tracking-tight mb-4 lowercase">
+      <h1 class="text-4xl font-extrabold text-foreground tracking-tight mb-4 lowercase">
         Choose your <span class="text-gradient">empire class.</span>
       </h1>
-      <p class="text-gray-500 font-medium lowercase">please select a plan to unlock your ai dashboard and start automating.</p>
+      <p class="text-foreground/50 font-medium lowercase">please select a plan to unlock your ai dashboard and start automating.</p>
     </div>
 
     <!-- Loading State -->
     <div v-if="isLoading" class="flex flex-col items-center justify-center min-h-[40vh] py-20">
       <Loader2 class="w-12 h-12 text-primary animate-spin mb-6" />
-      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">Retrieving Empire Classes...</p>
+      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/50">Retrieving Empire Classes...</p>
     </div>
 
     <!-- Pricing Grid -->
@@ -149,7 +149,7 @@ const openPortal = async () => {
       <div 
         v-for="plan in plans" 
         :key="plan.name"
-        class="glass-card p-10 flex flex-col relative transition-all duration-300 hover:border-primary/30 border-white/5"
+        class="glass-card p-10 flex flex-col relative transition-all duration-300 hover:border-primary/30 border-foreground/5"
         :class="plan.popular ? 'border-primary/20 bg-primary/[0.02]' : ''"
       >
         <div v-if="plan.popular" class="absolute -top-3 left-6 px-4 py-1 bg-primary text-black text-[9px] font-bold tracking-widest rounded-full">
@@ -157,20 +157,20 @@ const openPortal = async () => {
         </div>
 
         <div class="mb-8">
-          <h3 class="text-2xl font-bold text-white mb-2">{{ plan.name }}</h3>
-          <p class="text-xs text-gray-400 font-medium">{{ plan.desc }}</p>
+          <h3 class="text-2xl font-bold text-foreground mb-2">{{ plan.name }}</h3>
+          <p class="text-xs text-foreground/50 font-medium">{{ plan.desc }}</p>
         </div>
 
         <div class="mb-10 flex items-baseline gap-2">
-          <span class="text-4xl font-extrabold text-white">${{ plan.price }}</span>
-          <span class="text-[10px] text-gray-600 font-bold tracking-widest">/mo</span>
+          <span class="text-4xl font-extrabold text-foreground">${{ plan.price }}</span>
+          <span class="text-[10px] text-foreground/50 font-bold tracking-widest">/mo</span>
         </div>
 
         <button 
           @click="handleSelect(plan)"
           :disabled="isProcessing === plan.id"
           class="w-full py-4 rounded-xl font-bold text-[11px] tracking-widest transition-all mb-10 flex items-center justify-center gap-2"
-          :class="planSlug === plan.id ? 'bg-primary/20 text-primary border border-primary/30' : (plan.popular ? 'bg-primary text-black hover:bg-primary/90' : 'bg-white/5 hover:bg-white/10 text-white border border-white/10')"
+          :class="planSlug === plan.id ? 'bg-primary/20 text-primary border border-primary/30' : (plan.popular ? 'bg-primary text-black hover:bg-primary/90' : 'bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10')"
         >
           <template v-if="isProcessing === plan.id">
             <Loader2 class="w-4 h-4 animate-spin" />
@@ -185,7 +185,7 @@ const openPortal = async () => {
         </button>
 
         <div class="space-y-4">
-          <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-3 text-[11px] font-medium text-gray-400">
+          <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-3 text-[11px] font-medium text-foreground/50">
             <div class="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
               <Check class="w-2.5 h-2.5 text-primary" />
             </div>
@@ -196,28 +196,28 @@ const openPortal = async () => {
     </div>
 
     <!-- Sync and Manage Portal -->
-    <div class="mt-12 flex flex-col md:flex-row items-center justify-between gap-6 p-8 rounded-[32px] bg-white/[0.01] border border-white/5 relative overflow-hidden">
+    <div class="mt-12 flex flex-col md:flex-row items-center justify-between gap-6 p-8 rounded-[32px] bg-foreground/[0.01] border border-foreground/5 relative overflow-hidden">
       <div class="flex items-center gap-4 relative z-10">
         <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
           <Shield class="w-6 h-6" />
         </div>
         <div>
-          <p class="text-[12px] font-bold text-white tracking-widest mb-1">Billing Management</p>
-          <p class="text-[11px] text-gray-500 font-medium lowercase">payments are managed via polar.sh. need to update your card or cancel? use the portal.</p>
+          <p class="text-[12px] font-bold text-foreground tracking-widest mb-1">Billing Management</p>
+          <p class="text-[11px] text-foreground/50 font-medium lowercase">payments are managed via polar.sh. need to update your card or cancel? use the portal.</p>
         </div>
       </div>
       
       <div class="flex items-center gap-4 relative z-10 w-full md:w-auto">
         <button 
           @click="syncWithPolar" 
-          class="flex-1 md:flex-none px-6 py-3 rounded-xl border border-white/10 hover:bg-white/5 text-[10px] font-bold tracking-widest transition-all uppercase"
+          class="flex-1 md:flex-none px-6 py-3 rounded-xl border border-foreground/10 hover:bg-foreground/5 text-[10px] font-bold tracking-widest transition-all uppercase"
         >
           Sync Plan Status
         </button>
         <button 
           v-if="planSlug && planSlug !== 'starter'"
           @click="openPortal" 
-          class="flex-1 md:flex-none px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-[10px] font-bold tracking-widest transition-all uppercase"
+          class="flex-1 md:flex-none px-6 py-3 rounded-xl bg-foreground/5 hover:bg-foreground/10 text-[10px] font-bold tracking-widest transition-all uppercase"
         >
           Manage Subscription
         </button>
@@ -229,7 +229,7 @@ const openPortal = async () => {
 
 <style scoped>
 .glass-card {
-  @apply rounded-[32px] backdrop-blur-sm border bg-white/[0.01];
+  @apply rounded-[32px] backdrop-blur-sm border bg-foreground/[0.02] border-foreground/5;
 }
 .text-gradient {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60;

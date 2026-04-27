@@ -50,8 +50,8 @@ const submitFeedback = async () => {
 </script>
 
 <template>
-  <div class="glass-card p-8 w-full max-w-md relative overflow-hidden border-white/10 shadow-2xl">
-    <button @click="$emit('close')" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors p-2 rounded-full hover:bg-white/5">
+  <div class="glass-card p-8 w-full max-w-md relative overflow-hidden border-foreground/10 shadow-2xl">
+    <button @click="$emit('close')" class="absolute top-4 right-4 text-foreground/40 hover:text-foreground transition-colors p-2 rounded-full hover:bg-foreground/5">
       <X class="w-5 h-5" />
     </button>
 
@@ -61,14 +61,14 @@ const submitFeedback = async () => {
           <MessageSquare class="w-6 h-6" />
         </div>
         <div>
-          <h3 class="text-xl font-bold text-white tracking-tight">System Feedback</h3>
-          <p class="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Direct line to the engineering team</p>
+          <h3 class="text-xl font-bold text-foreground tracking-tight">System Feedback</h3>
+          <p class="text-xs text-foreground/40 font-bold uppercase tracking-widest mt-1">Direct line to the engineering team</p>
         </div>
       </div>
 
       <div class="space-y-6">
         <div class="space-y-3 text-center">
-          <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rate your experience</label>
+          <label class="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">Rate your experience</label>
           <div class="flex items-center justify-center gap-2">
             <button 
               v-for="i in 5" 
@@ -78,19 +78,19 @@ const submitFeedback = async () => {
             >
               <Star 
                 class="w-8 h-8" 
-                :class="i <= form.rating ? 'text-primary fill-primary' : 'text-gray-800'"
+                :class="i <= form.rating ? 'text-primary fill-primary' : 'text-foreground/20'"
               />
             </button>
           </div>
         </div>
 
         <div class="space-y-2">
-          <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Message *</label>
+          <label class="text-[10px] font-bold text-foreground/40 uppercase tracking-widest ml-1">Message *</label>
           <textarea 
             v-model="form.message"
             rows="4"
             placeholder="What's on your mind?"
-            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-primary/50 transition-all resize-none"
+            class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/50 transition-all resize-none"
           ></textarea>
         </div>
       </div>
@@ -113,8 +113,8 @@ const submitFeedback = async () => {
         <CheckCircle2 class="w-10 h-10" />
       </div>
       <div>
-        <h3 class="text-2xl font-bold text-white mb-2 tracking-tight uppercase">Feedback Logged</h3>
-        <p class="text-gray-500 text-sm font-medium">Your transmission has been received at HQ. <br /> Thank you for helping us build the future.</p>
+        <h3 class="text-2xl font-bold text-foreground mb-2 tracking-tight uppercase">Feedback Logged</h3>
+        <p class="text-foreground/40 text-sm font-medium">Your transmission has been received at HQ. <br /> Thank you for helping us build the future.</p>
       </div>
     </div>
   </div>

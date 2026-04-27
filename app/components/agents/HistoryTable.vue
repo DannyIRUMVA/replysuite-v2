@@ -67,20 +67,20 @@ const getJobSource = (job: any) => {
   <div class="glass-card">
     <div class="flex flex-col md:flex-row items-center gap-4 mb-8">
       <div class="relative flex-1 group">
-        <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 group-focus-within:text-primary transition-colors" />
+        <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30 group-focus-within:text-primary transition-colors" />
         <input v-model="searchQuery" placeholder="Search training context..." 
-          class="w-full bg-white/5 border border-white/5 focus:border-primary/30 rounded-2xl pl-12 pr-4 py-3 text-xs text-white placeholder:text-gray-700 focus:outline-none transition-all" />
+          class="w-full bg-foreground/5 border border-foreground/5 focus:border-primary/30 rounded-2xl pl-12 pr-4 py-3 text-xs text-foreground placeholder:text-foreground/20 focus:outline-none transition-all" />
       </div>
       
       <div class="flex items-center gap-3 w-full md:w-auto">
-        <select v-model="statusFilter" class="bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest focus:outline-none focus:border-primary/30 transition-all cursor-pointer">
+        <select v-model="statusFilter" class="bg-foreground/5 border border-foreground/5 rounded-2xl px-4 py-3 text-[10px] font-bold text-foreground/40 uppercase tracking-widest focus:outline-none focus:border-primary/30 transition-all cursor-pointer">
           <option value="all">ALL STATUS</option>
           <option value="finished">FINISHED</option>
           <option value="failed">FAILED</option>
           <option value="processing">PROCESSING</option>
         </select>
         
-        <select v-model="typeFilter" class="bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest focus:outline-none focus:border-primary/30 transition-all cursor-pointer">
+        <select v-model="typeFilter" class="bg-foreground/5 border border-foreground/5 rounded-2xl px-4 py-3 text-[10px] font-bold text-foreground/40 uppercase tracking-widest focus:outline-none focus:border-primary/30 transition-all cursor-pointer">
           <option value="all">ALL TYPES</option>
           <option value="url">WEBSITE</option>
           <option value="file">DOCUMENT</option>
@@ -89,48 +89,48 @@ const getJobSource = (job: any) => {
       </div>
     </div>
 
-    <div v-if="filteredJobs.length === 0" class="flex flex-col items-center justify-center py-20 bg-white/[0.02] rounded-2xl border border-dashed border-white/5">
-      <div class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-        <History class="w-8 h-8 text-gray-700" />
+    <div v-if="filteredJobs.length === 0" class="flex flex-col items-center justify-center py-20 bg-foreground/[0.02] rounded-2xl border border-dashed border-foreground/5">
+      <div class="w-16 h-16 rounded-full bg-foreground/5 flex items-center justify-center mb-4">
+        <History class="w-8 h-8 text-foreground/30" />
       </div>
-      <p class="text-sm font-bold text-gray-500 uppercase tracking-widest italic-none">No matching sessions</p>
-      <p class="text-[10px] text-gray-700 mt-2 uppercase tracking-widest italic-none">Try adjusting your filters or search query</p>
+      <p class="text-sm font-bold text-foreground/40 uppercase tracking-widest italic-none">No matching sessions</p>
+      <p class="text-[10px] text-foreground/30 mt-2 uppercase tracking-widest italic-none">Try adjusting your filters or search query</p>
     </div>
 
     <div v-else class="space-y-6">
-      <div class="overflow-hidden bg-white/[0.01] rounded-2xl border border-white/5">
+      <div class="overflow-hidden bg-foreground/[0.01] rounded-2xl border border-foreground/5">
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="border-b border-white/5 bg-white/[0.02]">
-                <th class="px-6 py-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest italic-none">Context Source</th>
-                <th class="px-6 py-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest italic-none">Type</th>
-                <th class="px-6 py-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest italic-none">Status</th>
-                <th class="px-6 py-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest italic-none">Started At</th>
-                <th class="px-6 py-4 text-right text-[10px] font-bold text-gray-500 uppercase tracking-widest italic-none">Insights</th>
+              <tr class="border-b border-foreground/5 bg-foreground/[0.02]">
+                <th class="px-6 py-4 text-[10px] font-bold text-foreground/40 uppercase tracking-widest italic-none">Context Source</th>
+                <th class="px-6 py-4 text-[10px] font-bold text-foreground/40 uppercase tracking-widest italic-none">Type</th>
+                <th class="px-6 py-4 text-[10px] font-bold text-foreground/40 uppercase tracking-widest italic-none">Status</th>
+                <th class="px-6 py-4 text-[10px] font-bold text-foreground/40 uppercase tracking-widest italic-none">Started At</th>
+                <th class="px-6 py-4 text-right text-[10px] font-bold text-foreground/40 uppercase tracking-widest italic-none">Insights</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-white/5">
-              <tr v-for="job in paginatedJobs" :key="job.id" class="group hover:bg-white/[0.02] transition-colors">
+            <tbody class="divide-y divide-foreground/5">
+              <tr v-for="job in paginatedJobs" :key="job.id" class="group hover:bg-foreground/[0.02] transition-colors">
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors border border-white/5 group-hover:border-primary/20">
-                      <Globe v-if="job.meta?.type === 'url'" class="w-4 h-4 text-gray-400 group-hover:text-primary" />
-                      <FileText v-else-if="job.meta?.type === 'file'" class="w-4 h-4 text-gray-400 group-hover:text-primary" />
-                      <Type v-else class="w-4 h-4 text-gray-400 group-hover:text-primary" />
+                    <div class="w-8 h-8 rounded-lg bg-foreground/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors border border-foreground/5 group-hover:border-primary/20">
+                      <Globe v-if="job.meta?.type === 'url'" class="w-4 h-4 text-foreground/40 group-hover:text-primary" />
+                      <FileText v-else-if="job.meta?.type === 'file'" class="w-4 h-4 text-foreground/40 group-hover:text-primary" />
+                      <Type v-else class="w-4 h-4 text-foreground/40 group-hover:text-primary" />
                     </div>
                     <div>
-                      <p class="text-[11px] font-bold text-white mb-0.5 truncate max-w-[200px]">
+                      <p class="text-[11px] font-bold text-foreground mb-0.5 truncate max-w-[200px]">
                         {{ job.meta?.title || job.meta?.filename || job.meta?.url || 'Batch Processing' }}
                       </p>
-                      <p class="text-[9px] text-gray-600 font-bold uppercase tracking-widest italic-none truncate max-w-[200px]">
+                      <p class="text-[9px] text-foreground/30 font-bold uppercase tracking-widest italic-none truncate max-w-[200px]">
                         {{ job.meta?.url || job.meta?.filename || 'Manual Entry' }}
                       </p>
                     </div>
                   </div>
                 </td>
                 <td class="px-6 py-4">
-                  <span class="px-2 py-0.5 rounded bg-white/5 text-[9px] font-bold text-gray-500 uppercase tracking-widest italic-none">
+                  <span class="px-2 py-0.5 rounded bg-foreground/5 text-[9px] font-bold text-foreground/40 uppercase tracking-widest italic-none">
                     {{ job.meta?.type || 'BATCH' }}
                   </span>
                 </td>
@@ -151,7 +151,7 @@ const getJobSource = (job: any) => {
                   </div>
                 </td>
                 <td class="px-6 py-4">
-                  <div class="flex items-center gap-2 text-[10px] text-gray-500 font-bold tracking-widest italic-none">
+                  <div class="flex items-center gap-2 text-[10px] text-foreground/40 font-bold tracking-widest italic-none">
                     <Clock class="w-3 h-3" />
                     {{ job.created_at ? new Date(job.created_at).toLocaleDateString() : 'Pending' }}
                   </div>
@@ -162,8 +162,8 @@ const getJobSource = (job: any) => {
                       v-if="job.status === 'finished' || job.status === 'failed'"
                       @click="emit('view-extraction', job)"
                       :class="[
-                        'px-3 py-1 bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all border border-white/5',
-                        job.status === 'failed' ? 'text-red-400 hover:text-red-300' : 'text-gray-400 hover:text-white'
+                        'px-3 py-1 bg-foreground/5 hover:bg-foreground/10 text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all border border-foreground/5',
+                        job.status === 'failed' ? 'text-red-400 hover:text-red-300' : 'text-foreground/40 hover:text-foreground'
                       ]"
                     >
                       {{ job.status === 'failed' ? 'View Error' : 'View Data' }}
@@ -172,7 +172,7 @@ const getJobSource = (job: any) => {
                     <button 
                       v-if="job.status === 'finished' && getJobSource(job)"
                       @click="emit('delete-source', getJobSource(job).id)"
-                      class="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-all"
+                      class="p-1.5 rounded-lg bg-foreground/5 hover:bg-red-500/10 text-foreground/40 hover:text-red-500 transition-all"
                     >
                       <Trash2 class="w-3.5 h-3.5" />
                     </button>
@@ -190,22 +190,22 @@ const getJobSource = (job: any) => {
 
       <!-- Pagination -->
       <div v-if="totalPages > 1" class="flex items-center justify-between px-2">
-        <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+        <p class="text-[10px] text-foreground/30 font-bold uppercase tracking-widest">
           Showing {{ ((currentPage - 1) * itemsPerPage) + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredJobs.length) }} of {{ filteredJobs.length }}
         </p>
         <div class="flex items-center gap-2">
           <button @click="currentPage--" :disabled="currentPage === 1"
-            class="p-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-gray-500 hover:text-white disabled:opacity-30 disabled:hover:bg-white/5 transition-all">
+            class="p-2 bg-foreground/5 hover:bg-foreground/10 border border-foreground/5 rounded-xl text-foreground/40 hover:text-foreground disabled:opacity-30 disabled:hover:bg-foreground/5 transition-all">
             <ArrowLeft class="w-4 h-4" />
           </button>
           <div class="flex items-center gap-1">
             <button v-for="p in totalPages" :key="p" @click="currentPage = p"
-              :class="['w-8 h-8 rounded-xl text-[10px] font-bold transition-all', currentPage === p ? 'bg-primary text-black shadow-lg shadow-primary/10' : 'text-gray-500 hover:text-white hover:bg-white/5']">
+              :class="['w-8 h-8 rounded-xl text-[10px] font-bold transition-all', currentPage === p ? 'bg-primary text-black shadow-lg shadow-primary/10' : 'text-foreground/40 hover:text-foreground hover:bg-foreground/5']">
               {{ p }}
             </button>
           </div>
           <button @click="currentPage++" :disabled="currentPage === totalPages"
-            class="p-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-gray-500 hover:text-white disabled:opacity-30 disabled:hover:bg-white/5 transition-all">
+            class="p-2 bg-foreground/5 hover:bg-foreground/10 border border-foreground/5 rounded-xl text-foreground/40 hover:text-foreground disabled:opacity-30 disabled:hover:bg-foreground/5 transition-all">
             <ArrowLeft class="w-4 h-4 rotate-180" />
           </button>
         </div>

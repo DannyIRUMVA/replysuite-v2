@@ -42,18 +42,18 @@ definePageMeta({
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#050505] text-white py-12 px-4 sm:px-6 lg:px-8 font-sans selection:bg-primary/30">
+  <div class="min-h-screen bg-background text-foreground py-12 px-4 sm:px-6 lg:px-8 font-sans selection:bg-primary/30">
     <div v-if="pending" class="max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[60vh] space-y-4">
       <div class="w-12 h-12 border-t-2 border-primary rounded-full animate-spin"></div>
-      <p class="text-gray-500 font-bold tracking-widest uppercase text-xs">Decrypting Ledger...</p>
+      <p class="text-foreground/50 font-bold tracking-widest uppercase text-xs">Decrypting Ledger...</p>
     </div>
 
     <div v-else-if="error || !invoice" class="max-w-4xl mx-auto text-center py-20">
       <div class="inline-flex p-6 rounded-full bg-red-500/10 mb-8">
         <FileText class="w-16 h-16 text-red-500" />
       </div>
-      <h1 class="text-3xl font-bold tracking-tighter mb-4 text-white">Invoice Not Found</h1>
-      <p class="text-gray-500 max-w-md mx-auto mb-10">The ledger entry you are looking for does not exist or has been archived.</p>
+      <h1 class="text-3xl font-bold tracking-tighter mb-4 text-foreground">Invoice Not Found</h1>
+      <p class="text-foreground/50 max-w-md mx-auto mb-10">The ledger entry you are looking for does not exist or has been archived.</p>
       <NuxtLink to="/" class="text-primary font-bold tracking-widest uppercase text-xs hover:underline">Return to Hub</NuxtLink>
     </div>
 
@@ -61,16 +61,16 @@ definePageMeta({
       <!-- Top Actions (Hidden in print) -->
       <div class="flex items-center justify-between mb-12 print:hidden">
         <div class="flex items-center gap-4">
-            <div class="p-3 rounded-xl bg-white/5 border border-white/10">
+            <div class="p-3 rounded-xl bg-foreground/5 border border-foreground/10">
                 <FileText class="w-6 h-6 text-primary" />
             </div>
             <div>
                 <h1 class="text-xl font-bold tracking-tight uppercase">Invoice {{ invoice.invoice_number }}</h1>
-                <p class="text-[10px] font-bold text-gray-500 tracking-[0.2em] uppercase mt-1">ReplySuite Settlement Protocol</p>
+                <p class="text-[10px] font-bold text-foreground/50 tracking-[0.2em] uppercase mt-1">ReplySuite Settlement Protocol</p>
             </div>
         </div>
         <div class="flex items-center gap-3">
-          <button @click="printInvoice" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold tracking-widest uppercase hover:bg-white/10 transition-all">
+          <button @click="printInvoice" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-foreground/5 border border-foreground/10 text-xs font-bold tracking-widest uppercase hover:bg-white/10 transition-all">
             <Printer class="w-4 h-4" />
             Print
           </button>
@@ -89,21 +89,21 @@ definePageMeta({
 
         <div class="relative z-10 space-y-12">
             <!-- Header: Seller & Client Info -->
-            <div class="grid grid-cols-2 gap-12 border-b border-white/5 pb-12 print:border-black/10">
+            <div class="grid grid-cols-2 gap-12 border-b border-foreground/5 pb-12 print:border-black/10">
                 <div>
-                    <h2 class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em] mb-4">From</h2>
+                    <h2 class="text-[10px] font-bold text-foreground/50 uppercase tracking-[0.3em] mb-4">From</h2>
                     <div class="space-y-1">
-                        <p class="text-xl font-bold text-white print:text-black">{{ invoice.order?.chatbot?.user?.company_name || invoice.order?.chatbot?.name }}</p>
-                        <p class="text-sm text-gray-400 print:text-gray-600">Managed via ReplySuite Agent</p>
-                        <p class="text-sm text-gray-400 print:text-gray-600">{{ invoice.order?.chatbot?.user?.contact_email }}</p>
+                        <p class="text-xl font-bold text-foreground print:text-black">{{ invoice.order?.chatbot?.user?.company_name || invoice.order?.chatbot?.name }}</p>
+                        <p class="text-sm text-foreground/40 print:text-gray-600">Managed via ReplySuite Agent</p>
+                        <p class="text-sm text-foreground/40 print:text-gray-600">{{ invoice.order?.chatbot?.user?.contact_email }}</p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <h2 class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em] mb-4">Bill To</h2>
+                    <h2 class="text-[10px] font-bold text-foreground/50 uppercase tracking-[0.3em] mb-4">Bill To</h2>
                     <div class="space-y-1">
-                        <p class="text-xl font-bold text-white print:text-black">{{ invoice.order?.customer_name || 'Valued Customer' }}</p>
-                        <p class="text-sm text-gray-400 print:text-gray-600">{{ invoice.order?.customer_phone }}</p>
-                        <p class="text-sm text-gray-400 print:text-gray-600">WhatsApp Verified Entity</p>
+                        <p class="text-xl font-bold text-foreground print:text-black">{{ invoice.order?.customer_name || 'Valued Customer' }}</p>
+                        <p class="text-sm text-foreground/40 print:text-gray-600">{{ invoice.order?.customer_phone }}</p>
+                        <p class="text-sm text-foreground/40 print:text-gray-600">WhatsApp Verified Entity</p>
                     </div>
                 </div>
             </div>
@@ -111,45 +111,45 @@ definePageMeta({
             <!-- Metadata: Dates & Number -->
             <div class="grid grid-cols-4 gap-6 text-[10px] font-bold tracking-widest uppercase">
                 <div class="space-y-2">
-                    <p class="text-gray-500">Invoice Number</p>
-                    <p class="text-white print:text-black">{{ invoice.invoice_number }}</p>
+                    <p class="text-foreground/50">Invoice Number</p>
+                    <p class="text-foreground print:text-black">{{ invoice.invoice_number }}</p>
                 </div>
                 <div class="space-y-2">
-                    <p class="text-gray-500">Date Issued</p>
-                    <p class="text-white print:text-black">{{ formatDate(invoice.issue_date) }}</p>
+                    <p class="text-foreground/50">Date Issued</p>
+                    <p class="text-foreground print:text-black">{{ formatDate(invoice.issue_date) }}</p>
                 </div>
                 <div class="space-y-2">
-                    <p class="text-gray-500">Order ID</p>
-                    <p class="text-white print:text-black">#{{ invoice.order?.id.substring(0, 8) }}</p>
+                    <p class="text-foreground/50">Order ID</p>
+                    <p class="text-foreground print:text-black">#{{ invoice.order?.id.substring(0, 8) }}</p>
                 </div>
                 <div class="space-y-2 text-right">
-                    <p class="text-gray-500">Currency</p>
-                    <p class="text-white print:text-black">RWF (Rwandan Franc)</p>
+                    <p class="text-foreground/50">Currency</p>
+                    <p class="text-foreground print:text-black">RWF (Rwandan Franc)</p>
                 </div>
             </div>
 
             <!-- Items Table -->
             <div class="space-y-6">
                 <h3 class="text-sm font-bold uppercase tracking-widest text-primary">Settlement Details</h3>
-                <div class="w-full border border-white/5 rounded-2xl overflow-hidden print:border-black/10">
+                <div class="w-full border border-foreground/5 rounded-2xl overflow-hidden print:border-black/10">
                     <table class="w-full text-left">
                         <thead class="bg-white/5 print:bg-gray-100">
                             <tr>
-                                <th class="px-6 py-4 text-[9px] font-bold text-gray-400 uppercase tracking-widest">Description</th>
-                                <th class="px-6 py-4 text-[9px] font-bold text-gray-400 uppercase tracking-widest text-center">Qty</th>
-                                <th class="px-6 py-4 text-[9px] font-bold text-gray-400 uppercase tracking-widest text-right">Unit Price</th>
-                                <th class="px-6 py-4 text-[9px] font-bold text-gray-400 uppercase tracking-widest text-right">Amount</th>
+                                <th class="px-6 py-4 text-[9px] font-bold text-foreground/40 uppercase tracking-widest">Description</th>
+                                <th class="px-6 py-4 text-[9px] font-bold text-foreground/40 uppercase tracking-widest text-center">Qty</th>
+                                <th class="px-6 py-4 text-[9px] font-bold text-foreground/40 uppercase tracking-widest text-right">Unit Price</th>
+                                <th class="px-6 py-4 text-[9px] font-bold text-foreground/40 uppercase tracking-widest text-right">Amount</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/5 print:divide-black/5">
                             <tr v-for="item in (invoice.order?.items || [])" :key="item.id" class="group hover:bg-white/[0.02]">
-                                <td class="px-6 py-6 font-bold text-sm text-white print:text-black">
+                                <td class="px-6 py-6 font-bold text-sm text-foreground print:text-black">
                                     {{ item.name }}
-                                    <p class="text-[10px] text-gray-500 font-normal mt-1">{{ item.description || 'Standard catalog item' }}</p>
+                                    <p class="text-[10px] text-foreground/50 font-normal mt-1">{{ item.description || 'Standard catalog item' }}</p>
                                 </td>
-                                <td class="px-6 py-6 text-sm text-gray-400 text-center print:text-black font-medium">{{ item.qty }}</td>
-                                <td class="px-6 py-6 text-sm text-gray-400 text-right print:text-black font-medium">{{ item.price.toLocaleString() }}</td>
-                                <td class="px-6 py-6 text-sm font-bold text-white text-right print:text-black">{{ (item.price * item.qty).toLocaleString() }}</td>
+                                <td class="px-6 py-6 text-sm text-foreground/40 text-center print:text-black font-medium">{{ item.qty }}</td>
+                                <td class="px-6 py-6 text-sm text-foreground/40 text-right print:text-black font-medium">{{ item.price.toLocaleString() }}</td>
+                                <td class="px-6 py-6 text-sm font-bold text-foreground text-right print:text-black">{{ (item.price * item.qty).toLocaleString() }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -157,19 +157,19 @@ definePageMeta({
             </div>
 
             <!-- Footer: Summary & Totals -->
-            <div class="flex justify-end pt-12 border-t border-white/5 print:border-black/10">
+            <div class="flex justify-end pt-12 border-t border-foreground/5 print:border-black/10">
                 <div class="w-full max-w-xs space-y-4">
                     <div class="flex justify-between text-[10px] font-bold tracking-widest uppercase">
-                        <p class="text-gray-500">Subtotal</p>
-                        <p class="text-white print:text-black">{{ invoice.total_amount.toLocaleString() }}</p>
+                        <p class="text-foreground/50">Subtotal</p>
+                        <p class="text-foreground print:text-black">{{ invoice.total_amount.toLocaleString() }}</p>
                     </div>
                     <div class="flex justify-between text-[10px] font-bold tracking-widest uppercase">
-                        <p class="text-gray-500">Tax (0%)</p>
-                        <p class="text-white print:text-black">0</p>
+                        <p class="text-foreground/50">Tax (0%)</p>
+                        <p class="text-foreground print:text-black">0</p>
                     </div>
                     <div class="pt-6 border-t border-white/10 flex justify-between items-center print:border-black/10">
                         <p class="text-sm font-bold uppercase tracking-[0.2em] text-primary">Total Amount</p>
-                        <p class="text-3xl font-bold tracking-tighter text-white print:text-black underline decoration-primary/50 underline-offset-8 decoration-2">{{ invoice.total_amount.toLocaleString() }} RWF</p>
+                        <p class="text-3xl font-bold tracking-tighter text-foreground print:text-black underline decoration-primary/50 underline-offset-8 decoration-2">{{ invoice.total_amount.toLocaleString() }} RWF</p>
                     </div>
                 </div>
             </div>
@@ -201,7 +201,7 @@ definePageMeta({
 
 <style scoped>
 .glass-card {
-  @apply bg-[#0a0a0a] backdrop-blur-2xl border border-white/5 p-12 rounded-[2.5rem] shadow-2xl;
+  @apply bg-background-card backdrop-blur-2xl border border-foreground/5 p-12 rounded-[2.5rem] shadow-2xl;
   box-shadow: 0 40px 100px -20px rgba(0,0,0,0.5);
 }
 

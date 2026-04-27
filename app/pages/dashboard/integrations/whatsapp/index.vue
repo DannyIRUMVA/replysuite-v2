@@ -56,8 +56,8 @@ const deleteAccount = async (id: string) => {
           <MessageSquare class="w-6 h-6 text-primary" />
         </div>
         <div>
-          <h2 class="text-xl font-bold text-white uppercase tracking-tight">Active Deployments</h2>
-          <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Managed API Nodes</p>
+          <h2 class="text-xl font-bold text-foreground uppercase tracking-tight">Active Deployments</h2>
+          <p class="text-[10px] font-black text-foreground/50 uppercase tracking-widest">Managed API Nodes</p>
         </div>
       </div>
 
@@ -73,25 +73,25 @@ const deleteAccount = async (id: string) => {
             { label: 'Active Nodes', value: accounts?.length || 0, icon: Zap },
             { label: 'System Health', value: '100%', icon: Activity },
             { label: 'Protocol', value: 'V21.0', icon: ShieldCheck }
-        ]" :key="stat.label" class="glass-card p-8 border-white/5 bg-white/[0.02] flex items-center gap-6">
+        ]" :key="stat.label" class="glass-card p-8 border-foreground/10 bg-foreground/5 flex items-center gap-6">
             <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
                 <component :is="stat.icon" class="w-6 h-6 text-primary" />
             </div>
             <div>
-                <p class="text-[9px] font-black text-gray-600 uppercase tracking-widest">{{ stat.label }}</p>
-                <p class="text-2xl font-black text-white tracking-tighter">{{ stat.value }}</p>
+                <p class="text-[9px] font-black text-foreground/50 uppercase tracking-widest">{{ stat.label }}</p>
+                <p class="text-2xl font-black text-foreground tracking-tighter">{{ stat.value }}</p>
             </div>
         </div>
     </div>
 
     <!-- Main Content -->
     <div v-if="isLoading" class="grid gap-6">
-        <div v-for="i in 3" :key="i" class="h-32 bg-white/5 rounded-2xl animate-pulse"></div>
+        <div v-for="i in 3" :key="i" class="h-32 bg-foreground/5 rounded-2xl animate-pulse"></div>
     </div>
 
     <div v-else-if="accounts && accounts.length > 0" class="grid gap-6">
         <div v-for="wa in accounts" :key="wa.id" class="group relative">
-            <NuxtLink :to="`/dashboard/integrations/whatsapp/${wa.id}`" class="block glass-card p-10 bg-[#0a0a0a] border-white/5 hover:border-primary/20 hover:bg-white/[0.02] transition-all duration-500 overflow-hidden relative">
+            <NuxtLink :to="`/dashboard/integrations/whatsapp/${wa.id}`" class="block glass-card p-10 bg-background border-foreground/10 hover:border-primary/20 hover:bg-foreground/[0.03] transition-all duration-500 overflow-hidden relative">
                 <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700"></div>
                 
                 <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
@@ -100,13 +100,13 @@ const deleteAccount = async (id: string) => {
                             <MessageSquare class="w-8 h-8 text-primary" />
                         </div>
                         <div>
-                            <h3 class="text-3xl font-black text-white tracking-tighter uppercase">{{ wa.phone_number }}</h3>
+                            <h3 class="text-3xl font-black text-foreground tracking-tighter uppercase">{{ wa.phone_number }}</h3>
                             <div class="flex items-center gap-4 mt-2">
-                                <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                                <span class="text-[10px] font-black text-foreground/50 uppercase tracking-widest flex items-center gap-2">
                                     <div :class="['w-1.5 h-1.5 rounded-full', wa.status === 'deployed' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]']"></div>
                                     {{ wa.status }}
                                 </span>
-                                <div class="w-px h-3 bg-white/10"></div>
+                                <div class="w-px h-3 bg-foreground/10"></div>
                                 <span class="text-[10px] font-black text-primary uppercase tracking-widest">
                                     {{ wa.chatbots?.name || 'No Agent Linked' }}
                                 </span>
@@ -116,10 +116,10 @@ const deleteAccount = async (id: string) => {
 
                     <div class="flex items-center gap-6">
                         <div class="text-right hidden lg:block">
-                            <p class="text-[9px] font-black text-gray-700 uppercase tracking-[0.2em] mb-1">Asset Reference</p>
-                            <p class="text-[10px] font-mono text-gray-500">{{ wa.waba_id }}</p>
+                            <p class="text-[9px] font-black text-foreground/50 uppercase tracking-[0.2em] mb-1">Asset Reference</p>
+                            <p class="text-[10px] font-mono text-foreground/50">{{ wa.waba_id }}</p>
                         </div>
-                        <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-primary group-hover:text-black transition-all duration-500">
+                        <div class="w-12 h-12 rounded-xl bg-foreground/5 flex items-center justify-center border border-foreground/10 group-hover:bg-primary group-hover:text-black transition-all duration-500">
                             <ArrowRight class="w-5 h-5" />
                         </div>
                     </div>
@@ -129,13 +129,13 @@ const deleteAccount = async (id: string) => {
     </div>
 
     <!-- Empty State -->
-    <div v-else class="glass-card p-20 bg-white/[0.01] border-white/5 border-dashed flex flex-col items-center text-center space-y-8">
-        <div class="w-24 h-24 rounded-2xl bg-white/5 flex items-center justify-center">
-            <Smartphone class="w-10 h-10 text-gray-700" />
+    <div v-else class="glass-card p-20 bg-foreground/[0.01] border-foreground/10 border-dashed flex flex-col items-center text-center space-y-8">
+        <div class="w-24 h-24 rounded-2xl bg-foreground/5 flex items-center justify-center">
+            <Smartphone class="w-10 h-10 text-foreground/50" />
         </div>
         <div class="max-w-md space-y-2">
-            <h3 class="text-2xl font-black text-white uppercase tracking-tighter">No Active Protocols</h3>
-            <p class="text-xs text-gray-500 font-bold uppercase tracking-widest">Connect your first WhatsApp Business Line to begin AI automation.</p>
+            <h3 class="text-2xl font-black text-foreground uppercase tracking-tighter">No Active Protocols</h3>
+            <p class="text-xs text-foreground/50 font-bold uppercase tracking-widest">Connect your first WhatsApp Business Line to begin AI automation.</p>
         </div>
         <NuxtLink to="/dashboard/integrations/whatsapp/setup" class="bg-primary text-black px-12 py-5 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl shadow-primary/20">
             Establish Connection
