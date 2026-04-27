@@ -258,7 +258,7 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
             </div>
 
             <!-- Cloudflare-Compatible CSS Bar Chart -->
-            <div class="absolute bottom-0 left-0 right-0 h-24 flex items-end justify-around px-10 opacity-[0.03] pointer-events-none">
+            <div class="absolute bottom-0 left-0 right-0 h-24 flex items-end justify-around px-10 opacity-[0.15] pointer-events-none">
                 <div v-for="(val, idx) in sparkData" :key="idx" 
                      class="w-full mx-1 bg-primary rounded-t-sm transition-all duration-1000"
                      :style="{ height: `${val}%` }">

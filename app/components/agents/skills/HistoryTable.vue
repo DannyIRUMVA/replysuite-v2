@@ -10,12 +10,15 @@ import {
   Clock, 
   History,
   Search,
-  ArrowLeft
+  ArrowLeft,
+  Eye,
+  Lock
 } from 'lucide-vue-next'
 
 const props = defineProps<{
   jobs: any[]
   sources: any[]
+  isPremium: boolean
 }>()
 
 const emit = defineEmits<{
@@ -160,13 +163,19 @@ const getJobSource = (job: any) => {
                   <div class="flex items-center justify-end gap-3">
                     <button 
                       v-if="job.status === 'finished' || job.status === 'failed'"
-                      @click="emit('view-extraction', job)"
+                      @click="isPremium ? emit('view-extraction', job) : null"
                       :class="[
-                        'px-3 py-1 bg-foreground/5 hover:bg-foreground/10 text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all border border-foreground/5',
-                        job.status === 'failed' ? 'text-red-400 hover:text-red-300' : 'text-foreground/40 hover:text-foreground'
+                        'px-3 py-1.5 flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all border',
+                        !isPremium 
+                          ? 'bg-foreground/5 border-foreground/5 text-foreground/20 cursor-not-allowed grayscale' 
+                          : job.status === 'failed' 
+                            ? 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20' 
+                            : 'bg-primary/5 border-primary/10 text-primary hover:bg-primary/10'
                       ]"
                     >
-                      {{ job.status === 'failed' ? 'View Error' : 'View Data' }}
+                      <component :is="isPremium ? Eye : Lock" class="w-3.5 h-3.5" />
+                      {{ job.status === 'failed' ? 'Error Detail' : 'Inspect' }}
+                      <span v-if="!isPremium" class="ml-1 bg-primary/20 text-primary px-1.5 py-0.5 rounded-[4px] text-[7px]">PRO</span>
                     </button>
                     
                     <button 

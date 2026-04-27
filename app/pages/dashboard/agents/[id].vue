@@ -22,9 +22,13 @@ import {
   CreditCard,
   Calendar,
   FileSpreadsheet,
+  Database,
   Plus
 } from 'lucide-vue-next'
 import CustomSelect from '~~/app/components/CustomSelect.vue'
+import ToolSelector from '~/components/agents/tools/ToolSelector.vue'
+import CatalogManager from '~/components/agents/tools/CatalogManager.vue'
+import PaypackConfig from '~/components/agents/tools/PaypackConfig.vue'
 
 definePageMeta({
   middleware: 'auth',
@@ -33,7 +37,8 @@ definePageMeta({
 
 const route = useRoute()
 const chatbotId = route.params.id as string
-const { userId } = useAuth()
+const { userId, planSlug } = useAuth()
+const isPremium = computed(() => ['silver', 'gold'].includes(planSlug.value || ''))
 const supabase = useSupabaseClient()
 const router = useRouter()
 const notify = useNotify()
@@ -42,7 +47,7 @@ const notify = useNotify()
 const isLoading = ref(true)
 const isSaving = ref(false)
 const agent = ref<any>(null)
-const activeTab = ref<'identity' | 'design' | 'security' | 'tools'>('identity')
+const activeTab = ref<'identity' | 'design' | 'security' | 'tools' | 'skills'>('identity')
 const newDomainInput = ref<string>('')
 
 useHead({
@@ -163,7 +168,9 @@ const fetchData = async () => {
         enabled_tools: data.enabled_tools || [],
         tools_config: data.tools_config || {},
       }
-      if (activeTab.value === 'tools') fetchCatalog()
+      if (activeTab.value === 'tools') {
+        // fetchCatalog was moved to CatalogManager component
+      }
     }
   } catch (err) {
     console.error('Error fetching agent:', err)
@@ -251,8 +258,7 @@ const resetDesign = () => {
   form.value.launcher_style = 'circle'
 }
 
-const { planSlug } = useAuth()
-const isPremium = computed(() => ['silver', 'gold'].includes(planSlug.value || ''))
+
 
 const launcherStyles = [
   { label: 'Circle', value: 'circle' },
@@ -262,60 +268,9 @@ const launcherStyles = [
 ]
 
 // Tools & Catalog Logic
-const catalog = ref<any[]>([])
-const isCatalogLoading = ref(false)
-const fetchCatalog = async () => {
-  if (!chatbotId) return
-  isCatalogLoading.value = true
-  const { data } = await supabase
-    .from('chatbot_catalog')
-    .select('*')
-    .eq('chatbot_id', chatbotId)
-    .order('created_at', { ascending: false })
-  catalog.value = data || []
-  isCatalogLoading.value = false
-}
+// Moved to components: ToolSelector, CatalogManager, PaypackConfig
+const catalogManagerRef = ref<any>(null)
 
-const newProduct = ref({ name: '', description: '', price: 0, category: '' })
-const isAddingProduct = ref(false)
-const handleAddProduct = async () => {
-  if (!newProduct.value.name || newProduct.value.price <= 0) return
-  isAddingProduct.value = true
-  try {
-    const { data, error } = await supabase
-      .from('chatbot_catalog')
-      .insert([{
-        chatbot_id: chatbotId,
-        name: newProduct.value.name,
-        description: newProduct.value.description,
-        price: newProduct.value.price,
-        category: newProduct.value.category
-      }])
-      .select()
-      .single()
-    if (error) throw error
-    catalog.value.unshift(data)
-    newProduct.value = { name: '', description: '', price: 0, category: '' }
-    notify.success('Product added to catalog.')
-  } catch (err) {
-    notify.error('Failed to add product.')
-  } finally {
-    isAddingProduct.value = false
-  }
-}
-
-const removeProduct = async (id: string) => {
-  if (!(await notify.confirm('Remove this product?'))) return
-  const { error } = await supabase.from('chatbot_catalog').delete().eq('id', id)
-  if (!error) {
-    catalog.value = catalog.value.filter(p => p.id !== id)
-    notify.success('Product removed.')
-  }
-}
-
-watch(activeTab, (newTab) => {
-  if (newTab === 'tools') fetchCatalog()
-})
 </script>
 
 <template>
@@ -355,7 +310,8 @@ watch(activeTab, (newTab) => {
         v-for="tab in [
           { id: 'identity', label: 'Core Identity', icon: Bot }, 
           { id: 'design', label: 'Design & Colors', icon: Palette },
-          { id: 'tools', label: 'Tools & Skills', icon: Zap },
+          { id: 'tools', label: 'Enabled Tools', icon: Zap },
+          { id: 'skills', label: 'Agent Skills', icon: Sparkles },
           { id: 'security', label: 'Domain Security', icon: Shield }
         ]"
         :key="tab.id"
@@ -959,155 +915,26 @@ watch(activeTab, (newTab) => {
         <div class="lg:col-span-8 space-y-8">
             
             <!-- Tool Selection -->
-            <section class="glass-card p-10">
-              <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-8">Agent Capabilities (Tools)</h3>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div v-for="tool in [
-                    { id: 'orders', name: 'Order Management', desc: 'Allow users to browse catalog and place orders.', icon: ShoppingBag, pro: true },
-                    { id: 'appointments', name: 'Appointment Setter', desc: 'Schedule meetings and consultations.', icon: Calendar, pro: true },
-                    { id: 'payments', name: 'MTN/Airtel Payments', desc: 'Accept local payments via Paypack.', icon: CreditCard, pro: true },
-                    { id: 'invoices', name: 'Automated Invoices', desc: 'Generate printable web invoices.', icon: FileSpreadsheet, pro: true },
-                ]" :key="tool.id" 
-                @click="() => {
-                    if (tool.pro && !isPremium) {
-                        return 
-                    }
-                    const idx = form.enabled_tools.indexOf(tool.id)
-                    if (idx > -1) form.enabled_tools.splice(idx, 1)
-                    else form.enabled_tools.push(tool.id)
-                    handleSave()
-                }"
-                :class="[
-                    'p-5 rounded-2xl border transition-all group relative',
-                    (tool.pro && !isPremium) ? 'opacity-50 grayscale cursor-not-allowed border-foreground/5' : 'cursor-pointer',
-                    form.enabled_tools.includes(tool.id) ? 'bg-primary/10 border-primary/30' : 'bg-foreground/[0.02] border-foreground/5 hover:border-foreground/10'
-                ]">
-                    <!-- Pro Badge -->
-                    <div v-if="tool.pro && !isPremium" class="absolute top-2 right-2 bg-background/50 backdrop-blur-md px-2 py-0.5 rounded-full border border-foreground/10 flex items-center gap-1">
-                        <Lock class="w-2.5 h-2.5 text-yellow-500" />
-                        <span class="text-[8px] font-bold text-foreground uppercase tracking-tighter">Pro Only</span>
-                    </div>
-
-                    <div class="flex items-center gap-4">
-                        <div :class="[
-                            'p-3 rounded-xl transition-all',
-                            form.enabled_tools.includes(tool.id) ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'bg-foreground/5 text-foreground/50 group-hover:text-foreground'
-                        ]">
-                            <component :is="tool.icon" class="w-5 h-5" />
-                        </div>
-                        <div>
-                            <p class="text-sm font-bold text-foreground mb-1">{{ tool.name }}</p>
-                            <p class="text-[9px] text-foreground/50 uppercase tracking-widest">{{ tool.desc }}</p>
-                        </div>
-                    </div>
-                </div>
-              </div>
-            </section>
+            <ToolSelector 
+              v-model="form.enabled_tools" 
+              :is-premium="isPremium" 
+              @save="handleSave" 
+            />
 
             <!-- Catalog Management (Only if orders enabled) -->
-            <section v-if="form.enabled_tools.includes('orders')" class="glass-card p-10">
-              <div class="flex items-center justify-between mb-8">
-                <div>
-                  <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-1">Product Catalog</h3>
-                  <p class="text-[9px] text-foreground/50 uppercase tracking-wider">Inventory managed by this agent</p>
-                </div>
-                <button 
-                  @click="handleAddProduct"
-                  :disabled="isAddingProduct"
-                  class="px-5 py-2 bg-primary text-black font-bold rounded-xl text-[10px] uppercase tracking-widest flex items-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-primary/20"
-                >
-                  <Plus v-if="!isAddingProduct" class="w-3.5 h-3.5" />
-                  <Loader2 v-else class="w-3.5 h-3.5 animate-spin" />
-                  Deploy Product
-                </button>
-              </div>
-
-              <!-- Add Product Form -->
-              <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-10 p-6 rounded-2xl bg-foreground/[0.01] border border-foreground/5">
-                <div class="sm:col-span-2">
-                    <label class="block text-[8px] font-bold text-foreground/50 uppercase tracking-widest mb-2">Product Name</label>
-                    <input v-model="newProduct.name" class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-foreground/50" placeholder="e.g. Classic Burger" />
-                </div>
-                <div>
-                    <label class="block text-[8px] font-bold text-foreground/50 uppercase tracking-widest mb-2">Price (RWF)</label>
-                    <input v-model.number="newProduct.price" type="number" class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-foreground/50" placeholder="5000" />
-                </div>
-                <div>
-                    <label class="block text-[8px] font-bold text-foreground/50 uppercase tracking-widest mb-2">Category</label>
-                    <input v-model="newProduct.category" class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-foreground/50" placeholder="Food" />
-                </div>
-                <div class="sm:col-span-4">
-                    <label class="block text-[8px] font-bold text-foreground/50 uppercase tracking-widest mb-2">Brief Description</label>
-                    <input v-model="newProduct.description" class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-foreground/50" placeholder="A juicy beef burger with cheese..." />
-                </div>
-              </div>
-
-              <!-- Catalog List -->
-              <div v-if="isCatalogLoading" class="flex justify-center py-10">
-                <Loader2 class="w-6 h-6 text-primary animate-spin" />
-              </div>
-              <div v-else-if="catalog.length === 0" class="text-center py-20 border-2 border-dashed border-foreground/5 rounded-[2rem]">
-                <ShoppingBag class="w-12 h-12 text-foreground/10 mx-auto mb-4" />
-                <p class="text-[10px] text-foreground/50 uppercase tracking-[0.2em]">Empty Inventory</p>
-              </div>
-              <div v-else class="space-y-3">
-                <div v-for="product in catalog" :key="product.id" class="flex items-center justify-between p-5 rounded-2xl bg-foreground/[0.01] border border-foreground/5 hover:border-foreground/10 transition-all group">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center text-foreground/50 font-black text-[10px]">
-                            {{ product.category?.substring(0, 3).toUpperCase() || 'ITM' }}
-                        </div>
-                        <div>
-                            <p class="text-sm font-bold text-foreground">{{ product.name }}</p>
-                            <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-0.5">{{ product.description || 'No description' }}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-6">
-                        <div class="text-right">
-                            <p class="text-xs font-bold text-foreground">{{ product.price.toLocaleString() }} RWF</p>
-                            <p class="text-[8px] text-primary uppercase font-bold tracking-tighter mt-0.5">Verified</p>
-                        </div>
-                        <button @click="removeProduct(product.id)" class="p-2 text-foreground/50 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                            <Trash2 class="w-4 h-4" />
-                        </button>
-                    </div>
-                </div>
-              </div>
-            </section>
+            <CatalogManager 
+              v-if="form.enabled_tools.includes('orders')" 
+              :chatbot-id="chatbotId"
+              ref="catalogManagerRef"
+            />
         </div>
 
         <div class="lg:col-span-4 space-y-6">
             <!-- Paypack Configuration -->
-            <section v-if="form.enabled_tools.includes('payments')" class="glass-card p-10">
-              <div class="flex items-center justify-between mb-8">
-                <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase">Paypack Setup</h3>
-                <CreditCard class="w-4 h-4 text-primary opacity-50" />
-              </div>
-              <div class="space-y-6">
-                <div>
-                  <label class="block text-[8px] font-bold text-foreground/50 uppercase tracking-widest mb-2">Application Client ID</label>
-                  <input 
-                    v-model="form.tools_config.paypack_client_id" 
-                    type="password"
-                    class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-foreground/50" 
-                    placeholder="pp_..." 
-                  />
-                </div>
-                <div>
-                  <label class="block text-[8px] font-bold text-foreground/50 uppercase tracking-widest mb-2">Application Client Secret</label>
-                  <input 
-                    v-model="form.tools_config.paypack_client_secret" 
-                    type="password"
-                    class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-foreground/50" 
-                    placeholder="••••••••••••" 
-                  />
-                </div>
-                <div class="p-4 rounded-xl bg-orange-500/5 border border-orange-500/10">
-                    <p class="text-[9px] text-orange-500/70 leading-relaxed uppercase tracking-wider">
-                        Credentials are encrypted and used only for processing customer payments.
-                    </p>
-                </div>
-              </div>
-            </section>
+            <PaypackConfig 
+              v-if="form.enabled_tools.includes('payments')" 
+              v-model="form.tools_config" 
+            />
 
             <!-- Stats & Insights -->
             <section class="glass-card p-10">
@@ -1118,7 +945,7 @@ watch(activeTab, (newTab) => {
                             <ShoppingBag class="w-5 h-5 text-foreground/50" />
                             <p class="text-[10px] font-bold text-foreground/50 uppercase tracking-widest">Active Inventory</p>
                         </div>
-                        <p class="text-xl font-bold text-foreground">{{ catalog.length }}</p>
+                        <p class="text-xl font-bold text-foreground">{{ catalogManagerRef?.catalogCount || 0 }}</p>
                     </div>
                     <div class="p-5 rounded-2xl bg-foreground/[0.01] border border-foreground/5 flex items-center justify-between">
                         <div class="flex items-center gap-3">
@@ -1131,6 +958,42 @@ watch(activeTab, (newTab) => {
             </section>
         </div>
       </div>
+    </div>
+
+    <!-- ─── SKILLS TAB ────────────────────────────────────────── -->
+    <div v-else-if="activeTab === 'skills'" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div class="lg:col-span-8 space-y-8">
+            <section class="glass-card p-10 text-center py-20">
+                <div class="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                    <Sparkles class="w-10 h-10 text-primary" />
+                </div>
+                <h3 class="text-xl font-bold text-foreground mb-4 uppercase italic-none">Agent Skills Engine</h3>
+                <p class="text-xs text-foreground/50 max-w-md mx-auto leading-relaxed uppercase tracking-widest font-bold">
+                    Skills allow your agent to perform specialized tasks and access advanced knowledge domains.
+                </p>
+                <div class="mt-10 p-6 rounded-2xl bg-foreground/[0.02] border border-dashed border-foreground/10">
+                    <p class="text-[10px] text-foreground/30 font-bold uppercase tracking-[0.2em]">
+                        Advanced skills architecture is coming soon.
+                    </p>
+                </div>
+            </section>
+        </div>
+
+        <div class="lg:col-span-4 space-y-6">
+            <section class="glass-card p-10">
+                <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-6">Knowledge Base</h3>
+                <p class="text-[11px] text-foreground/40 leading-relaxed mb-8">
+                    Looking to train your agent with custom data? Visit the Knowledge Ops center.
+                </p>
+                <NuxtLink 
+                  :to="`/dashboard/agents/skills/training?id=${chatbotId}`"
+                  class="w-full py-4 bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 rounded-2xl flex items-center justify-center gap-3 transition-all group"
+                >
+                    <Database class="w-4 h-4 text-primary" />
+                    <span class="text-[10px] font-bold tracking-widest uppercase text-foreground/60 group-hover:text-foreground">Open Knowledge Ops</span>
+                </NuxtLink>
+            </section>
+        </div>
     </div>
     <!-- ─── SECURITY TAB ────────────────────────────────────────── -->
     <div v-else-if="activeTab === 'security'" class="max-w-3xl space-y-8">

@@ -14,9 +14,9 @@ import {
   Zap as LucideZap,
   Sparkles as LucideSparkles
 } from 'lucide-vue-next'
-import HistoryTable from '~/components/agents/HistoryTable.vue'
-import DashboardStats from '~/components/agents/DashboardStats.vue'
-import ExtractionModal from '~/components/agents/ExtractionModal.vue'
+import HistoryTable from '~/components/agents/skills/HistoryTable.vue'
+import DashboardStats from '~/components/agents/skills/DashboardStats.vue'
+import ExtractionModal from '~/components/agents/skills/ExtractionModal.vue'
 import { marked } from 'marked'
 import xss from 'xss'
 
@@ -40,6 +40,8 @@ const sources = ref<any[]>([])
 const trainingJobs = ref<any[]>([])
 const monthlyUsage = ref(0)
 const totalTrainings = ref(0)
+
+const isPremium = computed(() => ['silver', 'gold'].includes(planSlug.value || ''))
 
 const renderMarkdown = (text: string) => {
   if (!text) return ''
@@ -406,8 +408,13 @@ const handleTestChat = async () => {
 
 
         <!-- Training Registry (Recorded History) -->
-        <HistoryTable :jobs="trainingJobs" :sources="sources" @view-extraction="viewExtraction"
-          @delete-source="handleDeleteSource" />
+        <HistoryTable 
+          :jobs="trainingJobs" 
+          :sources="sources" 
+          :is-premium="isPremium"
+          @view-extraction="viewExtraction" 
+          @delete-source="handleDeleteSource" 
+        />
       </div>
 
       <!-- Right Column: Meter & Strategy -->

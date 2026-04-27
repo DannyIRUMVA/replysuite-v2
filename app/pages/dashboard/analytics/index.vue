@@ -300,7 +300,7 @@ const formatDate = (d: string) => {
 
                   <!-- Bar -->
                   <div 
-                    class="w-full bg-foreground/5 rounded-t-lg group-hover:bg-primary/20 transition-all duration-500 relative overflow-hidden"
+                    class="w-full bg-foreground/10 rounded-t-lg group-hover:bg-primary/20 transition-all duration-500 relative overflow-hidden"
                     :style="{ height: `${point.height}%` }"
                   >
                     <!-- Highlight Fill -->

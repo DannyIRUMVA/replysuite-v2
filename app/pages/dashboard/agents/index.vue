@@ -292,7 +292,7 @@ const handleDelete = async (id: string) => {
 
           <div class="mt-8 flex items-center gap-3">
             <NuxtLink 
-              :to="`/dashboard/agents/training?id=${agent.id}`"
+              :to="`/dashboard/agents/skills/training?id=${agent.id}`"
               class="flex-1 py-2.5 bg-primary/10 hover:bg-primary/20 text-[10px] font-bold tracking-widest text-primary rounded-xl transition-all border border-primary/10 flex items-center justify-center gap-2 uppercase"
             >
               <Database class="w-3.5 h-3.5" />
