@@ -91,13 +91,13 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <aside class="hidden md:flex w-72 border-r border-foreground/5 bg-background flex-col p-6 overflow-y-auto shrink-0 relative">
+  <aside class="hidden md:flex w-72 border-r border-foreground/5 bg-[#f8f8f8] dark:bg-[#050505] flex-col p-6 overflow-y-auto shrink-0 relative">
     <!-- Brand -->
     <div class="flex items-center gap-3 mb-12 px-2">
       <div class="w-10 h-10 bg-gradient-to-tr from-primary to-primary-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
         <Zap class="text-black w-6 h-6 fill-current" />
       </div>
-      <span class="text-xl font-bold tracking-tight">ReplySuite</span>
+      <span class="text-xl font-bold">ReplySuite</span>
     </div>
 
     <!-- Navigation -->
@@ -118,7 +118,7 @@ const handleLogout = async () => {
               ]"
             >
               <component :is="iconMap[link.icon]" class="w-4 h-4 group-hover:scale-110 transition-transform" />
-              <span class="flex-1 text-sm tracking-tight capitalize">{{ link.name }}</span>
+              <span class="flex-1 text-sm capitalize">{{ link.name }}</span>
               <ChevronRight v-if="route.path === link.href" class="w-3 h-3" />
             </NuxtLink>
 
@@ -129,7 +129,7 @@ const handleLogout = async () => {
               class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-foreground/50 hover:text-foreground hover:bg-foreground/5 group cursor-pointer"
             >
               <component :is="iconMap[link.icon]" class="w-4 h-4 group-hover:scale-110 transition-transform" />
-              <span class="flex-1 text-sm tracking-tight text-left capitalize">{{ link.name }}</span>
+              <span class="flex-1 text-sm text-left capitalize">{{ link.name }}</span>
             </button>
 
             <!-- Locked Link -->
@@ -139,7 +139,7 @@ const handleLogout = async () => {
               class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-foreground/50 hover:text-foreground/80 group cursor-pointer"
             >
               <component :is="iconMap[link.icon]" class="w-4 h-4 grayscale opacity-50 group-hover:opacity-100 transition-all" />
-              <span class="flex-1 text-sm tracking-tight text-left">{{ link.name }}</span>
+              <span class="flex-1 text-sm text-left">{{ link.name }}</span>
               <Lock class="w-3 h-3 opacity-50 group-hover:opacity-100 transition-all" />
             </button>
           </template>
@@ -211,7 +211,7 @@ const handleLogout = async () => {
             <div class="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-primary/20">
                 <Lock class="w-10 h-10 text-primary" />
             </div>
-            <h3 class="text-2xl font-bold text-foreground mb-4 tracking-tight">Coming Soon</h3>
+            <h3 class="text-2xl font-bold text-foreground mb-4">Coming Soon</h3>
             <p class="text-foreground/50 text-sm leading-relaxed mb-8">
                 We're currently perfecting this channel to ensure it meets our elite performance standards. Stay tuned!
             </p>
@@ -229,7 +229,5 @@ const handleLogout = async () => {
 </template>
 
 <style scoped>
-.glass-card {
-  @apply bg-background/40 backdrop-blur-xl border border-foreground/5 rounded-[20px];
-}
+/* Sidebar specific styles if any */
 </style>

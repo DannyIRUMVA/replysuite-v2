@@ -22,6 +22,13 @@ useHead({
     }
   ]
 })
+
+// Global Font Scaling (10% Increase)
+useHead({
+  htmlAttrs: {
+    style: 'font-size: 17.6px' // 16px * 1.1 = 17.6px
+  }
+})
 </script>
 
 <template>

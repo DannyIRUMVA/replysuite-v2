@@ -26,7 +26,7 @@ onMounted(() => {
     :class="[
       isScrolled 
         ? 'backdrop-blur-xl bg-background/40 border-b border-foreground/10 shadow-2xl shadow-foreground/5' 
-        : 'bg-transparent border-b border-transparent'
+        : 'bg-transparent border-b border-foreground/5'
     ]"
   >
     <nav class="max-w-7xl mx-auto px-6 w-full flex items-center justify-between relative">

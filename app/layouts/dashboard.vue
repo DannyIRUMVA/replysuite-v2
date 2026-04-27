@@ -23,6 +23,13 @@ watch([polarCustomerId, planSlug, isLoading, isMounted], ([polarId, slug, loadin
   }
 }, { immediate: true })
 
+// 2. Global Font Scaling (10% Increase)
+useHead({
+  htmlAttrs: {
+    style: 'font-size: 17.6px' // 16px * 1.1 = 17.6px
+  }
+})
+
 </script>
 
 <template>
@@ -61,8 +68,5 @@ watch([polarCustomerId, planSlug, isLoading, isMounted], ([polarId, slug, loadin
 </template>
 
 <style>
-/* Dashboard specific global overrides */
-.glass-card {
-  @apply bg-foreground/[0.02] border border-foreground/5 rounded-16 transition-all;
-}
+/* Dashboard specific global overrides if any */
 </style>

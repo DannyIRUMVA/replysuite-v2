@@ -70,7 +70,7 @@ const navLinks = [
 
 <style scoped>
 .glass-dock {
-  @apply bg-background/80 backdrop-blur-2xl saturate-[180%];
+  @apply bg-background/95 backdrop-blur-3xl border border-foreground/5 shadow-[0_20px_50px_rgba(0,0,0,0.3)];
 }
 
 .router-link-active span {

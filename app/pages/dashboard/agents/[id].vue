@@ -330,7 +330,7 @@ watch(activeTab, (newTab) => {
           <ArrowLeft class="w-5 h-5" />
         </NuxtLink>
         <div>
-          <h2 class="text-xl font-bold tracking-tight text-foreground mb-1 uppercase">Agent Intelligence</h2>
+          <h2 class="text-xl font-bold text-foreground mb-1 uppercase">Agent Intelligence</h2>
           <div v-if="agent" class="flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-[10px]">
             <Bot class="w-3.5 h-3.5" />
             <span>{{ agent.name }}</span>
@@ -382,7 +382,7 @@ watch(activeTab, (newTab) => {
       <div class="lg:col-span-8 space-y-8">
 
         <!-- Core Identity -->
-        <section class="glass-card">
+        <section class="glass-card p-10">
           <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-8">Core Identity</h3>
           <div class="space-y-6">
             <div>
@@ -412,7 +412,7 @@ watch(activeTab, (newTab) => {
         </section>
 
         <!-- Danger Zone -->
-        <section class="glass-card border-red-500/10 bg-red-500/[0.01]">
+        <section class="glass-card p-10 border-red-500/10 bg-red-500/[0.01]">
           <h3 class="text-[10px] font-bold text-red-500/50 tracking-widest uppercase mb-6">Critical Actions</h3>
           <div class="flex items-center justify-between p-5 rounded-2xl bg-foreground/[0.01] border border-foreground/5">
             <div>
@@ -433,7 +433,7 @@ watch(activeTab, (newTab) => {
       <div class="lg:col-span-4 space-y-6">
 
         <!-- Visibility Toggle -->
-        <div class="glass-card">
+        <div class="glass-card p-8">
           <div class="flex items-center justify-between mb-6">
             <h4 class="text-[10px] font-bold tracking-widest text-foreground/50 uppercase">Deployment Status</h4>
             <component :is="form.is_public ? Globe : Lock" class="w-4 h-4 text-primary opacity-50" />
@@ -459,7 +459,7 @@ watch(activeTab, (newTab) => {
         </div>
 
         <!-- Linguistic Engine -->
-        <div class="glass-card">
+        <div class="glass-card p-8 relative z-10">
           <div class="flex items-center justify-between mb-6">
             <h4 class="text-[10px] font-bold tracking-widest text-foreground/50 uppercase">Linguistic Engine</h4>
             <Globe class="w-4 h-4 text-primary opacity-50" />
@@ -472,7 +472,7 @@ watch(activeTab, (newTab) => {
         </div>
 
         <!-- Global Compliance -->
-        <div class="glass-card">
+        <div class="glass-card p-8">
           <div class="flex items-center justify-between mb-6">
             <h4 class="text-[10px] font-bold tracking-widest text-foreground/50 uppercase">Compliance (EU/Global)</h4>
             <ShieldCheck class="w-4 h-4 text-primary opacity-50" />
@@ -498,7 +498,7 @@ watch(activeTab, (newTab) => {
         </div>
 
         <!-- Resource Summary -->
-        <div class="glass-card">
+        <div class="glass-card p-8">
           <h4 class="text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-6">Resource Summary</h4>
           <div class="space-y-5">
             <div class="flex items-center gap-4">
@@ -527,7 +527,7 @@ watch(activeTab, (newTab) => {
       <div class="lg:col-span-8 space-y-8">
 
         <!-- Color Presets -->
-        <section class="glass-card">
+        <section class="glass-card p-10">
           <div class="flex items-center justify-between mb-6">
             <div>
               <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-1">Color Presets</h3>
@@ -558,7 +558,7 @@ watch(activeTab, (newTab) => {
         </section>
 
         <!-- Custom Colors -->
-        <section class="glass-card">
+        <section class="glass-card p-10">
           <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-6">Custom Colors</h3>
           <div class="grid grid-cols-2 gap-5">
             <!-- Primary Color -->
@@ -620,7 +620,7 @@ watch(activeTab, (newTab) => {
         </section>
 
         <!-- Style & Layout -->
-        <section class="glass-card space-y-6">
+        <section class="glass-card p-10 space-y-8">
           <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase">Style & Layout</h3>
 
           <!-- Bubble Style -->
@@ -688,7 +688,7 @@ watch(activeTab, (newTab) => {
         </section>
 
         <!-- Launcher Customization (Premium) -->
-        <section class="glass-card relative overflow-hidden" :class="{ 'opacity-50 pointer-events-none': !isPremium }">
+        <section class="glass-card p-10 relative overflow-hidden" :class="{ 'opacity-50 pointer-events-none': !isPremium }">
           <div v-if="!isPremium" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/40 backdrop-blur-[2px]">
             <div class="p-3 bg-primary/20 rounded-2xl mb-3">
               <Lock class="w-6 h-6 text-primary" />
@@ -827,7 +827,7 @@ watch(activeTab, (newTab) => {
 
       <!-- Right: Live Preview (4/12) -->
       <div class="lg:col-span-4 sticky top-10">
-        <div class="glass-card">
+        <div class="glass-card p-10">
             <div class="flex items-center justify-between mb-5">
               <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase">Live Preview</h3>
               <a :href="`/widget/${chatbotId}`" target="_blank" class="p-2 hover:bg-foreground/5 rounded-lg transition-all text-foreground/50 hover:text-primary" title="Open Full Preview">
@@ -959,7 +959,7 @@ watch(activeTab, (newTab) => {
         <div class="lg:col-span-8 space-y-8">
             
             <!-- Tool Selection -->
-            <section class="glass-card">
+            <section class="glass-card p-10">
               <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-8">Agent Capabilities (Tools)</h3>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div v-for="tool in [
@@ -1005,7 +1005,7 @@ watch(activeTab, (newTab) => {
             </section>
 
             <!-- Catalog Management (Only if orders enabled) -->
-            <section v-if="form.enabled_tools.includes('orders')" class="glass-card">
+            <section v-if="form.enabled_tools.includes('orders')" class="glass-card p-10">
               <div class="flex items-center justify-between mb-8">
                 <div>
                   <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-1">Product Catalog</h3>
@@ -1077,7 +1077,7 @@ watch(activeTab, (newTab) => {
 
         <div class="lg:col-span-4 space-y-6">
             <!-- Paypack Configuration -->
-            <section v-if="form.enabled_tools.includes('payments')" class="glass-card">
+            <section v-if="form.enabled_tools.includes('payments')" class="glass-card p-10">
               <div class="flex items-center justify-between mb-8">
                 <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase">Paypack Setup</h3>
                 <CreditCard class="w-4 h-4 text-primary opacity-50" />
@@ -1110,7 +1110,7 @@ watch(activeTab, (newTab) => {
             </section>
 
             <!-- Stats & Insights -->
-            <section class="glass-card">
+            <section class="glass-card p-10">
                 <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-8">Intelligence Overlook</h3>
                 <div class="space-y-5">
                     <div class="p-5 rounded-2xl bg-foreground/[0.01] border border-foreground/5 flex items-center justify-between">
@@ -1134,13 +1134,13 @@ watch(activeTab, (newTab) => {
     </div>
     <!-- ─── SECURITY TAB ────────────────────────────────────────── -->
     <div v-else-if="activeTab === 'security'" class="max-w-3xl space-y-8">
-      <section class="glass-card">
+      <section class="glass-card p-10">
         <div class="flex items-center gap-4 mb-8">
           <div class="p-3 rounded-2xl bg-primary/10 border border-primary/20">
             <Shield class="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h3 class="text-lg font-bold text-foreground tracking-tight uppercase">Domain Whitelisting</h3>
+            <h3 class="text-lg font-bold text-foreground uppercase">Domain Whitelisting</h3>
             <p class="text-[10px] text-foreground/50 uppercase tracking-widest mt-1">Prevent unauthorized websites from embedding your widget</p>
           </div>
         </div>
@@ -1150,7 +1150,7 @@ watch(activeTab, (newTab) => {
             <div class="flex items-start gap-4">
               <Info class="w-4 h-4 text-primary shrink-0 mt-1" />
               <div class="space-y-1">
-                <p class="text-xs font-bold text-foreground uppercase tracking-tight">Security Protocol</p>
+                <p class="text-xs font-bold text-foreground uppercase">Security Protocol</p>
                 <p class="text-[10px] text-foreground/50 leading-relaxed uppercase tracking-wider">
                   If this list is empty, your widget can be embedded on any website. Once you add a domain, all other origins (except localhost) will be blocked.
                 </p>
@@ -1208,8 +1208,8 @@ watch(activeTab, (newTab) => {
       </section>
 
       <!-- Advanced Options -->
-      <section class="glass-card opacity-50 grayscale pointer-events-none">
-        <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-6 flex items-center gap-2">
+      <section class="glass-card p-10 opacity-50 grayscale pointer-events-none">
+        <h3 class="text-[10px] font-bold text-foreground/50 uppercase mb-6 flex items-center gap-2">
           Advanced Security <span class="bg-primary/20 text-primary px-2 py-0.5 rounded text-[8px]">PRO</span>
         </h3>
         <div class="space-y-4">
@@ -1239,7 +1239,4 @@ watch(activeTab, (newTab) => {
 </template>
 
 <style scoped>
-.glass-card {
-  @apply bg-foreground/[0.02] backdrop-blur-xl border border-foreground/5 p-8 rounded-[2rem];
-}
 </style>

@@ -1,64 +1,54 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --primary: 212 175 55;
-  --primary-accent: 197 160 89;
-  --background: 245 245 247;
+  --primary: 212 175 55; /* Golden primary */
+  --primary-accent: 255 215 0;
+  --background: 255 255 255; 
   --background-card: 255 255 255;
-  --background-accent: 235 236 240;
+  --background-accent: 249 250 251;
   --surface: 255 255 255;
-  --surface-border: 0 0 0; /* Will be used with opacity / 0.1 */
-  --text-base: 26 26 26;
-  --text-muted: 102 102 102;
-  --border-color: 0 0 0;
+  --surface-border: 0 0 0;
+  --text-base: 9 9 11;
+  --text-muted: 107 114 128;
+  --border-color: 229 231 235;
 }
 
 .dark {
   --primary: 212 175 55;
-  --primary-accent: 197 160 89;
-  --background: 10 10 11;
-  --background-card: 18 18 20;
-  --background-accent: 24 24 27;
-  --surface: 18 18 20;
+  --primary-accent: 255 215 0;
+  --background: 9 9 11; /* Standard Zinc-950 for better contrast */
+  --background-card: 12 12 14;
+  --background-accent: 18 18 20;
+  --surface: 12 12 14;
   --surface-border: 255 255 255;
-  --text-base: 255 255 255;
-  --text-muted: 161 161 170;
-  --border-color: 255 255 255;
+  --text-base: 248 250 252;
+  --text-muted: 148 163 184;
+  --border-color: 24 24 27;
 }
 
 @layer base {
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-  }
-  ::selection {
-    @apply bg-primary/30;
+    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
   }
 }
 
 @layer components {
-  .btn-primary {
-    @apply bg-primary hover:bg-primary/90 transition-all px-6 py-3 rounded-full font-bold text-black shadow-lg shadow-primary/20;
-  }
-  
   .btn-gradient {
-    @apply bg-gradient-to-r from-primary to-primary-accent hover:opacity-90 transition-all px-8 py-4 rounded-full font-bold text-black shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] tracking-tight;
+    @apply bg-gradient-to-r from-primary to-primary-accent hover:opacity-90 transition-all px-8 py-4 rounded-full font-bold text-black shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-[0.98];
   }
 
   .glass-card {
-    @apply bg-background-card border border-foreground/5 backdrop-blur-xl rounded-[32px] transition-all duration-500;
+    @apply bg-background-card border border-foreground/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.03)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] backdrop-blur-xl rounded-[32px] transition-all duration-500;
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-br from-primary via-primary-accent to-[#F9F6EE] font-black tracking-tight;
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-primary via-primary-accent to-primary/60 font-black;
   }
 
   .badge-gradient {
-    @apply px-4 py-1.5 rounded-full bg-primary/5 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.2em];
+    @apply px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.2em] shadow-sm;
   }
 
   /* Widget / Chatbot Markdown Rendering */

@@ -419,10 +419,6 @@ const handleDelete = async (id: string) => {
 </template>
 
 <style scoped>
-.glass-card {
-  @apply bg-foreground/[0.02] backdrop-blur-xl border border-foreground/5 p-8 rounded-[2rem];
-}
-
 .italic-none {
   font-style: normal !important;
 }

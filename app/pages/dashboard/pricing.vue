@@ -228,9 +228,6 @@ const openPortal = async () => {
 
 
 <style scoped>
-.glass-card {
-  @apply rounded-[32px] backdrop-blur-sm border bg-foreground/[0.02] border-foreground/5;
-}
 .text-gradient {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60;
 }

@@ -198,14 +198,28 @@
     });
 
     function init() {
-      if (document.body) {
-        document.body.appendChild(btn);
-        document.body.appendChild(container);
-      } else {
+      // Safety check for both head and body
+      if (!document.head || !document.body) {
         setTimeout(init, 50);
+        return;
+      }
+      
+      try {
+        if (!document.getElementById('replysuite-chat-widget-container')) {
+          document.body.appendChild(container);
+          document.body.appendChild(btn);
+        }
+      } catch (err) {
+        console.error('[ReplySuite] Failed to initialize launcher:', err);
       }
     }
-    init();
+    
+    // Ensure we run only after DOM is somewhat ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
   }
 
   // ── Utility: hex color → rgba ────────────────────────────────────────────────

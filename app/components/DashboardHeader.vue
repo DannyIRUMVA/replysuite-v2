@@ -36,7 +36,7 @@ const greeting = computed(() => {
         <div class="w-8 h-8 bg-gradient-to-tr from-primary to-primary-accent rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
           <Zap class="text-black w-4 h-4 fill-current" />
         </div>
-        <span class="text-lg font-bold tracking-tight">ReplySuite</span>
+        <span class="text-lg font-bold">ReplySuite</span>
       </div>
       
       <!-- Upgrade Trigger (Mobile) -->
@@ -50,7 +50,7 @@ const greeting = computed(() => {
          <span class="text-[10px] font-bold tracking-widest text-primary capitalize">{{ greeting }}</span>
          <div class="h-[1px] w-4 bg-primary/30"></div>
       </div>
-      <h1 class="text-2xl md:text-3xl font-black tracking-tighter text-foreground leading-tight">
+      <h1 class="text-2xl md:text-3xl font-black text-foreground leading-tight">
         {{ pageContext.title }}
       </h1>
       <p class="text-foreground/50 text-sm font-medium mt-1">{{ pageContext.subtitle }}</p>

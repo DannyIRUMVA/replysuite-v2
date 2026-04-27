@@ -131,7 +131,7 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
   <div class="space-y-10">
     <!-- Header -->
     <div class="max-w-xl">
-        <h2 class="text-xl font-bold tracking-tight text-foreground mb-2 italic-none uppercase">Conversations Analytics</h2>
+        <h2 class="text-xl font-bold text-foreground mb-2 italic-none uppercase">Conversations Analytics</h2>
         <p class="text-foreground/50 text-sm italic-none">Your comprehensive intelligence overlook across all digital channels.</p>
     </div>
 
@@ -157,7 +157,7 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
           <span :class="stat.changeType === 'increase' ? 'text-green-500' : 'text-foreground/50'" class="text-xs font-bold tracking-widest">{{ stat.change }}</span>
         </div>
         <p class="text-foreground/50 text-xs mb-1 tracking-widest font-bold leading-none capitalize">{{ stat.name }}</p>
-        <p class="text-3xl font-bold mt-2 tracking-tighter">{{ stat.value }}</p>
+        <p class="text-3xl font-bold mt-2"> {{ stat.value }}</p>
       </div>
     </div>
 
@@ -234,14 +234,14 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
                     <MessageSquare class="w-10 h-10 text-primary" />
                 </div>
                 
-                <h3 class="text-2xl font-black tracking-tighter text-foreground uppercase mb-2">Conversations Hub</h3>
+                <h3 class="text-2xl font-black text-foreground uppercase mb-2">Conversations Hub</h3>
                 <p class="text-foreground/50 font-bold uppercase tracking-[0.2em] text-[10px] mb-8 max-w-[200px] leading-relaxed">
                     Real-time monitoring and management of all active AI sessions
                 </p>
 
                 <div class="flex items-center gap-12 mb-10">
                     <div class="flex flex-col">
-                        <span class="text-3xl font-black tracking-tighter text-foreground">{{ stats.find(s => s.id === 'messages')?.value || '0' }}</span>
+                        <span class="text-3xl font-black text-foreground"> {{ stats.find(s => s.id === 'messages')?.value || '0' }}</span>
                         <span class="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Total Threads</span>
                     </div>
                     <div class="w-px h-10 bg-foreground/5"></div>
@@ -301,9 +301,6 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
 </template>
 
 <style scoped>
-.glass-card {
-  @apply bg-foreground/[0.02] backdrop-blur-xl border border-foreground/5 p-8 rounded-[20px];
-}
 .italic-none {
   font-style: normal !important;
 }

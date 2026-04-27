@@ -34,38 +34,19 @@ const selectedBotId = ref<string>('all')
 const analytics = ref<any>(null)
 const isLoading = ref(true)
 
-const FUNCTIONS_URL = 'https://vycwuvynlqdpvjiwbjjv.supabase.co/functions/v1'
-
 const fetchAnalytics = async () => {
   isLoading.value = true
   try {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      notify.error('Session expired. Please re-authenticate.')
-      return
-    }
-
-    const url = new URL(`${FUNCTIONS_URL}/fetch-analytics`)
-    if (selectedBotId.value !== 'all') {
-      url.searchParams.set('chatbotId', selectedBotId.value)
-    }
-
-    const res = await fetch(url.toString(), {
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
+    const { data, error } = await supabase.functions.invoke('fetch-analytics', {
+      method: 'GET',
+      queryParams: selectedBotId.value !== 'all' ? { chatbotId: selectedBotId.value } : {}
     })
 
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({ message: res.statusText }))
-      throw new Error(errBody.error || errBody.message || 'Edge function error')
-    }
-
-    analytics.value = await res.json()
+    if (error) throw error
+    analytics.value = data
   } catch (err: any) {
-    console.error('[Analytics]', err)
-    notify.error('Failed to load analytics data.')
+    console.error('[Analytics Error]', err)
+    notify.error('Failed to load analytics data. Please try again.')
     analytics.value = null
   } finally {
     isLoading.value = false
@@ -91,26 +72,41 @@ const botOptions = computed(() => {
 // ── Chart ───────────────────────────────────────────────────
 const chartData = computed(() => {
   if (!analytics.value?.timeline?.length) return []
-  const max = Math.max(...analytics.value.timeline.map((d: any) => d.count), 1)
-  return analytics.value.timeline.slice(-14).map((d: any, i: number) => ({
-    x: (i / 13) * 100,
-    y: 100 - (d.count / max) * 90,
+  // Show last 14 days
+  const rawData = analytics.value.timeline.slice(-14)
+  const max = Math.max(...rawData.map((d: any) => d.count), 1)
+  
+  return rawData.map((d: any, i: number) => ({
+    x: rawData.length > 1 ? (i / (rawData.length - 1)) * 100 : 50,
+    y: 100 - (d.count / max) * 85, // 85 to leave room at top
+    height: (d.count / max) * 100,
     count: d.count,
     date: d.date,
+    active: false
   }))
 })
 
-const linePath = computed(() => {
+// Spline calculation for a smooth line
+const splinePath = computed(() => {
   if (chartData.value.length < 2) return ''
-  return chartData.value.reduce((path: string, point: any, i: number) =>
-    i === 0 ? `M ${point.x} ${point.y}` : `${path} L ${point.x} ${point.y}`, '')
-})
-
-const areaPath = computed(() => {
-  if (chartData.value.length < 2) return ''
-  const first = chartData.value[0]
-  const last = chartData.value[chartData.value.length - 1]
-  return `${linePath.value} L ${last.x} 100 L ${first.x} 100 Z`
+  const points = chartData.value
+  let path = `M ${points[0].x} ${points[0].y}`
+  
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i === 0 ? i : i - 1]
+    const p1 = points[i]
+    const p2 = points[i + 1]
+    const p3 = points[i + 2 === points.length ? i + 1 : i + 2]
+    
+    // Smooth control points
+    const cp1x = p1.x + (p2.x - p0.x) / 6
+    const cp1y = p1.y + (p2.y - p0.y) / 6
+    const cp2x = p2.x - (p3.x - p1.x) / 6
+    const cp2y = p2.y - (p3.y - p1.y) / 6
+    
+    path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`
+  }
+  return path
 })
 
 // ── Channel bars ─────────────────────────────────────────────
@@ -265,45 +261,77 @@ const formatDate = (d: string) => {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         <!-- Timeline Chart -->
-        <div class="lg:col-span-2 bg-foreground/[0.02] border border-foreground/5 rounded-[2.5rem] p-10 space-y-8 relative overflow-hidden">
+        <div class="lg:col-span-2 bg-foreground/[0.02] border border-foreground/5 rounded-[2.5rem] p-10 space-y-8 relative overflow-hidden flex flex-col">
           <div class="absolute top-8 right-8 flex items-center gap-2">
             <div class="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span class="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Live Stream</span>
+            <span class="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Active Monitoring</span>
           </div>
           <div>
-            <h2 class="text-xl font-black text-foreground tracking-tight uppercase">Engagement Timeline</h2>
-            <p class="text-[10px] font-bold text-foreground/50 uppercase tracking-widest mt-1">Chat Sessions — Last 14 Days</p>
+            <h2 class="text-xl font-black text-foreground tracking-tight uppercase">AI Reply Activity</h2>
+            <p class="text-[10px] font-bold text-foreground/50 uppercase tracking-widest mt-1">
+              {{ selectedBotId === 'all' ? 'Aggregate Replies' : 'Selected Agent Activity' }} — Last 14 Days
+            </p>
           </div>
 
-          <!-- SVG -->
-          <div class="relative h-48 w-full">
-            <!-- Empty state for chart -->
+          <!-- Modern Bar + Line Chart -->
+          <div class="relative flex-1 min-h-[220px] w-full mt-4">
+            <!-- Empty state -->
             <div v-if="chartData.every((d: any) => d.count === 0)" class="absolute inset-0 flex flex-col items-center justify-center gap-3">
               <Activity class="w-8 h-8 text-foreground/20" />
-              <p class="text-[10px] text-foreground/50 uppercase tracking-widest font-black">No session data in the last 14 days</p>
+              <p class="text-[10px] text-foreground/50 uppercase tracking-widest font-black">No activity recorded yet</p>
             </div>
-            <svg v-else viewBox="0 0 100 100" preserveAspectRatio="none" class="w-full h-full overflow-visible">
-              <defs>
-                <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.25" />
-                  <stop offset="100%" stop-color="var(--primary)" stop-opacity="0" />
-                </linearGradient>
-              </defs>
-              <path :d="areaPath" fill="url(#areaGrad)" />
-              <path :d="linePath" fill="none" stroke="var(--primary)" stroke-width="0.6" stroke-linecap="round" stroke-linejoin="round" />
-              <g v-for="point in chartData" :key="point.date">
-                <title>{{ point.date }}: {{ point.count }} sessions</title>
-                <circle :cx="point.x" :cy="point.y" r="1.2" fill="var(--background)" stroke="var(--primary)" stroke-width="0.4" class="cursor-pointer" />
-              </g>
-            </svg>
-            <div class="absolute -bottom-5 left-0 w-full flex justify-between px-1">
-              <span
-                v-for="point in chartData.filter((_: any, i: number) => i % 3 === 0)"
-                :key="point.date"
-                class="text-[8px] font-black text-foreground/50 uppercase"
-              >
-                {{ formatDate(point.date) }}
-              </span>
+
+            <div v-else class="absolute inset-0 flex flex-col">
+              <!-- Bars Layer -->
+              <div class="flex-1 flex items-end justify-between gap-1 sm:gap-2 px-1">
+                <div 
+                  v-for="point in chartData" 
+                  :key="point.date"
+                  class="flex-1 group relative flex flex-col items-center"
+                >
+                  <!-- Tooltip -->
+                  <div class="absolute bottom-full mb-3 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 z-10 pointer-events-none">
+                    <div class="bg-foreground text-background text-[10px] font-black px-3 py-1.5 rounded-lg whitespace-nowrap shadow-xl border border-foreground/10 uppercase tracking-tighter">
+                      {{ point.count }} Replies
+                      <div class="text-[8px] opacity-50">{{ point.date }}</div>
+                    </div>
+                    <div class="w-2 h-2 bg-foreground rotate-45 mx-auto -mt-1" />
+                  </div>
+
+                  <!-- Bar -->
+                  <div 
+                    class="w-full bg-foreground/5 rounded-t-lg group-hover:bg-primary/20 transition-all duration-500 relative overflow-hidden"
+                    :style="{ height: `${point.height}%` }"
+                  >
+                    <!-- Highlight Fill -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Line Layer (Overlay) -->
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible pt-2">
+                <path 
+                  :d="splinePath" 
+                  fill="none" 
+                  stroke="var(--primary)" 
+                  stroke-width="1.2" 
+                  stroke-linecap="round" 
+                  class="drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]"
+                />
+              </svg>
+
+              <!-- X-Axis Labels -->
+              <div class="flex justify-between px-1 mt-6 border-t border-foreground/5 pt-4">
+                <span
+                  v-for="(point, i) in chartData"
+                  :key="point.date"
+                  v-show="i === 0 || i === chartData.length - 1 || i === Math.floor(chartData.length / 2)"
+                  class="text-[8px] font-black text-foreground/40 uppercase tracking-widest"
+                >
+                  {{ formatDate(point.date) }}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -347,7 +375,7 @@ const formatDate = (d: string) => {
                 </div>
                 <div class="w-full h-1.5 bg-foreground/5 rounded-full overflow-hidden">
                   <div
-                    class="h-full rounded-full transition-all duration-700"
+                    class="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-transparent"
                     :style="{ width: `${ch.pct || 0}%`, backgroundColor: ch.color }"
                   />
                 </div>
@@ -358,32 +386,34 @@ const formatDate = (d: string) => {
           <!-- Top Agents -->
           <div class="bg-foreground/[0.02] border border-foreground/5 rounded-[2rem] p-7 space-y-5">
             <div>
-              <h3 class="text-sm font-black text-foreground uppercase tracking-tight">Top Agents</h3>
-              <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-0.5">By conversation count</p>
+              <h3 class="text-sm font-black text-foreground uppercase tracking-tight">Top Performance</h3>
+              <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-0.5">Agents by output volume</p>
             </div>
             <div v-if="!analytics.topAgents?.length" class="flex flex-col items-center py-6 text-foreground/30">
               <Bot class="w-7 h-7 opacity-20 mb-2" />
               <p class="text-[9px] uppercase tracking-widest font-black">No agent data yet</p>
             </div>
-            <div v-else class="space-y-2.5">
+            <div v-else class="space-y-3">
               <div
                 v-for="(agent, idx) in analytics.topAgents"
                 :key="agent.id"
-                class="flex items-center gap-3 p-3 rounded-2xl bg-foreground/[0.01] border border-foreground/[0.03] hover:border-primary/20 transition-all group"
+                class="flex items-center gap-3 p-4 rounded-2xl bg-foreground/[0.01] border border-foreground/[0.03] hover:border-primary/20 transition-all group cursor-default"
               >
-                <div class="w-8 h-8 rounded-xl bg-foreground/5 flex items-center justify-center text-[10px] font-black text-foreground/50 group-hover:text-primary transition-colors shrink-0">
-                  #{{ idx + 1 }}
+                <div class="w-8 h-8 rounded-xl bg-foreground/5 flex items-center justify-center text-[10px] font-black text-foreground/40 group-hover:bg-primary/10 group-hover:text-primary transition-all shrink-0">
+                  {{ idx + 1 }}
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-[11px] font-black text-foreground uppercase truncate">{{ agent.name }}</p>
-                  <div class="w-full h-1 bg-foreground/5 rounded-full mt-1.5 overflow-hidden">
+                  <div class="flex justify-between items-center mb-1.5">
+                    <p class="text-[10px] font-black text-foreground uppercase truncate">{{ agent.name }}</p>
+                    <span class="text-[10px] font-black text-foreground tabular-nums">{{ agent.count }}</span>
+                  </div>
+                  <div class="w-full h-1 bg-foreground/5 rounded-full overflow-hidden">
                     <div
-                      class="h-full bg-primary rounded-full"
+                      class="h-full bg-gradient-to-r from-primary/50 to-primary rounded-full transition-all duration-1000"
                       :style="{ width: analytics.topAgents[0]?.count > 0 ? `${(agent.count / analytics.topAgents[0].count) * 100}%` : '0%' }"
                     />
                   </div>
                 </div>
-                <span class="text-[11px] font-black text-foreground shrink-0 tabular-nums">{{ agent.count }}</span>
               </div>
             </div>
           </div>
