@@ -99,8 +99,14 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@nuxtjs/supabase',
     '@polar-sh/nuxt',
-    '@nuxt/scripts'
+    '@nuxt/scripts',
+    '@nuxtjs/color-mode'
   ],
+  colorMode: {
+    classSuffix: '',
+    preference: 'dark',
+    fallback: 'dark'
+  },
   scripts: {
     registry: {
       googleTagManager: {
@@ -175,6 +181,28 @@ export default defineNuxtConfig({
     preset: 'cloudflare-pages',
     compatibilityFlags: {
       nodejs_compat: true
+    },
+    commonJS: {
+      dynamicRequireTargets: [
+        './node_modules/pdf-parse/lib/pdf.js/**/*.js',
+        './node_modules/pdf-parse/**/*.js',
+        './node_modules/pdf-parse-fork/lib/pdf.js/**/*.js',
+        './node_modules/pdf-parse-fork/**/*.js'
+      ]
+    },
+    routeRules: {
+      '/widget/**': {
+        headers: {
+          'Content-Security-Policy': "frame-ancestors * http: https: localhost:* file:;",
+          'X-Frame-Options': 'ALLOWALL'
+        }
+      },
+      '/**': {
+        headers: {
+          'Content-Security-Policy': "frame-ancestors * http: https: localhost:* file:;",
+          'X-Frame-Options': 'ALLOWALL'
+        }
+      }
     }
   }
 })

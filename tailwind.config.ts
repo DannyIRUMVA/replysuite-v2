@@ -5,13 +5,21 @@ export default <Partial<Config>>{
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#D4AF37', // Premium Gold
-          accent: '#C5A059',  // Soft Champagne
+          DEFAULT: 'var(--primary)',
+          accent: 'var(--primary-accent)',
         },
         background: {
-          DEFAULT: '#0A0A0B', // Sophisticated Off-Black
-          card: '#121214',   // Layered Cards
-          accent: '#18181B'  // Subtler highlights
+          DEFAULT: 'var(--background)',
+          card: 'var(--background-card)',
+          accent: 'var(--background-accent)',
+        },
+        surface: {
+          DEFAULT: 'rgb(var(--surface) / <alpha-value>)',
+          border: 'rgb(var(--surface-border) / <alpha-value>)',
+        },
+        foreground: {
+          DEFAULT: 'var(--text-base)',
+          muted: 'var(--text-muted)'
         }
       },
       fontFamily: {

@@ -26,7 +26,7 @@ watch([polarCustomerId, planSlug, isLoading, isMounted], ([polarId, slug, loadin
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#050505] text-white flex overflow-hidden">
+  <div class="min-h-screen bg-background text-foreground flex overflow-hidden">
     <!-- Sidebar -->
     <DashboardSidebar />
 

@@ -50,30 +50,31 @@ const greeting = computed(() => {
          <span class="text-[10px] font-bold tracking-widest text-primary capitalize">{{ greeting }}</span>
          <div class="h-[1px] w-4 bg-primary/30"></div>
       </div>
-      <h1 class="text-2xl md:text-3xl font-black tracking-tighter text-white leading-tight">
+      <h1 class="text-2xl md:text-3xl font-black tracking-tighter text-foreground leading-tight">
         {{ pageContext.title }}
       </h1>
-      <p class="text-gray-500 text-sm font-medium mt-1">{{ pageContext.subtitle }}</p>
+      <p class="text-foreground/50 text-sm font-medium mt-1">{{ pageContext.subtitle }}</p>
     </div>
     
-    <div class="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 border-white/5 pt-6 md:pt-0">
-      <div class="relative hidden sm:block">
-         <NuxtLink to="/dashboard/pricing" class="relative flex items-center gap-4 py-2.5 px-6 rounded-2xl bg-primary text-black font-bold border border-primary/20 hover:scale-105 hover:shadow-xl hover:shadow-primary/30 transition-all group whitespace-nowrap shadow-lg shadow-primary/20">
+    <div class="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 border-foreground/5 pt-6 md:pt-0">
+      <div class="hidden sm:flex items-center gap-4">
+        <NuxtLink to="/dashboard/pricing" class="relative flex items-center gap-4 py-2.5 px-6 rounded-2xl bg-primary text-black font-bold border border-primary/20 hover:scale-105 hover:shadow-xl hover:shadow-primary/30 transition-all group whitespace-nowrap shadow-lg shadow-primary/20">
             <span class="text-[10px] uppercase tracking-widest font-black">Upgrade Plan</span>
             <TrendingUp class="w-3.5 h-3.5" />
-         </NuxtLink>
+        </NuxtLink>
+        <ThemeSwitcher />
       </div>
 
-      <NuxtLink to="/dashboard/settings" class="flex items-center gap-3 glass-card !p-1.5 !rounded-full border-white/10 hover:border-primary/20 transition-all cursor-pointer group">
-         <div class="w-10 h-10 rounded-full overflow-hidden bg-primary/20 border border-white/10 p-0.5">
+      <NuxtLink to="/dashboard/settings" class="flex items-center gap-3 glass-card !p-1.5 !rounded-full border-foreground/10 hover:border-primary/20 transition-all cursor-pointer group">
+         <div class="w-10 h-10 rounded-full overflow-hidden bg-primary/20 border border-foreground/10 p-0.5">
             <img 
               :src="profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'expert'}`" 
               class="w-full h-full rounded-full object-cover group-hover:scale-110 transition-transform" 
             />
          </div>
          <div class="pr-5 hidden lg:block">
-            <p class="text-[10px] font-bold tracking-widest text-gray-500 leading-none mb-1">Logged In As</p>
-            <p class="text-xs font-bold text-white leading-none">{{ profile?.full_name || user?.email?.split('@')[0] || 'Member' }}</p>
+            <p class="text-[10px] font-bold tracking-widest text-foreground/50 leading-none mb-1">Logged In As</p>
+            <p class="text-xs font-bold text-foreground leading-none">{{ profile?.full_name || user?.email?.split('@')[0] || 'Member' }}</p>
          </div>
       </NuxtLink>
     </div>

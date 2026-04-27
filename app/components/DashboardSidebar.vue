@@ -91,7 +91,7 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <aside class="hidden md:flex w-72 border-r border-white/5 bg-[#0a0a0a] flex-col p-6 overflow-y-auto shrink-0 relative">
+  <aside class="hidden md:flex w-72 border-r border-foreground/5 bg-background flex-col p-6 overflow-y-auto shrink-0 relative">
     <!-- Brand -->
     <div class="flex items-center gap-3 mb-12 px-2">
       <div class="w-10 h-10 bg-gradient-to-tr from-primary to-primary-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
@@ -114,7 +114,7 @@ const handleLogout = async () => {
               :class="[
                 route.path === link.href 
                   ? 'bg-primary/10 text-primary font-bold shadow-[0_0_20px_rgba(var(--primary),0.05)]' 
-                  : 'text-gray-500 hover:text-white hover:bg-white/5'
+                  : 'text-foreground/50 hover:text-foreground hover:bg-foreground/5'
               ]"
             >
               <component :is="iconMap[link.icon]" class="w-4 h-4 group-hover:scale-110 transition-transform" />
@@ -126,7 +126,7 @@ const handleLogout = async () => {
             <button 
               v-else-if="link.action"
               @click="link.action()"
-              class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-gray-500 hover:text-white hover:bg-white/5 group cursor-pointer"
+              class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-foreground/50 hover:text-foreground hover:bg-foreground/5 group cursor-pointer"
             >
               <component :is="iconMap[link.icon]" class="w-4 h-4 group-hover:scale-110 transition-transform" />
               <span class="flex-1 text-sm tracking-tight text-left capitalize">{{ link.name }}</span>
@@ -136,7 +136,7 @@ const handleLogout = async () => {
             <button 
               v-else
               @click="showComingSoon = true"
-              class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-gray-700/50 hover:text-gray-400 group cursor-pointer"
+              class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-foreground/30 hover:text-foreground/60 group cursor-pointer"
             >
               <component :is="iconMap[link.icon]" class="w-4 h-4 grayscale opacity-30 group-hover:opacity-100 transition-all" />
               <span class="flex-1 text-sm tracking-tight text-left">{{ link.name }}</span>
@@ -149,7 +149,7 @@ const handleLogout = async () => {
 
     <!-- Subscription Card (Skeleton while loading) -->
     <div v-if="isLoading" class="mt-8 mb-4">
-      <div class="glass-card p-5 border border-white/5 bg-white/[0.02]">
+      <div class="glass-card p-5 border border-foreground/5 bg-foreground/[0.02]">
         <div class="flex items-center justify-between mb-3">
           <Skeleton width="60px" height="10px" />
           <Skeleton width="12px" height="12px" circle />
@@ -174,7 +174,7 @@ const handleLogout = async () => {
           <h4 class="font-bold text-sm mb-1 capitalize">
             {{ membership.plans?.display_name || membership.plans?.name }}
           </h4>
-          <p class="text-[11px] text-gray-500 mb-4 lowercase">
+          <p class="text-[11px] text-foreground/50 mb-4 lowercase">
             {{ daysLeft }} days remaining
           </p>
 
@@ -186,7 +186,7 @@ const handleLogout = async () => {
     </div>
 
     <!-- User Menu -->
-    <div class="pt-6 border-t border-white/5 mt-auto">
+    <div class="pt-6 border-t border-foreground/5 mt-auto">
       <button @click="handleLogout" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-400/10 transition-all border border-transparent hover:border-red-400/20 text-sm font-medium">
         <LogOut class="w-5 h-5" />
         Logout
@@ -203,16 +203,16 @@ const handleLogout = async () => {
       leave-to-class="transform opacity-0 scale-95"
     >
       <div v-if="showComingSoon" class="fixed inset-0 z-[200] flex items-center justify-center p-6">
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" @click="showComingSoon = false"></div>
-        <div class="relative w-full max-w-sm bg-[#0d0d0e] border border-white/10 rounded-[24px] p-10 shadow-2xl text-center">
-            <button @click="showComingSoon = false" class="absolute top-6 right-6 p-2 text-gray-500 hover:text-white transition-colors">
+        <div class="absolute inset-0 bg-background/80 backdrop-blur-md" @click="showComingSoon = false"></div>
+        <div class="relative w-full max-w-sm bg-background-card border border-foreground/10 rounded-[24px] p-10 shadow-2xl text-center">
+            <button @click="showComingSoon = false" class="absolute top-6 right-6 p-2 text-foreground/50 hover:text-foreground transition-colors">
                 <X class="w-5 h-5" />
             </button>
             <div class="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-primary/20">
                 <Lock class="w-10 h-10 text-primary" />
             </div>
-            <h3 class="text-2xl font-bold text-white mb-4 tracking-tight">Coming Soon</h3>
-            <p class="text-gray-500 text-sm leading-relaxed mb-8">
+            <h3 class="text-2xl font-bold text-foreground mb-4 tracking-tight">Coming Soon</h3>
+            <p class="text-foreground/50 text-sm leading-relaxed mb-8">
                 We're currently perfecting this channel to ensure it meets our elite performance standards. Stay tuned!
             </p>
             <button 
@@ -230,6 +230,6 @@ const handleLogout = async () => {
 
 <style scoped>
 .glass-card {
-  @apply bg-[#111111]/40 backdrop-blur-xl border border-white/5 rounded-[20px];
+  @apply bg-background-card/40 backdrop-blur-xl border border-foreground/5 rounded-[20px];
 }
 </style>

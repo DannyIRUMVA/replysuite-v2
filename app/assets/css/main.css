@@ -4,16 +4,42 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --primary: #D4AF37;
+  --primary-accent: #C5A059;
+  --background: #FFFFFF;
+  --background-card: #F8F9FA;
+  --background-accent: #E9ECEF;
+  --surface: 248 249 250;
+  --surface-border: 0 0 0; /* Will be used with opacity / 0.1 */
+  --text-base: #1A1A1A;
+  --text-muted: #666666;
+  --border-color: 0 0 0;
+}
+
+.dark {
+  --primary: #D4AF37;
+  --primary-accent: #C5A059;
+  --background: #0A0A0B;
+  --background-card: #121214;
+  --background-accent: #18181B;
+  --surface: 18 18 20;
+  --surface-border: 255 255 255;
+  --text-base: #FFFFFF;
+  --text-muted: #A1A1AA;
+  --border-color: 255 255 255;
+}
+
 @layer base {
   body {
-    @apply bg-background text-white font-sans antialiased selection:bg-primary/30;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/30;
     font-family: 'Plus Jakarta Sans', sans-serif;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary hover:bg-primary/90 transition-all px-6 py-3 rounded-full font-bold text-white shadow-lg shadow-primary/20;
+    @apply bg-primary hover:bg-primary/90 transition-all px-6 py-3 rounded-full font-bold text-black shadow-lg shadow-primary/20;
   }
   
   .btn-gradient {
@@ -21,7 +47,7 @@
   }
 
   .glass-card {
-    @apply bg-white/[0.01] border border-white/5 backdrop-blur-xl rounded-[32px] transition-all duration-500;
+    @apply bg-background-card border border-foreground/5 backdrop-blur-xl rounded-[32px] transition-all duration-500;
   }
 
   .text-gradient {
