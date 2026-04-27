@@ -29,13 +29,6 @@ useSeoMeta({
 })
 
 useHead({
-   script: [
-      {
-         src: 'https://replysuite.app/embed.js',
-         async: true,
-         'data-chatbot': 'cacdbcdb-7157-4e12-92c4-a715aadf3112'
-      }
-   ],
    link: [{ rel: 'canonical', href: 'https://replysuite.app' }]
 })
 
@@ -273,9 +266,8 @@ const handleSelect = async (plan: any) => {
             </div>
 
             <!-- Visual Asset: Chat Simulation -->
-            <div class="relative perspective-1000 hidden lg:block :ml-28">
-               <div
-                  class="glass-card p-2 border-foreground/10 rotate-y-[-10deg] rotate-x-[5deg] shadow-2xl skew-x-[-1deg] hover:rotate-0 transition-all duration-1000">
+            <div class="relative hidden lg:block md:ml-28">
+               <div class="glass-card p-2 border-foreground/10 shadow-2xl transition-all duration-1000">
                   <div
                      class="bg-background/40 rounded-3xl overflow-hidden aspect-[4/5] relative border border-foreground/5 backdrop-blur-md">
                      <!-- Fake IG Header -->
@@ -302,7 +294,7 @@ const handleSelect = async (plan: any) => {
                               'p-4 rounded-2xl text-sm transition-all animate-in fade-in slide-in-from-bottom-2',
                               msg.role === 'user'
                                  ? 'bg-foreground/5 border border-foreground/5 rounded-tl-none max-w-[80%] text-foreground'
-                                 : 'bg-primary/10 border border-primary/20 rounded-tr-none max-w-[80%] text-foreground'
+                                 : 'bg-gradient-to-tr from-primary to-primary-accent text-black font-bold rounded-tr-none max-w-[80%] shadow-lg shadow-primary/20'
                            ]">
                               {{ msg.content }}
                            </div>
@@ -332,16 +324,6 @@ const handleSelect = async (plan: any) => {
                   </div>
                </div>
 
-               <!-- Floating Badges -->
-               <div class="absolute -top-10 -right-10 glass-card p-6 border-primary/20 animate-float backdrop-blur-xl">
-                  <Bot class="text-primary w-8 h-8 mb-2" />
-                  <div class="text-[10px] font-bold tracking-widest uppercase text-foreground/80">AI Trained</div>
-               </div>
-               <div
-                  class="absolute -top-10 -left-10 glass-card p-6 border-primary/20 animate-float-delayed backdrop-blur-xl">
-                  <CheckCircle2 class="text-primary w-8 h-8 mb-2" />
-                  <div class="text-[10px] font-bold tracking-widest uppercase text-foreground/80">Verified Human</div>
-               </div>
             </div>
          </div>
       </div>
@@ -420,8 +402,8 @@ const handleSelect = async (plan: any) => {
                      <h4 class="text-lg font-bold text-foreground tracking-tight uppercase">North America</h4>
                   </div>
                   <p class="text-foreground/50 text-sm leading-relaxed font-medium mb-6">
-                     High-performance infrastructure aligned with **SOC 2 Type II** and **CCPA/CPRA** standards for
-                     enterprise U.S. clients.
+                     High-performance infrastructure aligned with <b>SOC 2 Type II</b> and <b>CCPA/CPRA</b>
+                     standards for enterprise U.S. clients.
                   </p>
                   <div class="flex items-center gap-2 text-[10px] font-bold text-primary tracking-widest uppercase">
                      <CheckCircle2 class="w-3 h-3" />

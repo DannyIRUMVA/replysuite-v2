@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Users, Sparkles, ShieldCheck, Heart, ArrowRight } from 'lucide-vue-next'
+import { Users, Sparkles, ShieldCheck, Heart, ArrowRight, Zap } from 'lucide-vue-next'
 
 useSeoMeta({
   title: 'About ReplySuite | Our Story & Mission',

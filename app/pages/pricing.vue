@@ -84,7 +84,7 @@ const isProcessing = ref<string | null>(null)
 
 // Fetch real plans from DB for product IDs
 const { data: dbPlans } = await useAsyncData('plans', async () => {
-  const { data } = await supabase.from('plans').select('*').order('monthly_price', { ascending: true })
+  const { data } = await supabase.from('plans').select('*').order('monthly_price_usd', { ascending: true })
   return data
 })
 

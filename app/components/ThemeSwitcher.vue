@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { Sun, Moon, Monitor } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
 
 const colorMode = useColorMode()
+const isMounted = ref(false)
+
+onMounted(() => {
+  isMounted.value = true
+})
 
 const themes = [
   { name: 'system', icon: Monitor },
@@ -18,7 +24,7 @@ const themes = [
       @click="colorMode.preference = theme.name"
       class="p-2 rounded-lg transition-all"
       :class="[
-        colorMode.preference === theme.name 
+        isMounted && colorMode.preference === theme.name 
           ? 'bg-background text-primary shadow-sm border border-foreground/5' 
           : 'text-foreground/40 hover:text-foreground hover:bg-foreground/5'
       ]"

@@ -13,6 +13,13 @@ useSeoMeta({
 useHead({
   link: [
     { rel: 'canonical', href: siteUrl }
+  ],
+  script: [
+    {
+      src: '/embed.js',
+      async: true,
+      'data-chatbot': 'cacdbcdb-7157-4e12-92c4-a715aadf3112'
+    }
   ]
 })
 </script>

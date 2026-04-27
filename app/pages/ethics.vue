@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Sparkles, ShieldCheck, Eye, Scale, Users, ArrowRight, Zap, Info } from 'lucide-vue-next'
+import { Sparkles, ShieldCheck, Eye, Scale, Users, ArrowRight, Zap, Info, CheckCircle2 } from 'lucide-vue-next'
 
 useSeoMeta({
   title: 'AI Ethics & Transparency | ReplySuite',

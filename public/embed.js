@@ -197,8 +197,15 @@
       }
     });
 
-    document.body.appendChild(btn);
-    document.body.appendChild(container);
+    function init() {
+      if (document.body) {
+        document.body.appendChild(btn);
+        document.body.appendChild(container);
+      } else {
+        setTimeout(init, 50);
+      }
+    }
+    init();
   }
 
   // ── Utility: hex color → rgba ────────────────────────────────────────────────
