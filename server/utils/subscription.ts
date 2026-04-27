@@ -118,7 +118,7 @@ export async function recordTrainingUsage(event: H3Event, chatbotId: string, use
   if (existing) {
     await client
       .from('training_usage')
-      .update({ training_count: existing.training_count + count })
+      .update({ training_count: (existing.training_count || 0) + count })
       .eq('id', existing.id)
   } else {
     await client

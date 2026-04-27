@@ -1,6 +1,7 @@
 import { H3Event, createError, getHeaders } from 'h3'
 import { serverSupabaseUser, serverSupabaseClient } from '#supabase/server'
-import { getUserSubscriptionLimits, SubscriptionLimits } from './subscription'
+import { getUserSubscriptionLimits } from './subscription'
+import type { SubscriptionLimits } from './subscription'
 
 export interface AuthContext {
   userId: string
@@ -23,7 +24,7 @@ export async function getAuthContext(event: H3Event, required = true): Promise<A
     try {
       const client = await serverSupabaseClient(event)
       const { data } = await client.auth.getUser(headers.authorization)
-      user = data.user
+      user = data.user as any
     } catch (e) {
       console.error('[getAuthContext] Auth header fallback failed', e)
     }

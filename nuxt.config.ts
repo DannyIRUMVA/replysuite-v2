@@ -171,28 +171,10 @@ export default defineNuxtConfig({
       ]
     }
   },
-
   nitro: {
     preset: 'cloudflare-pages',
-    commonJS: {
-      dynamicRequireTargets: [
-        './node_modules/pdf-parse/lib/pdf.js/**/*.js',
-        './node_modules/pdf-parse/**/*.js'
-      ]
-    },
-    routeRules: {
-      '/widget/**': {
-        headers: {
-          'Content-Security-Policy': "frame-ancestors * http: https: localhost:* file:;",
-          'X-Frame-Options': 'ALLOWALL'
-        }
-      },
-      '/**': {
-        headers: {
-          'Content-Security-Policy': "frame-ancestors * http: https: localhost:* file:;",
-          'X-Frame-Options': 'ALLOWALL'
-        }
-      }
+    compatibilityFlags: {
+      nodejs_compat: true
     }
   }
 })

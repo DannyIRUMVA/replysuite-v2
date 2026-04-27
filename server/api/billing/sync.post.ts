@@ -25,14 +25,18 @@ export default defineEventHandler(async (event) => {
     let foundSubscription: any = null
     let polarCustomerId: string | undefined
 
-    // 1. Search by External ID
+    // 1. Search by External ID (Preferred)
     try {
-      const state = await polar.customers.getExternalState({ externalId: userId })
-      if (state) {
-        polarCustomerId = state.customer.id
-        foundSubscription = state.activeSubscriptions?.[0]
+      const customers = await polar.customers.list({ query: userId })
+      const customer = customers.result?.items?.[0]
+      if (customer) {
+        polarCustomerId = customer.id
+        const subs = await polar.subscriptions.list({ customerId: customer.id })
+        foundSubscription = subs.result?.items?.find(s => ['active', 'trialing', 'past_due'].includes(s.status))
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[Polar Sync] External ID lookup failed:', e)
+    }
 
     // 2. Search by Email Fallback
     if (!foundSubscription && userEmail) {

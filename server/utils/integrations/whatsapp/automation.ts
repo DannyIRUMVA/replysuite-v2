@@ -102,6 +102,7 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
   `
 
   let replyText = ''
+  let chatSession: any = null
   try {
     const { data: chatbot } = await supabase
       .from('chatbots')
@@ -110,7 +111,6 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
       .single()
 
     // Find existing session to get history
-    let session;
     let messagesHistory: any[] = []
     
     const { data: existingSessions } = await supabase
@@ -122,12 +122,12 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
       .limit(1)
 
     if (existingSessions && existingSessions.length > 0) {
-      session = existingSessions[0]
+      chatSession = existingSessions[0]
       
       const { data: history } = await supabase
         .from('chat_messages')
         .select('role, content')
-        .eq('session_id', session.id)
+        .eq('session_id', chatSession.id)
         .order('created_at', { ascending: true })
         .limit(20)
         
@@ -162,7 +162,7 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
   if (replyText) {
     console.log(`\n[WhatsApp Debug] Saving chat into chat_sessions...`)
     try {
-      if (!session) {
+      if (!chatSession) {
         const { data: newSession, error: sessErr } = await supabase.from('chat_sessions').insert({
           chatbot_id: waAccount.chatbot_id,
           metadata: { type: 'whatsapp', phone: from_number, username: customer_name }
@@ -172,12 +172,12 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
            console.error('❌ Failed to insert new WhatsApp chat_sessions:', sessErr)
            throw sessErr
         }
-        session = newSession
+        chatSession = newSession
       }
 
       const { error: msgErr } = await supabase.from('chat_messages').insert([
-        { session_id: session.id, role: 'user', content: text },
-        { session_id: session.id, role: 'assistant', content: replyText }
+        { session_id: chatSession.id, role: 'user', content: text },
+        { session_id: chatSession.id, role: 'assistant', content: replyText }
       ])
       
       if (msgErr) {
@@ -185,7 +185,7 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
           throw msgErr
       }
       
-      console.log(`   ✅ Chat history securely appended to Session: ${session.id}`)
+      console.log(`   ✅ Chat history securely appended to Session: ${chatSession.id}`)
     } catch (err) { 
         console.error('❌ [WhatsApp Debug] Database Insertion Error:', err)
     }

@@ -57,20 +57,22 @@ export default defineEventHandler(async (event) => {
         }
     }
 
-    // 1.1 Try Customer State API if nothing found locally
+    // 1.1 Try Customer Lookup via External ID if nothing found locally
     if (!activeSubscription) {
         try {
-      const state = await polar.customers.getExternalState({ externalId: userId })
-      if (state) {
-        polarCustomerId = state.customer.id
-        activeSubscription = state.activeSubscriptions?.[0]
-        if (activeSubscription) {
-          console.log(`[Polar Upgrade] Found active sub via ExternalState: ${activeSubscription.id}`)
+            const customers = await polar.customers.list({ query: userId })
+            const customer = customers.result?.items?.[0]
+            if (customer) {
+                polarCustomerId = customer.id
+                const subs = await polar.subscriptions.list({ customerId: customer.id })
+                activeSubscription = subs.result?.items?.find(s => ['active', 'trialing', 'past_due'].includes(s.status))
+                if (activeSubscription) {
+                    console.log(`[Polar Upgrade] Found active sub via customer lookup: ${activeSubscription.id}`)
+                }
+            }
+        } catch (e) {
+            console.log('[Polar Upgrade] Customer lookup failed or not found.')
         }
-      }
-    } catch (e) {
-      console.log('[Polar Upgrade] ExternalState lookup failed or not found.')
-    }
 
     // 1.2 Try Email Fallback if nothing found yet
     if (!activeSubscription && userEmail) {

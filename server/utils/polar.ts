@@ -35,7 +35,8 @@ export async function syncUserToPolar(event: H3Event, userId: string, email: str
     let customer: any
 
     // 1. Try to find the customer by externalId first
-    const existingByExternal = await polar.customers.list({ externalId: safeUserId })
+    // In SDK 0.47, we use query or findByExternalId if available
+    const existingByExternal = await polar.customers.list({ query: safeUserId })
     if (existingByExternal.result?.items?.[0]) {
       console.log(`[Polar Sync] User ${safeUserId} already mapped in Polar: ${existingByExternal.result.items[0].id}`)
       customer = existingByExternal.result.items[0]
@@ -47,11 +48,14 @@ export async function syncUserToPolar(event: H3Event, userId: string, email: str
         console.log(`[Polar Sync] Found existing customer by email ${email}: ${customer.id}. Linking externalId...`)
         
         // Update them with our externalId
-        customer = await polar.customers.update(customer.id, {
-          externalId: safeUserId,
-          metadata: {
-            ...customer.metadata,
-            supabase_user_id: safeUserId
+        customer = await polar.customers.update({
+          id: customer.id,
+          customerUpdate: {
+            externalId: safeUserId,
+            metadata: {
+              ...customer.metadata,
+              supabase_user_id: safeUserId
+            }
           }
         })
       } else {
@@ -188,7 +192,7 @@ export async function syncUserSubscriptions(event: any, userId: string, polarId:
   const { data: plan } = await adminClient
     .from('plans')
     .select('id, internal_slug')
-    .or(`polar_product_id.eq.${polarSub.productId},polar_price_id.eq.${polarSub.priceId}`)
+    .or(`polar_product_id.eq.${polarSub.productId}`)
     .maybeSingle()
 
   if (plan) {
@@ -246,9 +250,11 @@ export async function updatePolarSubscription(subscriptionId: string, productId:
 
   try {
     console.log(`[Polar API] Updating subscription ${subscriptionId} to product ${productId}...`)
-    const result = await polar.subscriptions.update(subscriptionId, {
-      productId: productId,
-      prorationBehavior: 'invoice' // Invoice the difference immediately
+    const result = await polar.subscriptions.update({
+      id: subscriptionId,
+      subscriptionUpdate: {
+        productId: productId,
+      }
     })
     return result
   } catch (err: any) {
