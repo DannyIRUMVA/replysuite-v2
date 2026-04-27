@@ -10,7 +10,8 @@ import {
   Phone,
   Globe,
   Database,
-  CheckCircle2
+  CheckCircle2,
+  Instagram
 } from 'lucide-vue-next'
 import Skeleton from '~~/app/components/Skeleton.vue'
 import CustomSelect from '~~/app/components/CustomSelect.vue'
@@ -33,13 +34,20 @@ const selectedBotId = ref<string>('all')
 
 const analytics = ref<any>(null)
 const isLoading = ref(true)
+const isRefreshing = ref(false)
 
-const fetchAnalytics = async () => {
-  isLoading.value = true
+const fetchAnalytics = async (force = false) => {
+  if (isLoading.value && analytics.value && !force) return
+  
+  if (analytics.value) isRefreshing.value = true
+  else isLoading.value = true
+
   try {
+    // Ensure session is active to prevent lock contention
+    await supabase.auth.getSession()
+
     const { data, error } = await supabase.functions.invoke('fetch-analytics', {
-      method: 'GET',
-      queryParams: selectedBotId.value !== 'all' ? { chatbotId: selectedBotId.value } : {}
+      body: { botId: selectedBotId.value }
     })
 
     if (error) throw error
@@ -50,14 +58,13 @@ const fetchAnalytics = async () => {
     analytics.value = null
   } finally {
     isLoading.value = false
+    isRefreshing.value = false
   }
 }
 
 // Re-fetch when bot filter changes
 watch(selectedBotId, () => fetchAnalytics())
 onMounted(() => fetchAnalytics())
-
-const refresh = () => fetchAnalytics()
 
 
 // Chatbot selector options
@@ -111,11 +118,12 @@ const splinePath = computed(() => {
 
 // ── Channel bars ─────────────────────────────────────────────
 const channelBars = computed(() => {
-  const c = analytics.value?.channels || { whatsapp: 0, web: 0 }
-  const total = Math.max(c.whatsapp + c.web, 1)
+  const c = analytics.value?.channels || { whatsapp: 0, web: 0, instagram: 0 }
+  const total = Math.max(c.whatsapp + c.web + c.instagram, 1)
   return [
     { label: 'WhatsApp', count: c.whatsapp, pct: Math.round((c.whatsapp / total) * 100), color: '#22c55e', icon: Phone },
     { label: 'Web Chat', count: c.web, pct: Math.round((c.web / total) * 100), color: '#3b82f6', icon: Globe },
+    { label: 'Instagram', count: c.instagram, pct: Math.round((c.instagram / total) * 100), color: '#e1306c', icon: Instagram },
   ]
 })
 
@@ -143,17 +151,17 @@ const statCards = computed(() => {
     {
       label: 'Success Rate',
       value: `${s.successRate}%`,
-      sub: `${s.failedJobs} failures / ${s.sentJobs} sent`,
+      sub: 'Sessions with AI replies',
       icon: CheckCircle2,
-      trend: `${s.sentJobs} sent`,
+      trend: 'Active',
       trendColor: '#22c55e',
     },
     {
       label: 'Active Automations',
       value: s.activeTriggers.toString(),
-      sub: `${s.totalAgents} agents deployed`,
+      sub: `${s.totalDataSources} sources indexed`,
       icon: Zap,
-      trend: `${s.totalAgents} agents`,
+      trend: 'Automated',
       trendColor: '#D4AF37',
     },
   ]
@@ -190,11 +198,11 @@ const formatDate = (d: string) => {
         </div>
         <!-- Refresh -->
         <button
-          @click="refresh()"
-          :disabled="isLoading"
+          @click="fetchAnalytics(true)"
+          :disabled="isLoading || isRefreshing"
           class="bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 rounded-xl px-5 py-3 flex items-center gap-2 transition-all group active:scale-95"
         >
-          <RefreshCw :class="['w-4 h-4 text-primary transition-transform duration-700', isLoading ? 'animate-spin' : 'group-hover:rotate-180']" />
+          <RefreshCw :class="['w-4 h-4 text-primary transition-transform duration-700', (isLoading || isRefreshing) ? 'animate-spin' : 'group-hover:rotate-180']" />
           <span class="text-[10px] font-bold text-foreground uppercase tracking-widest">Refresh</span>
         </button>
       </div>
@@ -387,15 +395,15 @@ const formatDate = (d: string) => {
           <div class="bg-foreground/[0.02] border border-foreground/5 rounded-[2rem] p-7 space-y-5">
             <div>
               <h3 class="text-sm font-black text-foreground uppercase tracking-tight">Top Performance</h3>
-              <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-0.5">Agents by output volume</p>
+              <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-0.5">Agents by session volume</p>
             </div>
-            <div v-if="!analytics.topAgents?.length" class="flex flex-col items-center py-6 text-foreground/30">
+            <div v-if="!analytics.chatbots?.length" class="flex flex-col items-center py-6 text-foreground/30">
               <Bot class="w-7 h-7 opacity-20 mb-2" />
               <p class="text-[9px] uppercase tracking-widest font-black">No agent data yet</p>
             </div>
             <div v-else class="space-y-3">
               <div
-                v-for="(agent, idx) in analytics.topAgents"
+                v-for="(agent, idx) in analytics.chatbots.sort((a: any, b: any) => b.sessions - a.sessions).slice(0, 5)"
                 :key="agent.id"
                 class="flex items-center gap-3 p-4 rounded-2xl bg-foreground/[0.01] border border-foreground/[0.03] hover:border-primary/20 transition-all group cursor-default"
               >
@@ -405,12 +413,12 @@ const formatDate = (d: string) => {
                 <div class="flex-1 min-w-0">
                   <div class="flex justify-between items-center mb-1.5">
                     <p class="text-[10px] font-black text-foreground uppercase truncate">{{ agent.name }}</p>
-                    <span class="text-[10px] font-black text-foreground tabular-nums">{{ agent.count }}</span>
+                    <span class="text-[10px] font-black text-foreground tabular-nums">{{ agent.sessions }}</span>
                   </div>
                   <div class="w-full h-1 bg-foreground/5 rounded-full overflow-hidden">
                     <div
                       class="h-full bg-gradient-to-r from-primary/50 to-primary rounded-full transition-all duration-1000"
-                      :style="{ width: analytics.topAgents[0]?.count > 0 ? `${(agent.count / analytics.topAgents[0].count) * 100}%` : '0%' }"
+                      :style="{ width: analytics.chatbots[0]?.sessions > 0 ? `${(agent.sessions / analytics.chatbots[0].sessions) * 100}%` : '0%' }"
                     />
                   </div>
                 </div>
