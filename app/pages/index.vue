@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import {
    Zap,
    ArrowRight,
@@ -20,6 +20,8 @@ import {
    Check,
    Loader2
 } from 'lucide-vue-next'
+import { marked } from 'marked'
+import xss from 'xss'
 
 useSeoMeta({
    title: 'ReplySuite | The Infrastructure of AI Conversation',
@@ -37,6 +39,18 @@ definePageMeta({
 })
 
 const user = useSupabaseUser()
+
+const renderMarkdown = (text: string) => {
+   if (!text) return ''
+   try {
+      const html = marked.parse(text, { breaks: true, gfm: true })
+      if (typeof html !== 'string') return text
+      return xss(html)
+   } catch (e) {
+      console.error('Markdown error:', e)
+      return text
+   }
+}
 
 const trustedLogos = [
    { name: 'GrowthX', icon: BarChart3 },
@@ -105,9 +119,62 @@ const marketingFeatures = [
 const chatbotId = 'cacdbcdb-7157-4e12-92c4-a715aadf3112'
 const chatInput = ref('')
 const isChatLoading = ref(false)
-const chatMessages = ref([
-   { role: 'assistant', content: "Hi there! I am the ReplySuite Infrastructure Agent. I'm trained on 2026 market standards to help you scale your brand via AI. How can I assist you with your deployment today?" }
-])
+const chatbot = ref<any>(null)
+const chatMessages = ref<any[]>([])
+const scrollRef = ref<HTMLElement | null>(null)
+
+const scrollToBottom = () => {
+   if (scrollRef.value) {
+      scrollRef.value.scrollTop = scrollRef.value.scrollHeight
+   }
+}
+
+watch(chatMessages, () => {
+   nextTick(() => {
+      scrollToBottom()
+   })
+}, { deep: true })
+
+const fetchChatbot = async () => {
+   const supabase = useSupabaseClient()
+   try {
+      const { data } = await supabase.from('chatbots').select('*').eq('id', chatbotId).single()
+      if (data) {
+         chatbot.value = data
+      }
+   } catch (e) {
+      console.error('Failed to fetch chatbot:', e)
+   }
+
+   // Always initialize messages, even if fetch fails, to ensure "chatbot is working"
+   chatMessages.value = [
+      {
+         role: 'assistant',
+         content: chatbot.value?.welcome_message || "Welcome to ReplySuite, the gold standard for RAG-powered AI agents. I am the ReplySuite Infrastructure Agent, trained to help you automate conversations with human-like precision.\n\nHow can I assist you with your deployment today?",
+         actions: [
+            { label: 'VIEW PRICING', action: 'pricing' },
+            { label: 'GET STARTED', action: 'register' }
+         ]
+      },
+      {
+         role: 'user',
+         content: 'hello'
+      },
+      {
+         role: 'assistant',
+         content: 'Hi! How can I help you with your Instagram engagement today?'
+      }
+   ]
+}
+
+const handleQuickAction = (action: string) => {
+   if (action === 'pricing') {
+      const el = document.getElementById('pricing')
+      el?.scrollIntoView({ behavior: 'smooth' })
+   } else if (action === 'register') {
+      navigateTo('/register')
+   }
+}
 
 const sendDemoMessage = async () => {
    if (!chatInput.value.trim() || isChatLoading.value) return
@@ -169,6 +236,7 @@ const plans = [
 ]
 
 onMounted(() => {
+   fetchChatbot()
    if (window.PolarEmbedCheckout) {
       window.PolarEmbedCheckout.init()
    }
@@ -224,17 +292,18 @@ const handleSelect = async (plan: any) => {
 <template>
    <div class="relative overflow-hidden">
       <!-- Hero Section -->
-      <div class="relative pt-20 pb-20 mt-[10vh] md:pt-32 md:pb-32 overflow-hidden">
+      <div class="relative pt-20 pb-20 md:pt-32 md:pb-32 overflow-hidden">
          <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10 animate-pulse"></div>
 
-         <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+         <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-start">
             <div>
                <div class="flex items-center gap-3 mb-8 opacity-80 group cursor-default">
                   <div class="h-[1px] w-10 bg-primary/40 group-hover:w-14 transition-all duration-500"></div>
-                  <span class="text-[11px] font-bold tracking-[0.3em] text-primary uppercase">Enterprise Infrastructure</span>
+                  <span class="text-[11px] font-bold tracking-[0.3em] text-primary uppercase">Enterprise
+                     Infrastructure</span>
                </div>
                <h1 class="text-6xl md:text-7xl font-black mb-8 leading-[0.9] text-foreground">
-                  The Infrastructure <br />
+                  The Infrastructure
                   of <span class="text-gradient">AI Conversation.</span>
                </h1>
                <p class="text-xl text-foreground/60 mb-12 max-w-lg leading-relaxed font-semibold">
@@ -250,7 +319,8 @@ const handleSelect = async (plan: any) => {
                   </NuxtLink>
                   <button
                      class="px-10 py-5 text-foreground/60 hover:text-foreground transition-all text-base font-bold flex items-center justify-center gap-3 group border border-foreground/5 hover:border-foreground/10 rounded-full hover:bg-foreground/[0.02]">
-                     <div class="w-8 h-8 rounded-full bg-foreground/5 flex items-center justify-center group-hover:bg-primary group-hover:text-black transition-all">
+                     <div
+                        class="w-8 h-8 rounded-full bg-foreground/5 flex items-center justify-center group-hover:bg-primary group-hover:text-black transition-all">
                         <Play class="w-3 h-3 fill-current ml-0.5" />
                      </div>
                      Watch Demo
@@ -261,68 +331,104 @@ const handleSelect = async (plan: any) => {
                <div
                   class="mt-24 flex items-center gap-10 opacity-50 grayscale hover:opacity-100 transition-all duration-1000">
                   <div v-for="logo in trustedLogos" :key="logo.name" class="flex items-center gap-2 group">
-                     <component :is="logo.icon" class="w-5 h-5 text-foreground/70 group-hover:text-primary transition-colors" />
-                     <span class="text-xs font-bold text-foreground/60 uppercase group-hover:text-primary transition-colors">{{ logo.name }}</span>
+                     <component :is="logo.icon"
+                        class="w-5 h-5 text-foreground/70 group-hover:text-primary transition-colors" />
+                     <span
+                        class="text-xs font-bold text-foreground/60 uppercase group-hover:text-primary transition-colors">{{
+                           logo.name }}</span>
                   </div>
                </div>
             </div>
 
             <!-- Visual Asset: Chat Simulation -->
             <div class="relative hidden lg:block">
-               <div class="glass-card p-3 border-foreground/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] dark:shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] transition-all duration-1000">
+               <div
+                  class="glass-card p-3 border-foreground/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] dark:shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] transition-all duration-1000">
                   <div
-                     class="bg-background-card rounded-[28px] overflow-hidden aspect-[4/5] relative border border-foreground/5 shadow-inner">
+                     class="bg-background-card rounded-[28px] overflow-hidden h-[650px] flex flex-col relative border border-foreground/5 shadow-inner">
                      <!-- Premium Chat Header -->
-                     <div class="p-6 border-b border-foreground/10 flex items-center justify-between bg-foreground/[0.02]">
+                     <div
+                        class="p-6 border-b border-foreground/10 flex items-center justify-between bg-foreground/[0.01]">
                         <div class="flex items-center gap-4">
                            <div class="relative">
-                              <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary to-primary-accent p-0.5 shadow-lg shadow-primary/20">
+                              <div class="w-12 h-12 rounded-2xl p-0.5 border border-foreground/5 shadow-sm"
+                                 :style="{ background: `linear-gradient(to top right, ${chatbot?.primary_color || '#D4AF37'}, ${chatbot?.primary_color || '#D4AF37'}dd)` }">
                                  <div class="w-full h-full rounded-2xl bg-background flex items-center justify-center">
-                                    <Bot class="text-primary w-6 h-6" />
+                                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none"
+                                       xmlns="http://www.w3.org/2000/svg"
+                                       :style="{ color: chatbot?.primary_color || '#D4AF37' }">
+                                       <rect x="3" y="6" width="18" height="13" rx="3" stroke="currentColor"
+                                          stroke-width="2" />
+                                       <path d="M8 12H8.01" stroke="currentColor" stroke-width="2"
+                                          stroke-linecap="round" />
+                                       <path d="M16 12H16.01" stroke="currentColor" stroke-width="2"
+                                          stroke-linecap="round" />
+                                       <path d="M9 16C9 16 10.5 17.5 12 17.5C13.5 17.5 15 16 15 16"
+                                          stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                                    </svg>
                                  </div>
                               </div>
-                              <div class="absolute -right-1 -bottom-1 w-3.5 h-3.5 bg-green-500 border-4 border-background-card rounded-full shadow-sm"></div>
+                              <div
+                                 class="absolute -right-1 -bottom-1 w-3.5 h-3.5 bg-green-500 border-4 border-background-card rounded-full shadow-sm">
+                              </div>
                            </div>
                            <div>
-                              <div class="text-sm font-black uppercase">RS Core Infrastructure</div>
-                              <div class="text-[10px] text-foreground/40 font-bold uppercase tracking-widest mt-0.5">Cluster-01 Active</div>
+                              <div class="text-sm font-black uppercase text-foreground leading-none">{{ chatbot?.name ||
+                                 'REPLYSUITE OFFICIAL' }}</div>
+                              <div
+                                 class="text-[9px] text-foreground/30 font-bold uppercase tracking-widest mt-1.5 leading-none">
+                                 {{ chatbot?.is_public ? 'Global Infrastructure' : 'Private Instance' }} Active</div>
                            </div>
                         </div>
-                        <div class="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center hover:bg-foreground/10 transition-colors cursor-pointer">
-                           <Settings class="w-5 h-5 text-foreground/40" />
+                        <div
+                           class="w-10 h-10 rounded-xl bg-foreground/[0.03] border border-foreground/5 flex items-center justify-center hover:bg-foreground/10 transition-colors cursor-pointer">
+                           <Settings class="w-5 h-5 text-foreground/30" />
                         </div>
-                     </div>
+                     </div> <!-- Chat Messages -->
+                     <div class="relative flex-1 min-h-0 overflow-hidden">
+                        <div
+                           class="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-background-card to-transparent z-10 pointer-events-none">
+                        </div>
+                        <div ref="scrollRef"
+                           class="h-full p-8 space-y-6 overflow-y-auto custom-scrollbar flex flex-col scroll-smooth">
+                           <div v-for="(msg, idx) in chatMessages" :key="idx"
+                              :class="['flex w-full', msg.role === 'user' ? 'justify-end' : 'justify-start']">
+                              <div :class="[
+                                 'p-6 rounded-[2.5rem] text-[13px] transition-all animate-in fade-in slide-in-from-bottom-3 duration-500 prose-sm prose-p:my-1 prose-strong:text-inherit leading-relaxed',
+                                 msg.role === 'user'
+                                    ? 'bg-foreground/[0.04] border border-foreground/5 rounded-tr-none max-w-[80%] text-foreground font-bold'
+                                    : 'text-black font-bold rounded-tl-none max-w-[85%] shadow-2xl shadow-black/10'
+                              ]"
+                                 :style="msg.role === 'assistant' ? { background: `linear-gradient(135deg, ${chatbot?.primary_color || '#D4AF37'} 0%, ${chatbot?.primary_color || '#D4AF37'}ee 100%)` } : {}">
+                                 <div v-html="renderMarkdown(msg.content)" class="widget-markdown"></div>
 
-                     <!-- Chat Messages -->
-                     <div class="p-8 space-y-6 h-[420px] overflow-y-auto scrollbar-hide flex flex-col">
-                        <div v-for="(msg, idx) in chatMessages" :key="idx"
-                           :class="['flex', msg.role === 'user' ? 'justify-start' : 'justify-end']">
-                           <div :class="[
-                              'p-5 rounded-3xl text-sm transition-all animate-in fade-in slide-in-from-bottom-3 duration-500',
-                              msg.role === 'user'
-                                 ? 'bg-foreground/5 border border-foreground/5 rounded-tl-none max-w-[85%] text-foreground font-medium'
-                                 : 'bg-primary text-black font-black rounded-tr-none max-w-[85%] shadow-xl shadow-primary/20'
-                           ]">
-                              {{ msg.content }}
+                                 <!-- Quick Actions -->
+                                 <div v-if="msg.actions" class="mt-6 flex flex-wrap gap-2">
+                                    <button v-for="action in msg.actions" :key="action.label"
+                                       @click="handleQuickAction(action.action)"
+                                       class="px-4 py-2.5 bg-black/5 hover:bg-black/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-black/10">
+                                       {{ action.label }}
+                                    </button>
+                                 </div>
+                              </div>
                            </div>
-                        </div>
 
-                        <!-- Typing Indicator -->
-                        <div v-if="isChatLoading" class="flex justify-end animate-pulse">
-                           <div class="bg-primary/10 border border-primary/20 px-6 py-4 rounded-3xl rounded-tr-none">
-                              <div class="flex gap-2">
-                                 <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                                 <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                                 <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                           <!-- Typing Indicator -->
+                           <div v-if="isChatLoading" class="flex justify-end animate-pulse">
+                              <div class="bg-primary/10 border border-primary/20 px-6 py-4 rounded-3xl rounded-tr-none">
+                                 <div class="flex gap-2">
+                                    <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                                    <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                                    <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                                 </div>
                               </div>
                            </div>
                         </div>
                      </div>
 
                      <!-- Modern Input Field -->
-                     <div class="absolute bottom-6 left-6 right-6">
-                        <form @submit.prevent="sendDemoMessage"
-                           class="relative flex items-center group/form">
+                     <div class="p-8 pt-0 mt-auto">
+                        <form @submit.prevent="sendDemoMessage" class="relative flex items-center group/form">
                            <input v-model="chatInput" placeholder="System prompt here..."
                               class="w-full bg-foreground/[0.04] rounded-2xl pl-6 pr-14 py-4 border border-foreground/10 text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/40 focus:bg-background-card transition-all font-bold shadow-inner" />
                            <button type="submit" :disabled="!chatInput.trim() || isChatLoading"
@@ -335,7 +441,9 @@ const handleSelect = async (plan: any) => {
                </div>
 
                <!-- Decorative Background Blur -->
-               <div class="absolute -z-10 -right-20 -bottom-20 w-64 h-64 bg-primary/10 rounded-full blur-[100px] animate-pulse"></div>
+               <div
+                  class="absolute -z-10 -right-20 -bottom-20 w-64 h-64 bg-primary/10 rounded-full blur-[100px] animate-pulse">
+               </div>
             </div>
          </div>
       </div>
@@ -447,26 +555,28 @@ const handleSelect = async (plan: any) => {
       <!-- Global Linguistic Reach -->
       <section class="max-w-7xl mx-auto px-6 py-20 relative overflow-hidden">
          <div class="glass-card p-12 border-foreground/5 relative overflow-hidden group">
-            <div class="absolute inset-0 bg-primary/5 -z-10 group-hover:bg-primary/10 transition-colors duration-700"></div>
+            <div class="absolute inset-0 bg-primary/5 -z-10 group-hover:bg-primary/10 transition-colors duration-700">
+            </div>
             <div class="flex flex-col lg:flex-row items-center justify-between gap-16">
                <div class="max-w-xl">
                   <div class="flex items-center gap-3 mb-6">
                      <div class="w-10 h-10 rounded-2xl bg-primary/20 flex items-center justify-center text-primary">
                         <Globe2 class="w-5 h-5" />
                      </div>
-                     <span class="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Polyglot Intelligence</span>
+                     <span class="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Polyglot
+                        Intelligence</span>
                   </div>
                   <h2 class="text-4xl md:text-5xl font-black text-foreground mb-8 leading-tight">
                      Universal <span class="text-gradient">Linguistic</span> <br />
                      Architecture.
                   </h2>
                   <p class="text-lg text-foreground/50 leading-relaxed font-medium">
-                     ReplySuite agents are trained on massive localized datasets to ensure high-fidelity interactions in 
-                     regional dialects and global languages. From <b>Kinyarwanda</b> to <b>Mandarin</b>, your brand 
+                     ReplySuite agents are trained on massive localized datasets to ensure high-fidelity interactions in
+                     regional dialects and global languages. From <b>Kinyarwanda</b> to <b>Mandarin</b>, your brand
                      speaks the language of your customer.
                   </p>
                </div>
-               
+
                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 w-full lg:w-auto shrink-0">
                   <div v-for="lang in [
                      { name: 'Kinyarwanda', flag: '🇷🇼' },
@@ -481,7 +591,9 @@ const handleSelect = async (plan: any) => {
                   ]" :key="lang.name"
                      class="px-6 py-4 rounded-2xl bg-foreground/[0.02] border border-foreground/5 flex items-center gap-4 hover:border-primary/30 hover:bg-primary/[0.02] transition-all group/lang">
                      <span class="text-xl grayscale group-hover/lang:grayscale-0 transition-all">{{ lang.flag }}</span>
-                     <span class="text-[11px] font-black text-foreground/60 group-hover/lang:text-primary uppercase tracking-widest">{{ lang.name }}</span>
+                     <span
+                        class="text-[11px] font-black text-foreground/60 group-hover/lang:text-primary uppercase tracking-widest">{{
+                           lang.name }}</span>
                   </div>
                </div>
             </div>
