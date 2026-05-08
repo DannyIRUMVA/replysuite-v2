@@ -26,7 +26,7 @@ const updates = [
   },
   {
     version: 'v1.0.0',
-    date: 'January 15, 2026',
+    date: 'March 15, 2026',
     title: 'The Official Launch',
     items: [
       'Production-ready RAG (Retrieval-Augmented Generation)',
@@ -39,7 +39,7 @@ const updates = [
   },
   {
     version: 'Beta (v0.9.0)',
-    date: 'November 10, 2025',
+    date: 'February 10, 2026',
     title: 'Multi-Channel Engine',
     items: [
       'Initial WhatsApp Business API integration',
@@ -51,7 +51,7 @@ const updates = [
   },
   {
     version: 'Alpha',
-    date: 'August 05, 2025',
+    date: 'Janaury 05, 2026',
     title: 'The Genesis',
     items: [
       'Core AI reasoning engine development',
@@ -71,7 +71,8 @@ const updates = [
       <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10"></div>
       <div class="text-center max-w-3xl mx-auto">
         <span class="badge-gradient mb-10">Updates</span>
-        <h1 class="text-5xl sm:text-7xl md:text-8xl font-extrabold mb-8 tracking-tighter leading-[0.85] text-foreground">
+        <h1
+          class="text-5xl sm:text-7xl md:text-8xl font-extrabold mb-8 tracking-tighter leading-[0.85] text-foreground">
           Platform <br />
           <span class="text-gradient">Evolution.</span>
         </h1>
@@ -84,13 +85,14 @@ const updates = [
     <!-- Timeline -->
     <section class="max-w-4xl mx-auto px-6 py-20 relative">
       <div class="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-foreground/5 -z-10"></div>
-      
-      <div v-for="(update, index) in updates" :key="update.version" 
+
+      <div v-for="(update, index) in updates" :key="update.version"
         class="mb-32 relative flex flex-col md:flex-row gap-12 group"
         :class="index % 2 === 0 ? 'md:flex-row-reverse' : ''">
-        
+
         <!-- Icon/Point -->
-        <div class="absolute left-0 md:left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-background border border-foreground/10 flex items-center justify-center z-20 group-hover:border-primary/50 transition-colors">
+        <div
+          class="absolute left-0 md:left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-background border border-foreground/10 flex items-center justify-center z-20 group-hover:border-primary/50 transition-colors">
           <component :is="update.icon" class="w-5 h-5 text-primary" />
         </div>
 
@@ -103,7 +105,8 @@ const updates = [
             </div>
             <h3 class="text-2xl font-bold text-foreground mb-6 tracking-tight">{{ update.title }}</h3>
             <ul class="space-y-4">
-              <li v-for="item in update.items" :key="item" class="flex items-start gap-3 text-foreground/40 text-sm leading-relaxed font-medium">
+              <li v-for="item in update.items" :key="item"
+                class="flex items-start gap-3 text-foreground/40 text-sm leading-relaxed font-medium">
                 <div class="w-1.5 h-1.5 rounded-full bg-primary/40 mt-2 shrink-0"></div>
                 {{ item }}
               </li>
@@ -118,7 +121,8 @@ const updates = [
       <!-- Footer CTA -->
       <div class="mt-40 p-16 rounded-[48px] bg-foreground/[0.02] border border-foreground/10 text-center">
         <h3 class="text-3xl font-bold text-foreground mb-6 tracking-tight">Open Source Mindset</h3>
-        <p class="text-foreground/40 mb-10 font-medium">Follow our development journey on GitHub for real-time commits.</p>
+        <p class="text-foreground/40 mb-10 font-medium">Follow our development journey on GitHub for real-time commits.
+        </p>
         <a href="https://github.com/replysuite" class="btn-gradient px-10 py-5 inline-flex items-center gap-4 group">
           View on GitHub
           <Github class="w-5 h-5" />
@@ -129,5 +133,7 @@ const updates = [
 </template>
 
 <style scoped>
-.glass-card { @apply rounded-[40px]; }
+.glass-card {
+  @apply rounded-[40px];
+}
 </style>

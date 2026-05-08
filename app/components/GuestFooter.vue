@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Zap, Instagram, Twitter, Globe2, Github, Mail } from 'lucide-vue-next'
+import { Zap, Instagram, Twitter, Globe2, Linkedin } from 'lucide-vue-next'
 
 const { openFeedback } = useFeedback()
 </script>
@@ -14,11 +14,12 @@ const { openFeedback } = useFeedback()
           <span class="text-3xl font-bold tracking-tighter text-foreground">ReplySuite</span>
         </div>
         <p class="text-foreground/50 leading-relaxed font-medium">
-          The gold standard in AI automation and brand engagement. We provide the infrastructure for the next generation of digital-native brands.
+          The gold standard in AI automation and brand engagement. We provide the infrastructure for the next generation
+          of digital-native brands.
         </p>
       </div>
       <div class="flex gap-4">
-        <a v-for="icon in [Instagram, Twitter, Github, Mail]" :key="icon" href="#" 
+        <a v-for="icon in [Instagram, Twitter, Linkedin]" :key="icon" href="#"
           class="p-4 rounded-2xl bg-foreground/[0.02] border border-foreground/5 text-foreground/50 hover:text-primary hover:border-primary/20 transition-all hover:-translate-y-1">
           <component :is="icon" class="w-5 h-5" />
         </a>
@@ -32,13 +33,14 @@ const { openFeedback } = useFeedback()
         <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-10">Product</h4>
         <ul class="space-y-4">
           <li v-for="link in [
-            { name: 'AI Chatbot', to: '/product' },
             { name: 'Multi-Channel DM', to: '/features' },
             { name: 'Integrations', to: '/integrations' },
             { name: 'Pricing & Plans', to: '/pricing' },
             { name: 'Product Changelog', to: '/changelog' }
           ]" :key="link.name">
-            <NuxtLink :to="link.to" class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}</NuxtLink>
+            <NuxtLink :to="link.to"
+              class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}
+            </NuxtLink>
           </li>
         </ul>
       </div>
@@ -48,13 +50,14 @@ const { openFeedback } = useFeedback()
         <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-10">Resources</h4>
         <ul class="space-y-4">
           <li v-for="link in [
-            { name: 'Documentation', to: '/docs' },
             { name: 'Blog & Insights', to: '/blog' },
             { name: 'Success Stories', to: '/about#mission' },
             { name: 'Community Hub', to: '/community' },
             { name: 'API Reference', to: '/docs' }
           ]" :key="link.name">
-            <NuxtLink :to="link.to" class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}</NuxtLink>
+            <NuxtLink :to="link.to"
+              class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}
+            </NuxtLink>
           </li>
         </ul>
       </div>
@@ -65,15 +68,17 @@ const { openFeedback } = useFeedback()
         <ul class="space-y-4">
           <li v-for="link in [
             { name: 'Our Story', to: '/about' },
-            { name: 'Careers', to: '/careers' },
             { name: 'Contact Sales', to: '/contact' },
-            { name: 'Institutional Email', to: 'mailto:support@replysuite.app' },
-            { name: 'Brand Assets', to: '/brand' }
+            { name: 'Institutional Email', to: 'mailto:support@replysuite.app' }
           ]" :key="link.name">
-            <NuxtLink :to="link.to" class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}</NuxtLink>
+            <NuxtLink :to="link.to"
+              class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}
+            </NuxtLink>
           </li>
           <li>
-            <button @click="openFeedback('Guest Footer')" class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">Share Feedback</button>
+            <button @click="openFeedback('Guest Footer')"
+              class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">Share
+              Feedback</button>
           </li>
         </ul>
       </div>
@@ -83,13 +88,14 @@ const { openFeedback } = useFeedback()
         <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-10">Trust & Legal</h4>
         <ul class="space-y-4">
           <li v-for="link in [
-            { name: 'Security Posture', to: '/security' },
             { name: 'AI Ethics', to: '/ethics' },
             { name: 'Privacy Policy', to: '/privacy' },
             { name: 'Terms of Service', to: '/terms' },
             { name: 'Cookie Policy', to: '/cookie' }
           ]" :key="link.name">
-            <NuxtLink :to="link.to" class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}</NuxtLink>
+            <NuxtLink :to="link.to"
+              class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}
+            </NuxtLink>
           </li>
         </ul>
       </div>
@@ -99,24 +105,18 @@ const { openFeedback } = useFeedback()
     <div class="pt-10 border-t border-foreground/5 flex flex-col md:flex-row items-center justify-between gap-8">
       <div class="flex flex-col gap-2">
         <div class="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">
-          © 2026 ReplySuite AI. All rights reserved.
-        </div>
-        <div class="flex items-center gap-4 opacity-30 grayscale hover:grayscale-0 transition-all">
-           <span class="text-[9px] font-bold text-foreground/40 uppercase tracking-tighter">Infrastructure:</span>
-           <div class="flex items-center gap-3">
-              <span class="text-[9px] font-bold text-foreground uppercase border border-foreground/20 px-1 rounded">Azure Security</span>
-              <span class="text-[9px] font-bold text-foreground uppercase border border-foreground/20 px-1 rounded">Cloudflare Edge</span>
-              <span class="text-[9px] font-bold text-foreground uppercase border border-foreground/20 px-1 rounded">Official Meta API</span>
-           </div>
+          © 2026 ReplySuite Ltd. All rights reserved.
         </div>
       </div>
-      
+
       <div class="flex items-center gap-8">
-        <div class="flex items-center gap-3 px-4 py-2 rounded-full bg-green-500/5 border border-green-500/10 text-[10px] font-bold text-green-500/80 uppercase tracking-widest">
+        <div
+          class="flex items-center gap-3 px-4 py-2 rounded-full bg-green-500/5 border border-green-500/10 text-[10px] font-bold text-green-500/80 uppercase tracking-widest">
           <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
           All Systems Operational
         </div>
-        <div class="hidden md:flex items-center gap-6 text-[10px] text-foreground/40 font-bold uppercase tracking-widest">
+        <div
+          class="hidden md:flex items-center gap-6 text-[10px] text-foreground/40 font-bold uppercase tracking-widest">
           <div class="flex items-center gap-2 group cursor-pointer hover:text-foreground transition-colors">
             <Globe2 class="w-3 h-3 group-hover:text-primary" />
             <select class="bg-transparent border-none focus:ring-0 cursor-pointer appearance-none">
@@ -126,9 +126,6 @@ const { openFeedback } = useFeedback()
               <option value="hi">हिन्दी (IN)</option>
               <option value="rw">Kinyarwanda (RW)</option>
             </select>
-          </div>
-          <div class="flex items-center gap-2">
-            Region: Global Edge
           </div>
         </div>
       </div>

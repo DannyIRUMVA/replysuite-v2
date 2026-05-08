@@ -99,18 +99,18 @@ const channelFeatures = [
 // Hardened Features Data for SSR Stability
 const marketingFeatures = [
    {
-      title: 'Advanced RAG Engine',
-      desc: 'Fine-tune your bot using Retrieval-Augmented Generation to eliminate hallucinations.',
+      title: 'The Brain',
+      desc: 'Train on your PDFs, Docs, or URL. Your AI learns your brand voice in seconds.',
       icon: Bot
    },
    {
-      title: 'Secure Knowledge Base',
-      desc: 'Upload your PDFs and documents to our encrypted vector database.',
+      title: 'The Bridge',
+      desc: 'One-click WhatsApp integration & lightweight web-script. Be where your customers are.',
       icon: BrainCircuit
    },
    {
-      title: 'Infrastructure Scale',
-      desc: 'Built on Cloudflare Edge and Microsoft Azure for sub-second global response times.',
+      title: 'The Result',
+      desc: '24/7 Sales Support. No more missed leads because of slow response times.',
       icon: Zap
    }
 ]
@@ -299,22 +299,22 @@ const handleSelect = async (plan: any) => {
             <div>
                <div class="flex items-center gap-3 mb-8 opacity-80 group cursor-default">
                   <div class="h-[1px] w-10 bg-primary/40 group-hover:w-14 transition-all duration-500"></div>
-                  <span class="text-[11px] font-bold tracking-[0.3em] text-primary uppercase">Enterprise
-                     Infrastructure</span>
+                  <span class="text-[11px] font-bold tracking-[0.3em] text-primary uppercase">Train AI on Your Business
+                     Data.</span>
                </div>
-               <h1 class="text-6xl md:text-7xl font-black mb-8 leading-[0.9] text-foreground">
-                  The Infrastructure
-                  of <span class="text-gradient">AI Conversation.</span>
+               <h1 class="text-4xl md:text-5xl font-black mb-8 leading-[0.9] text-foreground">
+                  Deploy AI Agents on Your Website & WhatsApp in.
+                  <br><span class="text-gradient">Minutes.</span>
                </h1>
                <p class="text-xl text-foreground/60 mb-12 max-w-lg leading-relaxed font-semibold">
-                  ReplySuite is the premium automation layer for 2026 digital-native brands.
-                  Train your unique AI workforce on brand data and deploy anywhere in minutes.
+                  Build AI assistants trained on your documents, products, FAQs, PDFs, and website content deploy
+                  instantly on web and WhatsApp.
                </p>
 
                <div class="flex flex-col sm:flex-row gap-6 relative z-10 transition-all items-center">
                   <NuxtLink :to="user ? '/dashboard' : '/login'"
                      class="btn-gradient px-12 py-5 text-lg flex items-center justify-center gap-3 group w-full sm:w-auto">
-                     {{ user ? 'Access Executive Hub' : 'Deploy Your First Agent' }}
+                     {{ user ? 'Access Executive Hub' : 'Start Free' }}
                      <ArrowRight class="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </NuxtLink>
                   <button

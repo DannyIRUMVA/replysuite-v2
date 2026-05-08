@@ -68,14 +68,20 @@ const signInWithGoogle = async () => {
 <template>
   <div class="min-h-screen flex bg-background relative overflow-hidden">
     <!-- Left Side: Visual/Branding (Hidden on mobile) -->
-    <div class="hidden lg:flex lg:w-[45%] xl:w-[40%] relative flex-col justify-between p-12 overflow-hidden border-r border-foreground/5 bg-background-card">
+    <div
+      class="hidden lg:flex lg:w-[45%] xl:w-[40%] relative flex-col justify-between p-12 overflow-hidden border-r border-foreground/5 bg-background-card">
       <!-- Background Accents -->
-      <div class="absolute top-[-10%] right-[-10%] w-[80%] h-[80%] bg-primary/10 blur-[120px] rounded-full animate-pulse opacity-50"></div>
-      <div class="absolute bottom-[-10%] left-[-10%] w-[80%] h-[80%] bg-primary-accent/10 blur-[120px] rounded-full opacity-50"></div>
-      
+      <div
+        class="absolute top-[-10%] right-[-10%] w-[80%] h-[80%] bg-primary/10 blur-[120px] rounded-full animate-pulse opacity-50">
+      </div>
+      <div
+        class="absolute bottom-[-10%] left-[-10%] w-[80%] h-[80%] bg-primary-accent/10 blur-[120px] rounded-full opacity-50">
+      </div>
+
       <!-- Logo -->
       <div class="relative z-10 flex items-center gap-3">
-        <div class="w-10 h-10 bg-gradient-to-tr from-primary to-primary-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+        <div
+          class="w-10 h-10 bg-gradient-to-tr from-primary to-primary-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
           <Zap class="text-white w-6 h-6 fill-current" />
         </div>
         <span class="text-xl font-bold tracking-tight text-foreground">replysuite</span>
@@ -93,26 +99,26 @@ const signInWithGoogle = async () => {
         </div>
 
         <div class="flex flex-col gap-6 pt-10">
-           <div v-for="feat in [
-             { title: 'Real-time Analytics', desc: 'Monitor every conversation as it happens.' },
-             { title: 'Advanced RAG', desc: 'Keep your knowledge base updated and sharp.' }
-           ]" :key="feat.title" class="flex gap-4">
-              <div class="w-1.5 h-12 bg-primary/20 rounded-full overflow-hidden">
-                <div class="w-full h-1/2 bg-primary"></div>
-              </div>
-              <div class="space-y-1">
-                <h4 class="text-base font-bold text-foreground">{{ feat.title }}</h4>
-                <p class="text-sm text-foreground/50 max-w-[200px]">{{ feat.desc }}</p>
-              </div>
-           </div>
+          <div v-for="feat in [
+            { title: 'Real-time Analytics', desc: 'Monitor every conversation as it happens.' },
+            { title: 'Advanced RAG', desc: 'Keep your knowledge base updated and sharp.' }
+          ]" :key="feat.title" class="flex gap-4">
+            <div class="w-1.5 h-12 bg-primary/20 rounded-full overflow-hidden">
+              <div class="w-full h-1/2 bg-primary"></div>
+            </div>
+            <div class="space-y-1">
+              <h4 class="text-base font-bold text-foreground">{{ feat.title }}</h4>
+              <p class="text-sm text-foreground/50 max-w-[200px]">{{ feat.desc }}</p>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Footer Message -->
       <div class="relative z-10 flex items-center gap-4 text-foreground/50 text-xs font-semibold">
-        <span>© 2026 ReplySuite Automation</span>
+        <span>© 2026 ReplySuite Ltd</span>
         <span class="w-12 h-[1px] bg-foreground/10"></span>
-        <span>Premium AI Solutions</span>
+        <span>The Infrastructure of AI Conversation</span>
       </div>
     </div>
 
@@ -120,7 +126,8 @@ const signInWithGoogle = async () => {
     <div class="flex-1 flex flex-col justify-center items-center p-6 md:p-12 lg:p-20 relative bg-background">
       <!-- Mobile Logo (Only visible on small screens) -->
       <div class="lg:hidden absolute top-8 left-8 flex items-center gap-3">
-        <div class="w-8 h-8 bg-gradient-to-tr from-primary to-primary-accent rounded-lg flex items-center justify-center">
+        <div
+          class="w-8 h-8 bg-gradient-to-tr from-primary to-primary-accent rounded-lg flex items-center justify-center">
           <Zap class="text-foreground w-5 h-5 fill-current" />
         </div>
         <span class="text-lg font-bold tracking-tight">replysuite</span>
@@ -133,14 +140,16 @@ const signInWithGoogle = async () => {
         </div>
 
         <!-- Verification Success Alert -->
-        <div v-if="verified" class="mb-8 p-4 rounded-2xl bg-primary/10 border border-primary/20 flex items-center gap-4 animate-in fade-in zoom-in duration-500">
-           <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
-              <Sparkles class="w-5 h-5" />
-           </div>
-           <div>
-              <p class="text-sm font-bold text-foreground">Email verified successfully!</p>
-              <p class="text-[11px] text-foreground/50">Your account is active. Please sign in to continue to your dashboard.</p>
-           </div>
+        <div v-if="verified"
+          class="mb-8 p-4 rounded-2xl bg-primary/10 border border-primary/20 flex items-center gap-4 animate-in fade-in zoom-in duration-500">
+          <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+            <Sparkles class="w-5 h-5" />
+          </div>
+          <div>
+            <p class="text-sm font-bold text-foreground">Email verified successfully!</p>
+            <p class="text-[11px] text-foreground/50">Your account is active. Please sign in to continue to your
+              dashboard.</p>
+          </div>
         </div>
 
         <div>
@@ -180,14 +189,16 @@ const signInWithGoogle = async () => {
             <div class="space-y-2">
               <div class="flex items-center justify-between">
                 <label class="text-xs font-bold text-foreground/50">Password</label>
-                <a href="#" class="text-[10px] font-bold text-primary hover:text-foreground transition-colors">Forgot password?</a>
+                <a href="#" class="text-[10px] font-bold text-primary hover:text-foreground transition-colors">Forgot
+                  password?</a>
               </div>
               <input v-model="password" type="password" required
                 class="w-full bg-foreground/[0.02] border border-foreground/5 rounded-2xl px-6 py-4 focus:outline-none focus:border-primary/50 transition-all text-foreground placeholder:text-foreground/20 text-sm"
                 placeholder="••••••••" />
             </div>
 
-            <div v-if="errorMsg" class="text-red-400 text-sm font-semibold leading-relaxed bg-red-400/5 p-4 rounded-2xl border border-red-400/10">
+            <div v-if="errorMsg"
+              class="text-red-400 text-sm font-semibold leading-relaxed bg-red-400/5 p-4 rounded-2xl border border-red-400/10">
               {{ errorMsg }}
             </div>
 
@@ -197,8 +208,9 @@ const signInWithGoogle = async () => {
                 <Loader2 v-if="loading" class="w-5 h-5 animate-spin" />
                 <span v-else>Sign in to account</span>
               </button>
-              
-              <NuxtLink to="/register" class="w-full py-4 text-center text-xs font-bold text-foreground/50 hover:text-foreground transition-colors border border-foreground/5 rounded-2xl">
+
+              <NuxtLink to="/register"
+                class="w-full py-4 text-center text-xs font-bold text-foreground/50 hover:text-foreground transition-colors border border-foreground/5 rounded-2xl">
                 Don't have an account? <span class="text-primary font-bold">Sign up</span>
               </NuxtLink>
             </div>
@@ -207,9 +219,11 @@ const signInWithGoogle = async () => {
 
         <p class="mt-12 text-center text-foreground/50 text-[11px] font-semibold leading-loose">
           By continuing, you agree to our <br>
-          <NuxtLink to="/terms" class="text-foreground/50 hover:text-primary transition-colors">Terms of Service</NuxtLink> 
-          & 
-          <NuxtLink to="/privacy" class="text-foreground/50 hover:text-primary transition-colors">Privacy Policy</NuxtLink>
+          <NuxtLink to="/terms" class="text-foreground/50 hover:text-primary transition-colors">Terms of Service
+          </NuxtLink>
+          &
+          <NuxtLink to="/privacy" class="text-foreground/50 hover:text-primary transition-colors">Privacy Policy
+          </NuxtLink>
         </p>
       </div>
     </div>
