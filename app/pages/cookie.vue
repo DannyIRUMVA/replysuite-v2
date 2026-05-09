@@ -1,117 +1,105 @@
 <script setup lang="ts">
-import { Cookie, ShieldCheck, Eye, Scale, ArrowRight, Zap, Info } from 'lucide-vue-next'
+import LegalPage from '~~/app/components/legal/LegalPage.vue'
 
 useSeoMeta({
-  title: 'Cookie Policy | ReplySuite AI',
-  description: 'Understand how we use cookies and similar technologies to provide a premium automation experience.',
+  title: 'Cookie Policy | ReplySuite',
+  description: 'See which cookies ReplySuite uses, what they do, and how to manage cookie preferences.'
 })
 
 definePageMeta({
   layout: 'default'
 })
 
-const cookies = [
+const { openSettings } = useCookieConsent()
+
+const sections = [
+  { id: 'overview', title: 'Overview' },
+  { id: 'types', title: 'Cookie categories' },
+  { id: 'analytics', title: 'Analytics consent' },
+  { id: 'manage', title: 'Manage preferences' },
+  { id: 'contact', title: 'Contact' }
+]
+
+const cookieTypes = [
   {
-    category: 'Essential',
-    desc: 'Necessary for the website to function. Includes authentication and security tokens.',
-    type: 'Required'
+    title: 'Essential cookies',
+    required: true,
+    desc: 'Needed for security, core navigation, session handling, account access, and basic product functionality.'
   },
   {
-    category: 'Performance',
-    desc: 'Helps us understand how visitors interact with our platform to improve performance.',
-    type: 'Optional'
+    title: 'Analytics cookies',
+    required: false,
+    desc: 'Only used if you consent. These help us understand traffic, usage, and site performance.'
   },
   {
-    category: 'Functional',
-    desc: 'Enables enhanced functionality and personalization, such as remembering your preferences.',
-    type: 'Optional'
+    title: 'Functional cookies',
+    required: false,
+    desc: 'Remember preference-related choices so the website feels more consistent when you return.'
   }
 ]
 </script>
 
 <template>
-  <div class="relative min-h-screen">
-    <!-- Hero Section -->
-    <section class="max-w-7xl mx-auto px-6 pt-32 pb-20 relative overflow-hidden">
-      <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10"></div>
-      <div class="text-center max-w-3xl mx-auto mb-20">
-        <span class="badge-gradient mb-10">Transparency</span>
-        <h1 class="text-6xl md:text-8xl font-extrabold mb-8 tracking-tighter leading-[0.85] text-foreground">
-          Cookie <br />
-          <span class="text-gradient">Policy.</span>
-        </h1>
-        <p class="text-xl text-foreground/50 font-medium leading-relaxed">
-          We believe in a dark-pattern-free experience. Here is exactly how we use cookies.
-        </p>
+  <LegalPage
+    badge="Cookies"
+    title="Cookie policy"
+    description="This page explains which cookies and similar storage technologies ReplySuite uses, why we use them, and how you can manage your preferences."
+    last-updated="May 09, 2026"
+    :sections="sections"
+  >
+    <section id="overview">
+      <h2>Overview</h2>
+      <p>
+        ReplySuite uses cookies and similar storage technologies to keep the site secure, remember certain preferences, and measure usage only where you have consented to analytics.
+      </p>
+      <p>
+        We do not want cookie controls to be a dark pattern. The goal is to let visitors choose clearly.
+      </p>
+    </section>
+
+    <section id="types">
+      <h2>Cookie categories</h2>
+      <div class="grid gap-5 not-prose my-10">
+        <div v-for="item in cookieTypes" :key="item.title" class="rounded-[28px] border border-foreground/10 bg-foreground/[0.02] p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+          <div>
+            <h3 class="text-xl font-bold text-foreground mb-2 tracking-tight">{{ item.title }}</h3>
+            <p class="text-sm text-foreground/65 font-medium leading-relaxed max-w-2xl">{{ item.desc }}</p>
+          </div>
+          <div :class="item.required ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-foreground/[0.03] border-foreground/10 text-foreground/55'" class="px-4 py-2 rounded-full border text-[10px] font-black uppercase tracking-[0.22em] self-start">
+            {{ item.required ? 'Required' : 'Optional' }}
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- Content -->
-    <div class="max-w-4xl mx-auto px-6 py-20">
-      <div class="space-y-6 mb-32">
-        <div v-for="c in cookies" :key="c.category" class="glass-card p-10 border-foreground/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
-          <div>
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                <Cookie class="w-4 h-4" />
-              </div>
-              <h3 class="text-xl font-bold text-foreground tracking-tight">{{ c.category }}</h3>
-            </div>
-            <p class="text-foreground/50 font-medium leading-relaxed max-w-lg">{{ c.desc }}</p>
-          </div>
-          <div :class="[
-            'px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border',
-            c.type === 'Required' ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-foreground/5 border-foreground/10 text-foreground/50'
-          ]">
-            {{ c.type }}
-          </div>
-        </div>
+    <section id="analytics">
+      <h2>Analytics consent</h2>
+      <p>
+        On a new visit, ReplySuite asks whether you want to allow optional analytics and functional cookies. If you decline, we keep only the essential cookies needed to operate the site.
+      </p>
+      <p>
+        Analytics scripts are not meant to load until consent has been given. If you later change your mind, your updated preference will be stored for future visits.
+      </p>
+    </section>
+
+    <section id="manage">
+      <h2>Manage preferences</h2>
+      <p>
+        You can reopen the cookie settings modal and update your choices at any time.
+      </p>
+      <div class="not-prose mt-6">
+        <button class="btn-gradient px-8 py-4" @click="openSettings">
+          Open cookie settings
+        </button>
       </div>
+    </section>
 
-      <main class="prose dark:prose-invert prose-primary prose-lg">
-        <section class="mb-24">
-          <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight flex items-center gap-4">
-            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <Zap class="w-5 h-5 fill-current" />
-            </div>
-            Why we use cookies
-          </h2>
-          <p>
-            ReplySuite uses cookies and similar technologies (like local storage) to ensure that our application remains secure, performs efficiently, and provides a personalized experience for each brand.
-          </p>
-        </section>
-
-        <section class="mb-24">
-          <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight flex items-center gap-4">
-            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <ShieldCheck class="w-5 h-5" />
-            </div>
-            Your Consent
-          </h2>
-          <p>
-            You have the right to manage your cookie preferences. While essential cookies cannot be disabled as they are required for security and core functionality, you can opt-out of performance and functional cookies at any time.
-          </p>
-        </section>
-
-        <!-- CTA -->
-        <div class="mt-40 p-16 rounded-[48px] bg-foreground/[0.02] border border-foreground/5 text-center">
-          <h3 class="text-3xl font-bold text-foreground mb-6 tracking-tight">Questions about your data?</h3>
-          <p class="text-foreground/50 mb-10 font-medium">Read our full Privacy Policy or contact our legal team.</p>
-          <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
-            <NuxtLink to="/privacy" class="btn-gradient px-10 py-5 inline-flex items-center gap-4 group">
-              Privacy Policy
-              <ArrowRight class="w-5 h-5 group-hover:translate-x-2 transition-transform" />
-            </NuxtLink>
-            <a href="mailto:legal@replysuite.app" class="text-foreground font-bold hover:text-primary transition-colors">
-              Contact Legal
-            </a>
-          </div>
-        </div>
-      </main>
-    </div>
-  </div>
+    <section id="contact">
+      <h2>Contact</h2>
+      <p>
+        Questions about cookie usage or tracking preferences can be sent to
+        <a href="mailto:privacy@replysuite.app" class="text-primary hover:underline">privacy@replysuite.app</a>.
+      </p>
+    </section>
+  </LegalPage>
 </template>
-
-<style scoped>
-.glass-card { @apply rounded-[32px]; }
-</style>

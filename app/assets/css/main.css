@@ -29,8 +29,16 @@
 }
 
 @layer base {
+  html, body, #__nuxt {
+    min-height: 100%;
+  }
+
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
+  }
+
+  body.cookie-modal-open {
+    overflow: hidden !important;
   }
 }
 
@@ -49,6 +57,35 @@
 
   .badge-gradient {
     @apply px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.2em] shadow-sm;
+  }
+
+  .public-page-shell {
+    @apply relative min-h-screen bg-background text-foreground selection:bg-primary/30 selection:text-primary-accent overflow-x-hidden;
+  }
+
+  .public-page-pattern {
+    @apply absolute inset-0 pointer-events-none;
+    background:
+      radial-gradient(circle at top left, rgb(var(--primary) / 0.12), transparent 28%),
+      radial-gradient(circle at top right, rgba(59, 130, 246, 0.10), transparent 24%),
+      radial-gradient(circle at 20% 80%, rgba(168, 85, 247, 0.08), transparent 24%);
+  }
+
+  .public-page-pattern::before {
+    content: '';
+    @apply absolute inset-0;
+    background-image:
+      linear-gradient(to right, rgb(var(--surface-border) / 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(var(--surface-border) / 0.04) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(circle at center, black 35%, transparent 85%);
+    -webkit-mask-image: radial-gradient(circle at center, black 35%, transparent 85%);
+  }
+
+  .public-page-pattern::after {
+    content: '';
+    @apply absolute inset-x-0 top-0 h-[26rem];
+    background: linear-gradient(to bottom, rgb(var(--background) / 0.92), transparent);
   }
 
   /* Widget / Chatbot Markdown Rendering */

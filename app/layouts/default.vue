@@ -32,12 +32,16 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen bg-background text-foreground selection:bg-primary/30 selection:text-primary-accent">
-    <GuestNavbar />
-    <!-- Spacer for fixed navbar -->
-    <div class="h-[10vh]"></div>
-    <slot />
-    <GuestFooter />
+  <div class="public-page-shell">
+    <div class="public-page-pattern"></div>
+
+    <div class="relative z-10">
+      <GuestNavbar />
+      <!-- Spacer for fixed navbar -->
+      <div class="h-[10vh]"></div>
+      <slot />
+      <GuestFooter />
+    </div>
 
     <!-- Global Feedback Modal -->
     <Transition

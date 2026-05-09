@@ -132,6 +132,48 @@ const reasonsToBuy = [
   }
 ]
 
+const beforePoints = [
+  {
+    title: 'Generic answers',
+    desc: 'One-size-fits-all bots answer without using your real website, PDFs, FAQs, or business knowledge.'
+  },
+  {
+    title: 'Hard to trust',
+    desc: 'Generic GPT tools can sound impressive but still miss business context, policies, pricing, or service details.'
+  },
+  {
+    title: 'Too much maintenance',
+    desc: 'Custom-built bots often become expensive, fragile, and difficult to update every time the business changes.'
+  },
+  {
+    title: 'Slow human handoff',
+    desc: 'Your team still spends too much time repeating the same support and pre-sales answers.'
+  },
+  {
+    title: 'Support overload',
+    desc: 'Repetitive questions keep piling up, which slows response times and pulls staff away from higher-value work.'
+  }
+]
+
+const afterPoints = [
+  {
+    title: 'Trained on your content',
+    desc: 'ReplySuite learns from your website, PDFs, FAQs, and custom text so answers stay closer to your real business.'
+  },
+  {
+    title: 'Instant first responses',
+    desc: 'Provide 24/7 replies on your website and expand into WhatsApp when you want another high-value support channel.'
+  },
+  {
+    title: 'Less repetitive support work',
+    desc: 'Answer common questions automatically before they become another manual support task for your team.'
+  },
+  {
+    title: 'A stronger support team',
+    desc: 'Free your current team to focus on harder conversations, better follow-up, and more valuable customer work.'
+  }
+]
+
 const demoVideoUrl = 'https://www.youtube-nocookie.com/embed/drp1wlRRSr4?autoplay=1&rel=0'
 const isDemoVideoOpen = ref(false)
 
@@ -172,6 +214,11 @@ const scrollToBottom = () => {
   if (scrollRef.value) {
     scrollRef.value.scrollTop = scrollRef.value.scrollHeight
   }
+}
+
+const forwardDemoWheel = (event: WheelEvent) => {
+  if (typeof window === 'undefined') return
+  window.scrollBy({ top: event.deltaY, left: 0, behavior: 'auto' })
 }
 
 watch(chatMessages, () => {
@@ -426,7 +473,11 @@ const handleSelect = async (plan: any) => {
 
               <div class="relative flex-1 min-h-0 overflow-hidden">
                 <div class="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-background-card to-transparent z-10 pointer-events-none"></div>
-                <div ref="scrollRef" class="h-full p-8 space-y-6 overflow-y-auto custom-scrollbar flex flex-col scroll-smooth">
+                <div
+                  ref="scrollRef"
+                  class="h-full p-8 space-y-6 overflow-y-hidden flex flex-col scroll-smooth select-none"
+                  @wheel.prevent="forwardDemoWheel"
+                >
                   <div v-for="(msg, idx) in chatMessages" :key="idx" :class="['flex w-full', msg.role === 'user' ? 'justify-end' : 'justify-start']">
                     <div :class="[
                       'p-6 rounded-[2.5rem] text-[13px] transition-all animate-in fade-in slide-in-from-bottom-3 duration-500 prose-sm prose-p:my-1 prose-strong:text-inherit leading-relaxed',
@@ -544,6 +595,90 @@ const handleSelect = async (plan: any) => {
           </div>
           <h3 class="text-2xl font-black mb-4 text-foreground tracking-tight">{{ item.title }}</h3>
           <p class="text-sm text-foreground/55 leading-relaxed font-semibold">{{ item.desc }}</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="max-w-7xl mx-auto px-6 py-28 border-t border-foreground/5 overflow-hidden">
+      <div class="text-center mb-16 max-w-4xl mx-auto relative">
+        <div class="absolute inset-0 bg-primary/5 blur-[90px] -z-10"></div>
+        <span class="badge-gradient mb-6">Before vs after</span>
+        <h2 class="text-4xl md:text-6xl font-extrabold text-foreground mb-6 leading-tight">
+          Imagine what you could do if you had an expert chatbot
+          <span class="text-gradient">answering questions 24/7.</span>
+        </h2>
+        <p class="text-foreground/50 font-semibold leading-relaxed max-w-3xl mx-auto">
+          The difference is not just "having AI." It is having a chatbot trained on your real business content, deployed where customers already talk, and designed to reduce repetitive support work.
+        </p>
+      </div>
+
+      <div class="grid lg:grid-cols-[1fr_auto_1fr] gap-8 items-stretch">
+        <div class="glass-card relative p-10 md:p-12 border border-rose-500/20 bg-[linear-gradient(180deg,rgba(244,63,94,0.10),rgba(255,255,255,0.02))] overflow-hidden">
+          <div class="absolute -top-16 -left-10 w-40 h-40 rounded-full bg-rose-500/10 blur-3xl"></div>
+          <div class="relative">
+            <div class="inline-flex items-center gap-3 rounded-full border border-rose-500/20 bg-rose-500/10 px-4 py-2 mb-8">
+              <X class="w-4 h-4 text-rose-300" />
+              <span class="text-[10px] font-black uppercase tracking-widest text-rose-200">Before</span>
+            </div>
+            <h3 class="text-2xl md:text-3xl font-black text-foreground tracking-tight mb-3">
+              Fickle, one-size-fits-all chatbots that do more harm than good
+            </h3>
+            <p class="text-sm text-foreground/55 font-semibold leading-relaxed mb-8 max-w-xl">
+              Too generic, too hard to maintain, and not grounded in the real information your customers actually need.
+            </p>
+            <div class="space-y-4">
+              <div v-for="item in beforePoints" :key="item.title" class="rounded-[24px] border border-white/5 bg-black/15 p-5">
+                <div class="flex items-start gap-4">
+                  <div class="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <X class="w-4 h-4 text-rose-300" />
+                  </div>
+                  <div>
+                    <h4 class="text-base font-black text-foreground tracking-tight mb-1">{{ item.title }}</h4>
+                    <p class="text-sm text-foreground/60 leading-relaxed font-semibold">{{ item.desc }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hidden lg:flex items-center justify-center">
+          <div class="w-16 h-16 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center shadow-[0_0_40px_rgba(168,85,247,0.18)]">
+            <ArrowRight class="w-7 h-7 text-primary" />
+          </div>
+        </div>
+
+        <div class="glass-card relative p-10 md:p-12 border border-primary/20 bg-[linear-gradient(180deg,rgba(168,85,247,0.12),rgba(255,255,255,0.02))] overflow-hidden">
+          <div class="absolute -bottom-16 -right-10 w-44 h-44 rounded-full bg-primary/10 blur-3xl"></div>
+          <div class="relative">
+            <div class="inline-flex items-center gap-3 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 mb-8">
+              <Check class="w-4 h-4 text-primary" />
+              <span class="text-[10px] font-black uppercase tracking-widest text-primary">After</span>
+            </div>
+            <h3 class="text-2xl md:text-3xl font-black text-foreground tracking-tight mb-3">
+              An automated resource that strengthens your support team
+            </h3>
+            <p class="text-sm text-foreground/55 font-semibold leading-relaxed mb-8 max-w-xl">
+              Train once on your business content, answer faster on your website, and grow into WhatsApp support when you are ready.
+            </p>
+            <div class="grid sm:grid-cols-2 gap-3 mb-8">
+              <div class="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-[11px] font-black uppercase tracking-widest text-primary text-center">Train on website + PDFs</div>
+              <div class="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-[11px] font-black uppercase tracking-widest text-primary text-center">Website first, WhatsApp next</div>
+            </div>
+            <div class="space-y-4">
+              <div v-for="item in afterPoints" :key="item.title" class="rounded-[24px] border border-white/5 bg-black/15 p-5">
+                <div class="flex items-start gap-4">
+                  <div class="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check class="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 class="text-base font-black text-foreground tracking-tight mb-1">{{ item.title }}</h4>
+                    <p class="text-sm text-foreground/60 leading-relaxed font-semibold">{{ item.desc }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

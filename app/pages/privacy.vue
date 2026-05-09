@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ShieldCheck, FileText, Lock, Globe, MessageCircle, Mail, Eye, ArrowRight } from 'lucide-vue-next'
+import LegalPage from '~~/app/components/legal/LegalPage.vue'
 
 useSeoMeta({
   title: 'Privacy Policy | ReplySuite',
-  description: 'Learn how ReplySuite handles account data and customer conversation data.',
+  description: 'Learn what data ReplySuite collects, how it is used, and how we handle chatbot, account, and customer conversation data.'
 })
 
 definePageMeta({
@@ -11,120 +11,124 @@ definePageMeta({
 })
 
 const sections = [
-  { id: 'intro', title: 'Introduction', icon: FileText },
-  { id: 'collection', title: 'Data collection', icon: Eye },
-  { id: 'usage', title: 'How we use data', icon: MessageCircle },
-  { id: 'security', title: 'Security', icon: Lock },
-  { id: 'rights', title: 'Your rights', icon: Globe },
-  { id: 'contact', title: 'Contact', icon: Mail }
+  { id: 'overview', title: 'Overview' },
+  { id: 'what-we-collect', title: 'What we collect' },
+  { id: 'how-we-use-it', title: 'How we use it' },
+  { id: 'providers', title: 'Infrastructure & providers' },
+  { id: 'retention', title: 'Retention & deletion' },
+  { id: 'rights', title: 'Your rights' },
+  { id: 'contact', title: 'Contact' }
 ]
 </script>
 
 <template>
-  <div class="relative min-h-screen bg-background">
-    <section class="max-w-7xl mx-auto px-6 pt-32 pb-20 border-b border-foreground/5 relative overflow-hidden">
-      <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10 animate-pulse"></div>
-      <span class="badge-gradient mb-10">Privacy</span>
-      <h1 class="text-5xl md:text-7xl font-extrabold mb-8 tracking-tight text-foreground">
-        Privacy policy
-      </h1>
-      <p class="text-foreground/50 font-bold uppercase tracking-[0.2em] text-xs">Last updated: April 10, 2026</p>
+  <LegalPage
+    badge="Privacy"
+    title="Privacy policy"
+    description="This page explains what data ReplySuite processes, why we process it, and how we handle account information, chatbot training data, and customer conversations."
+    last-updated="May 09, 2026"
+    :sections="sections"
+  >
+    <section id="overview">
+      <h2>Overview</h2>
+      <p>
+        ReplySuite helps businesses create AI chatbots for their website and WhatsApp workflows. To do that, we process account information, chatbot configuration, training content, and conversation data needed to operate the product.
+      </p>
+      <p>
+        We aim to keep this policy readable. It is a practical explanation of how the product works, not a vague promise page.
+      </p>
+      <blockquote>
+        You remain responsible for the content you upload, connect, or use to train your chatbot. ReplySuite processes that information to deliver the service to you.
+      </blockquote>
     </section>
 
-    <div class="max-w-7xl mx-auto px-6 py-20 grid lg:grid-cols-4 gap-16">
-      <aside class="hidden lg:block">
-        <div class="sticky top-32 space-y-2">
-          <a v-for="s in sections" :key="s.id" :href="`#${s.id}`" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-foreground/5 transition-all group text-foreground/50 hover:text-foreground">
-            <component :is="s.icon" class="w-5 h-5 group-hover:text-primary transition-colors" />
-            <span class="text-sm font-bold tracking-widest uppercase">{{ s.title }}</span>
-          </a>
-        </div>
-      </aside>
+    <section id="what-we-collect">
+      <h2>What we collect</h2>
+      <h3>1. Account and business information</h3>
+      <p>
+        This can include your name, email address, business name, billing plan, and account preferences.
+      </p>
 
-      <main class="lg:col-span-3 prose dark:prose-invert prose-primary max-w-none">
-        <section id="intro" class="mb-20">
-          <h2 class="text-3xl font-bold mb-8 tracking-tight flex items-center gap-4 text-foreground">
-            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <FileText class="w-5 h-5" />
-            </div>
-            Introduction
-          </h2>
-          <p class="text-foreground/50 leading-relaxed text-lg">
-            This policy explains what data ReplySuite collects and how we use it.
-          </p>
-          <p class="text-foreground/50 leading-relaxed text-lg">
-            By using ReplySuite, you agree to this policy.
-          </p>
-        </section>
+      <h3>2. Chatbot and workspace data</h3>
+      <p>
+        This includes chatbot names, settings, prompts, deployment preferences, supported channels, and connected integrations.
+      </p>
 
-        <section id="collection" class="mb-20">
-          <h2 class="text-3xl font-bold tracking-tight flex items-center gap-4 text-foreground">
-            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <Eye class="w-5 h-5" />
-            </div>
-            Data collection
-          </h2>
-          <p class="text-foreground/50 leading-relaxed">
-            We collect account data, service usage data, and data needed to provide the product.
-          </p>
-          <div class="grid md:grid-cols-2 gap-8 my-10 font-medium">
-            <div class="glass-card p-8 border-foreground/10 bg-foreground/[0.01]">
-              <h4 class="text-primary font-bold tracking-widest text-xs mb-4">account data</h4>
-              <p class="text-foreground/50 text-sm">Name, email, and business details you provide.</p>
-            </div>
-            <div class="glass-card p-8 border-foreground/10 bg-foreground/[0.01]">
-              <h4 class="text-primary font-bold tracking-widest text-xs mb-4">usage data</h4>
-              <p class="text-foreground/50 text-sm">Product activity, browser details, and service diagnostics.</p>
-            </div>
-          </div>
-        </section>
+      <h3>3. Training content and knowledge sources</h3>
+      <p>
+        If you train a ReplySuite agent using website content, PDFs, FAQs, uploaded files, or custom text, we process that content so your chatbot can generate more relevant answers.
+      </p>
 
-        <section id="usage" class="mb-20">
-          <h2 class="text-3xl font-bold tracking-tight flex items-center gap-4 text-foreground">
-            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <MessageCircle class="w-5 h-5" />
-            </div>
-            How we use data
-          </h2>
-          <p class="text-foreground/50 leading-relaxed">
-            We use data to run the product, improve reliability, support your account, and maintain security.
-          </p>
-        </section>
+      <h3>4. Conversation and usage data</h3>
+      <p>
+        We may process messages sent through your chatbot, support interactions, logs, diagnostic data, and product usage events needed to operate, secure, and improve the service.
+      </p>
 
-        <section id="rights" class="mb-20">
-          <h2 class="text-3xl font-bold tracking-tight flex items-center gap-4 text-foreground">
-            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <Globe class="w-5 h-5" />
-            </div>
-            Your rights
-          </h2>
-          <p class="text-foreground/50 leading-relaxed">
-            Depending on your region, you may have rights to access, correct, delete, or limit the use of your personal data.
-          </p>
-        </section>
+      <h3>5. Billing data</h3>
+      <p>
+        Paid billing is handled through our payment provider. ReplySuite may store plan, subscription, and transaction references, but payment-card handling is managed by the payment provider rather than stored directly by us.
+      </p>
+    </section>
 
-        <section id="contact" class="mb-20">
-          <h2 class="text-3xl font-bold tracking-tight flex items-center gap-4 text-foreground">
-            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <Mail class="w-5 h-5" />
-            </div>
-            Contact
-          </h2>
-          <p class="text-foreground/50 leading-relaxed">
-            Questions? Contact <a href="mailto:security@replysuite.app" class="text-primary hover:underline font-bold">security@replysuite.app</a>.
-          </p>
-          <NuxtLink to="/security" class="inline-flex items-center gap-2 text-primary font-bold hover:underline mt-4">
-            Read our security page
-            <ArrowRight class="w-4 h-4" />
-          </NuxtLink>
-        </section>
-      </main>
-    </div>
-  </div>
+    <section id="how-we-use-it">
+      <h2>How we use it</h2>
+      <p>We use personal and business data to:</p>
+      <ul>
+        <li>create and maintain your account;</li>
+        <li>train and operate your chatbot;</li>
+        <li>deliver website and WhatsApp automation features;</li>
+        <li>provide billing, support, diagnostics, and account management;</li>
+        <li>protect the service from abuse, fraud, or unauthorized access;</li>
+        <li>measure product performance and improve reliability.</li>
+      </ul>
+      <p>
+        We do not describe customer data as “anonymous magic fuel.” If data is used to run the product, secure it, or improve operations, this policy should say so clearly.
+      </p>
+    </section>
+
+    <section id="providers">
+      <h2>Infrastructure &amp; providers</h2>
+      <p>
+        ReplySuite uses third-party infrastructure and service providers to deliver the product. Depending on the feature you use, this may include:
+      </p>
+      <ul>
+        <li><strong>Cloudflare Pages and edge services</strong> for deployment, delivery, and edge protection;</li>
+        <li><strong>Supabase</strong> for database, storage, and authentication services;</li>
+        <li><strong>Polar</strong> or other payment tooling for subscription and billing workflows;</li>
+        <li><strong>Email and messaging providers</strong> for verification, transactional email, and support communication;</li>
+        <li><strong>Optional analytics tools</strong> if you consent to analytics cookies.</li>
+      </ul>
+      <p>
+        These providers process data only to help us deliver the service or related operations. Their own privacy and security terms may also apply.
+      </p>
+    </section>
+
+    <section id="retention">
+      <h2>Retention &amp; deletion</h2>
+      <p>
+        We keep data for as long as needed to operate your account, provide the service, meet legal obligations, resolve disputes, and maintain platform integrity.
+      </p>
+      <p>
+        If you delete content or close your account, some data may remain in backups, logs, or records for a limited period where reasonably necessary for security, compliance, or recovery purposes.
+      </p>
+    </section>
+
+    <section id="rights">
+      <h2>Your rights</h2>
+      <p>
+        Depending on your location, you may have rights to access, correct, delete, export, or restrict certain uses of your personal data. You may also have the right to object to some processing activities.
+      </p>
+      <p>
+        You can also manage optional cookies through our cookie settings and review our <NuxtLink to="/cookie" class="text-primary hover:underline">Cookie Policy</NuxtLink> for more detail.
+      </p>
+    </section>
+
+    <section id="contact">
+      <h2>Contact</h2>
+      <p>
+        Questions about privacy or data handling can be sent to
+        <a href="mailto:privacy@replysuite.app" class="text-primary hover:underline">privacy@replysuite.app</a>.
+      </p>
+    </section>
+  </LegalPage>
 </template>
-
-<style scoped>
-.prose h2 { @apply text-foreground border-b border-foreground/5 pb-6 mt-20; }
-.prose p { @apply text-foreground/50 leading-loose; }
-.glass-card { @apply rounded-[24px]; }
-</style>

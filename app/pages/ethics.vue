@@ -1,157 +1,120 @@
 <script setup lang="ts">
-import { Sparkles, ShieldCheck, Eye, Scale, Users, ArrowRight, Zap, Info, CheckCircle2 } from 'lucide-vue-next'
+import LegalPage from '~~/app/components/legal/LegalPage.vue'
 
 useSeoMeta({
   title: 'AI Ethics & Transparency | ReplySuite',
-  description: 'Learn about our commitment to responsible AI, data privacy, and ethical automation at ReplySuite.',
+  description: 'See how ReplySuite approaches AI transparency, customer data handling, human review, and responsible automation.'
 })
 
 definePageMeta({
   layout: 'default'
 })
 
+const sections = [
+  { id: 'principles', title: 'Core principles' },
+  { id: 'transparency', title: 'Transparency' },
+  { id: 'data', title: 'Data & training' },
+  { id: 'human-review', title: 'Human review' },
+  { id: 'limitations', title: 'Limitations' },
+  { id: 'prohibited', title: 'Prohibited use' },
+  { id: 'contact', title: 'Contact' }
+]
+
 const principles = [
   {
-    title: 'Transparency',
-    desc: 'We are clear about when you are interacting with an AI and how that AI was trained.',
-    icon: Eye
+    title: 'Clear AI disclosure',
+    desc: 'Businesses should be clear when an automated assistant is responding to customers.'
   },
   {
-    title: 'Data Privacy',
-    desc: 'Your data is never used to train global models. It stays yours, period.',
-    icon: ShieldCheck
+    title: 'Grounded answers',
+    desc: 'AI should be trained on relevant business content instead of relying only on generic responses.'
   },
   {
-    title: 'Human-in-the-loop',
-    desc: 'AI is a tool to empower humans, not replace them. We provide easy escalation to real agents.',
-    icon: Users
+    title: 'Human oversight',
+    desc: 'Automation should support human teams, not remove judgment from high-risk decisions.'
   },
   {
-    title: 'Fairness',
-    desc: 'We actively monitor our models to prevent bias and ensure consistent, equitable treatment.',
-    icon: Scale
+    title: 'Respect for customer data',
+    desc: 'Training content and customer conversation data should be handled with clear purpose and control.'
   }
 ]
 </script>
 
 <template>
-  <div class="relative min-h-screen">
-    <!-- Hero Section -->
-    <section class="max-w-7xl mx-auto px-6 pt-32 pb-20 relative overflow-hidden">
-      <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10"></div>
-      <div class="text-center max-w-3xl mx-auto mb-20">
-        <span class="badge-gradient mb-10">Our Commitment</span>
-        <h1 class="text-6xl md:text-8xl font-extrabold mb-8 tracking-tighter leading-[0.85] text-foreground">
-          AI <span class="text-gradient">Ethics.</span>
-        </h1>
-        <p class="text-xl text-foreground/40 font-medium leading-relaxed">
-          Building the gold standard in automation requires more than code—it requires a foundation of trust and
-          responsibility.
-        </p>
+  <LegalPage
+    badge="AI Ethics"
+    title="AI ethics & transparency"
+    description="ReplySuite is built for practical automation, not black-box hype. This page explains how we think about transparency, customer data, human review, and responsible deployment."
+    last-updated="May 09, 2026"
+    :sections="sections"
+  >
+    <section id="principles">
+      <h2>Core principles</h2>
+      <div class="grid md:grid-cols-2 gap-5 not-prose my-10">
+        <div v-for="item in principles" :key="item.title" class="rounded-[28px] border border-foreground/10 bg-foreground/[0.02] p-6">
+          <h3 class="text-xl font-bold text-foreground mb-3 tracking-tight">{{ item.title }}</h3>
+          <p class="text-sm text-foreground/65 font-medium leading-relaxed">{{ item.desc }}</p>
+        </div>
       </div>
     </section>
 
-    <!-- Content -->
-    <div class="max-w-7xl mx-auto px-6 py-20">
-      <div class="grid md:grid-cols-2 gap-8 mb-32">
-        <div v-for="p in principles" :key="p.title"
-          class="glass-card p-12 border-foreground/10 hover:border-primary/20 transition-all group">
-          <div
-            class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-            <component :is="p.icon" class="w-6 h-6 text-primary" />
-          </div>
-          <h3 class="text-2xl font-bold text-foreground mb-4 tracking-tight">{{ p.title }}</h3>
-          <p class="text-foreground/40 leading-relaxed font-medium">{{ p.desc }}</p>
-        </div>
-      </div>
+    <section id="transparency">
+      <h2>Transparency</h2>
+      <p>
+        We believe automated interactions should not pretend to be human. If you use ReplySuite, you should present your assistant in a way that is clear, fair, and not deceptive.
+      </p>
+      <p>
+        That matters even more in support and sales contexts, where customers may rely on what the assistant says.
+      </p>
+    </section>
 
-      <!-- Detailed Statement -->
-      <main class="max-w-4xl mx-auto prose dark:prose-invert prose-primary prose-lg text-foreground">
-        <section class="mb-24">
-          <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight flex items-center gap-4">
-            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <Zap class="w-5 h-5 fill-current" />
-            </div>
-            Model Transparency
-          </h2>
-          <p>
-            At ReplySuite, we leverage state-of-the-art Large Language Models (LLMs) to power our automation. Our
-            primary stack includes <strong>Gemini 3.1</strong> and <strong>GPT-5.5</strong>, selected for their
-            precision and sophisticated reasoning capabilities.
-          </p>
-          <p>
-            We do not hide behind "black box" algorithms. When you use ReplySuite, your AI agent follows clear,
-            deterministic instructions provided by you, ensuring that every response aligns with your brand's specific
-            guidelines.
-          </p>
-        </section>
+    <section id="data">
+      <h2>Data &amp; training</h2>
+      <p>
+        ReplySuite is strongest when chatbots are trained on your actual business content: website pages, FAQs, PDFs, and custom text. That approach is more useful and more responsible than generic AI output with no business grounding.
+      </p>
+      <p>
+        We do not describe customer data as something to be casually reused. Training data and conversation data should be processed for the specific service you are using and handled with appropriate access control and review.
+      </p>
+    </section>
 
-        <section class="mb-24">
-          <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight flex items-center gap-4">
-            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <ShieldCheck class="w-5 h-5" />
-            </div>
-            Data Ethics & Ownership
-          </h2>
-          <div class="bg-primary/5 border border-primary/20 p-8 rounded-[32px] my-10">
-            <h4 class="text-primary font-bold tracking-widest text-[10px] uppercase mb-4 flex items-center gap-2">
-              <Info class="w-3 h-3" />
-              The Zero-Training Guarantee
-            </h4>
-            <p class="text-foreground font-medium mb-0 leading-relaxed">
-              We guarantee that any data you upload to train your ReplySuite agent is used <strong>exclusively</strong>
-              for your specific chatbot. We never contribute your proprietary data to train global or multi-tenant
-              models.
-            </p>
-          </div>
-          <p>
-            You retain full ownership of all data used for training and all conversations generated by the platform. You
-            can export or delete your data at any time through the dashboard.
-          </p>
-        </section>
+    <section id="human-review">
+      <h2>Human review</h2>
+      <p>
+        ReplySuite is meant to reduce repetitive support work and improve first responses. It is not a substitute for human judgment in sensitive, high-risk, or legally significant decisions.
+      </p>
+      <p>
+        Businesses should keep humans involved where escalation, approval, or interpretation matters.
+      </p>
+    </section>
 
-        <section class="mb-24">
-          <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight flex items-center gap-4">
-            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <Scale class="w-5 h-5" />
-            </div>
-            Global Compliance & Transparency
-          </h2>
-          <p>
-            Automation should never be deceptive. In alignment with the <strong>2026 EU AI Act</strong>, the
-            <strong>California B.O.T. Act</strong>, and global transparency standards, ReplySuite provides built-in
-            tools for mandatory AI disclosure.
-          </p>
-          <div class="bg-foreground/[0.03] border border-foreground/10 p-8 rounded-[32px] my-10">
-            <h4 class="text-foreground font-bold mb-4 flex items-center gap-2">
-              <CheckCircle2 class="w-4 h-4 text-primary" />
-              Mandatory AI Labeling
-            </h4>
-            <p class="text-foreground/40 text-sm mb-0">
-              Whether it is a legal requirement in the EU, California, or Brazil, all AI-generated text must be
-              identifiable. Our platform includes an "AI Disclosure Toggle" that automatically appends transparency
-              metadata or visible labels to bot responses, ensuring your brand stays compliant across all jurisdictions.
-            </p>
-          </div>
-        </section>
+    <section id="limitations">
+      <h2>Limitations</h2>
+      <p>
+        AI systems can still be incomplete, wrong, or overly confident. Better training content improves outcomes, but no model should be treated as infallible.
+      </p>
+      <p>
+        We encourage customers to test their chatbot carefully, review high-impact flows, and avoid relying on automated replies where a human review step is clearly necessary.
+      </p>
+    </section>
 
-        <!-- CTA -->
-        <div class="mt-40 p-16 rounded-[48px] bg-foreground/[0.02] border border-foreground/10 text-center">
-          <h3 class="text-3xl font-bold text-foreground mb-6 tracking-tight">Have questions about our AI posture?</h3>
-          <p class="text-foreground/40 mb-10 font-medium">Our security and ethics team is available for deep-dive
-            consultations.</p>
-          <a href="mailto:security@replysuite.app" class="btn-gradient px-10 py-5 inline-flex items-center gap-4 group">
-            Contact Ethics Team
-            <ArrowRight class="w-5 h-5 group-hover:translate-x-2 transition-transform" />
-          </a>
-        </div>
-      </main>
-    </div>
-  </div>
+    <section id="prohibited">
+      <h2>Prohibited use</h2>
+      <p>You should not use ReplySuite to enable or automate:</p>
+      <ul>
+        <li>fraud, spam, impersonation, or deceptive engagement;</li>
+        <li>harassment, manipulation, or abusive messaging workflows;</li>
+        <li>collection or use of data without proper rights or disclosure;</li>
+        <li>unsafe or misleading responses in contexts where people may rely on them materially.</li>
+      </ul>
+    </section>
+
+    <section id="contact">
+      <h2>Contact</h2>
+      <p>
+        Questions about our AI posture or responsible-use expectations can be sent to
+        <a href="mailto:security@replysuite.app" class="text-primary hover:underline">security@replysuite.app</a>.
+      </p>
+    </section>
+  </LegalPage>
 </template>
-
-<style scoped>
-.glass-card {
-  @apply rounded-[40px];
-}
-</style>
