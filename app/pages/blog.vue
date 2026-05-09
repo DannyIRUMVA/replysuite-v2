@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { BookOpen, Calendar, Clock, ArrowRight, Sparkles, MessageSquare, Zap } from 'lucide-vue-next'
+import { BookOpen, Clock, ArrowRight, Zap } from 'lucide-vue-next'
 
 useSeoMeta({
-  title: 'Blog | AI Marketing & Automation Insights',
-  description: 'Deep dives into AI marketing, customer engagement strategies, and the future of automation with ReplySuite.',
+  title: 'Blog | ReplySuite',
+  description: 'Short guides and updates about AI chatbots, support automation, and website or WhatsApp use cases.',
 })
 
 definePageMeta({
@@ -13,38 +13,34 @@ definePageMeta({
 const posts = [
   {
     title: '10 Best ReplySuite Alternatives in 2026',
-    excerpt: 'A deep dive into the top 10 AI chatbot and automation platforms. See how we compare to the industry giants.',
+    excerpt: 'A simple comparison of chatbot tools and where ReplySuite fits.',
     date: 'May 05, 2026',
     readTime: '12 min read',
     category: 'Comparison',
-    image: '/blog/post-alt.png',
     to: '/blog/replysuite-alternatives'
   },
   {
     title: 'Privacy-First AI: Navigating GDPR in 2026',
-    excerpt: 'How ReplySuite ensures absolute data sovereignty while maintaining high-performance AI reasoning.',
+    excerpt: 'What privacy means when you use AI for customer conversations.',
     date: 'May 03, 2026',
     readTime: '10 min read',
     category: 'Security',
-    image: '/blog/post-privacy.png',
     to: '/blog/privacy-first-ai'
   },
   {
     title: 'Reducing Support Tickets by 70%',
-    excerpt: 'A blueprint for brands to automate repetitive inquiries without losing the human touch.',
+    excerpt: 'How teams can reduce repetitive work with trained AI replies.',
     date: 'Apr 28, 2026',
     readTime: '8 min read',
     category: 'Efficiency',
-    image: '/blog/post-efficiency.png',
     to: '/blog/reduce-support-tickets'
   },
   {
     title: 'The Shift to AI-Native Brands in 2026',
-    excerpt: 'Why traditional marketing is failing and how AI agents are reclaiming the human connection.',
+    excerpt: 'Why faster answers and better coverage matter more than ever.',
     date: 'Apr 18, 2026',
     readTime: '6 min read',
     category: 'Strategy',
-    image: '/blog/post-1.png',
     to: '#'
   }
 ]
@@ -52,51 +48,47 @@ const posts = [
 
 <template>
   <div class="relative min-h-screen">
-    <!-- Hero -->
     <section class="max-w-7xl mx-auto px-6 pt-32 pb-20 relative overflow-hidden">
       <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10"></div>
       <div class="text-center max-w-3xl mx-auto">
-        <span class="badge-gradient mb-10">Insights</span>
-        <h1 class="text-5xl sm:text-7xl md:text-8xl font-extrabold mb-8 tracking-tighter leading-[0.85] text-foreground">
-          The Future of <br />
-          <span class="text-gradient">Engagement.</span>
+        <span class="badge-gradient mb-10">Blog</span>
+        <h1 class="text-5xl sm:text-7xl md:text-8xl font-extrabold mb-8 tracking-tight leading-[0.9] text-foreground">
+          Practical guides for AI chatbots and support automation.
         </h1>
-        <p class="text-xl text-foreground/40 font-medium leading-relaxed">
-          Strategy, security, and stories from the frontier of AI automation.
+        <p class="text-lg text-foreground/50 font-medium leading-relaxed">
+          Short reads about setup, security, support, and customer response workflows.
         </p>
       </div>
     </section>
 
-    <!-- Featured Post (Placeholder) -->
     <section class="max-w-7xl mx-auto px-6 py-20">
       <div class="glass-card p-1 items-center gap-16 border-foreground/10 bg-foreground/[0.01] overflow-hidden hidden lg:flex">
-         <div class="w-1/2 aspect-video bg-foreground/5 rounded-[30px] flex items-center justify-center border border-foreground/10 relative overflow-hidden group">
-            <div class="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-50 group-hover:opacity-80 transition-opacity"></div>
-            <Zap class="w-20 h-20 text-primary opacity-20" />
-         </div>
-         <div class="w-1/2 pr-16 py-12">
-            <span class="text-xs font-bold text-primary uppercase tracking-widest mb-6 block">Featured Post</span>
-            <h2 class="text-4xl font-extrabold text-foreground mb-6 tracking-tight leading-tight">
-              Reclaiming Human Time: The Role of AI in 2026.
-            </h2>
-            <p class="text-foreground/40 mb-10 leading-relaxed font-medium">
-              We explore how AI agents are not replacing human staff, but rather shielding them from repetitive inquiries to enable deep work.
-            </p>
-            <div class="flex items-center justify-between">
-               <div class="flex items-center gap-4 text-xs text-foreground/30 font-bold uppercase tracking-widest">
-                  <span>May 01, 2026</span>
-                  <span class="w-1 h-1 rounded-full bg-foreground/20"></span>
-                  <span>10 min read</span>
-               </div>
-               <button class="flex items-center gap-2 text-foreground font-bold hover:text-primary transition-colors group">
-                  Read Article
-                  <ArrowRight class="w-5 h-5 group-hover:translate-x-2 transition-transform" />
-               </button>
+        <div class="w-1/2 aspect-video bg-foreground/5 rounded-[30px] flex items-center justify-center border border-foreground/10 relative overflow-hidden group">
+          <div class="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-50"></div>
+          <Zap class="w-20 h-20 text-primary opacity-20" />
+        </div>
+        <div class="w-1/2 pr-16 py-12">
+          <span class="text-xs font-bold text-primary uppercase tracking-widest mb-6 block">Featured</span>
+          <h2 class="text-4xl font-extrabold text-foreground mb-6 tracking-tight leading-tight">
+            How AI chatbots save time without replacing your team.
+          </h2>
+          <p class="text-foreground/40 mb-10 leading-relaxed font-medium">
+            A simple look at where AI helps most: repetitive questions, fast answers, and better after-hours coverage.
+          </p>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4 text-xs text-foreground/30 font-bold uppercase tracking-widest">
+              <span>May 01, 2026</span>
+              <span class="w-1 h-1 rounded-full bg-foreground/20"></span>
+              <span>10 min read</span>
             </div>
-         </div>
+            <button class="flex items-center gap-2 text-foreground font-bold hover:text-primary transition-colors group">
+              Read article
+              <ArrowRight class="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- Post Grid -->
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mt-20">
         <NuxtLink v-for="post in posts" :key="post.title" :to="post.to" class="glass-card flex flex-col border-foreground/10 hover:border-primary/20 transition-all group cursor-pointer overflow-hidden">
           <div class="aspect-video bg-foreground/5 flex items-center justify-center border-b border-foreground/10 relative overflow-hidden">
@@ -107,8 +99,8 @@ const posts = [
             <div class="flex items-center justify-between mb-6">
               <span class="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-full border border-primary/10">{{ post.category }}</span>
               <div class="flex items-center gap-2 text-[10px] text-foreground/30 font-bold uppercase tracking-widest">
-                 <Clock class="w-3 h-3" />
-                 {{ post.readTime }}
+                <Clock class="w-3 h-3" />
+                {{ post.readTime }}
               </div>
             </div>
             <h3 class="text-xl font-bold text-foreground mb-4 tracking-tight leading-snug group-hover:text-primary transition-colors">{{ post.title }}</h3>
@@ -125,5 +117,5 @@ const posts = [
 </template>
 
 <style scoped>
-.glass-card { @apply rounded-[40px] bg-foreground/[0.01]; }
+.glass-card { @apply rounded-[32px] bg-foreground/[0.01]; }
 </style>

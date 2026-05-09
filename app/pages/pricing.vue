@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { Check, Zap, Rocket, Shield, ArrowRight, HelpCircle, Loader2 } from 'lucide-vue-next'
+import { Check, ArrowRight, HelpCircle, Loader2 } from 'lucide-vue-next'
 
 useSeoMeta({
-  title: 'Pricing & Plans | ReplySuite',
-  description: 'Choose the perfect plan for your brand growth. From startups to high-volume global brands, we have the gold standard of AI automation for every level.',
-  ogTitle: 'ReplySuite Pricing | Scalable AI Automation',
-  ogDescription: 'Simple, transparent pricing for AI chatbots and automation. Start free, scale as you grow.',
+  title: 'Pricing | ReplySuite',
+  description: 'Simple pricing for website and WhatsApp AI chatbots. Start free, then upgrade as your volume grows.',
+  ogTitle: 'ReplySuite Pricing',
+  ogDescription: 'Start free. Train your chatbot on your own content. Upgrade when you need more replies, training, or WhatsApp.',
   ogUrl: 'https://replysuite.app/pricing',
   twitterCard: 'summary_large_image',
   twitterTitle: 'ReplySuite Pricing',
-  twitterDescription: 'Affordable AI chatbot plans for every business size.',
+  twitterDescription: 'Simple pricing for business AI chatbots.',
 })
 
 useHead({
@@ -24,7 +24,7 @@ useHead({
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web',
         url: 'https://replysuite.app',
-        description: 'AI-powered live chat and chatbot automation for Instagram, WhatsApp, and websites.',
+        description: 'AI chatbot software for websites and WhatsApp.',
         offers: [
           {
             '@type': 'Offer',
@@ -39,7 +39,7 @@ useHead({
             name: 'Silver Plan',
             price: '17.88',
             priceCurrency: 'USD',
-            description: '3 chatbots, 4,000 AI replies per month, 30 training sessions, Official WhatsApp API.',
+            description: '3 chatbots, 4,000 AI replies per month, 30 training sessions.',
             url: 'https://replysuite.app/pricing'
           },
           {
@@ -47,25 +47,8 @@ useHead({
             name: 'Gold Plan',
             price: '26.88',
             priceCurrency: 'USD',
-            description: '5 chatbots, 10,000 AI replies, 100 training sessions, Official WhatsApp API.',
+            description: '5 chatbots, 10,000 AI replies, 100 training sessions, WhatsApp integration.',
             url: 'https://replysuite.app/pricing'
-          }
-        ]
-      })
-    },
-    {
-      type: 'application/ld+json',
-      children: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: [
-          {
-            '@type': 'Question',
-            name: 'How much does ReplySuite cost?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'ReplySuite offers three plans: Free ($0/month, 1 chatbot, 100 replies), Silver ($17.88/month, 3 chatbots, 4,000 replies, 30 training sessions), and Gold ($26.88/month, 10,000 replies, 100 training sessions, WhatsApp).'
-            }
           }
         ]
       })
@@ -82,7 +65,6 @@ const supabase = useSupabaseClient()
 const notify = useNotify()
 const isProcessing = ref<string | null>(null)
 
-// Fetch real plans from DB for product IDs
 const { data: dbPlans } = await useAsyncData('plans', async () => {
   const { data } = await supabase.from('plans').select('*').order('monthly_price_usd', { ascending: true })
   return data
@@ -93,17 +75,14 @@ const getPlanId = (name: string) => {
   return dbPlans.value?.find(p => p.internal_slug === slug)?.polar_product_id
 }
 
-// Watch for polar script
 onMounted(() => {
   if (window.PolarEmbedCheckout) {
     window.PolarEmbedCheckout.init()
   }
 
-  // Listen for successful checkout
-  window.addEventListener("polar:checkout:confirmed", async (event) => {
-    console.log("[Public Pricing] Checkout confirmed:", event)
+  window.addEventListener('polar:checkout:confirmed', async (event) => {
+    console.log('[Public Pricing] Checkout confirmed:', event)
     notify.success('Payment successful! Redirecting to your dashboard...')
-    // Sync briefly and then move to dashboard
     await syncWithPolar()
     setTimeout(() => {
       navigateTo('/dashboard/analytics')
@@ -113,22 +92,19 @@ onMounted(() => {
 
 const handleSelect = async (plan: any) => {
   if (!isAuthenticated.value) {
-    // If not authenticated, store plan choice and redirect to register
     return navigateTo(`/register?plan=${plan.name.toLowerCase()}`)
   }
 
   isProcessing.value = plan.name
-  
+
   try {
     if (plan.name === 'Free') {
-      // Direct Onboarding for Free
       const res = await $fetch('/api/billing/onboard-free', { method: 'POST' })
       if (res.success) {
         await refreshAuth()
         return navigateTo('/dashboard/analytics')
       }
     } else {
-      // Checkout flow for Paid
       const productId = getPlanId(plan.name)
       if (!productId) {
         notify.error('Plan configuration missing. Please contact support.')
@@ -160,166 +136,162 @@ const plans = [
   {
     name: 'Free',
     price: '0.00',
-    desc: 'Experience the gold standard risk-free.',
+    desc: 'Best for testing your first website chatbot.',
     features: ['1 website chatbot', '100 AI replies / mo', '10 training sessions', 'Trainable AI agent', 'Email support'],
     popular: false
   },
   {
     name: 'Silver',
     price: '17.88',
-    desc: 'The best value for growing elite brands.',
-    features: ['3 website chatbots', '4,000 AI replies / mo', '30 training sessions', 'Official WhatsApp API', 'Advanced bot training'],
+    desc: 'Best for growing businesses that need more training and more replies.',
+    features: ['3 website chatbots', '4,000 AI replies / mo', '30 training sessions', 'Advanced bot training', 'Priority support'],
     popular: true
   },
   {
     name: 'Gold',
     price: '26.88',
-    desc: 'High-performance for scaling experts.',
+    desc: 'Best for higher volume and WhatsApp automation.',
     features: ['5 website chatbots', '10,000 AI replies / mo', '100 training sessions', 'Official WhatsApp API', 'Dedicated manager'],
     popular: false
   }
 ]
 
 const faqs = [
-  { q: 'Can I cancel my subscription any time?', a: 'Yes, you can cancel your subscription at any time from your account settings. You will retain access until the end of your billing cycle.' },
-  { q: 'Is there a free trial?', a: 'Yes! We offer an automatic 30-day Free Month for all new verified accounts so you can experience ReplySuite risk-free.' },
-  { q: 'What happens if I exceed my monthly limit?', a: 'We will notify you when you reach 80% and 100% of your limit. You can easily upgrade your plan to continue service without interruption.' }
+  { q: 'Can I cancel any time?', a: 'Yes. You can cancel from your account settings.' },
+  { q: 'Is there a free start?', a: 'Yes. You can start on the free plan and upgrade later.' },
+  { q: 'What happens if I hit my limit?', a: 'You can upgrade to continue without interruption.' }
 ]
 </script>
 
 <template>
   <div class="relative min-h-screen">
-      <div class="max-w-7xl mx-auto px-6 py-32">
-        <div class="text-center max-w-3xl mx-auto mb-32 border-b border-foreground/5 pb-20">
-          <span class="badge-gradient mb-10">Investment</span>
-          <h1 class="text-6xl md:text-8xl font-extrabold mb-10 tracking-tighter leading-[0.85] text-foreground">
-            Choose your <br />
-            <span class="text-gradient">Tier.</span>
-          </h1>
-          <p class="text-xl text-foreground/50 font-medium leading-relaxed">High-performance AI automation built for every stage of your growth.</p>
-        </div>
-
-        <!-- Pricing Cards -->
-        <div class="grid lg:grid-cols-3 gap-12 mb-40">
-          <div 
-            v-for="plan in plans" 
-            :key="plan.name"
-            class="glass-card p-12 flex flex-col relative transition-all duration-500 hover:-translate-y-4 border-foreground/5"
-            :class="plan.popular ? 'border-primary/40 !bg-primary/[0.03]' : ''"
-          >
-            <div v-if="plan.popular" class="absolute -top-5 left-1/2 -translate-x-1/2 px-6 py-2 bg-primary text-black text-[11px] font-bold tracking-[0.2em] rounded-full shadow-2xl shadow-primary/30 uppercase">
-              Elite Choice
-            </div>
-
-            <div class="mb-10">
-              <h3 class="text-3xl font-bold mb-3 tracking-tight tracking-widest">{{ plan.name }}</h3>
-              <p class="text-sm text-foreground/50 font-medium">{{ plan.desc }}</p>
-            </div>
-
-            <div class="mb-12 flex items-baseline gap-2">
-              <span class="text-6xl font-extrabold tracking-tighter text-foreground">${{ plan.price }}</span>
-              <span class="text-foreground/50 font-bold tracking-[0.1em] text-[10px] uppercase">/month</span>
-            </div>
-
-            <button 
-              @click="handleSelect(plan)"
-              :disabled="isProcessing === plan.name"
-              class="w-full py-5 rounded-full font-bold text-center mb-12 transition-all tracking-[0.1em] text-sm flex items-center justify-center gap-2"
-              :class="plan.popular ? 'btn-gradient' : 'bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10 hover:border-foreground/20'"
-            >
-              <template v-if="isProcessing === plan.name">
-                <Loader2 class="w-4 h-4 animate-spin" />
-                Processing...
-              </template>
-              <template v-else>
-                {{ isAuthenticated ? (plan.name === 'Free' ? 'Activate Free' : 'Select Plan') : (plan.name === 'Gold' ? 'Get Started' : 'Start Free Month') }}
-              </template>
-            </button>
-
-            <div class="space-y-6 flex-grow">
-              <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-4 text-sm font-medium text-foreground/50">
-                <div class="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Check class="w-3 h-3 text-primary" />
-                </div>
-                {{ feat }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Plan Comparison Table — machine-readable for AI crawlers -->
-        <section class="max-w-5xl mx-auto mb-32 overflow-x-auto">
-          <h2 class="text-3xl font-extrabold tracking-tight text-foreground text-center mb-12">
-            Compare <span class="text-gradient">Plans</span>
-          </h2>
-          <table class="w-full text-sm border-collapse" aria-label="ReplySuite pricing plan comparison">
-            <thead>
-              <tr class="border-b border-foreground/10">
-                <th class="text-left py-4 px-6 text-foreground/40 font-bold uppercase tracking-widest text-[10px]">Feature</th>
-                <th class="py-4 px-6 text-center font-bold text-foreground">Free<br /><span class="text-primary font-extrabold text-lg">$0</span><span class="text-foreground/50 text-[10px]">/mo</span></th>
-                <th class="py-4 px-6 text-center font-bold text-foreground bg-primary/5 rounded-t-2xl">Silver<br /><span class="text-primary font-extrabold text-lg">$17.88</span><span class="text-foreground/50 text-[10px]">/mo</span></th>
-                <th class="py-4 px-6 text-center font-bold text-foreground">Gold<br /><span class="text-primary font-extrabold text-lg">$26.88</span><span class="text-foreground/50 text-[10px]">/mo</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(row, i) in [
-                { label: 'AI Chatbots', free: '1', silver: '3', gold: '5' },
-                { label: 'AI Replies / month', free: '100', silver: '4,000', gold: '10,000' },
-                { label: 'Training Sessions / mo', free: '10', silver: '30', gold: '100' },
-                { label: 'Trainable AI agent', free: '✓', silver: '✓', gold: '✓' },
-                { label: 'Advanced bot training', free: '—', silver: '✓', gold: '✓' },
-                { label: 'WhatsApp Official API', free: '—', silver: '✓', gold: '✓' },
-                { label: 'Dedicated account manager', free: '—', silver: '—', gold: '✓' },
-                { label: 'Priority support', free: '—', silver: '✓', gold: '✓' },
-                { label: 'Free trial', free: '30 days', silver: '30 days', gold: '30 days' },
-              ]" :key="row.label"
-                :class="i % 2 === 0 ? 'bg-foreground/[0.01]' : ''"
-                class="border-b border-foreground/5 transition-colors hover:bg-foreground/[0.03]"
-              >
-                <td class="py-4 px-6 text-foreground/50 font-medium">{{ row.label }}</td>
-                <td class="py-4 px-6 text-center text-foreground/70">{{ row.free }}</td>
-                <td class="py-4 px-6 text-center text-foreground font-semibold bg-primary/[0.03]">{{ row.silver }}</td>
-                <td class="py-4 px-6 text-center text-foreground/70">{{ row.gold }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-
-        <!-- FAQ Section -->
-
-        <section class="max-w-4xl mx-auto py-32 border-t border-foreground/5">
-          <div class="text-center mb-24">
-             <h2 class="text-5xl font-extrabold mb-6 tracking-tight text-foreground">Common <span class="text-gradient">Inquiries.</span></h2>
-          </div>
-          <div class="grid md:grid-cols-2 gap-8">
-            <div v-for="faq in faqs" :key="faq.q" class="glass-card p-10 border-foreground/5 bg-foreground/[0.01] hover:border-primary/20 transition-all">
-              <h4 class="text-xl font-bold mb-6 flex items-start gap-4 tracking-tight">
-                <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                   <HelpCircle class="w-5 h-5 text-primary" />
-                </div>
-                {{ faq.q }}
-              </h4>
-              <p class="text-foreground/50 font-medium leading-relaxed pl-14">{{ faq.a }}</p>
-            </div>
-          </div>
-        </section>
-
-        <!-- Final CTA -->
-        <section class="mt-40 bg-foreground/[0.02] p-24 rounded-[64px] border border-foreground/5 text-center relative overflow-hidden group">
-          <div class="absolute inset-0 bg-primary/5 blur-[120px] group-hover:bg-primary/10 transition-all duration-1000"></div>
-          <h2 class="text-5xl md:text-7xl font-extrabold mb-10 relative z-10 tracking-tighter text-foreground">Bespoke <span class="text-gradient">Solutions.</span></h2>
-          <p class="text-foreground/50 mb-16 max-w-xl mx-auto font-medium text-lg relative z-10">Tailored configurations for agencies and global enterprises demanding unlimited scale.</p>
-          <NuxtLink to="mailto:support@replysuite.com" class="btn-gradient px-12 py-6 text-xl inline-flex items-center gap-4 group/btn relative z-10">
-            Consult with Experts
-            <ArrowRight class="w-6 h-6 group-hover/btn:translate-x-2 transition-transform" />
-          </NuxtLink>
-        </section>
+    <div class="max-w-7xl mx-auto px-6 py-32">
+      <div class="text-center max-w-3xl mx-auto mb-24 border-b border-foreground/5 pb-16">
+        <span class="badge-gradient mb-8">Pricing</span>
+        <h1 class="text-5xl md:text-7xl font-extrabold mb-8 tracking-tight leading-[0.95] text-foreground">
+          Simple pricing.
+          <span class="text-gradient">Clear upgrade path.</span>
+        </h1>
+        <p class="text-lg text-foreground/50 font-medium leading-relaxed">
+          Start with one chatbot. Upgrade when you need more training, more replies, or WhatsApp.
+        </p>
       </div>
+
+      <div class="grid lg:grid-cols-3 gap-10 mb-32">
+        <div
+          v-for="plan in plans"
+          :key="plan.name"
+          class="glass-card p-12 flex flex-col relative transition-all duration-500 hover:-translate-y-4 border-foreground/10"
+          :class="plan.popular ? 'border-primary/40 !bg-primary/[0.03]' : 'bg-foreground/[0.02]'"
+        >
+          <div v-if="plan.popular" class="absolute -top-5 left-1/2 -translate-x-1/2 px-6 py-2 bg-primary text-black text-[11px] font-bold tracking-[0.2em] rounded-full shadow-2xl shadow-primary/30 uppercase">
+            Best Value
+          </div>
+
+          <div class="mb-10">
+            <h3 class="text-3xl font-bold mb-3 tracking-tight text-foreground">{{ plan.name }}</h3>
+            <p class="text-sm text-foreground/50 font-medium">{{ plan.desc }}</p>
+          </div>
+
+          <div class="mb-12 flex items-baseline gap-2">
+            <span class="text-6xl font-extrabold tracking-tighter text-foreground">${{ plan.price }}</span>
+            <span class="text-foreground/50 font-bold tracking-[0.1em] text-[10px] uppercase">/month</span>
+          </div>
+
+          <button
+            @click="handleSelect(plan)"
+            :disabled="isProcessing === plan.name"
+            class="w-full py-5 rounded-full font-bold text-center mb-12 transition-all tracking-[0.1em] text-sm flex items-center justify-center gap-2"
+            :class="plan.popular ? 'btn-gradient' : 'bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10 hover:border-foreground/20'"
+          >
+            <template v-if="isProcessing === plan.name">
+              <Loader2 class="w-4 h-4 animate-spin" />
+              Processing...
+            </template>
+            <template v-else>
+              {{ isAuthenticated ? (plan.name === 'Free' ? 'Activate Free' : 'Select Plan') : 'Start Free' }}
+            </template>
+          </button>
+
+          <div class="space-y-6 flex-grow">
+            <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-4 text-sm font-medium text-foreground/50">
+              <div class="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Check class="w-3 h-3 text-primary" />
+              </div>
+              {{ feat }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="max-w-5xl mx-auto mb-24 overflow-x-auto">
+        <h2 class="text-3xl font-extrabold tracking-tight text-foreground text-center mb-12">
+          Compare <span class="text-gradient">plans</span>
+        </h2>
+        <table class="w-full text-sm border-collapse" aria-label="ReplySuite pricing plan comparison">
+          <thead>
+            <tr class="border-b border-foreground/10">
+              <th class="text-left py-4 px-6 text-foreground/40 font-bold uppercase tracking-widest text-[10px]">Feature</th>
+              <th class="py-4 px-6 text-center font-bold text-foreground">Free</th>
+              <th class="py-4 px-6 text-center font-bold text-foreground bg-primary/5 rounded-t-2xl">Silver</th>
+              <th class="py-4 px-6 text-center font-bold text-foreground">Gold</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, i) in [
+              { label: 'AI Chatbots', free: '1', silver: '3', gold: '5' },
+              { label: 'AI Replies / month', free: '100', silver: '4,000', gold: '10,000' },
+              { label: 'Training Sessions / mo', free: '10', silver: '30', gold: '100' },
+              { label: 'Trainable AI agent', free: '✓', silver: '✓', gold: '✓' },
+              { label: 'Advanced bot training', free: '—', silver: '✓', gold: '✓' },
+              { label: 'WhatsApp Official API', free: '—', silver: '—', gold: '✓' },
+              { label: 'Dedicated account manager', free: '—', silver: '—', gold: '✓' },
+              { label: 'Priority support', free: '—', silver: '✓', gold: '✓' }
+            ]" :key="row.label"
+              :class="i % 2 === 0 ? 'bg-foreground/[0.01]' : ''"
+              class="border-b border-foreground/5 transition-colors hover:bg-foreground/[0.03]"
+            >
+              <td class="py-4 px-6 text-foreground/50 font-medium">{{ row.label }}</td>
+              <td class="py-4 px-6 text-center text-foreground/70">{{ row.free }}</td>
+              <td class="py-4 px-6 text-center text-foreground font-semibold bg-primary/[0.03]">{{ row.silver }}</td>
+              <td class="py-4 px-6 text-center text-foreground/70">{{ row.gold }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="max-w-4xl mx-auto py-24 border-t border-foreground/5">
+        <div class="text-center mb-16">
+          <h2 class="text-4xl font-extrabold mb-6 tracking-tight text-foreground">Common questions</h2>
+        </div>
+        <div class="grid md:grid-cols-3 gap-8">
+          <div v-for="faq in faqs" :key="faq.q" class="glass-card p-8 border-foreground/10 bg-foreground/[0.01] hover:border-primary/20 transition-all">
+            <h4 class="text-lg font-bold mb-4 flex items-start gap-3 tracking-tight text-foreground">
+              <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <HelpCircle class="w-5 h-5 text-primary" />
+              </div>
+              {{ faq.q }}
+            </h4>
+            <p class="text-foreground/50 font-medium leading-relaxed">{{ faq.a }}</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-24 bg-foreground/[0.02] p-16 rounded-[48px] border border-foreground/10 text-center relative overflow-hidden group">
+        <div class="absolute inset-0 bg-primary/5 blur-[120px] group-hover:bg-primary/10 transition-all duration-1000"></div>
+        <h2 class="text-4xl md:text-6xl font-extrabold mb-8 relative z-10 tracking-tight text-foreground">Need a custom setup?</h2>
+        <p class="text-foreground/50 mb-12 max-w-xl mx-auto font-medium text-lg relative z-10">Talk to us if you want help with onboarding, training, or a larger rollout.</p>
+        <NuxtLink to="mailto:support@replysuite.com" class="btn-gradient px-12 py-6 text-xl inline-flex items-center gap-4 group/btn relative z-10">
+          Contact Us
+          <ArrowRight class="w-6 h-6 group-hover/btn:translate-x-2 transition-transform" />
+        </NuxtLink>
+      </section>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .glass-card {
-  @apply rounded-[48px];
+  @apply rounded-[40px];
 }
 </style>

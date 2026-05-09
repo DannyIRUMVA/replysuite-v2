@@ -10,7 +10,7 @@ const navLinks = [
   { name: 'Product', href: '/product', icon: Layout },
   { name: 'Features', href: '/features', icon: Sparkles },
   { name: 'Pricing', href: '/pricing', icon: CreditCard },
-  { name: 'About', href: '/about', icon: Info }
+  { name: 'Contact', href: '/contact', icon: Info }
 ]
 
 onMounted(() => {
@@ -60,8 +60,8 @@ onMounted(() => {
               <LogIn class="w-4 h-4" />
               Sign In
             </NuxtLink>
-            <NuxtLink to="/login" class="btn-gradient px-6 py-2.5 text-sm">
-              Get Started
+            <NuxtLink to="/register" class="btn-gradient px-6 py-2.5 text-sm">
+              Start Free
             </NuxtLink>
           </template>
           <template v-else>
@@ -104,7 +104,7 @@ onMounted(() => {
             <hr class="border-foreground/5 my-2" />
             <NuxtLink :to="user ? '/dashboard' : '/login'" @click="isMenuOpen = false"
               class="btn-gradient w-full text-center py-4 text-sm font-bold tracking-widest uppercase">
-              {{ user ? 'go to dashboard' : 'get started' }}
+              {{ user ? 'go to dashboard' : 'start free' }}
             </NuxtLink>
 
             <!-- Theme Switcher Mobile -->

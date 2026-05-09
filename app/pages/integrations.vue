@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { Instagram, Globe, MessageSquare, Code, Layout, Zap, ArrowRight, Share2, MessageCircle, Shield } from 'lucide-vue-next'
+import { Globe, Code, Zap, ArrowRight, MessageCircle } from 'lucide-vue-next'
 
 useSeoMeta({
-  title: 'Integrations | ReplySuite Ecosystem',
-  description: 'Connect ReplySuite to your website and WhatsApp. Seamlessly integrate AI with your own custom tech stack and WordPress.',
+  title: 'Integrations | ReplySuite',
+  description: 'Connect ReplySuite to your website, WordPress site, and WhatsApp.',
 })
 
 definePageMeta({
@@ -12,97 +12,82 @@ definePageMeta({
 
 const integrations = [
   {
-    name: 'Website Integration',
-    desc: 'Deploy your AI agent on any website with a single line of code. High-performance, lightweight script compatible with all frameworks.',
+    name: 'Website widget',
+    desc: 'Add your chatbot to any website with a simple script.',
     icon: Code,
-    status: 'Native'
+    status: 'Live'
   },
   {
-    name: 'WordPress Plugin',
-    desc: 'The official ReplySuite plugin for WordPress. Seamlessly integrate AI into your site, compatible with Elementor and WooCommerce.',
+    name: 'WordPress',
+    desc: 'Use ReplySuite on WordPress sites with a simple setup flow.',
     icon: Globe,
-    status: 'Native'
+    status: 'Live'
   },
   {
-    name: 'WhatsApp Business',
-    desc: 'Scale your communication on the world’s most popular messaging app using our official Meta API integration.',
+    name: 'WhatsApp',
+    desc: 'Connect your business line for higher-value customer conversations.',
     icon: MessageCircle,
-    status: 'Native'
+    status: 'Available'
   }
 ]
 </script>
 
 <template>
   <div class="relative min-h-screen">
-    <!-- Hero -->
     <section class="max-w-7xl mx-auto px-6 pt-32 pb-20 text-center relative overflow-hidden">
       <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10"></div>
-      <span class="badge-gradient mb-10 text-xs uppercase tracking-widest font-bold">Ecosystem</span>
-      <h1 class="text-5xl sm:text-7xl md:text-8xl font-extrabold mb-8 tracking-tighter leading-[0.85] text-foreground">
-        Connect Your <br />
-        <span class="text-gradient">Workflow.</span>
+      <span class="badge-gradient mb-10 text-xs uppercase tracking-widest font-bold">Integrations</span>
+      <h1 class="text-5xl sm:text-7xl md:text-8xl font-extrabold mb-8 tracking-tight leading-[0.9] text-foreground">
+        Connect your chatbot where customers already talk to you.
       </h1>
-      <p class="text-xl text-foreground/50 max-w-2xl mx-auto leading-relaxed font-medium">
-        ReplySuite is optimized for where it matters most. Deploy your AI on your website, WordPress site, or WhatsApp instantly.
+      <p class="text-lg text-foreground/50 max-w-3xl mx-auto leading-relaxed font-medium">
+        Start with your website. Add WordPress if needed. Move into WhatsApp when you want more direct support and sales conversations.
       </p>
     </section>
 
-    <!-- Grid -->
     <section class="max-w-7xl mx-auto px-6 py-20">
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <div v-for="i in integrations" :key="i.name" class="glass-card p-10 border-foreground/5 hover:border-primary/20 transition-all group bg-foreground/[0.02] rounded-[40px]">
-          <div class="flex items-start justify-between mb-10">
+        <div v-for="i in integrations" :key="i.name" class="glass-card p-10 border-foreground/10 hover:border-primary/20 transition-all group bg-foreground/[0.02] rounded-[32px]">
+          <div class="flex items-start justify-between mb-8">
             <div class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-500">
               <component :is="i.icon" class="w-8 h-8" />
             </div>
-            <span :class="[
-              'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border',
-              i.status === 'Native' ? 'bg-green-500/10 border-green-500/20 text-green-500' : 
-              i.status === 'Upcoming' ? 'bg-foreground/5 border-foreground/10 text-foreground/50' : 'bg-primary/10 border-primary/20 text-primary'
-            ]">
+            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border bg-primary/10 border-primary/20 text-primary">
               {{ i.status }}
             </span>
           </div>
           <h3 class="text-2xl font-bold text-foreground mb-4 tracking-tight">{{ i.name }}</h3>
           <p class="text-foreground/50 leading-relaxed font-medium mb-8 text-sm">{{ i.desc }}</p>
-          <div class="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-            Documentation
-            <ArrowRight class="w-3 h-3" />
-          </div>
         </div>
       </div>
     </section>
 
-    <!-- Developer Section -->
-    <section class="max-w-7xl mx-auto px-6 py-40 border-t border-foreground/5">
-      <div class="bg-foreground/[0.02] border border-foreground/5 p-16 md:p-24 rounded-[64px] flex flex-col md:flex-row items-center gap-16 overflow-hidden relative">
+    <section class="max-w-7xl mx-auto px-6 py-24 border-t border-foreground/5">
+      <div class="bg-foreground/[0.02] border border-foreground/10 p-12 md:p-20 rounded-[40px] flex flex-col md:flex-row items-center gap-12 overflow-hidden relative">
         <div class="absolute top-0 right-0 w-1/3 h-full bg-primary/5 blur-[100px]"></div>
         <div class="flex-1 relative z-10">
-          <h2 class="text-4xl md:text-6xl font-extrabold text-foreground mb-8 tracking-tighter leading-tight">
-            Build Custom <br />
-            <span class="text-gradient">Experiences.</span>
+          <h2 class="text-4xl md:text-5xl font-extrabold text-foreground mb-6 tracking-tight leading-tight">
+            Need a custom setup?
           </h2>
-          <p class="text-foreground/50 mb-10 text-lg leading-relaxed">
-            Our Webhooks and REST API allow you to pipe conversation data into your CRM, ERP, or custom analytics dashboard in real-time.
+          <p class="text-foreground/50 mb-8 text-lg leading-relaxed font-medium">
+            Talk to us if you want help with implementation, onboarding, or a larger rollout.
           </p>
-          <NuxtLink to="/register" class="btn-gradient px-10 py-5 inline-flex items-center gap-3">
-            Get API Access
-            <Zap class="w-5 h-5 fill-current" />
+          <NuxtLink to="/contact" class="btn-gradient px-10 py-5 inline-flex items-center gap-3">
+            Contact us
+            <ArrowRight class="w-5 h-5" />
           </NuxtLink>
         </div>
-        <div class="flex-1 bg-background p-10 rounded-[40px] border border-foreground/10 font-mono text-sm relative z-10 shadow-2xl">
+        <div class="flex-1 bg-background p-10 rounded-[32px] border border-foreground/10 font-mono text-sm relative z-10 shadow-2xl">
           <div class="flex gap-2 mb-6">
             <div class="w-3 h-3 rounded-full bg-red-500/20"></div>
             <div class="w-3 h-3 rounded-full bg-yellow-500/20"></div>
             <div class="w-3 h-3 rounded-full bg-green-500/20"></div>
           </div>
           <div class="text-foreground/50">
-            <span class="text-primary">POST</span> /api/v1/webhooks<br />
-            {<br />
-            &nbsp;&nbsp;<span class="text-foreground">"event":</span> "message.received",<br />
-            &nbsp;&nbsp;<span class="text-foreground">"channel":</span> "whatsapp",<br />
-            &nbsp;&nbsp;<span class="text-foreground">"payload":</span> { ... }<br />
-            }
+            <span class="text-primary">Channels</span><br />
+            website_widget<br />
+            wordpress<br />
+            whatsapp
           </div>
         </div>
       </div>
@@ -111,5 +96,5 @@ const integrations = [
 </template>
 
 <style scoped>
-.glass-card { @apply rounded-[40px]; }
+.glass-card { @apply rounded-[32px]; }
 </style>

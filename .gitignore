@@ -17,6 +17,8 @@ logs
 .DS_Store
 .fleet
 .idea
+.pi
+supabase/.temp
 
 # Local env files
 .env

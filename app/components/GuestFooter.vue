@@ -1,7 +1,20 @@
 <script setup lang="ts">
-import { Zap, Instagram, Twitter, Globe2, Linkedin } from 'lucide-vue-next'
+import { Zap, Instagram, Globe2, Linkedin } from 'lucide-vue-next'
 
 const { openFeedback } = useFeedback()
+
+const socialLinks = [
+  {
+    icon: Instagram,
+    href: 'https://www.instagram.com/replysuite',
+    label: 'Instagram'
+  },
+  {
+    icon: Linkedin,
+    href: 'https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://rw.linkedin.com/showcase/replysuite/&ved=2ahUKEwi_gtGn8qqUAxWBQEEAHR_uFisQFnoECB8QAQ&usg=AOvVaw1qymawqHdl9ObjInc9vRqM',
+    label: 'LinkedIn'
+  }
+]
 </script>
 
 <template>
@@ -14,14 +27,14 @@ const { openFeedback } = useFeedback()
           <span class="text-3xl font-bold tracking-tighter text-foreground">ReplySuite</span>
         </div>
         <p class="text-foreground/50 leading-relaxed font-medium">
-          The gold standard in AI automation and brand engagement. We provide the infrastructure for the next generation
-          of digital-native brands.
+          Embeddable AI chatbot for your website with WhatsApp integration. Train it on your business content, answer faster, and support customers better.
         </p>
       </div>
       <div class="flex gap-4">
-        <a v-for="icon in [Instagram, Twitter, Linkedin]" :key="icon" href="#"
+        <a v-for="item in socialLinks" :key="item.label" :href="item.href" target="_blank" rel="noopener noreferrer"
+          :aria-label="item.label"
           class="p-4 rounded-2xl bg-foreground/[0.02] border border-foreground/5 text-foreground/50 hover:text-primary hover:border-primary/20 transition-all hover:-translate-y-1">
-          <component :is="icon" class="w-5 h-5" />
+          <component :is="item.icon" class="w-5 h-5" />
         </a>
       </div>
     </div>
