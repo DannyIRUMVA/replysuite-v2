@@ -25,6 +25,8 @@ const renderMarkdown = (text: string) => {
 
 const route = useRoute()
 const chatbotId = route.params.id as string
+const widgetEmbedToken = computed(() => typeof route.query.token === 'string' ? route.query.token : '')
+const widgetEmbedHost = computed(() => typeof route.query.host === 'string' ? route.query.host : '')
 
 // ── Design config (loaded from API) ──────────────────────────
 const design = ref({
@@ -110,7 +112,12 @@ const sendMessage = async () => {
   try {
     const res = await $fetch('/api/public/chat', {
       method: 'POST',
-      body: { chatbotId, message: userMsg },
+      body: {
+        chatbotId,
+        message: userMsg,
+        embedToken: widgetEmbedToken.value,
+        embedHost: widgetEmbedHost.value,
+      },
     })
     if (typeof res === 'object' && res && 'success' in res && res.success) {
       messages.value.push({ role: 'assistant', content: (res as any).response })
@@ -206,7 +213,7 @@ onMounted(async () => {
           <div class="flex items-center gap-1.5 mt-0.5">
             <div class="w-1.5 h-1.5 rounded-full animate-pulse" :style="{ backgroundColor: design.primaryColor }" />
             <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Active Now</span>
-            <span v-if="design.planSlug === 'gold'" class="ml-2 text-[8px] font-black text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">PREMIUM</span>
+            <span v-if="design.planSlug === 'gold' || design.planSlug === 'enterprise-ready'" class="ml-2 text-[8px] font-black text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">PREMIUM</span>
           </div>
         </div>
       </div>

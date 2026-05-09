@@ -49,6 +49,14 @@ useHead({
             priceCurrency: 'USD',
             description: '5 chatbots, 10,000 AI replies, 100 training sessions, WhatsApp integration.',
             url: 'https://replysuite.app/pricing'
+          },
+          {
+            '@type': 'Offer',
+            name: 'Enterprise Ready Plan',
+            price: '350.88',
+            priceCurrency: 'USD',
+            description: '50 chatbots, 500,000 AI replies, 1,000 training sessions, 100 connected domains, and custom-ready starter templates.',
+            url: 'https://replysuite.app/pricing'
           }
         ]
       })
@@ -70,8 +78,7 @@ const { data: dbPlans } = await useAsyncData('plans', async () => {
   return data
 })
 
-const getPlanId = (name: string) => {
-  const slug = name.toLowerCase()
+const getPlanId = (slug: string) => {
   return dbPlans.value?.find(p => p.internal_slug === slug)?.polar_product_id
 }
 
@@ -92,20 +99,20 @@ onMounted(() => {
 
 const handleSelect = async (plan: any) => {
   if (!isAuthenticated.value) {
-    return navigateTo(`/register?plan=${plan.name.toLowerCase()}`)
+    return navigateTo(plan.id === 'enterprise-ready' ? '/contact' : `/register?plan=${plan.id}`)
   }
 
-  isProcessing.value = plan.name
+  isProcessing.value = plan.id
 
   try {
-    if (plan.name === 'Free') {
+    if (plan.id === 'starter') {
       const res = await $fetch('/api/billing/onboard-free', { method: 'POST' })
       if (res.success) {
         await refreshAuth()
         return navigateTo('/dashboard/analytics')
       }
     } else {
-      const productId = getPlanId(plan.name)
+      const productId = getPlanId(plan.id)
       if (!productId) {
         notify.error('Plan configuration missing. Please contact support.')
         return
@@ -134,24 +141,35 @@ const handleSelect = async (plan: any) => {
 
 const plans = [
   {
+    id: 'starter',
     name: 'Free',
     price: '0.00',
-    desc: 'Best for testing your first website chatbot.',
-    features: ['1 website chatbot', '100 AI replies / mo', '10 training sessions', 'Trainable AI agent', 'Email support'],
+    desc: 'Best for launching one chatbot on one website domain.',
+    features: ['1 website chatbot', '1 connected domain / chatbot', '100 AI replies / mo', '10 training sessions', 'Email support'],
     popular: false
   },
   {
+    id: 'silver',
     name: 'Silver',
     price: '17.88',
-    desc: 'Best for growing businesses that need more training and more replies.',
-    features: ['3 website chatbots', '4,000 AI replies / mo', '30 training sessions', 'Advanced bot training', 'Priority support'],
+    desc: 'Best for growing businesses that need more domains and more replies.',
+    features: ['3 website chatbots', '5 connected domains / chatbot', '4,000 AI replies / mo', '30 training sessions', 'Priority support'],
     popular: true
   },
   {
+    id: 'gold',
     name: 'Gold',
     price: '26.88',
-    desc: 'Best for higher volume and WhatsApp automation.',
-    features: ['5 website chatbots', '10,000 AI replies / mo', '100 training sessions', 'Official WhatsApp API', 'Dedicated manager'],
+    desc: 'Best for higher volume web and WhatsApp automation.',
+    features: ['5 website chatbots', '10 connected domains / chatbot', '10,000 AI replies / mo', '100 training sessions', 'Official WhatsApp API'],
+    popular: false
+  },
+  {
+    id: 'enterprise-ready',
+    name: 'Enterprise Ready',
+    price: '350.88',
+    desc: 'Best for larger rollouts that need scale, control, and ready-start templates.',
+    features: ['50 website chatbots', '100 connected domains / chatbot', '500,000 AI replies / mo', '1,000 training sessions', 'Custom-ready starter templates'],
     popular: false
   }
 ]
@@ -173,11 +191,11 @@ const faqs = [
           <span class="text-gradient">Clear upgrade path.</span>
         </h1>
         <p class="text-lg text-foreground/50 font-medium leading-relaxed">
-          Start with one chatbot. Upgrade when you need more training, more replies, or WhatsApp.
+          Start with one chatbot. Upgrade when you need more domains, more training, more replies, or a larger rollout.
         </p>
       </div>
 
-      <div class="grid lg:grid-cols-3 gap-10 mb-32">
+      <div class="grid xl:grid-cols-4 md:grid-cols-2 gap-10 mb-32">
         <div
           v-for="plan in plans"
           :key="plan.name"
@@ -200,16 +218,16 @@ const faqs = [
 
           <button
             @click="handleSelect(plan)"
-            :disabled="isProcessing === plan.name"
+            :disabled="isProcessing === plan.id"
             class="w-full py-5 rounded-full font-bold text-center mb-12 transition-all tracking-[0.1em] text-sm flex items-center justify-center gap-2"
             :class="plan.popular ? 'btn-gradient' : 'bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10 hover:border-foreground/20'"
           >
-            <template v-if="isProcessing === plan.name">
+            <template v-if="isProcessing === plan.id">
               <Loader2 class="w-4 h-4 animate-spin" />
               Processing...
             </template>
             <template v-else>
-              {{ isAuthenticated ? (plan.name === 'Free' ? 'Activate Free' : 'Select Plan') : 'Start Free' }}
+              {{ isAuthenticated ? (plan.id === 'starter' ? 'Activate Free' : 'Select Plan') : (plan.id === 'enterprise-ready' ? 'Talk to Sales' : 'Start Free') }}
             </template>
           </button>
 
@@ -235,18 +253,20 @@ const faqs = [
               <th class="py-4 px-6 text-center font-bold text-foreground">Free</th>
               <th class="py-4 px-6 text-center font-bold text-foreground bg-primary/5 rounded-t-2xl">Silver</th>
               <th class="py-4 px-6 text-center font-bold text-foreground">Gold</th>
+              <th class="py-4 px-6 text-center font-bold text-foreground">Enterprise Ready</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(row, i) in [
-              { label: 'AI Chatbots', free: '1', silver: '3', gold: '5' },
-              { label: 'AI Replies / month', free: '100', silver: '4,000', gold: '10,000' },
-              { label: 'Training Sessions / mo', free: '10', silver: '30', gold: '100' },
-              { label: 'Trainable AI agent', free: '✓', silver: '✓', gold: '✓' },
-              { label: 'Advanced bot training', free: '—', silver: '✓', gold: '✓' },
-              { label: 'WhatsApp Official API', free: '—', silver: '—', gold: '✓' },
-              { label: 'Dedicated account manager', free: '—', silver: '—', gold: '✓' },
-              { label: 'Priority support', free: '—', silver: '✓', gold: '✓' }
+              { label: 'AI Chatbots', free: '1', silver: '3', gold: '5', enterprise: '50' },
+              { label: 'Connected domains / chatbot', free: '1', silver: '5', gold: '10', enterprise: '100' },
+              { label: 'AI Replies / month', free: '100', silver: '4,000', gold: '10,000', enterprise: '500,000' },
+              { label: 'Training Sessions / mo', free: '10', silver: '30', gold: '100', enterprise: '1,000' },
+              { label: 'Trainable AI agent', free: '✓', silver: '✓', gold: '✓', enterprise: '✓' },
+              { label: 'Advanced bot training', free: '—', silver: '✓', gold: '✓', enterprise: '✓' },
+              { label: 'WhatsApp Official API', free: '—', silver: '—', gold: '✓', enterprise: '✓' },
+              { label: 'Custom-ready starter templates', free: '—', silver: '—', gold: '—', enterprise: '✓' },
+              { label: 'Priority support', free: '—', silver: '✓', gold: '✓', enterprise: '✓' }
             ]" :key="row.label"
               :class="i % 2 === 0 ? 'bg-foreground/[0.01]' : ''"
               class="border-b border-foreground/5 transition-colors hover:bg-foreground/[0.03]"
@@ -255,6 +275,7 @@ const faqs = [
               <td class="py-4 px-6 text-center text-foreground/70">{{ row.free }}</td>
               <td class="py-4 px-6 text-center text-foreground font-semibold bg-primary/[0.03]">{{ row.silver }}</td>
               <td class="py-4 px-6 text-center text-foreground/70">{{ row.gold }}</td>
+              <td class="py-4 px-6 text-center text-foreground/70">{{ row.enterprise }}</td>
             </tr>
           </tbody>
         </table>

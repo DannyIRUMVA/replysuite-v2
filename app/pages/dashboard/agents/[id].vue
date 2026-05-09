@@ -37,8 +37,8 @@ definePageMeta({
 
 const route = useRoute()
 const chatbotId = route.params.id as string
-const { userId, planSlug } = useAuth()
-const isPremium = computed(() => ['silver', 'gold'].includes(planSlug.value || ''))
+const { userId, planSlug, limits } = useAuth()
+const isPremium = computed(() => ['silver', 'gold', 'enterprise-ready'].includes(planSlug.value || ''))
 const supabase = useSupabaseClient()
 const router = useRouter()
 const notify = useNotify()
@@ -74,6 +74,7 @@ const form = ref({
   widget_position: 'bottom-right',
   welcome_message: 'Hello! How can I help you today?',
   allowed_domains: [] as string[],
+  allow_localhost_testing: true,
   ai_disclosure: true,
   launcher_color: '#D4AF37',
   launcher_icon: 'MessageSquare',
@@ -132,6 +133,39 @@ const previewMessages = [
   { role: 'bot', text: form },
 ]
 
+const maxWebsiteDomains = computed(() => limits.value.maxWebsiteDomains || 1)
+const websiteConnectionIsActive = computed(() => form.value.is_public && form.value.allowed_domains.length > 0)
+const canDisableLocalhostTesting = computed(() => websiteConnectionIsActive.value)
+
+const normalizeDomainInput = (value: string) => value.trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0].replace(/:\d+$/, '')
+
+const addAllowedDomain = () => {
+  const normalized = normalizeDomainInput(newDomainInput.value)
+
+  if (!normalized) {
+    notify.warn('Enter a valid domain first.')
+    return
+  }
+
+  if (normalized === 'localhost' || normalized === '127.0.0.1') {
+    notify.warn('Use localhost testing instead of adding localhost as an approved production domain.')
+    return
+  }
+
+  if (form.value.allowed_domains.includes(normalized)) {
+    notify.warn('This domain is already in your allowlist.')
+    return
+  }
+
+  if (form.value.allowed_domains.length >= maxWebsiteDomains.value) {
+    notify.error(`Your current plan allows up to ${maxWebsiteDomains.value} website domain${maxWebsiteDomains.value === 1 ? '' : 's'} per chatbot.`)
+    return
+  }
+
+  form.value.allowed_domains.push(normalized)
+  newDomainInput.value = ''
+}
+
 // Fetch Data
 const fetchData = async () => {
   if (!chatbotId || !userId.value) return
@@ -158,6 +192,7 @@ const fetchData = async () => {
         widget_position: data.widget_position || 'bottom-right',
         welcome_message: data.welcome_message || 'Hello! How can I help you today?',
         allowed_domains: data.allowed_domains || [],
+        allow_localhost_testing: data.allow_localhost_testing ?? true,
         ai_disclosure: data.ai_disclosure ?? true,
         launcher_color: data.launcher_color || data.primary_color || '#D4AF37',
         launcher_icon: data.launcher_icon || 'MessageSquare',
@@ -192,6 +227,16 @@ onMounted(async () => {
 // Save
 const handleSave = async () => {
   if (!chatbotId || isSaving.value) return
+
+  if (form.value.allowed_domains.length > maxWebsiteDomains.value) {
+    notify.error(`Your current plan allows up to ${maxWebsiteDomains.value} website domain${maxWebsiteDomains.value === 1 ? '' : 's'} per chatbot.`)
+    return
+  }
+
+  if (!websiteConnectionIsActive.value) {
+    form.value.allow_localhost_testing = true
+  }
+
   isSaving.value = true
   try {
     const { error } = await supabase
@@ -207,6 +252,7 @@ const handleSave = async () => {
         widget_position: form.value.widget_position,
         welcome_message: form.value.welcome_message,
         allowed_domains: form.value.allowed_domains,
+        allow_localhost_testing: form.value.allow_localhost_testing,
         ai_disclosure: form.value.ai_disclosure,
         launcher_color: form.value.launcher_color,
         launcher_icon: form.value.launcher_icon,
@@ -1012,10 +1058,13 @@ const catalogManagerRef = ref<any>(null)
           <div class="p-5 rounded-2xl bg-foreground/[0.01] border border-foreground/5 space-y-4">
             <div class="flex items-start gap-4">
               <Info class="w-4 h-4 text-primary shrink-0 mt-1" />
-              <div class="space-y-1">
+              <div class="space-y-2">
                 <p class="text-xs font-bold text-foreground uppercase">Security Protocol</p>
                 <p class="text-[10px] text-foreground/50 leading-relaxed uppercase tracking-wider">
-                  If this list is empty, your widget can be embedded on any website. Once you add a domain, all other origins (except localhost) will be blocked.
+                  Once you add approved domains, all other origins are blocked. Localhost stays available for testing until this connection is active and you decide to disable it.
+                </p>
+                <p class="text-[10px] text-primary/80 leading-relaxed uppercase tracking-wider">
+                  Current plan limit: {{ maxWebsiteDomains }} website domain{{ maxWebsiteDomains === 1 ? '' : 's' }} per chatbot.
                 </p>
               </div>
             </div>
@@ -1046,23 +1095,32 @@ const catalogManagerRef = ref<any>(null)
                   v-model="newDomainInput"
                   class="flex-1 bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors text-xs placeholder:text-foreground/50"
                   placeholder="e.g. example.com"
-                  @keypress.enter.prevent="() => {
-                    if (newDomainInput) {
-                      form.allowed_domains.push(newDomainInput.trim().replace(/^https?:\/\//, '').split('/')[0])
-                      newDomainInput = ''
-                    }
-                  }"
+                  @keypress.enter.prevent="addAllowedDomain"
                 />
                 <button 
-                  @click="() => {
-                    if (newDomainInput) {
-                      form.allowed_domains.push(newDomainInput.trim().replace(/^https?:\/\//, '').split('/')[0])
-                      newDomainInput = ''
-                    }
-                  }"
-                  class="px-5 py-3 bg-foreground/5 border border-foreground/10 text-foreground rounded-xl font-bold text-[10px] tracking-widest uppercase hover:bg-foreground/10 transition-all"
+                  @click="addAllowedDomain"
+                  :disabled="form.allowed_domains.length >= maxWebsiteDomains"
+                  class="px-5 py-3 bg-foreground/5 border border-foreground/10 text-foreground rounded-xl font-bold text-[10px] tracking-widest uppercase hover:bg-foreground/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Add Domain
+                </button>
+              </div>
+              <div class="flex items-center justify-between gap-4 p-4 mt-4 rounded-xl bg-foreground/[0.02] border border-foreground/10">
+                <div>
+                  <p class="text-xs font-bold text-foreground uppercase">Localhost Testing</p>
+                  <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-1">
+                    {{ canDisableLocalhostTesting ? 'Disable localhost after launch if you want production-only enforcement.' : 'Localhost remains enabled until the website connection is active.' }}
+                  </p>
+                </div>
+                <button
+                  @click="canDisableLocalhostTesting ? (form.allow_localhost_testing = !form.allow_localhost_testing) : null"
+                  :class="[
+                    'w-12 h-7 rounded-full p-1 transition-colors',
+                    form.allow_localhost_testing ? 'bg-primary' : 'bg-foreground/10',
+                    !canDisableLocalhostTesting ? 'opacity-60 cursor-not-allowed' : ''
+                  ]"
+                >
+                  <div :class="['w-5 h-5 rounded-full bg-white transition-all', form.allow_localhost_testing ? 'translate-x-5' : 'translate-x-0']" />
                 </button>
               </div>
             </div>

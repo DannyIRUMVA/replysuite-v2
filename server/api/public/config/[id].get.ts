@@ -1,34 +1,55 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
+import {
+  createWidgetAccessToken,
+  getRequestOriginContext,
+  isAllowedDomainHost,
+  isUuid,
+  normalizeHost,
+  setPublicCors,
+} from '~~/server/utils/public-chatbot'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   const supabase = serverSupabaseServiceRole(event)
 
-  // Handle CORS
-  setResponseHeader(event, 'Access-Control-Allow-Origin', '*')
-  setResponseHeader(event, 'Access-Control-Allow-Methods', 'GET, OPTIONS')
-  setResponseHeader(event, 'Access-Control-Allow-Headers', 'Content-Type, Authorization')
-
-  if (event.method === 'OPTIONS') {
-    return 'OK'
-  }
-
-  if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+  if (!isUuid(id)) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid or missing chatbot ID' })
   }
 
   const { data, error } = await supabase
     .from('chatbots')
-    .select('user_id, name, is_public, primary_color, secondary_color, chat_bubble_style, widget_position, welcome_message, allowed_domains, launcher_color, launcher_icon, launcher_style, ai_disclosure, chat_icon, launcher_icon_color, chat_icon_color')
+    .select('user_id, name, is_public, deleted_at, primary_color, secondary_color, chat_bubble_style, widget_position, welcome_message, allowed_domains, launcher_color, launcher_icon, launcher_style, ai_disclosure, chat_icon, launcher_icon_color, chat_icon_color')
     .eq('id', id)
     .single()
 
-  if (error || !data) {
-    console.error(`[Config API] Chatbot not found or error for ID ${id}:`, error)
+  if (error) {
+    console.error('[Public Config] Failed to load chatbot config:', error)
+    throw createError({ statusCode: 500, statusMessage: 'Failed to load chatbot config' })
+  }
+
+  if (!data || !data.is_public || data.deleted_at) {
     throw createError({ statusCode: 404, statusMessage: 'Chatbot not found' })
   }
 
-  // Get owner's plan details for feature gating
+  const requestContext = getRequestOriginContext(event)
+  const allowedDomains = data.allowed_domains || []
+  const allowLocalhostTesting = (data as any).allow_localhost_testing ?? true
+  const requestHost = normalizeHost(requestContext.requestHost)
+
+  if (allowedDomains.length > 0 && !requestHost) {
+    throw createError({ statusCode: 403, statusMessage: 'Missing request origin' })
+  }
+
+  if (requestHost && !isAllowedDomainHost(event, requestHost, allowedDomains, { allowLocalhostTesting })) {
+    throw createError({ statusCode: 403, statusMessage: 'Unauthorized domain' })
+  }
+
+  setPublicCors(event, requestContext.requestOrigin)
+
+  if (event.method === 'OPTIONS') {
+    return 'OK'
+  }
+
   const { data: membership } = await supabase
     .from('user_memberships')
     .select(`
@@ -45,39 +66,11 @@ export default defineEventHandler(async (event) => {
   const plan = membership?.plans as any
   const planSlug = plan?.internal_slug || 'starter'
   const removeBranding = plan?.remove_branding || false
-
-  // Domain Verification
-  const origin = getHeader(event, 'origin') || ''
-  const referer = getHeader(event, 'referer') || ''
-  const allowedDomains = data.allowed_domains || []
-
-  if (allowedDomains.length > 0) {
-    let requestHost = ''
-    
-    try {
-      if (origin && origin !== 'null') {
-        requestHost = new URL(origin).hostname
-      } else if (referer) {
-        requestHost = new URL(referer).hostname
-      }
-    } catch (e) {
-      console.warn(`[Security] Failed to parse origin/referer for chatbot ${id}:`, { origin, referer })
-    }
-    
-    // Security Policy: Always allow localhost and the main platform domain
-    const isMainDomain = requestHost === 'replysuite.app' || requestHost.endsWith('.replysuite.app')
-    const isLocal = requestHost === 'localhost' || requestHost === '127.0.0.1' || !requestHost
-    
-    const isAllowed = isMainDomain || isLocal || allowedDomains.some(domain => {
-      const cleanDomain = domain.replace(/^https?:\/\//, '').split('/')[0]
-      return requestHost === cleanDomain || requestHost.endsWith(`.${cleanDomain}`)
-    })
-
-    if (!isAllowed && requestHost) {
-      console.warn(`[Security] Unauthorized widget access from: ${requestHost} for chatbot: ${id}`)
-      throw createError({ statusCode: 403, statusMessage: 'Unauthorized domain' })
-    }
-  }
+  const embedHost = requestHost || 'replysuite.app'
+  const embedToken = await createWidgetAccessToken(event, {
+    chatbotId: id,
+    host: embedHost,
+  })
 
   return {
     success: true,
@@ -95,6 +88,8 @@ export default defineEventHandler(async (event) => {
     chatIconColor: data.chat_icon_color || null,
     aiDisclosure: data.ai_disclosure ?? true,
     removeBranding,
-    planSlug
+    planSlug,
+    embedHost,
+    embedToken,
   }
 })

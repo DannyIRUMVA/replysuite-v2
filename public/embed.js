@@ -28,9 +28,11 @@
       var launcherIconColor = config.launcherIconColor;
       var position = config.widgetPosition || 'bottom-right';
       var isRight = position !== 'bottom-left';
+      var embedHost = config.embedHost || window.location.hostname || '';
+      var embedToken = config.embedToken || '';
 
       injectStyles(primaryColor);
-      buildLauncher(chatbotId, launcherColor, launcherIcon, launcherStyle, isRight, BASE_URL, launcherIconColor);
+      buildLauncher(chatbotId, launcherColor, launcherIcon, launcherStyle, isRight, BASE_URL, launcherIconColor, embedHost, embedToken);
     })
     .catch(function () {
       // Fallback with defaults if config fetch fails
@@ -58,7 +60,7 @@
   }
 
   // ── Build the floating launcher button and iframe ────────────────────────────
-  function buildLauncher(id, color, iconName, styleName, isRight, base, iconColor) {
+  function buildLauncher(id, color, iconName, styleName, isRight, base, iconColor, embedHost, embedToken) {
     var isOpen = false;
 
     var icons = {
@@ -151,7 +153,12 @@
     ].join(';');
 
     var iframe = document.createElement('iframe');
-    iframe.src = base + '/widget/' + id;
+    var iframeUrl = base + '/widget/' + id;
+    var query = [];
+    if (embedHost) query.push('host=' + encodeURIComponent(embedHost));
+    if (embedToken) query.push('token=' + encodeURIComponent(embedToken));
+    if (query.length) iframeUrl += '?' + query.join('&');
+    iframe.src = iframeUrl;
     iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
     iframe.setAttribute('title', 'ReplySuite Chat');
     iframe.setAttribute('allow', 'microphone; autoplay');

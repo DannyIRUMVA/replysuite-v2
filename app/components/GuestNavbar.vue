@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Zap, Menu, X, ChevronRight, Layout, Sparkles, CreditCard, Info, LogIn } from 'lucide-vue-next'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 
 const isMenuOpen = ref(false)
 const isScrolled = ref(false)
 const user = useSupabaseUser()
+const route = useRoute()
 
 const navLinks = [
   { name: 'Product', href: '/product', icon: Layout },
@@ -13,26 +14,37 @@ const navLinks = [
   { name: 'Contact', href: '/contact', icon: Info }
 ]
 
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 20
+}
+
 onMounted(() => {
-  window.addEventListener('scroll', () => {
-    isScrolled.value = window.scrollY > 20
-  })
+  handleScroll()
+  window.addEventListener('scroll', handleScroll)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
+
+watch(() => route.fullPath, () => {
+  isMenuOpen.value = false
 })
 </script>
 
 <template>
-  <header class="fixed top-0 inset-x-0 z-[100] transition-all duration-500 h-[10vh] flex items-center" :class="[
+  <header class="fixed top-0 inset-x-0 z-[100] transition-all duration-500 min-h-[77px] sm:min-h-[88px] flex items-center" :class="[
     isScrolled
       ? 'backdrop-blur-xl bg-background/40 border-b border-foreground/10 shadow-2xl shadow-foreground/5'
       : 'bg-transparent border-b border-foreground/5'
   ]">
-    <nav class="max-w-7xl mx-auto px-6 w-full flex items-center justify-between relative">
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 w-full flex items-center justify-between relative gap-3">
       <!-- Logo -->
-      <NuxtLink to="/" class="flex items-center gap-2 group">
+      <NuxtLink to="/" class="flex items-center gap-2 group min-w-0 flex-shrink">
         <div class="p-2 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
           <Zap class="text-primary w-6 h-6 fill-current" />
         </div>
-        <span class="text-2xl font-bold tracking-tight text-foreground">ReplySuite</span>
+        <span class="text-lg sm:text-2xl font-bold tracking-tight text-foreground truncate">ReplySuite</span>
       </NuxtLink>
 
       <!-- Desktop Menu -->
@@ -47,25 +59,25 @@ onMounted(() => {
       </div>
 
       <!-- Right Side -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 sm:gap-4 flex-shrink-0">
         <!-- Theme Switcher Desktop -->
-        <div class="hidden sm:block">
+        <div class="hidden md:block">
           <ThemeSwitcher />
         </div>
 
         <ClientOnly>
           <template v-if="!user">
             <NuxtLink to="/login"
-              class="hidden sm:flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold text-foreground/40 hover:text-foreground transition-all">
+              class="hidden md:flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold text-foreground/40 hover:text-foreground transition-all">
               <LogIn class="w-4 h-4" />
               Sign In
             </NuxtLink>
-            <NuxtLink to="/register" class="btn-gradient px-6 py-2.5 text-sm">
+            <NuxtLink to="/register" class="hidden sm:inline-flex btn-gradient px-5 sm:px-6 py-2.5 text-sm whitespace-nowrap">
               Start Free
             </NuxtLink>
           </template>
           <template v-else>
-            <NuxtLink to="/dashboard" class="btn-gradient px-8 py-2.5 text-sm flex items-center gap-2 group">
+            <NuxtLink to="/dashboard" class="hidden sm:inline-flex btn-gradient px-6 sm:px-8 py-2.5 text-sm items-center gap-2 group whitespace-nowrap">
               Dashboard
               <ChevronRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </NuxtLink>
@@ -78,7 +90,7 @@ onMounted(() => {
 
         <!-- Mobile Toggle -->
         <button @click="isMenuOpen = !isMenuOpen"
-          class="lg:hidden p-2 text-foreground/40 hover:text-foreground transition-colors">
+          class="lg:hidden inline-flex items-center justify-center p-2.5 rounded-xl border border-foreground/10 bg-background/70 text-foreground/60 hover:text-foreground hover:bg-foreground/[0.04] transition-colors">
           <Menu v-if="!isMenuOpen" class="w-6 h-6" />
           <X v-else class="w-6 h-6" />
         </button>
@@ -89,26 +101,37 @@ onMounted(() => {
         enter-to-class="opacity-100 translate-y-0" leave-active-class="transition duration-150 ease-in"
         leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-[-10px]">
         <div v-if="isMenuOpen"
-          class="absolute top-full left-6 right-6 mt-4 p-6 bg-background-card/95 backdrop-blur-2xl border border-foreground/10 rounded-32 shadow-2xl lg:hidden">
+          class="absolute top-full left-3 right-3 sm:left-6 sm:right-6 mt-3 p-4 sm:p-6 bg-background-card/95 backdrop-blur-2xl border border-foreground/10 rounded-[28px] shadow-2xl lg:hidden max-h-[calc(100vh-5.5rem)] overflow-y-auto">
           <div class="flex flex-col gap-2">
             <NuxtLink v-for="link in navLinks" :key="link.name" :to="link.href" @click="isMenuOpen = false"
-              class="flex items-center gap-4 px-4 py-3 rounded-2xl text-lg font-semibold text-foreground/40 hover:text-primary hover:bg-foreground/5 transition-all">
+              class="flex items-center gap-4 px-4 py-3 rounded-2xl text-base sm:text-lg font-semibold text-foreground/50 hover:text-primary hover:bg-foreground/5 transition-all">
               <component :is="link.icon" class="w-6 h-6" />
               {{ link.name }}
             </NuxtLink>
             <NuxtLink v-if="user" to="/dashboard" @click="isMenuOpen = false"
-              class="flex items-center gap-4 px-4 py-3 rounded-2xl text-lg font-semibold text-foreground/40 hover:text-primary hover:bg-foreground/5 transition-all">
+              class="flex items-center gap-4 px-4 py-3 rounded-2xl text-base sm:text-lg font-semibold text-foreground/50 hover:text-primary hover:bg-foreground/5 transition-all">
               <Layout class="w-6 h-6" />
               Dashboard
             </NuxtLink>
             <hr class="border-foreground/5 my-2" />
-            <NuxtLink :to="user ? '/dashboard' : '/login'" @click="isMenuOpen = false"
-              class="btn-gradient w-full text-center py-4 text-sm font-bold tracking-widest uppercase">
-              {{ user ? 'go to dashboard' : 'start free' }}
+            <div v-if="!user" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+              <NuxtLink to="/login" @click="isMenuOpen = false"
+                class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border border-foreground/10 text-sm font-bold text-foreground/70 hover:text-foreground hover:bg-foreground/[0.03] transition-all">
+                <LogIn class="w-4 h-4" />
+                Sign In
+              </NuxtLink>
+              <NuxtLink to="/register" @click="isMenuOpen = false"
+                class="btn-gradient w-full text-center py-3 text-sm font-bold tracking-widest uppercase">
+                start free
+              </NuxtLink>
+            </div>
+            <NuxtLink v-else :to="user ? '/dashboard' : '/login'" @click="isMenuOpen = false"
+              class="btn-gradient w-full text-center py-4 text-sm font-bold tracking-widest uppercase mt-2">
+              go to dashboard
             </NuxtLink>
 
             <!-- Theme Switcher Mobile -->
-            <div class="mt-2">
+            <div class="mt-3 rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-2">
               <ThemeSwitcher class="!w-full !justify-between !p-2" />
             </div>
           </div>

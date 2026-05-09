@@ -7,6 +7,7 @@ export const SubscriptionLimitSchema = z.object({
   max_replies_per_month: z.number().default(100),
   max_training_units: z.number().default(10),
   max_embedding_mb: z.number().default(5.0),
+  max_website_domains: z.number().default(1),
 })
 
 export type SubscriptionLimits = z.infer<typeof SubscriptionLimitSchema>
@@ -40,6 +41,7 @@ export async function getUserSubscriptionLimits(event: H3Event, userId?: string 
       max_replies_per_month: freePlan?.max_replies_per_month || 100,
       max_training_units: freePlan?.max_training_units || 10,
       max_embedding_mb: freePlan?.max_embedding_mb || 1.0,
+      max_website_domains: (freePlan as any)?.max_website_domains || 1,
     })
   }
 
@@ -69,6 +71,7 @@ export async function getUserSubscriptionLimits(event: H3Event, userId?: string 
       max_replies_per_month: freePlan?.max_replies_per_month || 100,
       max_training_units: freePlan?.max_training_units || 10,
       max_embedding_mb: freePlan?.max_embedding_mb || 1.0,
+      max_website_domains: (freePlan as any)?.max_website_domains || 1,
     })
   }
 
@@ -77,6 +80,7 @@ export async function getUserSubscriptionLimits(event: H3Event, userId?: string 
     max_replies_per_month: membership.plans.max_replies_per_month,
     max_training_units: (membership.plans as any).max_training_units || 10,
     max_embedding_mb: (membership.plans as any).max_embedding_mb || 5.0,
+    max_website_domains: (membership.plans as any).max_website_domains || 1,
   })
 }
 

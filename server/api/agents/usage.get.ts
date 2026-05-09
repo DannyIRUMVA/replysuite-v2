@@ -1,4 +1,5 @@
-import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
+import { serverSupabaseClient, serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
+import { isUuid } from '~~/server/utils/public-chatbot'
 
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
@@ -6,20 +7,29 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
   }
 
-  const { chatbotId } = getQuery(event)
-  if (!chatbotId) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing chatbotId' })
+  const chatbotId = getQuery(event).chatbotId as string | undefined
+  if (!isUuid(chatbotId)) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing or invalid chatbotId' })
+  }
+
+  const userClient = await serverSupabaseClient(event)
+  const { data: chatbot, error: chatbotError } = await userClient
+    .from('chatbots')
+    .select('id')
+    .eq('id', chatbotId)
+    .maybeSingle()
+
+  if (chatbotError || !chatbot) {
+    throw createError({ statusCode: 404, statusMessage: 'Chatbot not found or access denied' })
   }
 
   const supabase = serverSupabaseServiceRole(event)
-  
-  // Get current month start
+
   const now = new Date()
   now.setUTCDate(1)
   now.setUTCHours(0, 0, 0, 0)
   const monthStart = now.toISOString()
 
-  // Parallel fetch counts from all sources of truth
   const [waRes, webRes] = await Promise.all([
     supabase.from('whatsapp_message_jobs')
       .select('*', { count: 'exact', head: true })

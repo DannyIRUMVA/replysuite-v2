@@ -1,23 +1,31 @@
-import { serverSupabaseClient, serverSupabaseUser } from '#supabase/server'
+import { serverSupabaseClient, serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 import { searchKnowledge, getChatCompletion } from '~~/server/utils/ai'
+import { isUuid } from '~~/server/utils/public-chatbot'
 
 export default defineEventHandler(async (event) => {
   const supabase = await serverSupabaseClient(event)
+  const supabaseAdmin = serverSupabaseServiceRole(event)
   const user = await serverSupabaseUser(event)
-  
+
   if (!user) throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
 
   const body = await readBody(event)
-  const { chatbotId, message, sessionId: providedSessionId } = body
+  const chatbotId = body?.chatbotId
+  const message = typeof body?.message === 'string' ? body.message.trim() : ''
+  const providedSessionId = body?.sessionId
 
-  if (!chatbotId || !message) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing chatbotId or message' })
+  if (!isUuid(chatbotId) || !message) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing or invalid chatbotId/message' })
   }
 
-  // 1. Verify ownership (respects RLS)
+  if (providedSessionId && !isUuid(providedSessionId)) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid sessionId' })
+  }
+
+  // 1. Verify ownership with the user-scoped client
   const { data: chatbot, error: chatbotError } = await supabase
     .from('chatbots')
-    .select('*, user_id')
+    .select('id, name, system_prompt, user_id')
     .eq('id', chatbotId)
     .maybeSingle()
 
@@ -25,27 +33,42 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Chatbot not found or access denied' })
   }
 
-  // 2. Handle Session
+  // 2. Handle Session via service role after ownership is confirmed
   let sessionId = providedSessionId
-  if (!sessionId) {
-    const { data: newSession } = await supabase
+  if (sessionId) {
+    const { data: existingSession, error: sessionError } = await supabaseAdmin
+      .from('chat_sessions')
+      .select('id, chatbot_id')
+      .eq('id', sessionId)
+      .maybeSingle()
+
+    if (sessionError || !existingSession || existingSession.chatbot_id !== chatbotId) {
+      throw createError({ statusCode: 400, statusMessage: 'Invalid session for chatbot' })
+    }
+  } else {
+    const { data: newSession, error: sessionInsertError } = await supabaseAdmin
       .from('chat_sessions')
       .insert({ chatbot_id: chatbotId, metadata: { type: 'test' } })
       .select('id')
       .single()
-    sessionId = newSession?.id
+
+    if (sessionInsertError || !newSession?.id) {
+      throw createError({ statusCode: 500, statusMessage: 'Failed to initialize test session' })
+    }
+
+    sessionId = newSession.id
   }
 
   try {
     // 3. Save User Message
-    await supabase.from('chat_messages').insert({
+    await supabaseAdmin.from('chat_messages').insert({
       session_id: sessionId,
       role: 'user',
       content: message
     })
 
     // 4. Search Knowledge Base (RAG)
-    const contextResults = await searchKnowledge(supabase, chatbotId, message, 3)
+    const contextResults = await searchKnowledge(supabaseAdmin, chatbotId, message, 3)
     const contextText = contextResults.map((r: any) => r.content).join('\n\n---\n\n')
 
     // 5. Construct System Prompt with Knowledge
@@ -77,7 +100,7 @@ export default defineEventHandler(async (event) => {
       .trim()
 
     // 8. Save Assistant Reply
-    await supabase.from('chat_messages').insert({
+    await supabaseAdmin.from('chat_messages').insert({
       session_id: sessionId,
       role: 'assistant',
       content: response

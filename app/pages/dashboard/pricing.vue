@@ -29,7 +29,7 @@ onMounted(async () => {
   // Listen for successful checkout
   window.addEventListener("polar:checkout:confirmed", async (event) => {
     console.log("[Pricing] Checkout confirmed:", event)
-    notify.success('Payment successful! Your empire class is being upgraded.')
+    notify.success('Payment successful! Your plan is being updated.')
     await syncWithPolar()
   })
 
@@ -89,8 +89,8 @@ const plans = [
     name: 'Free',
     id: 'starter',
     price: '0.00',
-    desc: 'Experience the gold standard risk-free.',
-    features: ['1 website chatbot', '100 AI replies / mo', '10 training sessions', 'Trainable AI agent', 'Email support'],
+    desc: 'Best for launching one chatbot on one website domain.',
+    features: ['1 website chatbot', '1 connected website domain', '100 AI replies / mo', '10 training sessions', 'Email support'],
     popular: false
   },
   {
@@ -98,8 +98,8 @@ const plans = [
     id: 'silver',
     productId: 'dc070937-6444-40a6-8a02-fd8b25df7aae',
     price: '17.88',
-    desc: 'The best value for growing elite brands.',
-    features: ['3 website chatbots', '4,000 AI replies / mo', '30 training sessions', 'Advanced bot training', 'Priority support'],
+    desc: 'Best for growing teams that need more domains and more replies.',
+    features: ['3 website chatbots', '5 connected domains / chatbot', '4,000 AI replies / mo', '30 training sessions', 'Priority support'],
     popular: true
   },
   {
@@ -107,8 +107,17 @@ const plans = [
     id: 'gold',
     productId: 'd0493f6f-16bc-4d3c-97bb-7be920840f12',
     price: '26.88',
-    desc: 'Elite power for high-volume experts.',
-    features: ['5 website chatbots', '10,000 AI replies / mo', '100 training sessions', 'WhatsApp integration', 'Dedicated manager'],
+    desc: 'Built for higher volume web and WhatsApp deployments.',
+    features: ['5 website chatbots', '10 connected domains / chatbot', '10,000 AI replies / mo', '100 training sessions', 'WhatsApp integration'],
+    popular: false
+  },
+  {
+    name: 'Enterprise Ready',
+    id: 'enterprise-ready',
+    productId: '3e4e4e1a-e1da-4f3f-be5a-298e409c7c1e',
+    price: '350.88',
+    desc: 'For larger rollouts that need scale, control, and starter templates.',
+    features: ['50 website chatbots', '100 connected domains / chatbot', '500,000 AI replies / mo', '1,000 training sessions', 'Custom-ready starter templates'],
     popular: false
   }
 ]
@@ -126,44 +135,88 @@ const openPortal = async () => {
 </script>
 
 <template>
-  <div class="p-8 max-w-6xl mx-auto">
+  <div class="px-2 md:px-4 py-8 w-full max-w-none">
     <!-- Header -->
-    <div class="mb-12">
-      <span class="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary mb-4 inline-block tracking-wider">
-        Subscription required
+    <div class="mb-10 max-w-4xl">
+      <span class="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary mb-4 inline-block tracking-wider uppercase">
+        Choose your plan
       </span>
-      <h1 class="text-4xl font-extrabold text-foreground tracking-tight mb-4 lowercase">
-        Choose your <span class="text-gradient">empire class.</span>
+      <h1 class="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight mb-4">
+        Pick the plan that fits your
+        <span class="text-gradient">next stage of growth.</span>
       </h1>
-      <p class="text-foreground/50 font-medium lowercase">please select a plan to unlock your ai dashboard and start automating.</p>
+      <p class="text-foreground/60 text-base leading-relaxed max-w-3xl">
+        Start with one website chatbot, then upgrade when you need more domains, more replies, WhatsApp automation, or a larger rollout.
+      </p>
+    </div>
+
+    <div class="grid xl:grid-cols-4 md:grid-cols-2 gap-4 mb-12">
+      <div class="rounded-3xl border border-foreground/10 bg-foreground/[0.02] p-5">
+        <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary mb-2">New here?</p>
+        <h3 class="text-sm font-bold text-foreground mb-2">Start with Starter</h3>
+        <p class="text-sm text-foreground/55 leading-relaxed">Best for launching your first website chatbot on one domain.</p>
+      </div>
+      <div class="rounded-3xl border border-foreground/10 bg-foreground/[0.02] p-5">
+        <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary mb-2">Need more websites?</p>
+        <h3 class="text-sm font-bold text-foreground mb-2">Choose Silver</h3>
+        <p class="text-sm text-foreground/55 leading-relaxed">A better fit for growing businesses managing more web traffic.</p>
+      </div>
+      <div class="rounded-3xl border border-foreground/10 bg-foreground/[0.02] p-5">
+        <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary mb-2">Need WhatsApp too?</p>
+        <h3 class="text-sm font-bold text-foreground mb-2">Choose Gold</h3>
+        <p class="text-sm text-foreground/55 leading-relaxed">Best for businesses that want website and WhatsApp automation together.</p>
+      </div>
+      <div class="rounded-3xl border border-foreground/10 bg-foreground/[0.02] p-5">
+        <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary mb-2">Running at scale?</p>
+        <h3 class="text-sm font-bold text-foreground mb-2">Go Enterprise Ready</h3>
+        <p class="text-sm text-foreground/55 leading-relaxed">For bigger deployments, higher volume, and template-led team rollout.</p>
+      </div>
     </div>
 
     <!-- Loading State -->
     <div v-if="isLoading" class="flex flex-col items-center justify-center min-h-[40vh] py-20">
       <Loader2 class="w-12 h-12 text-primary animate-spin mb-6" />
-      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/50">Retrieving Empire Classes...</p>
+      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/50">Loading plans...</p>
     </div>
 
     <!-- Pricing Grid -->
-    <div v-else class="grid lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div v-else class="grid xl:grid-cols-4 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div 
         v-for="plan in plans" 
         :key="plan.name"
         class="glass-card p-10 flex flex-col relative transition-all duration-300 hover:border-primary/30 border-foreground/5"
         :class="plan.popular ? 'border-primary/20 bg-primary/[0.02]' : ''"
       >
-        <div v-if="plan.popular" class="absolute -top-3 left-6 px-4 py-1 bg-primary text-black text-[9px] font-bold tracking-widest rounded-full">
-          best value
+        <div v-if="plan.popular" class="absolute -top-3 left-6 px-4 py-1 bg-primary text-black text-[9px] font-bold tracking-widest rounded-full uppercase">
+          Best value
         </div>
 
         <div class="mb-8">
-          <h3 class="text-2xl font-bold text-foreground mb-2">{{ plan.name }}</h3>
-          <p class="text-xs text-foreground/50 font-medium">{{ plan.desc }}</p>
+          <div class="flex items-center justify-between gap-3 mb-3">
+            <h3 class="text-2xl font-bold text-foreground">{{ plan.name }}</h3>
+            <span class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">
+              {{ plan.id === 'starter' ? 'Start here' : plan.id === 'silver' ? 'Growth' : plan.id === 'gold' ? 'Website + WhatsApp' : 'Scale' }}
+            </span>
+          </div>
+          <p class="text-sm text-foreground/55 font-medium leading-relaxed">{{ plan.desc }}</p>
         </div>
 
-        <div class="mb-10 flex items-baseline gap-2">
+        <div class="mb-4 flex items-baseline gap-2">
           <span class="text-4xl font-extrabold text-foreground">${{ plan.price }}</span>
           <span class="text-[10px] text-foreground/50 font-bold tracking-widest">/mo</span>
+        </div>
+
+        <div class="mb-8 rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4">
+          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45 mb-2">Best for</p>
+          <p class="text-sm text-foreground/70 leading-relaxed">
+            {{ plan.id === 'starter'
+              ? 'Testing your first website chatbot.'
+              : plan.id === 'silver'
+                ? 'Growing businesses that need more web coverage.'
+                : plan.id === 'gold'
+                  ? 'Businesses ready for both website and WhatsApp conversations.'
+                  : 'Teams rolling out multiple bots across many domains.' }}
+          </p>
         </div>
 
         <button 
@@ -180,7 +233,7 @@ const openPortal = async () => {
             current plan
           </template>
           <template v-else>
-            {{ plan.id === 'starter' ? 'get started' : 'select plan' }}
+            {{ plan.id === 'starter' ? 'Start with Starter' : plan.id === 'silver' ? 'Choose Silver' : plan.id === 'gold' ? 'Choose Gold' : 'Choose Enterprise Ready' }}
           </template>
         </button>
 
@@ -203,7 +256,7 @@ const openPortal = async () => {
         </div>
         <div>
           <p class="text-[12px] font-bold text-foreground tracking-widest mb-1">Billing Management</p>
-          <p class="text-[11px] text-foreground/50 font-medium lowercase">payments are managed via polar.sh. need to update your card or cancel? use the portal.</p>
+          <p class="text-[11px] text-foreground/50 font-medium">Payments are managed via Polar. Update your card, review billing, or cancel from the portal.</p>
         </div>
       </div>
       

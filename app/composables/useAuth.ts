@@ -46,6 +46,7 @@ export const useAuth = () => {
     maxTrainings: plan.value?.max_training_units || 0,
     maxEmbeddingMb: plan.value?.max_embedding_mb || 0,
     maxReplies: plan.value?.max_replies_per_month || 0,
+    maxWebsiteDomains: (plan.value as any)?.max_website_domains || 1,
     hasAdvancedTraining: plan.value?.advanced_training || false,
     hasApiAccess: plan.value?.api_access || false,
     removeBranding: plan.value?.remove_branding || false

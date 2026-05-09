@@ -56,19 +56,83 @@ const languageOptions = [
 ]
 
 const agents = computed(() => pageData.value?.agents || [])
-const stats = computed(() => pageData.value?.stats || { totalChats: 0, totalDataSources: 0 })
+const stats = computed(() => pageData.value?.stats || {
+  totalChats: 0,
+  totalDataSources: 0,
+  liveWebAgents: 0,
+  liveWhatsappAgents: 0,
+})
 const isLoading = computed(() => authLoading.value || dataLoading.value)
+
+const fleetStats = computed(() => [
+  { label: 'Active Agents', value: agents.value.length.toString().padStart(2, '0'), icon: Bot },
+  { label: 'Plan Limit', value: `${agents.value.length} / ${limits.value.maxAgents ?? '∞'}`, icon: Sparkles },
+  { label: 'Total Interactions', value: stats.value.totalChats.toLocaleString(), icon: MessageSquare },
+  { label: 'Data Sources', value: stats.value.totalDataSources.toLocaleString(), icon: Database }
+])
 
 // UI State
 const canCreateAgent = computed(() => {
   return agents.value.length < (limits.value.maxAgents || 1)
 })
 
+const getAgentStatus = (agent: any, dataSourceCount: number, whatsappLiveCount: number) => {
+  const allowedDomains = Array.isArray(agent.allowed_domains) ? agent.allowed_domains : []
+  const hasWebsiteConnection = !!agent.is_public || allowedDomains.length > 0
+
+  if (hasWebsiteConnection && whatsappLiveCount > 0) {
+    return {
+      label: 'Live on Web + WhatsApp',
+      tone: 'live',
+      pulse: true,
+    }
+  }
+
+  if (whatsappLiveCount > 0) {
+    return {
+      label: 'Live on WhatsApp',
+      tone: 'live',
+      pulse: true,
+    }
+  }
+
+  if (hasWebsiteConnection) {
+    return {
+      label: 'Live on Web',
+      tone: 'web',
+      pulse: true,
+    }
+  }
+
+  if (dataSourceCount > 0) {
+    return {
+      label: 'Trained',
+      tone: 'ready',
+      pulse: false,
+    }
+  }
+
+  return {
+    label: 'Draft',
+    tone: 'draft',
+    pulse: false,
+  }
+}
+
 // Fetch Data using useAsyncData for consistency with other dashboard pages
 const { data: pageData, pending: dataLoading, refresh: refreshAgents } = useAsyncData('agents-data', async () => {
-  if (!userId.value) return { agents: [], stats: { totalChats: 0 } }
-  
-  // 1. Fetch Agents (with data source count via Supabase join)
+  if (!userId.value) {
+    return {
+      agents: [],
+      stats: {
+        totalChats: 0,
+        totalDataSources: 0,
+        liveWebAgents: 0,
+        liveWhatsappAgents: 0,
+      }
+    }
+  }
+
   const { data: agents, error: agentsError } = await supabase
     .from('chatbots')
     .select('*, data_sources(count)')
@@ -77,34 +141,68 @@ const { data: pageData, pending: dataLoading, refresh: refreshAgents } = useAsyn
     .order('created_at', { ascending: false })
 
   if (agentsError) throw agentsError
-  
+
   const agentIds = (agents || []).map(a => a.id)
-  let totalChats = 0
-  
+  let sessionRows: any[] = []
+  let whatsappAccounts: any[] = []
+
   if (agentIds.length > 0) {
-    const { count, error: statsError } = await supabase
-      .from('chat_sessions')
-      .select('*', { count: 'exact', head: true })
-      .in('chatbot_id', agentIds)
-    
-    if (!statsError) {
-      totalChats = count || 0
-    }
+    const [{ data: sessionsData }, { data: whatsappData }] = await Promise.all([
+      supabase
+        .from('chat_sessions')
+        .select('id, chatbot_id')
+        .in('chatbot_id', agentIds),
+      supabase
+        .from('whatsapp_accounts')
+        .select('id, chatbot_id, status')
+        .in('chatbot_id', agentIds)
+    ])
+
+    sessionRows = sessionsData || []
+    whatsappAccounts = whatsappData || []
   }
 
-  // Normalize data_sources from [{count}] to a number
-  const normalizedAgents = (agents || []).map(a => ({
-    ...a,
-    data_source_count: Array.isArray(a.data_sources) ? (a.data_sources[0]?.count ?? 0) : 0
-  }))
+  const interactionCountByAgent = sessionRows.reduce((acc: Record<string, number>, row: any) => {
+    if (!row.chatbot_id) return acc
+    acc[row.chatbot_id] = (acc[row.chatbot_id] || 0) + 1
+    return acc
+  }, {})
+
+  const whatsappLiveCountByAgent = whatsappAccounts.reduce((acc: Record<string, number>, row: any) => {
+    if (!row.chatbot_id) return acc
+    if (!['active', 'deployed'].includes(row.status)) return acc
+    acc[row.chatbot_id] = (acc[row.chatbot_id] || 0) + 1
+    return acc
+  }, {})
+
+  const normalizedAgents = (agents || []).map(a => {
+    const dataSourceCount = Array.isArray(a.data_sources) ? (a.data_sources[0]?.count ?? 0) : 0
+    const whatsappLiveCount = whatsappLiveCountByAgent[a.id] || 0
+    const allowedDomains = Array.isArray(a.allowed_domains) ? a.allowed_domains : []
+    const webConnected = !!a.is_public || allowedDomains.length > 0
+    const status = getAgentStatus(a, dataSourceCount, whatsappLiveCount)
+
+    return {
+      ...a,
+      data_source_count: dataSourceCount,
+      interaction_count: interactionCountByAgent[a.id] || 0,
+      whatsapp_live_count: whatsappLiveCount,
+      web_connected: webConnected,
+      status,
+    }
+  })
 
   const totalDataSources = normalizedAgents.reduce((s, a) => s + a.data_source_count, 0)
+  const liveWebAgents = normalizedAgents.filter(a => a.web_connected).length
+  const liveWhatsappAgents = normalizedAgents.filter(a => a.whatsapp_live_count > 0).length
 
   return {
     agents: normalizedAgents,
     stats: {
-      totalChats,
-      totalDataSources
+      totalChats: sessionRows.length,
+      totalDataSources,
+      liveWebAgents,
+      liveWhatsappAgents,
     }
   }
 }, {
@@ -168,19 +266,29 @@ const handleDelete = async (id: string) => {
         <h2 class="text-xl font-bold tracking-tight text-foreground mb-2 italic-none uppercase">AI Agents</h2>
         <p class="text-foreground/50 text-sm italic-none">Deploy and manage your fleet of intelligent conversation specialists.</p>
       </div>
-      
-      <button 
-        @click="canCreateAgent ? (showCreateModal = true) : null"
-        :class="[
-          'flex items-center gap-3 px-6 py-3 font-bold rounded-2xl transition-all shadow-lg text-[11px] tracking-widest uppercase',
-          canCreateAgent 
-            ? 'bg-primary text-black hover:bg-primary-accent shadow-primary/10' 
-            : 'bg-foreground/5 text-foreground/50 cursor-not-allowed opacity-50'
-        ]"
-      >
-        <Plus class="w-5 h-5" />
-        {{ canCreateAgent ? 'Forge New Agent' : 'Agent Limit Reached' }}
-      </button>
+
+      <div class="flex flex-col items-start md:items-end gap-2">
+        <button 
+          @click="canCreateAgent ? (showCreateModal = true) : null"
+          :class="[
+            'flex items-center gap-3 px-6 py-3 font-bold rounded-2xl transition-all shadow-lg text-[11px] tracking-widest uppercase',
+            canCreateAgent 
+              ? 'bg-primary text-black hover:bg-primary-accent shadow-primary/10' 
+              : 'bg-foreground/5 text-foreground/50 cursor-not-allowed opacity-60'
+          ]"
+        >
+          <Plus class="w-5 h-5" />
+          {{ canCreateAgent ? 'Forge New Agent' : 'Agent Limit Reached' }}
+        </button>
+
+        <NuxtLink
+          v-if="!canCreateAgent"
+          to="/dashboard/pricing"
+          class="text-[10px] font-bold tracking-widest uppercase text-primary hover:text-primary-accent transition-colors"
+        >
+          Need more agents? Upgrade your plan
+        </NuxtLink>
+      </div>
     </div>
 
     <!-- Stats Row (Loading or Data) -->
@@ -197,17 +305,12 @@ const handleDelete = async (id: string) => {
     </div>
     
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div v-for="stat in [
-        { label: 'Active Agents', value: agents.length.toString().padStart(2, '0'), icon: Bot },
-        { label: 'Plan Limit', value: `${agents.length} / ${limits.maxAgents ?? '∞'}`, icon: Sparkles },
-        { label: 'Total Chats', value: stats.totalChats.toLocaleString(), icon: MessageSquare },
-        { label: 'Data Sources', value: stats.totalDataSources.toLocaleString(), icon: Database }
-      ]" :key="stat.label" class="glass-card !p-5 bg-foreground/[0.01]">
+      <div v-for="stat in fleetStats" :key="stat.label" class="glass-card !p-5 bg-foreground/[0.01]">
         <div class="flex items-center gap-4">
-          <div class="p-2.5 bg-foreground/5 rounded-xl">
+          <div class="w-11 h-11 shrink-0 bg-foreground/5 rounded-xl flex items-center justify-center">
             <component :is="stat.icon" class="w-5 h-5 text-foreground/50" />
           </div>
-          <div>
+          <div class="min-h-[44px] flex flex-col justify-center">
             <p class="text-[10px] font-bold tracking-widest text-foreground/50 mb-0.5 uppercase">{{ stat.label }}</p>
             <p class="text-lg font-bold text-foreground leading-none italic-none">{{ stat.value }}</p>
           </div>
@@ -247,50 +350,67 @@ const handleDelete = async (id: string) => {
       <div 
         v-for="agent in agents" 
         :key="agent.id"
-        class="glass-card hover:border-primary/20 transition-all group relative overflow-hidden bg-foreground/[0.01]"
+        class="glass-card hover:border-primary/20 transition-all group relative overflow-hidden bg-foreground/[0.01] h-full"
       >
-        <div class="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+        <div class="absolute top-0 right-0 p-6 opacity-[0.035] group-hover:opacity-[0.06] transition-opacity pointer-events-none">
           <Zap class="w-24 h-24 text-foreground" />
         </div>
 
-        <div class="relative z-10 p-6">
-          <div class="flex items-start justify-between mb-6">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary-accent/5 flex items-center justify-center border border-foreground/5 shadow-inner">
+        <div class="relative z-10 p-6 flex h-full flex-col">
+          <div class="flex items-start justify-between mb-6 gap-4">
+            <div class="flex items-center gap-4 min-w-0">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary-accent/5 flex items-center justify-center border border-foreground/5 shadow-inner shrink-0">
                 <Bot class="w-6 h-6 text-primary" />
               </div>
-              <div>
-                <h4 class="font-bold text-foreground tracking-tight uppercase text-xs">{{ agent.name }}</h4>
-                <div class="flex items-center gap-1.5 mt-1">
-                  <div class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"></div>
-                  <span class="text-[9px] font-bold tracking-widest text-foreground/50 uppercase">Active</span>
+              <div class="min-w-0">
+                <h4 class="font-bold text-foreground tracking-tight uppercase text-xs truncate">{{ agent.name }}</h4>
+                <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                  <div
+                    :class="[
+                      'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-bold tracking-widest uppercase',
+                      agent.status.tone === 'live' ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : '',
+                      agent.status.tone === 'web' ? 'border-sky-500/20 bg-sky-500/10 text-sky-400' : '',
+                      agent.status.tone === 'ready' ? 'border-primary/20 bg-primary/10 text-primary' : '',
+                      agent.status.tone === 'draft' ? 'border-foreground/10 bg-foreground/5 text-foreground/55' : ''
+                    ]"
+                  >
+                    <span
+                      :class="[
+                        'w-1.5 h-1.5 rounded-full',
+                        agent.status.tone === 'live' ? 'bg-emerald-400' : '',
+                        agent.status.tone === 'web' ? 'bg-sky-400' : '',
+                        agent.status.tone === 'ready' ? 'bg-primary' : '',
+                        agent.status.tone === 'draft' ? 'bg-foreground/35' : '',
+                        agent.status.pulse ? 'animate-pulse' : ''
+                      ]"
+                    />
+                    {{ agent.status.label }}
+                  </div>
                 </div>
               </div>
             </div>
-            
-            <button class="p-2 text-foreground/50 hover:text-foreground transition-colors">
-              <MoreVertical class="w-5 h-5" />
-            </button>
           </div>
 
-          <div class="bg-foreground/[0.02] border border-foreground/5 rounded-2xl p-4 mb-6 min-h-[60px]">
-            <p class="text-[11px] text-foreground/50 leading-relaxed line-clamp-2 italic-none capitalize">
+          <div class="bg-foreground/[0.02] border border-foreground/5 rounded-2xl p-4 mb-6 h-[88px] sm:h-[96px] overflow-hidden">
+            <p class="text-[11px] text-foreground/60 leading-relaxed line-clamp-3 italic-none">
               {{ agent.system_prompt || 'No system prompt configured. This agent will use default behavioral patterns.' }}
             </p>
           </div>
 
-          <div class="flex items-center gap-6">
+          <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
             <div class="flex items-center gap-2">
-              <Activity class="w-3.5 h-3.5 text-foreground/50" />
-              <span class="text-[10px] font-bold text-foreground/50">0 Interactions</span>
+              <Activity class="w-3.5 h-3.5 text-foreground/55" />
+              <span class="text-[10px] font-extrabold text-foreground/80">
+                {{ agent.interaction_count.toLocaleString() }} Interactions
+              </span>
             </div>
             <div class="flex items-center gap-2">
-              <Clock class="w-3.5 h-3.5 text-foreground/50" />
-              <span class="text-[10px] font-bold text-foreground/50">Deployed {{ new Date(agent.created_at).toLocaleDateString() }}</span>
+              <Clock class="w-3.5 h-3.5 text-foreground/45" />
+              <span class="text-[10px] font-bold text-foreground/55">Deployed {{ new Date(agent.created_at).toLocaleDateString() }}</span>
             </div>
           </div>
 
-          <div class="mt-8 flex items-center gap-3">
+          <div class="mt-auto pt-8 flex items-center gap-3">
             <NuxtLink 
               :to="`/dashboard/agents/skills/training?id=${agent.id}`"
               class="flex-1 py-2.5 bg-primary/10 hover:bg-primary/20 text-[10px] font-bold tracking-widest text-primary rounded-xl transition-all border border-primary/10 flex items-center justify-center gap-2 uppercase"
@@ -307,30 +427,43 @@ const handleDelete = async (id: string) => {
             </NuxtLink>
             <button 
               @click="handleDelete(agent.id)"
-              class="w-11 h-11 flex items-center justify-center bg-foreground/5 hover:bg-red-400/10 rounded-xl border border-foreground/5 text-foreground/50 hover:text-red-400 transition-all uppercase"
+              class="w-10 h-10 shrink-0 flex items-center justify-center bg-transparent hover:bg-red-400/8 rounded-xl border border-foreground/5 hover:border-red-400/20 text-foreground/35 hover:text-red-400 transition-all uppercase"
+              title="Delete agent"
             >
-              <Trash2 class="w-4 h-4" />
+              <Trash2 class="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       </div>
 
       <button 
-        @click="canCreateAgent ? (showCreateModal = true) : null"
-        :class="[
-          'glass-card border-dashed transition-all flex flex-col items-center justify-center py-12 group bg-foreground/[0.01]',
-          canCreateAgent 
-            ? 'border-foreground/10 hover:border-primary/30' 
-            : 'border-foreground/5 cursor-not-allowed opacity-40'
-        ]"
+        v-if="canCreateAgent"
+        @click="showCreateModal = true"
+        class="glass-card border-dashed transition-all flex flex-col items-center justify-center py-12 group bg-foreground/[0.01] border-foreground/10 hover:border-primary/30"
       >
         <div class="w-12 h-12 rounded-full bg-foreground/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-          <Plus :class="['w-6 h-6', canCreateAgent ? 'text-foreground/50 group-hover:text-primary' : 'text-foreground/20']" />
+          <Plus class="w-6 h-6 text-foreground/50 group-hover:text-primary" />
         </div>
         <span class="text-[10px] font-bold tracking-widest text-foreground/50 uppercase">
-          {{ canCreateAgent ? 'Forge New Agent' : 'Limit Reached' }}
+          Forge New Agent
         </span>
       </button>
+
+      <NuxtLink
+        v-else
+        to="/dashboard/pricing"
+        class="glass-card border-dashed transition-all flex flex-col items-center justify-center py-12 group bg-foreground/[0.01] border-foreground/10 hover:border-primary/30"
+      >
+        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
+          <Sparkles class="w-6 h-6 text-primary" />
+        </div>
+        <span class="text-[10px] font-bold tracking-widest text-foreground/70 uppercase text-center">
+          Agent Limit Reached
+        </span>
+        <span class="mt-2 text-[10px] font-bold tracking-widest text-primary uppercase text-center">
+          Upgrade for more agents
+        </span>
+      </NuxtLink>
     </div>
 
     <div v-else class="glass-card flex flex-col items-center py-20 text-center border-dashed border-foreground/10 bg-foreground/[0.01]">

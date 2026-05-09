@@ -80,6 +80,7 @@ export type Database = {
       }
       chatbots: {
         Row: {
+          allow_localhost_testing: boolean | null
           created_at: string | null
           current_embedding_mb: number | null
           deleted_at: string | null
@@ -90,6 +91,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          allow_localhost_testing?: boolean | null
           created_at?: string | null
           current_embedding_mb?: number | null
           deleted_at?: string | null
@@ -100,6 +102,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          allow_localhost_testing?: boolean | null
           created_at?: string | null
           current_embedding_mb?: number | null
           deleted_at?: string | null
@@ -638,6 +641,7 @@ export type Database = {
           max_tokens: number | null
           max_training_units: number | null
           max_triggers: number | null
+          max_website_domains: number | null
           monthly_price_usd: number | null
           name: string
           polar_payment_processor: string | null
@@ -669,6 +673,7 @@ export type Database = {
           max_tokens?: number | null
           max_training_units?: number | null
           max_triggers?: number | null
+          max_website_domains?: number | null
           monthly_price_usd?: number | null
           name: string
           polar_payment_processor?: string | null
@@ -700,6 +705,7 @@ export type Database = {
           max_tokens?: number | null
           max_training_units?: number | null
           max_triggers?: number | null
+          max_website_domains?: number | null
           monthly_price_usd?: number | null
           name?: string
           polar_payment_processor?: string | null

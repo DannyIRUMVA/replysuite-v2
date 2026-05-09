@@ -144,6 +144,7 @@ export default defineNuxtConfig({
     smtpFromName: process.env.SMTP_FROM_NAME,
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    widgetAccessSecret: process.env.WIDGET_ACCESS_SECRET,
     whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN,
     whatsappWebhookUrl: process.env.WHATSAPP_WEBHOOK_URL,
 

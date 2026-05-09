@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import {
   ArrowRight,
   Play,
@@ -9,6 +9,7 @@ import {
   BrainCircuit,
   ShieldCheck,
   MessageCircle,
+  MessageSquare,
   Send,
   Globe2,
   Check,
@@ -20,7 +21,11 @@ import {
   MessageSquareMore,
   ScanSearch,
   Lock,
-  X
+  Zap,
+  Info,
+  X,
+  Paperclip,
+  SmilePlus
 } from 'lucide-vue-next'
 import { marked } from 'marked'
 import xss from 'xss'
@@ -176,6 +181,10 @@ const afterPoints = [
 
 const demoVideoUrl = 'https://www.youtube-nocookie.com/embed/drp1wlRRSr4?autoplay=1&rel=0'
 const isDemoVideoOpen = ref(false)
+const demoAccent = '#D4AF37'
+const demoAccentDeep = '#B78E17'
+const demoAssistantBubble = 'linear-gradient(135deg, rgba(212,175,55,0.30) 0%, rgba(183,142,23,0.24) 100%)'
+const demoAccentSoft = 'rgba(212,175,55,0.08)'
 
 const openDemoVideo = () => {
   isDemoVideoOpen.value = true
@@ -206,7 +215,10 @@ const testimonialSamples = [
 const chatbotId = 'cacdbcdb-7157-4e12-92c4-a715aadf3112'
 const chatInput = ref('')
 const isChatLoading = ref(false)
+const isChatbotLoading = ref(true)
 const chatbot = ref<any>(null)
+const demoEmbedToken = ref('')
+const demoEmbedHost = ref('')
 const chatMessages = ref<any[]>([])
 const scrollRef = ref<HTMLElement | null>(null)
 
@@ -232,12 +244,41 @@ const scrollToSection = (id: string) => {
   el?.scrollIntoView({ behavior: 'smooth' })
 }
 
+const chatIconMap: Record<string, any> = {
+  Bot,
+  MessageSquare,
+  Sparkles,
+  Zap,
+  HelpCircle: Info,
+  Info,
+  MessageSquareMore
+}
+
+const demoChatIcon = computed(() => {
+  const iconName = chatbot.value?.chat_icon || 'Bot'
+  return chatIconMap[iconName] || Bot
+})
+
 const fetchChatbot = async () => {
-  const supabase = useSupabaseClient()
+  isChatbotLoading.value = true
+
   try {
-    const { data } = await supabase.from('chatbots').select('*').eq('id', chatbotId).single()
-    if (data) {
-      chatbot.value = data
+    const data = await $fetch<any>(`/api/public/config/${chatbotId}`)
+    if (data?.success) {
+      chatbot.value = {
+        name: data.name,
+        welcome_message: data.welcomeMessage,
+        primary_color: data.primaryColor,
+        secondary_color: data.secondaryColor,
+        chat_bubble_style: data.bubbleStyle,
+        widget_position: data.widgetPosition,
+        ai_disclosure: data.aiDisclosure,
+        chat_icon: data.chatIcon,
+        chat_icon_color: data.chatIconColor,
+        launcher_color: data.launcherColor,
+      }
+      demoEmbedToken.value = data.embedToken || ''
+      demoEmbedHost.value = data.embedHost || ''
     }
   } catch (e) {
     console.error('Failed to fetch chatbot:', e)
@@ -261,6 +302,8 @@ const fetchChatbot = async () => {
       content: 'It helps you answer customer questions faster on your website and WhatsApp using your own business content.'
     }
   ]
+
+  isChatbotLoading.value = false
 }
 
 const handleQuickAction = (action: string) => {
@@ -282,7 +325,12 @@ const sendDemoMessage = async () => {
   try {
     const res = await $fetch<{ success: boolean; response: string }>('/api/public/chat', {
       method: 'POST',
-      body: { chatbotId, message: userMsg }
+      body: {
+        chatbotId,
+        message: userMsg,
+        embedToken: demoEmbedToken.value || undefined,
+        embedHost: demoEmbedHost.value || undefined,
+      }
     })
 
     if (res.success) {
@@ -307,8 +355,8 @@ const plans = [
     name: 'Free',
     id: 'starter',
     price: '0.00',
-    desc: 'Best for testing your first website chatbot.',
-    features: ['1 website chatbot', '100 AI replies / mo', '10 training sessions', 'Trainable AI agent', 'Email support'],
+    desc: 'Best for launching one chatbot on one website domain.',
+    features: ['1 website chatbot', '1 connected domain / chatbot', '100 AI replies / mo', '10 training sessions', 'Email support'],
     popular: false
   },
   {
@@ -316,8 +364,8 @@ const plans = [
     id: 'silver',
     productId: 'dc070937-6444-40a6-8a02-fd8b25df7aae',
     price: '17.88',
-    desc: 'Best for growing businesses that want more training and more conversations.',
-    features: ['3 website chatbots', '4,000 AI replies / mo', '30 training sessions', 'Advanced bot training', 'Priority support'],
+    desc: 'Best for growing businesses that want more domains and more conversations.',
+    features: ['3 website chatbots', '5 connected domains / chatbot', '4,000 AI replies / mo', '30 training sessions', 'Priority support'],
     popular: true
   },
   {
@@ -326,13 +374,23 @@ const plans = [
     productId: 'd0493f6f-16bc-4d3c-97bb-7be920840f12',
     price: '26.88',
     desc: 'Best for businesses ready for higher volume and WhatsApp automation.',
-    features: ['5 website chatbots', '10,000 AI replies / mo', '100 training sessions', 'WhatsApp integration', 'Dedicated manager'],
+    features: ['5 website chatbots', '10 connected domains / chatbot', '10,000 AI replies / mo', '100 training sessions', 'WhatsApp integration'],
+    popular: false
+  },
+  {
+    name: 'Enterprise Ready',
+    id: 'enterprise-ready',
+    productId: '3e4e4e1a-e1da-4f3f-be5a-298e409c7c1e',
+    price: '350.88',
+    desc: 'Best for larger rollouts that need scale, control, and starter templates.',
+    features: ['50 website chatbots', '100 connected domains / chatbot', '500,000 AI replies / mo', '1,000 training sessions', 'Custom-ready starter templates'],
     popular: false
   }
 ]
 
 onMounted(() => {
   fetchChatbot()
+
   if (window.PolarEmbedCheckout) {
     window.PolarEmbedCheckout.init()
   }
@@ -349,7 +407,7 @@ onMounted(() => {
 
 const handleSelect = async (plan: any) => {
   if (!isAuthenticated.value) {
-    return navigateTo(`/register?plan=${plan.id}`)
+    return navigateTo(plan.id === 'enterprise-ready' ? '/contact' : `/register?plan=${plan.id}`)
   }
 
   isProcessing.value = plan.id
@@ -386,14 +444,13 @@ const handleSelect = async (plan: any) => {
 
 <template>
   <div class="relative overflow-hidden">
-    <section class="relative pt-20 pb-20 md:pt-32 md:pb-24 overflow-hidden">
-      <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10 animate-pulse"></div>
-
+    <section class="relative pt-14 pb-20 md:pt-24 md:pb-24 overflow-hidden">
       <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-start">
         <div>
           <div class="flex items-center gap-3 mb-8 opacity-80 group cursor-default">
             <div class="h-[1px] w-10 bg-primary/40 group-hover:w-14 transition-all duration-500"></div>
-            <span class="text-[11px] font-bold tracking-[0.3em] text-primary uppercase">AI chatbot for website + WhatsApp</span>
+            <span class="text-[11px] font-bold tracking-[0.3em] text-primary uppercase">AI chatbot for website +
+              WhatsApp</span>
           </div>
 
           <h1 class="text-4xl md:text-6xl font-black mb-8 leading-[0.92] text-foreground max-w-3xl">
@@ -402,146 +459,275 @@ const handleSelect = async (plan: any) => {
           </h1>
 
           <p class="text-lg md:text-xl text-foreground/60 mb-10 max-w-2xl leading-relaxed font-semibold">
-            ReplySuite helps you answer customer questions faster, capture more leads, and support customers on your website and WhatsApp using your own website content, PDFs, FAQs, and custom text.
+            ReplySuite helps you answer customer questions faster, capture more leads, and support customers on your
+            website and WhatsApp using your own website content, PDFs, FAQs, and custom text.
           </p>
 
-          <div class="grid sm:grid-cols-1 gap-3 mb-10 max-w-2xl">
-            <div v-for="point in outcomePoints" :key="point" class="flex items-start gap-3 rounded-2xl border border-foreground/10 bg-foreground/[0.02] px-4 py-3">
-              <CheckCircle2 class="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-              <span class="text-sm md:text-base text-foreground/75 font-semibold">{{ point }}</span>
+          <div class="grid sm:grid-cols-1 gap-2.5 mb-10 max-w-xl">
+            <div v-for="point in outcomePoints" :key="point"
+              class="flex items-start gap-2.5 rounded-xl border border-foreground/10 bg-foreground/[0.02] px-3 py-2">
+              <CheckCircle2 class="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+              <span class="text-xs md:text-sm text-foreground/75 font-semibold leading-snug">{{ point }}</span>
             </div>
           </div>
 
           <div class="flex flex-col sm:flex-row gap-4 relative z-10 items-center">
-            <NuxtLink
-              :to="user ? '/dashboard' : '/register'"
-              class="btn-gradient px-10 py-5 text-lg flex items-center justify-center gap-3 group w-full sm:w-auto"
-            >
+            <NuxtLink :to="user ? '/dashboard' : '/register'"
+              class="btn-gradient px-10 py-5 text-lg flex items-center justify-center gap-3 group w-full sm:w-auto">
               {{ user ? 'Go to Dashboard' : 'Start Free' }}
               <ArrowRight class="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </NuxtLink>
 
-            <button
-              @click="openDemoVideo"
-              class="px-8 py-5 text-foreground/70 hover:text-foreground transition-all text-base font-bold flex items-center justify-center gap-3 group border border-foreground/10 rounded-full hover:bg-foreground/[0.02] w-full sm:w-auto"
-            >
-              <div class="w-8 h-8 rounded-full bg-foreground/5 flex items-center justify-center group-hover:bg-primary group-hover:text-black transition-all">
+            <button @click="openDemoVideo"
+              class="px-8 py-5 text-foreground/70 hover:text-foreground transition-all text-base font-bold flex items-center justify-center gap-3 group border border-foreground/10 rounded-full hover:bg-foreground/[0.02] w-full sm:w-auto">
+              <div
+                class="w-8 h-8 rounded-full bg-foreground/5 flex items-center justify-center group-hover:bg-primary group-hover:text-black transition-all">
                 <Play class="w-3 h-3 fill-current ml-0.5" />
               </div>
               Watch Demo Video
             </button>
           </div>
 
-          <div class="mt-10 flex flex-wrap items-center gap-4 text-[11px] font-black uppercase tracking-widest text-foreground/45">
-            <span class="inline-flex items-center gap-2"><ShieldCheck class="w-4 h-4 text-primary" /> Train on your own data</span>
-            <span class="inline-flex items-center gap-2"><Globe2 class="w-4 h-4 text-primary" /> Website widget</span>
-            <span class="inline-flex items-center gap-2"><MessageCircle class="w-4 h-4 text-primary" /> WhatsApp ready</span>
+          <div
+            class="mt-10 flex flex-wrap items-center gap-4 text-[11px] font-black uppercase tracking-widest text-foreground/45">
+            <span class="inline-flex items-center gap-2">
+              <ShieldCheck class="w-4 h-4 text-primary" /> Train on your own data
+            </span>
+            <span class="inline-flex items-center gap-2">
+              <Globe2 class="w-4 h-4 text-primary" /> Website widget
+            </span>
+            <span class="inline-flex items-center gap-2">
+              <MessageCircle class="w-4 h-4 text-primary" /> WhatsApp ready
+            </span>
           </div>
         </div>
 
         <div id="demo" class="relative hidden lg:block">
-          <div class="glass-card p-3 border-foreground/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] dark:shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] transition-all duration-1000">
-            <div class="bg-background-card rounded-[28px] overflow-hidden h-[650px] flex flex-col relative border border-foreground/5 shadow-inner">
-              <div class="p-6 border-b border-foreground/10 flex items-center justify-between bg-foreground/[0.01]">
-                <div class="flex items-center gap-4">
-                  <div class="relative">
-                    <div class="w-12 h-12 rounded-2xl p-0.5 border border-foreground/5 shadow-sm"
-                      :style="{ background: `linear-gradient(to top right, ${chatbot?.primary_color || '#D4AF37'}, ${chatbot?.primary_color || '#D4AF37'}dd)` }">
-                      <div class="w-full h-full rounded-2xl bg-background flex items-center justify-center">
-                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-                          :style="{ color: chatbot?.primary_color || '#D4AF37' }">
-                          <rect x="3" y="6" width="18" height="13" rx="3" stroke="currentColor" stroke-width="2" />
-                          <path d="M8 12H8.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                          <path d="M16 12H16.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                          <path d="M9 16C9 16 10.5 17.5 12 17.5C13.5 17.5 15 16 15 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                        </svg>
+          <div class="relative transition-all duration-1000">
+            <div
+              class="bg-background-card dark:bg-zinc-900 rounded-[28px] overflow-hidden h-[700px] flex flex-col relative border border-foreground/6 dark:border-white/5 shadow-[0_32px_90px_-28px_rgba(15,23,42,0.22)] dark:shadow-[0_32px_90px_-28px_rgba(0,0,0,0.62)]">
+              <div
+                class="px-5 pt-5 pb-4 border-b border-foreground/6 dark:border-white/5 bg-background-card dark:bg-zinc-900">
+                <div class="flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="relative flex-shrink-0">
+                      <div
+                        class="w-11 h-11 rounded-2xl flex items-center justify-center text-foreground shadow-sm border border-primary/10"
+                        :style="{ background: demoAccentSoft }">
+                        <component :is="demoChatIcon" class="w-5 h-5"
+                          :style="chatbot?.chat_icon_color ? { color: chatbot.chat_icon_color } : {}" />
+                      </div>
+                      <div
+                        class="absolute -right-0.5 -bottom-0.5 w-3 h-3 bg-emerald-500 border-2 border-background-card rounded-full">
                       </div>
                     </div>
-                    <div class="absolute -right-1 -bottom-1 w-3.5 h-3.5 bg-green-500 border-4 border-background-card rounded-full shadow-sm"></div>
-                  </div>
-                  <div>
-                    <div class="text-sm font-black uppercase text-foreground leading-none">{{ chatbot?.name || 'REPLYSUITE DEMO BOT' }}</div>
-                    <div class="text-[9px] text-foreground/30 font-bold uppercase tracking-widest mt-1.5 leading-none">
-                      Live demo • trained business assistant
+                    <div class="min-w-0">
+                      <template v-if="isChatbotLoading">
+                        <div class="h-3.5 w-36 rounded-full bg-foreground/10 animate-pulse"></div>
+                        <div class="h-2.5 w-28 rounded-full bg-foreground/8 animate-pulse mt-2"></div>
+                      </template>
+                      <template v-else>
+                        <div class="text-sm font-black leading-none text-foreground truncate">{{ chatbot?.name ||
+                          'ReplySuite Assistant' }}</div>
+                        <div class="text-[11px] text-foreground/55 font-semibold mt-1">Typically replies in seconds</div>
+                      </template>
                     </div>
                   </div>
-                </div>
-                <div class="w-10 h-10 rounded-xl bg-foreground/[0.03] border border-foreground/5 flex items-center justify-center hover:bg-foreground/10 transition-colors cursor-pointer">
-                  <Settings class="w-5 h-5 text-foreground/30" />
+
+                  <button type="button"
+                    class="w-9 h-9 rounded-xl bg-foreground/[0.03] border border-foreground/8 flex items-center justify-center text-foreground/50 hover:bg-foreground/[0.05] transition-colors">
+                    <X class="w-4 h-4" />
+                  </button>
                 </div>
               </div>
 
-              <div class="relative flex-1 min-h-0 overflow-hidden">
-                <div class="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-background-card to-transparent z-10 pointer-events-none"></div>
+              <div
+                class="relative flex-1 min-h-0 overflow-hidden bg-background-card dark:bg-zinc-900">
                 <div
-                  ref="scrollRef"
-                  class="h-full p-8 space-y-6 overflow-y-hidden flex flex-col scroll-smooth select-none"
-                  @wheel.prevent="forwardDemoWheel"
-                >
-                  <div v-for="(msg, idx) in chatMessages" :key="idx" :class="['flex w-full', msg.role === 'user' ? 'justify-end' : 'justify-start']">
+                  class="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-background-card via-background-card/92 to-transparent dark:from-zinc-900 dark:via-zinc-900/92 z-10 pointer-events-none">
+                </div>
+                <div ref="scrollRef"
+                  class="h-full p-4 space-y-3.5 overflow-y-hidden flex flex-col scroll-smooth select-none"
+                  @wheel.prevent="forwardDemoWheel">
+                  <template v-if="isChatbotLoading">
+                    <div class="self-start max-w-[84%] rounded-2xl border border-foreground/8 dark:border-white/5 bg-background dark:bg-zinc-900 px-4 py-3 shadow-sm dark:shadow-none animate-pulse">
+                      <div class="flex items-center gap-2 mb-3">
+                        <div class="w-7 h-7 rounded-xl bg-foreground/10"></div>
+                        <div class="space-y-2">
+                          <div class="h-2.5 w-24 rounded-full bg-foreground/10"></div>
+                          <div class="h-2 w-36 rounded-full bg-foreground/8"></div>
+                        </div>
+                      </div>
+                      <div class="flex flex-wrap gap-2">
+                        <div class="h-7 w-16 rounded-full bg-foreground/8"></div>
+                        <div class="h-7 w-20 rounded-full bg-foreground/8"></div>
+                        <div class="h-7 w-24 rounded-full bg-foreground/8"></div>
+                      </div>
+                    </div>
+
+                    <div class="flex flex-col items-start gap-2 animate-pulse">
+                      <div class="flex items-center gap-2 px-1">
+                        <div class="w-7 h-7 rounded-full bg-foreground/10"></div>
+                        <div class="h-2.5 w-28 rounded-full bg-foreground/8"></div>
+                      </div>
+                      <div class="w-[78%] rounded-2xl rounded-bl-md border border-foreground/6 dark:border-white/5 bg-background dark:bg-zinc-900 px-4 py-3 space-y-2">
+                        <div class="h-2.5 w-[88%] rounded-full bg-foreground/8"></div>
+                        <div class="h-2.5 w-[70%] rounded-full bg-foreground/8"></div>
+                      </div>
+                    </div>
+
+                    <div class="flex flex-col items-end gap-2 animate-pulse">
+                      <div class="flex items-center gap-2 px-1 flex-row-reverse">
+                        <div class="w-7 h-7 rounded-full bg-sky-500/20"></div>
+                        <div class="h-2.5 w-16 rounded-full bg-foreground/8"></div>
+                      </div>
+                      <div class="w-[62%] rounded-2xl rounded-br-md bg-sky-500/75 px-4 py-3 space-y-2">
+                        <div class="h-2.5 w-[80%] rounded-full bg-white/40"></div>
+                        <div class="h-2.5 w-[58%] rounded-full bg-white/35"></div>
+                      </div>
+                    </div>
+
+                    <div class="flex flex-col items-start gap-2 animate-pulse">
+                      <div class="flex items-center gap-2 px-1">
+                        <div class="w-7 h-7 rounded-full bg-foreground/10"></div>
+                        <div class="h-2.5 w-28 rounded-full bg-foreground/8"></div>
+                      </div>
+                      <div class="w-[82%] rounded-2xl rounded-bl-md border border-foreground/6 dark:border-white/5 bg-background dark:bg-zinc-900 px-4 py-3 space-y-2">
+                        <div class="h-2.5 w-[84%] rounded-full bg-foreground/8"></div>
+                        <div class="h-2.5 w-[76%] rounded-full bg-foreground/8"></div>
+                        <div class="h-2.5 w-[52%] rounded-full bg-foreground/8"></div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <template v-else>
+                    <div
+                      class="self-start max-w-[84%] rounded-2xl border border-foreground/8 dark:border-white/5 bg-background dark:bg-zinc-900 px-4 py-3 shadow-sm dark:shadow-none">
+                      <div class="flex items-center gap-2 mb-2">
+                        <div class="w-7 h-7 rounded-xl flex items-center justify-center border border-primary/10"
+                          :style="{ background: demoAccentSoft }">
+                          <component :is="demoChatIcon" class="w-3.5 h-3.5 text-foreground"
+                            :style="chatbot?.chat_icon_color ? { color: chatbot.chat_icon_color } : {}" />
+                        </div>
+                        <div>
+                          <p class="text-[11px] font-black text-foreground">Hi there 👋</p>
+                          <p class="text-[10px] text-foreground/50 font-semibold">Ask about setup, pricing, training, or
+                            WhatsApp.</p>
+                        </div>
+                      </div>
+                      <div class="flex flex-wrap gap-2">
+                        <button type="button" @click="chatInput = 'How does setup work?'"
+                          class="rounded-full border border-foreground/10 bg-foreground/[0.02] px-3 py-1.5 text-[10px] font-bold text-foreground/65 hover:border-primary/15 hover:text-foreground transition-colors">
+                          Setup
+                        </button>
+                        <button type="button" @click="chatInput = 'Can I train it on my website and PDFs?'"
+                          class="rounded-full border border-foreground/10 bg-foreground/[0.02] px-3 py-1.5 text-[10px] font-bold text-foreground/65 hover:border-primary/15 hover:text-foreground transition-colors">
+                          Training
+                        </button>
+                        <button type="button" @click="chatInput = 'How does WhatsApp integration work?'"
+                          class="rounded-full border border-foreground/10 bg-foreground/[0.02] px-3 py-1.5 text-[10px] font-bold text-foreground/65 hover:border-primary/15 hover:text-foreground transition-colors">
+                          WhatsApp
+                        </button>
+                      </div>
+                    </div>
+                    <div v-for="(msg, idx) in chatMessages" :key="idx" class="flex flex-col gap-2"
+                      :class="msg.role === 'user' ? 'items-end' : 'items-start'">
+                    <div class="flex items-center gap-2 px-1" :class="msg.role === 'user' ? 'flex-row-reverse' : ''">
+                      <div class="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-black shadow-sm"
+                        :class="msg.role === 'user' ? 'bg-sky-500/12 text-sky-700 dark:text-sky-300 border border-sky-500/20' : 'text-foreground border border-primary/10'"
+                        :style="msg.role === 'assistant' ? { background: demoAccentSoft } : {}">
+                        <template v-if="msg.role === 'user'">You</template>
+                        <component v-else :is="demoChatIcon" class="w-3.5 h-3.5"
+                          :style="chatbot?.chat_icon_color ? { color: chatbot.chat_icon_color } : {}" />
+                      </div>
+                      <span class="text-[10px] font-bold tracking-wide"
+                        :class="msg.role === 'user' ? 'text-foreground/35' : 'text-foreground/50'">
+                        {{ msg.role === 'user' ? 'Visitor' : 'ReplySuite assistant' }}
+                      </span>
+                    </div>
+
                     <div :class="[
-                      'p-6 rounded-[2.5rem] text-[13px] transition-all animate-in fade-in slide-in-from-bottom-3 duration-500 prose-sm prose-p:my-1 prose-strong:text-inherit leading-relaxed',
+                      'px-4 py-3 rounded-2xl text-[12px] transition-all animate-in fade-in slide-in-from-bottom-3 duration-500 prose-sm prose-p:my-1 prose-strong:text-inherit leading-relaxed shadow-sm',
                       msg.role === 'user'
-                        ? 'bg-foreground/[0.04] border border-foreground/5 rounded-tr-none max-w-[80%] text-foreground font-bold'
-                        : 'text-black font-bold rounded-tl-none max-w-[85%] shadow-2xl shadow-black/10'
-                    ]"
-                      :style="msg.role === 'assistant' ? { background: `linear-gradient(135deg, ${chatbot?.primary_color || '#D4AF37'} 0%, ${chatbot?.primary_color || '#D4AF37'}ee 100%)` } : {}">
+                        ? 'bg-sky-500 rounded-br-md max-w-[76%] text-white font-semibold border border-sky-600/70 shadow-[0_10px_24px_rgba(14,165,233,0.22)]'
+                        : 'bg-background dark:bg-zinc-900 border border-foreground/6 dark:border-white/5 rounded-bl-md max-w-[84%] text-foreground'
+                    ]">
                       <div v-html="renderMarkdown(msg.content)" class="widget-markdown"></div>
 
-                      <div v-if="msg.actions" class="mt-6 flex flex-wrap gap-2">
-                        <button
-                          v-for="action in msg.actions"
-                          :key="action.label"
+                      <div v-if="msg.actions" class="mt-4 flex flex-wrap gap-2">
+                        <button v-for="action in msg.actions" :key="action.label"
                           @click="handleQuickAction(action.action)"
-                          class="px-4 py-2.5 bg-black/5 hover:bg-black/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-black/10"
-                        >
+                          class="px-3 py-2 bg-background hover:bg-background rounded-full text-[9px] font-black uppercase tracking-widest transition-all border border-foreground/10 text-foreground/75">
                           {{ action.label }}
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  <div v-if="isChatLoading" class="flex justify-end animate-pulse">
-                    <div class="bg-primary/10 border border-primary/20 px-6 py-4 rounded-3xl rounded-tr-none">
-                      <div class="flex gap-2">
-                        <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                        <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                        <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                    <div v-if="isChatLoading" class="flex flex-col items-start gap-2 animate-pulse">
+                      <div class="flex items-center gap-2 px-1">
+                        <div
+                          class="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-black text-foreground border border-primary/10 shadow-sm"
+                          :style="{ background: demoAccentSoft }">
+                          <component :is="demoChatIcon" class="w-3.5 h-3.5"
+                            :style="chatbot?.chat_icon_color ? { color: chatbot.chat_icon_color } : {}" />
+                        </div>
+                        <span class="text-[10px] font-bold tracking-wide text-foreground/50">ReplySuite assistant</span>
+                      </div>
+                      <div
+                        class="border border-foreground/6 dark:border-white/5 px-4 py-3 rounded-2xl rounded-bl-md shadow-sm dark:shadow-none bg-background dark:bg-zinc-900">
+                        <div class="flex gap-1.5">
+                          <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                          <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                          <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </template>
                 </div>
               </div>
 
-              <div class="p-8 pt-0 mt-auto">
-                <p class="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-3">Ask about pricing, setup, training, or deployment</p>
+              <div
+                class="p-4 pt-3 mt-auto border-t border-foreground/6 dark:border-white/5 bg-background-card dark:bg-zinc-900">
+                <div class="flex items-center gap-2 mb-3 text-foreground/40">
+                  <button type="button"
+                    class="w-9 h-9 rounded-xl border border-foreground/8 dark:border-white/5 bg-foreground/[0.02] dark:bg-white/[0.02] flex items-center justify-center hover:bg-foreground/[0.04] dark:hover:bg-white/[0.05] transition-colors">
+                    <Paperclip class="w-4 h-4" />
+                  </button>
+                  <button type="button"
+                    class="w-9 h-9 rounded-xl border border-foreground/8 dark:border-white/5 bg-foreground/[0.02] dark:bg-white/[0.02] flex items-center justify-center hover:bg-foreground/[0.04] dark:hover:bg-white/[0.05] transition-colors">
+                    <SmilePlus class="w-4 h-4" />
+                  </button>
+                </div>
                 <form @submit.prevent="sendDemoMessage" class="relative flex items-center group/form">
-                  <input
-                    v-model="chatInput"
-                    placeholder="Ask the demo bot a question..."
-                    class="w-full bg-foreground/[0.04] rounded-2xl pl-6 pr-14 py-4 border border-foreground/10 text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/40 focus:bg-background-card transition-all font-bold shadow-inner"
-                  />
-                  <button
-                    type="submit"
-                    :disabled="!chatInput.trim() || isChatLoading"
-                    class="absolute right-2 w-10 h-10 bg-primary text-black rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-20"
-                  >
+                  <input v-model="chatInput" :disabled="isChatbotLoading" :placeholder="isChatbotLoading ? 'Loading chatbot…' : 'Send us a message...'"
+                    class="w-full bg-background dark:bg-zinc-900 rounded-2xl pl-4 pr-14 py-4 border border-foreground/8 dark:border-white/5 text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/20 focus:bg-background-card dark:focus:bg-zinc-900 transition-all font-semibold shadow-[0_4px_18px_rgba(15,23,42,0.04)] dark:shadow-none disabled:opacity-70 disabled:cursor-not-allowed" />
+                  <button type="submit" :disabled="isChatbotLoading || !chatInput.trim() || isChatLoading"
+                    class="absolute right-2 w-10 h-10 text-foreground rounded-xl flex items-center justify-center shadow-lg shadow-primary/10 hover:scale-105 active:scale-95 transition-all disabled:opacity-20 disabled:cursor-not-allowed border border-primary/8"
+                    :style="{ background: demoAssistantBubble }">
                     <Send class="w-4 h-4" />
                   </button>
                 </form>
+
+                <div class="mt-3 flex items-center justify-between gap-3 text-[10px] font-semibold text-foreground/40">
+                  <span>Usually replies in a few seconds</span>
+                  <span class="text-primary/60">ReplySuite</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="absolute -z-10 -right-20 -bottom-20 w-64 h-64 bg-primary/10 rounded-full blur-[100px] animate-pulse"></div>
+          <div class="absolute -z-10 -right-20 -bottom-20 w-64 h-64 bg-primary/10 rounded-full blur-[100px]"></div>
         </div>
       </div>
     </section>
 
     <section class="max-w-7xl mx-auto px-6 py-8 md:py-12">
       <div class="grid md:grid-cols-3 gap-6">
-        <div v-for="card in proofCards" :key="card.title" class="glass-card p-8 border-foreground/10 bg-foreground/[0.02]">
-          <div class="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
+        <div v-for="card in proofCards" :key="card.title"
+          class="glass-card p-8 border-foreground/10 bg-foreground/[0.02]">
+          <div
+            class="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
             <component :is="card.icon" class="w-7 h-7 text-primary" />
           </div>
           <h3 class="text-xl font-black text-foreground mb-3 tracking-tight">{{ card.title }}</h3>
@@ -560,12 +746,14 @@ const handleSelect = async (plan: any) => {
           </h2>
         </div>
         <p class="text-foreground/50 max-w-xl font-semibold leading-relaxed">
-          This is the simplest way to get a business-trained AI assistant live without building a custom AI stack from scratch.
+          This is the simplest way to get a business-trained AI assistant live without building a custom AI stack from
+          scratch.
         </p>
       </div>
 
       <div class="grid md:grid-cols-3 gap-8">
-        <div v-for="step in steps" :key="step.num" class="glass-card p-10 border-foreground/10 relative overflow-hidden group hover:border-primary/20 transition-all duration-500">
+        <div v-for="step in steps" :key="step.num"
+          class="glass-card p-10 border-foreground/10 relative overflow-hidden group hover:border-primary/20 transition-all duration-500">
           <div class="text-[11px] font-black tracking-[0.35em] text-primary uppercase mb-6">Step {{ step.num }}</div>
           <h3 class="text-2xl font-black mb-4 text-foreground tracking-tight">{{ step.title }}</h3>
           <p class="text-foreground/55 text-sm leading-relaxed font-semibold">{{ step.desc }}</p>
@@ -584,13 +772,17 @@ const handleSelect = async (plan: any) => {
           <span class="text-gradient">faster.</span>
         </h2>
         <p class="text-foreground/50 font-semibold leading-relaxed">
-          ReplySuite is easiest to buy when the outcome is obvious: faster answers, fewer missed leads, and better customer response coverage.
+          ReplySuite is easiest to buy when the outcome is obvious: faster answers, fewer missed leads, and better
+          customer
+          response coverage.
         </p>
       </div>
 
       <div class="grid md:grid-cols-3 gap-8">
-        <div v-for="item in useCases" :key="item.title" class="glass-card p-10 border-foreground/10 bg-foreground/[0.02] hover:border-primary/20 transition-all duration-500">
-          <div class="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-8">
+        <div v-for="item in useCases" :key="item.title"
+          class="glass-card p-10 border-foreground/10 bg-foreground/[0.02] hover:border-primary/20 transition-all duration-500">
+          <div
+            class="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-8">
             <component :is="item.icon" class="w-7 h-7 text-primary" />
           </div>
           <h3 class="text-2xl font-black mb-4 text-foreground tracking-tight">{{ item.title }}</h3>
@@ -608,15 +800,18 @@ const handleSelect = async (plan: any) => {
           <span class="text-gradient">answering questions 24/7.</span>
         </h2>
         <p class="text-foreground/50 font-semibold leading-relaxed max-w-3xl mx-auto">
-          The difference is not just "having AI." It is having a chatbot trained on your real business content, deployed where customers already talk, and designed to reduce repetitive support work.
+          The difference is not just "having AI." It is having a chatbot trained on your real business content, deployed
+          where customers already talk, and designed to reduce repetitive support work.
         </p>
       </div>
 
       <div class="grid lg:grid-cols-[1fr_auto_1fr] gap-8 items-stretch">
-        <div class="glass-card relative p-10 md:p-12 border border-rose-500/20 bg-[linear-gradient(180deg,rgba(244,63,94,0.10),rgba(255,255,255,0.02))] overflow-hidden">
+        <div
+          class="glass-card relative p-10 md:p-12 border border-rose-500/20 bg-[linear-gradient(180deg,rgba(244,63,94,0.10),rgba(255,255,255,0.02))] overflow-hidden">
           <div class="absolute -top-16 -left-10 w-40 h-40 rounded-full bg-rose-500/10 blur-3xl"></div>
           <div class="relative">
-            <div class="inline-flex items-center gap-3 rounded-full border border-rose-500/20 bg-rose-500/10 px-4 py-2 mb-8">
+            <div
+              class="inline-flex items-center gap-3 rounded-full border border-rose-500/20 bg-rose-500/10 px-4 py-2 mb-8">
               <X class="w-4 h-4 text-rose-300" />
               <span class="text-[10px] font-black uppercase tracking-widest text-rose-200">Before</span>
             </div>
@@ -627,9 +822,11 @@ const handleSelect = async (plan: any) => {
               Too generic, too hard to maintain, and not grounded in the real information your customers actually need.
             </p>
             <div class="space-y-4">
-              <div v-for="item in beforePoints" :key="item.title" class="rounded-[24px] border border-white/5 bg-black/15 p-5">
+              <div v-for="item in beforePoints" :key="item.title"
+                class="rounded-[24px] border border-white/5 bg-black/15 p-5">
                 <div class="flex items-start gap-4">
-                  <div class="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div
+                    class="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <X class="w-4 h-4 text-rose-300" />
                   </div>
                   <div>
@@ -643,15 +840,18 @@ const handleSelect = async (plan: any) => {
         </div>
 
         <div class="hidden lg:flex items-center justify-center">
-          <div class="w-16 h-16 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center shadow-[0_0_40px_rgba(168,85,247,0.18)]">
+          <div
+            class="w-16 h-16 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center shadow-[0_0_40px_rgba(168,85,247,0.18)]">
             <ArrowRight class="w-7 h-7 text-primary" />
           </div>
         </div>
 
-        <div class="glass-card relative p-10 md:p-12 border border-primary/20 bg-[linear-gradient(180deg,rgba(168,85,247,0.12),rgba(255,255,255,0.02))] overflow-hidden">
+        <div
+          class="glass-card relative p-10 md:p-12 border border-primary/20 bg-[linear-gradient(180deg,rgba(168,85,247,0.12),rgba(255,255,255,0.02))] overflow-hidden">
           <div class="absolute -bottom-16 -right-10 w-44 h-44 rounded-full bg-primary/10 blur-3xl"></div>
           <div class="relative">
-            <div class="inline-flex items-center gap-3 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 mb-8">
+            <div
+              class="inline-flex items-center gap-3 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 mb-8">
               <Check class="w-4 h-4 text-primary" />
               <span class="text-[10px] font-black uppercase tracking-widest text-primary">After</span>
             </div>
@@ -659,16 +859,24 @@ const handleSelect = async (plan: any) => {
               An automated resource that strengthens your support team
             </h3>
             <p class="text-sm text-foreground/55 font-semibold leading-relaxed mb-8 max-w-xl">
-              Train once on your business content, answer faster on your website, and grow into WhatsApp support when you are ready.
+              Train once on your business content, answer faster on your website, and grow into WhatsApp support when
+              you
+              are ready.
             </p>
             <div class="grid sm:grid-cols-2 gap-3 mb-8">
-              <div class="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-[11px] font-black uppercase tracking-widest text-primary text-center">Train on website + PDFs</div>
-              <div class="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-[11px] font-black uppercase tracking-widest text-primary text-center">Website first, WhatsApp next</div>
+              <div
+                class="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-[11px] font-black uppercase tracking-widest text-primary text-center">
+                Train on website + PDFs</div>
+              <div
+                class="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-[11px] font-black uppercase tracking-widest text-primary text-center">
+                Website first, WhatsApp next</div>
             </div>
             <div class="space-y-4">
-              <div v-for="item in afterPoints" :key="item.title" class="rounded-[24px] border border-white/5 bg-black/15 p-5">
+              <div v-for="item in afterPoints" :key="item.title"
+                class="rounded-[24px] border border-white/5 bg-black/15 p-5">
                 <div class="flex items-start gap-4">
-                  <div class="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div
+                    class="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Check class="w-4 h-4 text-primary" />
                   </div>
                   <div>
@@ -692,13 +900,17 @@ const handleSelect = async (plan: any) => {
             <span class="text-gradient">win more conversations.</span>
           </h2>
           <p class="text-foreground/50 font-semibold leading-relaxed max-w-2xl">
-            ReplySuite gives you the tools to train, test, and deploy one business chatbot across your website and WhatsApp. The value is simple: faster replies, fewer missed leads, and better customer coverage.
+            ReplySuite gives you the tools to train, test, and deploy one business chatbot across your website and
+            WhatsApp.
+            The value is simple: faster replies, fewer missed leads, and better customer coverage.
           </p>
         </div>
 
         <div class="space-y-6">
-          <div v-for="item in reasonsToBuy" :key="item.title" class="glass-card p-8 border-foreground/10 bg-foreground/[0.02] flex gap-5 items-start">
-            <div class="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+          <div v-for="item in reasonsToBuy" :key="item.title"
+            class="glass-card p-8 border-foreground/10 bg-foreground/[0.02] flex gap-5 items-start">
+            <div
+              class="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
               <component :is="item.icon" class="w-6 h-6 text-primary" />
             </div>
             <div>
@@ -723,8 +935,10 @@ const handleSelect = async (plan: any) => {
       </div>
 
       <div class="grid lg:grid-cols-3 gap-8">
-        <div v-for="item in testimonialSamples" :key="item.name" class="glass-card p-10 border-foreground/10 bg-foreground/[0.02]">
-          <div class="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-8">
+        <div v-for="item in testimonialSamples" :key="item.name"
+          class="glass-card p-10 border-foreground/10 bg-foreground/[0.02]">
+          <div
+            class="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-8">
             <MessageSquareMore class="w-7 h-7 text-primary" />
           </div>
           <p class="text-foreground/75 leading-relaxed font-semibold text-sm mb-8">
@@ -742,25 +956,20 @@ const handleSelect = async (plan: any) => {
       <div class="text-center mb-20 max-w-3xl mx-auto">
         <span class="badge-gradient mb-6">Pricing</span>
         <h2 class="text-4xl md:text-6xl font-extrabold text-foreground">
-          Start free, then scale into more training,
-          <span class="text-gradient">more replies, and WhatsApp.</span>
+          Start free, then scale into more domains,
+          <span class="text-gradient">more replies, and bigger rollouts.</span>
         </h2>
         <p class="text-foreground/50 mt-6 font-semibold leading-relaxed">
           Same pricing, clearer fit: choose the plan that matches your volume and channel needs.
         </p>
       </div>
 
-      <div class="grid lg:grid-cols-3 gap-8">
-        <div
-          v-for="plan in plans"
-          :key="plan.name"
+      <div class="grid xl:grid-cols-4 md:grid-cols-2 gap-8">
+        <div v-for="plan in plans" :key="plan.name"
           class="glass-card p-10 flex flex-col relative transition-all duration-500 hover:-translate-y-4 border-foreground/10"
-          :class="plan.popular ? 'border-primary/40 !bg-primary/[0.03]' : 'bg-foreground/[0.02]'"
-        >
-          <div
-            v-if="plan.popular"
-            class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-black text-[10px] font-bold tracking-widest rounded-full uppercase"
-          >
+          :class="plan.popular ? 'border-primary/40 !bg-primary/[0.03]' : 'bg-foreground/[0.02]'">
+          <div v-if="plan.popular"
+            class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-black text-[10px] font-bold tracking-widest rounded-full uppercase">
             Best Value
           </div>
 
@@ -774,23 +983,21 @@ const handleSelect = async (plan: any) => {
             <span class="text-foreground/50 font-bold tracking-widest text-[10px] uppercase">/mo</span>
           </div>
 
-          <button
-            @click="handleSelect(plan)"
-            :disabled="isProcessing === plan.id"
+          <button @click="handleSelect(plan)" :disabled="isProcessing === plan.id"
             class="w-full py-5 rounded-full font-bold text-center mb-10 transition-all tracking-widest text-xs flex items-center justify-center gap-2"
-            :class="plan.popular ? 'btn-gradient' : 'bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10 hover:border-foreground/20'"
-          >
+            :class="plan.popular ? 'btn-gradient' : 'bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10 hover:border-foreground/20'">
             <template v-if="isProcessing === plan.id">
               <Loader2 class="w-4 h-4 animate-spin" />
               Processing...
             </template>
             <template v-else>
-              {{ isAuthenticated ? (plan.id === 'starter' ? 'Activate Free' : 'Select Plan') : (plan.id === 'gold' ? 'Get Started' : 'Start Free') }}
+              {{ isAuthenticated ? (plan.id === 'starter' ? 'Activate Free' : 'Select Plan') : (plan.id === 'enterprise-ready' ? 'Talk to Sales' : 'Start Free') }}
             </template>
           </button>
 
           <div class="space-y-4 flex-grow">
-            <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-3 text-xs font-semibold text-foreground/55">
+            <div v-for="feat in plan.features" :key="feat"
+              class="flex items-center gap-3 text-xs font-semibold text-foreground/55">
               <div class="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <Check class="w-2.5 h-2.5 text-primary" />
               </div>
@@ -802,7 +1009,8 @@ const handleSelect = async (plan: any) => {
     </section>
 
     <section class="max-w-5xl mx-auto px-6 py-28">
-      <div class="bg-foreground/[0.03] p-12 md:p-20 rounded-[40px] border border-foreground/10 text-center relative overflow-hidden backdrop-blur-sm">
+      <div
+        class="bg-foreground/[0.03] p-12 md:p-20 rounded-[40px] border border-foreground/10 text-center relative overflow-hidden backdrop-blur-sm">
         <div class="absolute inset-0 bg-primary/5 blur-[120px]"></div>
 
         <h2 class="text-4xl md:text-6xl font-extrabold mb-8 relative z-10 leading-tight text-foreground">
@@ -811,21 +1019,19 @@ const handleSelect = async (plan: any) => {
         </h2>
 
         <p class="text-foreground/55 max-w-2xl mx-auto mb-10 relative z-10 font-semibold leading-relaxed">
-          Start with your website, train the bot on your content, and expand into WhatsApp when you want more revenue and support automation.
+          Start with your website, train the bot on your content, and expand into WhatsApp when you want more revenue
+          and
+          support automation.
         </p>
 
         <div class="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
-          <NuxtLink
-            to="/register"
-            class="bg-foreground text-background px-10 py-5 rounded-full font-bold text-lg inline-flex items-center justify-center gap-3 hover:bg-foreground/90 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-foreground/10"
-          >
+          <NuxtLink to="/register"
+            class="bg-foreground text-background px-10 py-5 rounded-full font-bold text-lg inline-flex items-center justify-center gap-3 hover:bg-foreground/90 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-foreground/10">
             Start Free
             <ArrowRight class="w-5 h-5" />
           </NuxtLink>
-          <button
-            @click="scrollToSection('pricing')"
-            class="px-10 py-5 rounded-full font-bold text-lg inline-flex items-center justify-center gap-3 border border-foreground/10 text-foreground hover:bg-foreground/[0.04] transition-all"
-          >
+          <button @click="scrollToSection('pricing')"
+            class="px-10 py-5 rounded-full font-bold text-lg inline-flex items-center justify-center gap-3 border border-foreground/10 text-foreground hover:bg-foreground/[0.04] transition-all">
             View Pricing
             <FileText class="w-5 h-5" />
           </button>
@@ -838,35 +1044,27 @@ const handleSelect = async (plan: any) => {
     </section>
 
     <div v-if="isDemoVideoOpen" class="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
-      <button
-        class="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        aria-label="Close demo video"
-        @click="closeDemoVideo"
-      ></button>
-      <div class="relative z-10 w-full max-w-5xl rounded-[28px] border border-foreground/10 bg-background shadow-2xl overflow-hidden">
+      <button class="absolute inset-0 bg-black/80 backdrop-blur-sm" aria-label="Close demo video"
+        @click="closeDemoVideo"></button>
+      <div
+        class="relative z-10 w-full max-w-5xl rounded-[28px] border border-foreground/10 bg-background shadow-2xl overflow-hidden">
         <div class="flex items-center justify-between px-5 py-4 border-b border-foreground/10 bg-foreground/[0.02]">
           <div>
             <p class="text-sm font-black text-foreground tracking-tight">ReplySuite demo video</p>
-            <p class="text-[11px] font-semibold text-foreground/50 uppercase tracking-widest">Watch without leaving the site</p>
+            <p class="text-[11px] font-semibold text-foreground/50 uppercase tracking-widest">Watch without leaving the
+              site
+            </p>
           </div>
-          <button
-            @click="closeDemoVideo"
+          <button @click="closeDemoVideo"
             class="w-10 h-10 rounded-xl border border-foreground/10 bg-foreground/[0.03] text-foreground/60 hover:text-foreground hover:bg-foreground/[0.06] transition-all flex items-center justify-center"
-            aria-label="Close demo video"
-          >
+            aria-label="Close demo video">
             <X class="w-5 h-5" />
           </button>
         </div>
         <div class="aspect-video bg-black">
-          <iframe
-            v-if="isDemoVideoOpen"
-            class="w-full h-full"
-            :src="demoVideoUrl"
-            title="ReplySuite demo video"
+          <iframe v-if="isDemoVideoOpen" class="w-full h-full" :src="demoVideoUrl" title="ReplySuite demo video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerpolicy="strict-origin-when-cross-origin"
-            allowfullscreen
-          ></iframe>
+            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
         </div>
       </div>
     </div>
@@ -883,6 +1081,7 @@ const handleSelect = async (plan: any) => {
 }
 
 @keyframes float {
+
   0%,
   100% {
     transform: translateY(0);

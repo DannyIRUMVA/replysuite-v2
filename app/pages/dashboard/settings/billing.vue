@@ -68,16 +68,16 @@ const pricingPlans = [
     name: 'Starter',
     id: 'starter',
     price: '0',
-    features: ['1 Current AI Bot', 'Basic Knowledge Base', '50 AI Messages / month', 'Shared Infrastructure'],
-    limitDesc: 'Perfect for initial training'
+    features: ['1 current AI bot', '1 connected domain / chatbot', '100 AI replies / month', '10 training sessions'],
+    limitDesc: 'Perfect for your first website launch'
   },
   {
     name: 'Silver',
     id: 'silver',
     productId: 'dc070937-6444-40a6-8a02-fd8b25df7aae',
     price: '17.88',
-    features: ['3 Current AI Bots', 'Advanced Knowledge Base', 'Unlimited AI Messages', 'Priority Processing'],
-    limitDesc: 'For growing enterprises',
+    features: ['3 current AI bots', '5 connected domains / chatbot', '4,000 AI replies / month', 'Priority support'],
+    limitDesc: 'For growing businesses',
     popular: true
   },
   {
@@ -85,8 +85,16 @@ const pricingPlans = [
     id: 'gold',
     productId: 'd0493f6f-16bc-4d3c-97bb-7be920840f12',
     price: '26.88',
-    features: ['Unlimited AI Bots', 'Enterprise Knowledge Base', 'Unlimited AI Messages', 'Dedicated Compute'],
-    limitDesc: 'The ultimate agency ecosystem'
+    features: ['5 current AI bots', '10 connected domains / chatbot', '10,000 AI replies / month', 'WhatsApp integration'],
+    limitDesc: 'For higher volume automation'
+  },
+  {
+    name: 'Enterprise Ready',
+    id: 'enterprise-ready',
+    productId: '3e4e4e1a-e1da-4f3f-be5a-298e409c7c1e',
+    price: '350.88',
+    features: ['50 current AI bots', '100 connected domains / chatbot', '500,000 AI replies / month', 'Custom-ready starter templates'],
+    limitDesc: 'For large-scale deployments'
   }
 ]
 
@@ -180,18 +188,18 @@ const handleUpgrade = async (plan: any) => {
         </div>
 
         <div v-else class="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h3 class="text-xl font-black tracking-wide text-primary mb-6">Billing Hub</h3>
+          <h3 class="text-xl font-black tracking-wide text-primary mb-6">Billing & Plans</h3>
 
           <!-- Active Plan Badge -->
           <div class="mb-12 flex flex-col md:flex-row items-start md:items-center justify-between p-6 gap-6 glass-card border-primary/30 bg-primary/10">
             <div class="flex items-center gap-4">
               <div class="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary">
-                <Crown v-if="planSlug === 'gold'" class="w-6 h-6" />
+                <Crown v-if="planSlug === 'gold' || planSlug === 'enterprise-ready'" class="w-6 h-6" />
                 <Shield v-else-if="planSlug === 'silver'" class="w-6 h-6" />
                 <Zap v-else class="w-6 h-6" />
               </div>
               <div>
-                <p class="text-[10px] font-black uppercase tracking-widest text-primary">Current Subscription</p>
+                <p class="text-[10px] font-black uppercase tracking-widest text-primary">Current Plan</p>
                 <h4 class="text-lg font-black uppercase tracking-tighter">{{ planSlug }}</h4>
               </div>
             </div>
@@ -211,7 +219,7 @@ const handleUpgrade = async (plan: any) => {
           </div>
 
           <!-- Pricing Tiers Grid -->
-          <div class="grid md:grid-cols-3 gap-6 mb-16">
+          <div class="grid xl:grid-cols-4 md:grid-cols-2 gap-6 mb-16">
             <div v-for="p in pricingPlans" :key="p.id"
               class="glass-card p-8 border-foreground/10 bg-foreground/5 flex flex-col relative overflow-hidden group hover:border-primary/20 transition-all"
               :class="{ 'border-primary/30 !bg-primary/[0.03]': planSlug === p.id }">
@@ -221,7 +229,12 @@ const handleUpgrade = async (plan: any) => {
                 Popular
               </div>
 
-              <h5 class="text-sm font-black uppercase tracking-widest text-foreground/50 mb-1">{{ p.name }}</h5>
+              <div class="flex items-center justify-between gap-3 mb-1">
+                <h5 class="text-sm font-black uppercase tracking-widest text-foreground/50">{{ p.name }}</h5>
+                <span class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/35">
+                  {{ p.id === 'starter' ? 'Start here' : p.id === 'silver' ? 'Growth' : p.id === 'gold' ? 'Website + WhatsApp' : 'Scale' }}
+                </span>
+              </div>
               <div class="flex items-baseline gap-1 mb-4">
                 <span class="text-3xl font-black text-foreground">${{ p.price }}</span>
                 <span class="text-xs text-foreground/50">/mo</span>
@@ -245,7 +258,7 @@ const handleUpgrade = async (plan: any) => {
                   <Loader2 class="w-3 h-3 animate-spin" /> processing
                 </span>
                 <span v-else-if="planSlug === p.id">Current Plan</span>
-                <span v-else>Select Plan</span>
+                <span v-else>{{ p.id === 'starter' ? 'Choose Starter' : p.id === 'silver' ? 'Choose Silver' : p.id === 'gold' ? 'Choose Gold' : 'Choose Enterprise Ready' }}</span>
               </button>
             </div>
           </div>

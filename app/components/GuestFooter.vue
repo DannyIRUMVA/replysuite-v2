@@ -2,6 +2,7 @@
 import { Zap, Instagram, Globe2, Linkedin } from 'lucide-vue-next'
 
 const { openFeedback } = useFeedback()
+const { openSettings } = useCookieConsent()
 
 const socialLinks = [
   {
@@ -116,10 +117,16 @@ const socialLinks = [
 
     <!-- Bottom Bar -->
     <div class="pt-10 border-t border-foreground/5 flex flex-col md:flex-row items-center justify-between gap-8">
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-3">
         <div class="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">
           © 2026 ReplySuite Ltd. All rights reserved.
         </div>
+        <button
+          @click="openSettings"
+          class="text-left text-[10px] text-foreground/40 hover:text-primary transition-colors font-bold uppercase tracking-widest"
+        >
+          Cookie settings
+        </button>
       </div>
 
       <div class="flex items-center gap-8">

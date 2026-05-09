@@ -124,9 +124,9 @@ const formatDate = (dateString: string) => {
 const isExporting = ref(false)
 const exportToCSV = async () => {
     // Check membership (Silver or Gold)
-    const allowedPlans = ['silver', 'gold']
+    const allowedPlans = ['silver', 'gold', 'enterprise-ready']
     if (!allowedPlans.includes(planSlug.value || '')) {
-        notify.error('Exporting is a premium feature. Please upgrade to Silver or Gold.')
+        notify.error('Exporting is a premium feature. Please upgrade to Silver, Gold, or Enterprise Ready.')
         return
     }
 

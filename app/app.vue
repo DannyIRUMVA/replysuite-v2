@@ -2,6 +2,7 @@
 import '~/assets/css/main.css'
 
 const { showFeedback, feedbackSource, closeFeedback } = useFeedback()
+const user = useSupabaseUser()
 </script>
 
 <template>
@@ -10,6 +11,8 @@ const { showFeedback, feedbackSource, closeFeedback } = useFeedback()
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+
+    <CookieConsentModal v-if="!user" />
 
     <!-- Global UI Providers -->
     <ToastProvider />

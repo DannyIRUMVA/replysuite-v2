@@ -41,7 +41,7 @@ const trainingJobs = ref<any[]>([])
 const monthlyUsage = ref(0)
 const totalTrainings = ref(0)
 
-const isPremium = computed(() => ['silver', 'gold'].includes(planSlug.value || ''))
+const isPremium = computed(() => ['silver', 'gold', 'enterprise-ready'].includes(planSlug.value || ''))
 
 const renderMarkdown = (text: string) => {
   if (!text) return ''
