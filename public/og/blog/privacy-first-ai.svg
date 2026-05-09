@@ -1,0 +1,14 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#09090B"/>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="170" cy="120" r="220" fill="#A855F7" fill-opacity="0.18"/>
+  <circle cx="1040" cy="520" r="240" fill="#3B82F6" fill-opacity="0.14"/>
+  <text x="70" y="92" fill="#A855F7" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="700" letter-spacing="6">TRUST &amp; SECURITY</text>
+  <text x="70" y="210" fill="white" font-size="64" font-family="Arial, Helvetica, sans-serif" font-weight="800">Privacy-First AI:</text>
+  <text x="70" y="286" fill="white" font-size="64" font-family="Arial, Helvetica, sans-serif" font-weight="800">Navigating GDPR</text>
+  <text x="70" y="362" fill="white" font-size="64" font-family="Arial, Helvetica, sans-serif" font-weight="800">in 2026</text>
+  <rect x="70" y="448" width="500" height="76" rx="24" fill="white" fill-opacity="0.06"/>
+  <text x="102" y="494" fill="#D4D4D8" font-size="28" font-family="Arial, Helvetica, sans-serif" font-weight="600">Grounded AI answers and better control</text>
+  <text x="918" y="84" fill="white" fill-opacity="0.10" font-size="56" font-family="Arial, Helvetica, sans-serif" font-weight="800">ReplySuite</text>
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse"><stop stop-color="#111827"/><stop offset="0.55" stop-color="#0B1020"/><stop offset="1" stop-color="#09090B"/></linearGradient></defs>
+</svg>

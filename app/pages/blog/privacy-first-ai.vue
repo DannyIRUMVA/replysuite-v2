@@ -1,100 +1,87 @@
 <script setup lang="ts">
-import { ArrowLeft, ShieldCheck, Lock, Globe, Zap, ArrowRight, EyeOff, Scale, Calendar, Clock } from 'lucide-vue-next'
+import ArticleView from '~~/app/components/blog/ArticleView.vue'
+import { blogArticleMap } from '~~/app/data/blog'
+
+const articleMeta = blogArticleMap['privacy-first-ai']
 
 useSeoMeta({
-  title: 'Privacy-First AI: Navigating GDPR in 2026 | ReplySuite',
-  description: 'Learn how ReplySuite handles data sovereignty, PII protection, and compliance with global AI regulations.',
+  title: `${articleMeta.title} | ReplySuite`,
+  description: articleMeta.description,
+  ogTitle: articleMeta.title,
+  ogDescription: articleMeta.description,
+  ogType: 'article',
+  ogImage: `https://replysuite.app${articleMeta.ogImage}`,
+  twitterCard: 'summary_large_image',
+  twitterTitle: articleMeta.title,
+  twitterDescription: articleMeta.description,
+  twitterImage: `https://replysuite.app${articleMeta.ogImage}`
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: `https://replysuite.app${articleMeta.to}` }]
 })
 
 definePageMeta({
   layout: 'default'
 })
+
+const { data: article, pending } = await useAsyncData('blog-privacy-first-ai', async () => articleMeta)
 </script>
 
 <template>
-  <div class="relative min-h-screen pb-40">
-    <!-- Hero -->
-    <section class="max-w-4xl mx-auto px-6 pt-32 pb-20 relative overflow-hidden">
-      <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10"></div>
-      <NuxtLink to="/blog" class="flex items-center gap-2 text-foreground/50 hover:text-primary transition-colors mb-12 font-bold text-xs uppercase tracking-widest group">
-        <ArrowLeft class="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-        Back to Insights
-      </NuxtLink>
-      
-      <span class="badge-gradient mb-8">Trust & Security</span>
-      <h1 class="text-5xl md:text-7xl font-extrabold mb-8 tracking-tighter leading-[0.9] text-foreground">
-        Privacy-First <span class="text-gradient">AI Architecture.</span>
-      </h1>
-      
-      <div class="flex flex-wrap items-center gap-8 pt-8 border-t border-foreground/5">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center font-bold text-xs text-primary">SC</div>
-          <span class="text-foreground font-bold text-sm">Security Council</span>
-        </div>
-        <div class="flex items-center gap-6 text-xs text-foreground/40 font-bold uppercase tracking-widest">
-           <div class="flex items-center gap-2"><Calendar class="w-3 h-3" /> May 03, 2026</div>
-           <div class="flex items-center gap-2"><Clock class="w-3 h-3" /> 10 min read</div>
-        </div>
+  <ArticleView :article="article || articleMeta" :pending="pending" :cta="{
+    title: 'Want a privacy-conscious chatbot workflow?',
+    text: 'Train your chatbot on your business content and manage website and WhatsApp conversations from one product.',
+    buttonLabel: 'Start free',
+    buttonTo: '/register'
+  }">
+    <p class="text-xl text-foreground/70 leading-relaxed font-medium mb-12">
+      Privacy-first AI sounds good in marketing copy, but businesses need a more practical answer. If an AI chatbot is handling customer questions, business documents, and support conversations, the important questions are simple: <strong>What data goes in? Who can access it? How is it used? And how much control do you keep?</strong>
+    </p>
+
+    <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight">Why privacy matters more in AI support</h2>
+    <p class="text-foreground/50 mb-8">
+      A chatbot for customer support is not just a design feature. It can sit in front of pricing questions, account questions, order updates, support complaints, and internal business information. That means privacy is not a side issue. It is part of product quality.
+    </p>
+    <p class="text-foreground/50 mb-12">
+      When a business trains a chatbot on its website, PDFs, or FAQs, it needs confidence that the process is controlled and understandable. The more the bot handles real support work, the more that trust matters.
+    </p>
+
+    <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight">What privacy-first AI should mean in practice</h2>
+    <div class="not-prose grid gap-6 my-14">
+      <div v-for="item in [
+        { title: 'Clear training sources', desc: 'You should know exactly what content the chatbot is trained on.' },
+        { title: 'Scoped access', desc: 'User data and chatbot data should stay bounded to the correct account and workflow.' },
+        { title: 'Operational visibility', desc: 'Teams should be able to review and improve the chatbot instead of treating it like a black box.' }
+      ]" :key="item.title" class="p-8 rounded-[28px] bg-foreground/[0.02] border border-foreground/10">
+        <h3 class="text-lg font-bold text-foreground mb-3 tracking-tight">{{ item.title }}</h3>
+        <p class="text-sm text-foreground/60 leading-relaxed font-medium">{{ item.desc }}</p>
       </div>
-    </section>
+    </div>
 
-    <!-- Content -->
-    <article class="max-w-3xl mx-auto px-6 prose dark:prose-invert prose-primary prose-lg">
-      <p class="text-xl text-foreground/70 leading-relaxed font-medium mb-12">
-        As AI becomes the backbone of customer engagement, the risk of data leakage and non-compliance has reached an all-time high. In 2026, privacy is no longer a checkbox—it's a competitive advantage.
-      </p>
+    <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight">The risk of generic AI answers</h2>
+    <p class="text-foreground/50 mb-8">
+      Privacy is not only about data storage. It is also about answer quality. A generic chatbot that is not grounded in your content can say the wrong thing with confidence. That is a customer trust issue as much as it is a product issue.
+    </p>
+    <p class="text-foreground/50 mb-12">
+      A better approach is to train the chatbot on your actual business content so replies are more relevant, more constrained, and easier to improve over time.
+    </p>
 
-      <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight">The Challenge of LLM Sovereignty</h2>
-      <p class="text-foreground/50 mb-10">
-        Most AI platforms send your data to centralized models where it can potentially be used for training. ReplySuite takes a fundamentally different approach. We utilize **Logically Isolated RAG (Retrieval-Augmented Generation)** to ensure your brand's data never leaves your secure environment.
-      </p>
+    <blockquote class="border-l-4 border-primary pl-8 my-16 text-foreground/70 italic font-medium py-4 bg-primary/5 rounded-r-3xl pr-8">
+      Good AI support is not just about faster answers. It is about controlled answers, grounded answers, and answers the business can stand behind.
+    </blockquote>
 
-      <!-- Key Pillars -->
-      <div class="not-prose grid gap-6 my-20">
-        <div v-for="p in [
-          { title: 'PII Redaction', desc: 'Automatic detection and stripping of sensitive customer data before AI processing.', icon: EyeOff },
-          { title: 'Data Residency', icon: Globe, desc: 'Choose where your data lives: EU (Frankfurt), US (Virginia), or Africa (Kigali).' },
-          { title: 'Zero-Retrain Policy', icon: Lock, desc: 'Your data is never used to improve global models. It stays yours, forever.' }
-        ]" :key="p.title" class="p-8 rounded-[32px] bg-foreground/[0.02] border border-foreground/5 flex gap-8 items-start group">
-          <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-110 transition-transform">
-             <component :is="p.icon" class="w-6 h-6" />
-          </div>
-          <div>
-            <h4 class="text-xl font-bold text-foreground mb-2 tracking-tight">{{ p.title }}</h4>
-            <p class="text-sm text-foreground/50 leading-relaxed font-medium">{{ p.desc }}</p>
-          </div>
-        </div>
-      </div>
+    <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight">How ReplySuite fits this conversation</h2>
+    <p class="text-foreground/50 mb-8">
+      ReplySuite is strongest when businesses want a practical workflow: train the chatbot on owned content, deploy it on the website, monitor the results, and then expand into WhatsApp if the business wants another high-value support channel.
+    </p>
+    <p class="text-foreground/50 mb-12">
+      That workflow makes privacy easier to reason about because the training content, deployment path, and chatbot purpose stay connected. It is easier to understand than an AI layer that feels detached from the actual business content.
+    </p>
 
-      <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight">Meeting the 2026 Standards</h2>
-      <p class="text-foreground/50 mb-10">
-        With the enforcement of the **Global AI Act**, brands are now legally required to provide transparency about how AI decisions are made. ReplySuite’s "Explainable AI" logs allow your legal team to audit exactly why an agent provided a specific response.
-      </p>
-
-      <blockquote class="border-l-4 border-primary pl-8 my-16 text-foreground/70 italic font-medium py-4 bg-primary/5 rounded-r-3xl pr-8">
-        "Privacy-first engineering isn't just about security; it's about building a relationship with your customer that is based on absolute transparency."
-        <footer class="mt-4 text-xs font-bold uppercase tracking-widest text-primary">— ReplySuite CTO</footer>
-      </blockquote>
-
-      <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight">Conclusion</h2>
-      <p class="text-foreground/50 mb-12">
-        Scaling your brand with AI shouldn't mean sacrificing your customer's trust. By adopting a privacy-first infrastructure, you protect your liability and your reputation simultaneously.
-      </p>
-
-      <!-- Bottom CTA -->
-      <div class="not-prose p-12 rounded-[48px] bg-foreground/[0.02] border border-foreground/5 text-center mt-32 relative overflow-hidden group">
-         <div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity blur-[80px]"></div>
-         <ShieldCheck class="w-12 h-12 text-primary mx-auto mb-8" />
-         <h3 class="text-3xl font-bold text-foreground mb-6 tracking-tight">Audit-Ready AI.</h3>
-         <p class="text-foreground/50 mb-10 max-w-lg mx-auto font-medium">Download our Security Posture whitepaper or start a free trial.</p>
-         <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
-            <NuxtLink to="/register" class="btn-gradient px-10 py-5 inline-flex items-center gap-4 group/btn">
-                Start Scaling Securely
-                <ArrowRight class="w-5 h-5 group-hover/btn:translate-x-2 transition-transform" />
-            </NuxtLink>
-            <NuxtLink to="/security" class="text-foreground font-bold hover:text-primary transition-colors text-sm uppercase tracking-widest">View Security Policy</NuxtLink>
-         </div>
-      </div>
-    </article>
-  </div>
+    <h2 class="text-3xl font-bold text-foreground mb-8 tracking-tight">Final takeaway</h2>
+    <p class="text-foreground/50 mb-12">
+      Privacy-first AI should not mean vague promises. It should mean understandable training inputs, clearer control, and a chatbot that stays grounded in the business content you choose. For businesses adopting AI support, that is the difference between experimentation and real trust.
+    </p>
+  </ArticleView>
 </template>
