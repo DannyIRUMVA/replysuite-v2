@@ -321,23 +321,13 @@ const catalogManagerRef = ref<any>(null)
 
 <template>
   <div class="max-w-[1400px] mx-auto space-y-8 pb-24">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <NuxtLink 
-          to="/dashboard/agents"
-          class="p-2.5 bg-foreground/5 hover:bg-foreground/10 rounded-xl border border-foreground/5 transition-all text-foreground/50 hover:text-foreground"
-        >
-          <ArrowLeft class="w-5 h-5" />
-        </NuxtLink>
-        <div>
-          <h2 class="text-xl font-bold text-foreground mb-1 uppercase">Agent Intelligence</h2>
-          <div v-if="agent" class="flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-[10px]">
-            <Bot class="w-3.5 h-3.5" />
-            <span>{{ agent.name }}</span>
-          </div>
-        </div>
-      </div>
+    <div class="flex items-center justify-between gap-4">
+      <NuxtLink 
+        to="/dashboard/agents"
+        class="p-2.5 bg-foreground/5 hover:bg-foreground/10 rounded-xl border border-foreground/5 transition-all text-foreground/50 hover:text-foreground"
+      >
+        <ArrowLeft class="w-5 h-5" />
+      </NuxtLink>
 
       <button 
         @click="handleSave"

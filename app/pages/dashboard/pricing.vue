@@ -51,6 +51,8 @@ const handleSelect = async (plan: any) => {
         notify.success('Starter plan activated')
         return navigateTo('/dashboard/analytics')
       }
+    } else if (plan.id === 'enterprise-ready') {
+      return navigateTo('/contact')
     } else {
       if (!plan.productId) {
         notify.warn('Plan configuration missing. Please contact support.')
@@ -69,11 +71,8 @@ const handleSelect = async (plan: any) => {
           window.location.href = res.url
         }
       } else if (res.updated) {
-        // Handle instant update (proration)
         notify.success('Plan updated successfully! Your new limits are active.')
-        await syncWithPolar() // Deep sync to update local DB and refreshAuth
-        // Optional: navigate to dashboard
-        // return navigateTo('/dashboard/analytics')
+        await syncWithPolar()
       }
     }
   } catch (err: any) {
@@ -91,7 +90,8 @@ const plans = [
     price: '0.00',
     desc: 'Best for launching one chatbot on one website domain.',
     features: ['1 website chatbot', '1 connected website domain', '100 AI replies / mo', '10 training sessions', 'Email support'],
-    popular: false
+    popular: false,
+    accent: 'start'
   },
   {
     name: 'Silver',
@@ -100,7 +100,8 @@ const plans = [
     price: '17.88',
     desc: 'Best for growing teams that need more domains and more replies.',
     features: ['3 website chatbots', '5 connected domains / chatbot', '4,000 AI replies / mo', '30 training sessions', 'Priority support'],
-    popular: true
+    popular: true,
+    accent: 'growth'
   },
   {
     name: 'Gold',
@@ -109,7 +110,8 @@ const plans = [
     price: '26.88',
     desc: 'Built for higher volume web and WhatsApp deployments.',
     features: ['5 website chatbots', '10 connected domains / chatbot', '10,000 AI replies / mo', '100 training sessions', 'WhatsApp integration'],
-    popular: false
+    popular: false,
+    accent: 'multichannel'
   },
   {
     name: 'Enterprise Ready',
@@ -118,7 +120,8 @@ const plans = [
     price: '350.88',
     desc: 'For larger rollouts that need scale, control, and starter templates.',
     features: ['50 website chatbots', '100 connected domains / chatbot', '500,000 AI replies / mo', '1,000 training sessions', 'Custom-ready starter templates'],
-    popular: false
+    popular: false,
+    accent: 'enterprise'
   }
 ]
 
@@ -136,20 +139,6 @@ const openPortal = async () => {
 
 <template>
   <div class="px-2 md:px-4 py-8 w-full max-w-none">
-    <!-- Header -->
-    <div class="mb-10 max-w-4xl">
-      <span class="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary mb-4 inline-block tracking-wider uppercase">
-        Choose your plan
-      </span>
-      <h1 class="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight mb-4">
-        Pick the plan that fits your
-        <span class="text-gradient">next stage of growth.</span>
-      </h1>
-      <p class="text-foreground/60 text-base leading-relaxed max-w-3xl">
-        Start with one website chatbot, then upgrade when you need more domains, more replies, WhatsApp automation, or a larger rollout.
-      </p>
-    </div>
-
     <div class="grid xl:grid-cols-4 md:grid-cols-2 gap-4 mb-12">
       <div class="rounded-3xl border border-foreground/10 bg-foreground/[0.02] p-5">
         <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary mb-2">New here?</p>
@@ -185,17 +174,23 @@ const openPortal = async () => {
         v-for="plan in plans" 
         :key="plan.name"
         class="glass-card p-10 flex flex-col relative transition-all duration-300 hover:border-primary/30 border-foreground/5"
-        :class="plan.popular ? 'border-primary/20 bg-primary/[0.02]' : ''"
+        :class="[
+          plan.popular ? 'border-primary/30 bg-primary/[0.03] shadow-xl shadow-primary/5 -translate-y-1' : '',
+          plan.id === 'enterprise-ready' ? 'border-cyan-400/20 bg-cyan-400/[0.03]' : ''
+        ]"
       >
         <div v-if="plan.popular" class="absolute -top-3 left-6 px-4 py-1 bg-primary text-black text-[9px] font-bold tracking-widest rounded-full uppercase">
-          Best value
+          Most popular
+        </div>
+        <div v-else-if="plan.id === 'enterprise-ready'" class="absolute -top-3 left-6 px-4 py-1 bg-cyan-400 text-black text-[9px] font-bold tracking-widest rounded-full uppercase">
+          Talk to sales
         </div>
 
         <div class="mb-8">
           <div class="flex items-center justify-between gap-3 mb-3">
             <h3 class="text-2xl font-bold text-foreground">{{ plan.name }}</h3>
             <span class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">
-              {{ plan.id === 'starter' ? 'Start here' : plan.id === 'silver' ? 'Growth' : plan.id === 'gold' ? 'Website + WhatsApp' : 'Scale' }}
+              {{ plan.id === 'starter' ? 'Start here' : plan.id === 'silver' ? 'Growth' : plan.id === 'gold' ? 'Website + WhatsApp' : 'Sales-assisted' }}
             </span>
           </div>
           <p class="text-sm text-foreground/55 font-medium leading-relaxed">{{ plan.desc }}</p>
@@ -215,7 +210,7 @@ const openPortal = async () => {
                 ? 'Growing businesses that need more web coverage.'
                 : plan.id === 'gold'
                   ? 'Businesses ready for both website and WhatsApp conversations.'
-                  : 'Teams rolling out multiple bots across many domains.' }}
+                  : 'Teams that want onboarding help, larger rollout support, and scale.' }}
           </p>
         </div>
 
@@ -233,7 +228,7 @@ const openPortal = async () => {
             current plan
           </template>
           <template v-else>
-            {{ plan.id === 'starter' ? 'Start with Starter' : plan.id === 'silver' ? 'Choose Silver' : plan.id === 'gold' ? 'Choose Gold' : 'Choose Enterprise Ready' }}
+            {{ plan.id === 'starter' ? 'Start with Starter' : plan.id === 'silver' ? 'Choose Silver' : plan.id === 'gold' ? 'Choose Gold' : 'Contact Sales' }}
           </template>
         </button>
 
@@ -244,6 +239,26 @@ const openPortal = async () => {
             </div>
             {{ feat }}
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-12 rounded-[32px] border border-primary/15 bg-primary/[0.03] p-6 md:p-8">
+      <div class="grid lg:grid-cols-3 gap-6">
+        <div>
+          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary mb-2">What happens next?</p>
+          <h3 class="text-lg font-bold text-foreground mb-2">You will not get lost after choosing a plan.</h3>
+          <p class="text-sm text-foreground/60 leading-relaxed">Once you select a plan, you can create your chatbot, connect your website, train it on your content, and test it before going live.</p>
+        </div>
+        <div class="rounded-2xl border border-foreground/10 bg-background/60 p-5">
+          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45 mb-2">Step 1</p>
+          <p class="text-sm font-semibold text-foreground">Create your chatbot</p>
+          <p class="text-sm text-foreground/55 mt-2">Start with one bot, set its tone, then prepare it for your website.</p>
+        </div>
+        <div class="rounded-2xl border border-foreground/10 bg-background/60 p-5">
+          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45 mb-2">Step 2</p>
+          <p class="text-sm font-semibold text-foreground">Connect, train, and test</p>
+          <p class="text-sm text-foreground/55 mt-2">Add your domain, train your bot on real content, then test locally before launch.</p>
         </div>
       </div>
     </div>

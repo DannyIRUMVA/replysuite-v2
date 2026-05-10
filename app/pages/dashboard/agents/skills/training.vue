@@ -42,6 +42,18 @@ const monthlyUsage = ref(0)
 const totalTrainings = ref(0)
 
 const isPremium = computed(() => ['silver', 'gold', 'enterprise-ready'].includes(planSlug.value || ''))
+const activeTrainingJobs = computed(() =>
+  trainingJobs.value.filter(job => ['queued', 'processing'].includes(job.status))
+)
+
+const getJobTitle = (job: any) => job?.meta?.title || job?.meta?.filename || job?.meta?.url || 'Knowledge source'
+const getJobProgress = (job: any) => {
+  const value = Math.max(0, Math.min(100, Number(job?.progress || 0)))
+  if (value > 0) return value
+  if (['queued', 'processing'].includes(job?.status)) return 5
+  return 0
+}
+const getJobProgressLabel = (job: any) => job?.progress_label || (job?.status === 'queued' ? 'Waiting for worker' : 'Processing knowledge')
 
 const renderMarkdown = (text: string) => {
   if (!text) return ''
@@ -92,10 +104,10 @@ const fetchData = async () => {
 // Polling for processing jobs
 let pollInterval: any = null
 watch(trainingJobs, (newJobs) => {
-  const hasProcessing = newJobs.some(j => j.status === 'processing')
-  if (hasProcessing && !pollInterval) {
+  const hasActiveJobs = newJobs.some(j => ['queued', 'processing'].includes(j.status))
+  if (hasActiveJobs && !pollInterval) {
     pollInterval = setInterval(fetchData, 3000)
-  } else if (!hasProcessing && pollInterval) {
+  } else if (!hasActiveJobs && pollInterval) {
     clearInterval(pollInterval)
     pollInterval = null
   }
@@ -133,12 +145,12 @@ const handleUrlTrain = async () => {
       body: { chatbotId, url: urlForm.value.url }
     })
 
-    // Immediate visibility fix: Refresh data after a short delay to allow DB insert
     setTimeout(() => fetchData(), 1000)
 
-    const res = await trainPromise
+    const res: any = await trainPromise
     if (res.success) {
       urlForm.value.url = ''
+      notify.success(res.message || 'Website training queued successfully.')
     }
   } catch (err: any) {
     console.error('[URL Training Error]', err)
@@ -159,12 +171,12 @@ const handleTextTrain = async () => {
       body: { chatbotId, ...textForm.value }
     })
 
-    // Immediate visibility fix: Refresh data after a short delay
     setTimeout(() => fetchData(), 1000)
 
-    const res = await trainPromise
+    const res: any = await trainPromise
     if (res.success) {
       textForm.value = { title: '', content: '' }
+      notify.success(res.message || 'Text training queued successfully.')
     }
   } catch (err: any) {
     console.error('[Text Training Error]', err)
@@ -196,12 +208,12 @@ const handleFileTrain = async () => {
       body: formData
     })
 
-    // Immediate visibility fix
     setTimeout(() => fetchData(), 1000)
 
-    const res = await trainPromise
+    const res: any = await trainPromise
     if (res.success) {
       selectedFile.value = null
+      notify.success(res.message || 'Document training queued successfully.')
     }
   } catch (err: any) {
     console.error('[File Training Error]', err)
@@ -216,12 +228,12 @@ const handleDeleteSource = async (id: string) => {
   if (!(await notify.confirm('Are you sure you want to remove this knowledge source? The corresponding embeddings will also be deleted.'))) return
 
   try {
-    // Delete embeddings first
-    await supabase.from('embeddings').delete().eq('chatbot_id', chatbotId) // Simplification for now, usually you'd want to tag embeddings to source
-    await supabase.from('data_sources').delete().eq('id', id)
+    await $fetch(`/api/agents/train/source/${id}`, { method: 'DELETE' })
+    notify.success('Knowledge source removed successfully.')
     await fetchData()
   } catch (err) {
     console.error('Error deleting source:', err)
+    notify.error('Failed to delete the selected knowledge source.')
   }
 }
 
@@ -265,22 +277,11 @@ const handleTestChat = async () => {
 
 <template>
   <div class="space-y-8 pb-20 relative">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <NuxtLink to="/dashboard/agents"
-          class="p-2.5 bg-foreground/5 hover:bg-foreground/10 rounded-xl border border-foreground/5 transition-all text-foreground/40 hover:text-foreground">
-          <ArrowLeft class="w-5 h-5" />
-        </NuxtLink>
-        <div>
-          <h2 class="text-xl font-bold tracking-tight text-foreground mb-1 uppercase italic-none">Knowledge Ops</h2>
-          <div v-if="chatbot" class="flex items-center gap-2">
-            <Bot class="w-3.5 h-3.5 text-primary" />
-            <span class="text-[10px] font-bold tracking-widest text-foreground/40 uppercase italic-none">{{ chatbot.name
-              }}</span>
-          </div>
-        </div>
-      </div>
+    <div class="flex items-center justify-between gap-4">
+      <NuxtLink to="/dashboard/agents"
+        class="p-2.5 bg-foreground/5 hover:bg-foreground/10 rounded-xl border border-foreground/5 transition-all text-foreground/40 hover:text-foreground">
+        <ArrowLeft class="w-5 h-5" />
+      </NuxtLink>
 
       <button @click="showChatTest = true"
         class="group flex items-center gap-3 px-6 py-3 bg-foreground/5 hover:bg-primary hover:text-black border border-foreground/10 rounded-2xl transition-all shadow-xl">
@@ -296,6 +297,43 @@ const handleTestChat = async () => {
     <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Left: Training Interface -->
       <div class="lg:col-span-2 space-y-6 min-w-0">
+        <div v-if="activeTrainingJobs.length" class="glass-card !bg-primary/[0.04] border-primary/10 space-y-4">
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-[11px] font-bold tracking-widest text-primary uppercase italic-none">Training in Progress</p>
+              <p class="text-[10px] text-foreground/40 uppercase tracking-widest italic-none">
+                {{ activeTrainingJobs.length }} active {{ activeTrainingJobs.length === 1 ? 'job' : 'jobs' }} updating automatically
+              </p>
+            </div>
+            <Loader2 class="w-4 h-4 text-primary animate-spin" />
+          </div>
+
+          <div class="space-y-3">
+            <div
+              v-for="job in activeTrainingJobs"
+              :key="job.id"
+              class="rounded-2xl border border-primary/10 bg-background/40 p-4"
+            >
+              <div class="flex items-start justify-between gap-4 mb-2">
+                <div class="min-w-0">
+                  <p class="text-xs font-bold text-foreground truncate">{{ getJobTitle(job) }}</p>
+                  <p class="text-[10px] text-foreground/40 uppercase tracking-widest italic-none truncate">
+                    {{ getJobProgressLabel(job) }}
+                  </p>
+                </div>
+                <span class="text-xs font-bold text-primary whitespace-nowrap">{{ getJobProgress(job) }}%</span>
+              </div>
+
+              <div class="h-2 w-full bg-foreground/5 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-primary transition-all duration-500 shadow-[0_0_12px_rgba(var(--primary),0.25)]"
+                  :style="{ width: `${getJobProgress(job)}%` }"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="glass-card !bg-foreground/[0.01]">
           <!-- Tabs -->
           <div class="flex items-center gap-1 p-1 bg-foreground/5 rounded-2xl mb-8">

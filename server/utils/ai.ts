@@ -135,13 +135,14 @@ export const getChatCompletion = async (messages: ChatMessage[], options: { syst
  * Perform Vector Search in Supabase Knowledge Base
  * @param supabase - The Supabase client (passed from event handler)
  */
-export const searchKnowledge = async (supabase: any, chatbotId: string, query: string, limit = 3) => {
+export const searchKnowledge = async (supabase: any, chatbotId: string, query: string, limit = 6) => {
   const embedding = await getEmbeddings(query)
 
+  const candidateLimit = Math.max(limit * 2, 8)
   const { data, error } = await supabase.rpc('match_embeddings', {
     query_embedding: embedding,
-    match_threshold: 0.5,
-    match_count: limit,
+    match_threshold: 0.45,
+    match_count: candidateLimit,
     p_chatbot_id: chatbotId
   })
 
@@ -150,5 +151,59 @@ export const searchKnowledge = async (supabase: any, chatbotId: string, query: s
     return []
   }
 
-  return data || []
+  const matches = data || []
+  if (!matches.length) return []
+
+  const ids = matches.map((row: any) => row.id).filter(Boolean)
+  const { data: embeddingRows } = await supabase
+    .from('embeddings')
+    .select('id, content, source_id, metadata')
+    .in('id', ids)
+
+  const embeddingMap = new Map((embeddingRows || []).map((row: any) => [row.id, row]))
+  const sourceIds = Array.from(new Set((embeddingRows || []).map((row: any) => row.source_id).filter(Boolean)))
+
+  let sourceMap = new Map<string, any>()
+  if (sourceIds.length > 0) {
+    const { data: sources } = await supabase
+      .from('data_sources')
+      .select('id, type, metadata')
+      .in('id', sourceIds)
+
+    sourceMap = new Map((sources || []).map((row: any) => [row.id, row]))
+  }
+
+  const perSourceCount = new Map<string, number>()
+  const seenContent = new Set<string>()
+  const enriched: any[] = []
+
+  for (const match of matches) {
+    const embeddingRow = embeddingMap.get(match.id)
+    const sourceId = embeddingRow?.source_id || 'unknown'
+    const sourceCount = perSourceCount.get(sourceId) || 0
+    const content = embeddingRow?.content || match.content || ''
+    const fingerprint = `${sourceId}:${content.slice(0, 280)}`
+
+    if (!content || seenContent.has(fingerprint)) continue
+    if (sourceId !== 'unknown' && sourceCount >= 2) continue
+
+    seenContent.add(fingerprint)
+    perSourceCount.set(sourceId, sourceCount + 1)
+
+    const source = sourceMap.get(sourceId)
+    enriched.push({
+      id: match.id,
+      content,
+      similarity: match.similarity ?? match.score ?? 0,
+      sourceId,
+      sourceType: source?.type || embeddingRow?.metadata?.type || null,
+      title: source?.metadata?.title || source?.metadata?.filename || embeddingRow?.metadata?.page_title || null,
+      url: embeddingRow?.metadata?.page_url || source?.metadata?.url || null,
+      metadata: embeddingRow?.metadata || {},
+    })
+
+    if (enriched.length >= limit) break
+  }
+
+  return enriched
 }

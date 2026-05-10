@@ -62,16 +62,6 @@ const submitManualSetup = async () => {
         Back to WhatsApp Hub
     </NuxtLink>
 
-    <div class="flex items-center gap-6 mb-12">
-      <div class="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-        <Zap class="w-8 h-8 text-primary" />
-      </div>
-      <div>
-        <h2 class="text-2xl font-black text-foreground uppercase tracking-tighter">Connection Wizard</h2>
-        <p class="text-xs text-foreground/50 font-bold uppercase tracking-widest mt-1">Manual API Node Configuration</p>
-      </div>
-    </div>
-
     <div class="grid md:grid-cols-3 gap-8">
       <!-- Form Section -->
       <div class="md:col-span-2 space-y-8">

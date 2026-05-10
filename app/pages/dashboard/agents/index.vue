@@ -260,13 +260,7 @@ const handleDelete = async (id: string) => {
 
 <template>
   <div class="space-y-12 pb-24 lg:pb-0">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-      <div class="max-w-xl">
-        <h2 class="text-xl font-bold tracking-tight text-foreground mb-2 italic-none uppercase">AI Agents</h2>
-        <p class="text-foreground/50 text-sm italic-none">Deploy and manage your fleet of intelligent conversation specialists.</p>
-      </div>
-
+    <div class="flex justify-end">
       <div class="flex flex-col items-start md:items-end gap-2">
         <button 
           @click="canCreateAgent ? (showCreateModal = true) : null"

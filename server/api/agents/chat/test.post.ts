@@ -68,8 +68,11 @@ export default defineEventHandler(async (event) => {
     })
 
     // 4. Search Knowledge Base (RAG)
-    const contextResults = await searchKnowledge(supabaseAdmin, chatbotId, message, 3)
-    const contextText = contextResults.map((r: any) => r.content).join('\n\n---\n\n')
+    const contextResults = await searchKnowledge(supabaseAdmin, chatbotId, message, 6)
+    const contextText = contextResults.map((r: any, index: number) => {
+      const sourceLabel = [r.title, r.url].filter(Boolean).join(' · ') || r.sourceType || 'Knowledge Source'
+      return `[Source ${index + 1}: ${sourceLabel}]\n${r.content}`
+    }).join('\n\n---\n\n')
 
     // 5. Construct System Prompt with Knowledge
     const baseInstructions = chatbot.system_prompt || `You are an AI assistant for ${chatbot.name}.`

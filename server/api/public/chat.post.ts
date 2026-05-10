@@ -119,9 +119,11 @@ export default defineEventHandler(async (event) => {
       content: message,
     })
 
-    const contextResults = await searchKnowledge(supabase, chatbotId, message, 3)
-    const chunks = contextResults.map((r: any) => r.content)
-    const contextText = chunks.join('\n\n---\n\n')
+    const contextResults = await searchKnowledge(supabase, chatbotId, message, 6)
+    const contextText = contextResults.map((r: any, index: number) => {
+      const sourceLabel = [r.title, r.url].filter(Boolean).join(' · ') || r.sourceType || 'Knowledge Source'
+      return `[Source ${index + 1}: ${sourceLabel}]\n${r.content}`
+    }).join('\n\n---\n\n')
 
     const baseInstructions = chatbot.system_prompt || `You are an AI assistant for ${chatbot.name}.`
 

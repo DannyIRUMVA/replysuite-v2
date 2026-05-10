@@ -180,13 +180,7 @@ const formatDate = (d: string) => {
 <template>
   <div class="space-y-8 pb-24">
 
-    <!-- Header + Filters -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground uppercase">Intelligence Analytics</h2>
-        <p class="text-foreground/50 text-sm mt-1">Real-time data across all your AI channels and agents.</p>
-      </div>
-
+    <div class="flex justify-end">
       <div class="flex items-center gap-3 flex-wrap">
         <!-- Chatbot selector -->
         <div class="w-52">

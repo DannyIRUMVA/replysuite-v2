@@ -182,18 +182,7 @@ useHead({
         Back to WhatsApp Hub
     </NuxtLink>
 
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-12">
-      <div class="flex items-center gap-6">
-        <div class="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-          <MessageSquare class="w-8 h-8 text-primary" />
-        </div>
-        <div>
-          <h2 class="text-3xl font-black text-foreground tracking-tighter uppercase">{{ waAccount?.phone_number || 'Protocol Loading...' }}</h2>
-          <p class="text-xs text-foreground/50 font-bold uppercase tracking-widest mt-1">Live Node Configuration</p>
-        </div>
-      </div>
-      
+    <div class="flex justify-end mb-12">
       <div class="flex items-center gap-4">
         <button @click="sendTestMessage" class="px-8 py-4 rounded-xl bg-foreground/5 border border-foreground/10 text-foreground font-bold uppercase tracking-widest text-[10px] hover:bg-foreground/10 transition-all flex items-center gap-3">
           <Send class="w-3.5 h-3.5" />

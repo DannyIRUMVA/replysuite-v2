@@ -1,39 +1,60 @@
-import { createClient } from '@supabase/supabase-js'
 import { serverSupabaseClient, serverSupabaseUser, serverSupabaseServiceRole } from '#supabase/server'
-import { getEmbeddings } from '~~/server/utils/ai'
-import { checkTrainingLimit, recordTrainingUsage, getUserSubscriptionLimits } from '~~/server/utils/subscription'
-import pdf from 'pdf-parse-fork'
+import { checkTrainingLimit, getUserSubscriptionLimits } from '~~/server/utils/subscription'
+import { dispatchTrainingJob } from '~~/server/utils/training-dispatch'
+
+const SUPPORTED_TEXT_MIME = new Set([
+  'text/plain',
+  'text/markdown',
+  'text/csv',
+  'application/json',
+  'text/html',
+])
+
+function getFileKind(file: { filename?: string; type?: string }) {
+  const filename = (file.filename || '').toLowerCase()
+  const type = (file.type || '').toLowerCase()
+
+  if (type === 'application/pdf' || filename.endsWith('.pdf')) return 'pdf'
+  if (SUPPORTED_TEXT_MIME.has(type) || /\.(txt|md|csv|json|html|htm)$/i.test(filename)) return 'text'
+  return 'unsupported'
+}
 
 export default defineEventHandler(async (event) => {
   const supabase = await serverSupabaseClient(event)
+  const supabaseAdmin = serverSupabaseServiceRole(event)
   const user = await serverSupabaseUser(event)
 
-  const supabaseAdmin = serverSupabaseServiceRole(event)
-  
   if (!user) throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
 
   const formData = await readMultipartFormData(event)
   if (!formData) throw createError({ statusCode: 400, statusMessage: 'No file uploaded' })
 
-  const file = formData.find(f => f.name === 'file')
-  const chatbotId = formData.find(f => f.name === 'chatbotId')?.data.toString()
+  const file = formData.find((entry) => entry.name === 'file')
+  const chatbotId = formData.find((entry) => entry.name === 'chatbotId')?.data.toString()
 
   if (!file || !chatbotId) {
     throw createError({ statusCode: 400, statusMessage: 'Missing file or chatbotId' })
   }
 
+  const fileKind = getFileKind(file)
+  if (fileKind === 'unsupported') {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Unsupported file type. Please upload PDF, TXT, Markdown, CSV, JSON, or HTML files.'
+    })
+  }
+
   const userId = (user as any)?.id || (user as any)?.sub
   if (!userId) throw createError({ statusCode: 401, statusMessage: 'Unauthorized - Missing User ID' })
 
-  // 1. Verify ownership via USER client (respects RLS)
   const { data: chatbot, error: chatbotError } = await supabase
     .from('chatbots')
-    .select('*, user_id')
+    .select('id, user_id, current_embedding_mb')
     .eq('id', chatbotId)
     .maybeSingle()
 
   if (chatbotError) {
-    console.error('[File Training Debug] Supabase error during chatbot lookup:', chatbotError)
+    console.error('[File Training Queue] Chatbot lookup failed:', chatbotError)
     throw createError({ statusCode: 500, statusMessage: 'Database query failed' })
   }
 
@@ -41,135 +62,98 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Agent not found or access denied' })
   }
 
-  // Check training limit
   const canTrain = await checkTrainingLimit(event, chatbotId, userId)
   if (!canTrain) {
     throw createError({ statusCode: 403, statusMessage: 'Monthly training limit reached for this agent.' })
   }
 
-  // 1a. Check Capacity limit (Vector Capacity)
   const limits = await getUserSubscriptionLimits(event, userId)
   const currentSizeMB = Number(chatbot.current_embedding_mb || 0)
   if (currentSizeMB >= limits.max_embedding_mb) {
-    throw createError({ 
-      statusCode: 403, 
-      statusMessage: `Vector capacity reached (${limits.max_embedding_mb}MB). Please remove existing knowledge sources to add more.` 
+    throw createError({
+      statusCode: 403,
+      statusMessage: `Vector capacity reached (${limits.max_embedding_mb}MB). Please remove existing knowledge sources to add more.`
     })
   }
 
-  // 1b. Create Training Job record
+  const fileName = file.filename || `${fileKind}-source`
+  const storagePath = `${userId}/${chatbotId}/${Date.now()}-${fileName.replace(/[^a-zA-Z0-9._-]/g, '-')}`
+
+  const { error: uploadError } = await supabaseAdmin.storage
+    .from('training-assets')
+    .upload(storagePath, file.data, {
+      contentType: file.type || (fileKind === 'pdf' ? 'application/pdf' : 'text/plain'),
+      upsert: false,
+    })
+
+  if (uploadError) {
+    console.error('[File Training Queue] Storage upload failed:', uploadError)
+    throw createError({ statusCode: 500, statusMessage: 'Failed to upload training file.' })
+  }
+
+  const { data: source, error: sourceError } = await supabaseAdmin
+    .from('data_sources')
+    .insert({
+      chatbot_id: chatbotId,
+      user_id: userId,
+      type: fileKind === 'pdf' ? 'file' : 'text',
+      metadata: {
+        filename: fileName,
+        storage_path: storagePath,
+        content_type: file.type || null,
+        upload_kind: fileKind,
+      },
+      status: 'pending',
+      data_size_bytes: file.data.length,
+      content_text: null,
+    })
+    .select('id')
+    .single()
+
+  if (sourceError || !source?.id) {
+    await supabaseAdmin.storage.from('training-assets').remove([storagePath]).catch(() => null)
+    console.error('[File Training Queue] Failed to create source:', sourceError)
+    throw createError({ statusCode: 500, statusMessage: 'Failed to initialize file training source.' })
+  }
+
   const { data: job, error: jobError } = await supabaseAdmin
     .from('training_jobs')
     .insert({
       chatbot_id: chatbotId,
       user_id: userId,
-      status: 'processing',
-      meta: { type: 'file', filename: file.filename || file.name }
+      data_source_id: source.id,
+      status: 'queued',
+      progress: 5,
+      progress_label: 'Queued for document processing',
+      job_type: fileKind,
+      meta: {
+        type: fileKind === 'pdf' ? 'file' : 'text',
+        filename: fileName,
+        source_id: source.id,
+        storage_path: storagePath,
+        upload_kind: fileKind,
+      },
     })
-    .select()
+    .select('id')
     .single()
 
-  if (jobError) {
-    console.error('[File Training] Failed to insert job:', jobError)
-    throw createError({ statusCode: 500, statusMessage: 'Internal DB Error: Could not initialize PDF extraction' })
+  if (jobError || !job?.id) {
+    await supabaseAdmin.from('data_sources').delete().eq('id', source.id)
+    await supabaseAdmin.storage.from('training-assets').remove([storagePath]).catch(() => null)
+    console.error('[File Training Queue] Failed to create job:', jobError)
+    throw createError({ statusCode: 500, statusMessage: 'Could not queue file training.' })
   }
 
-  try {
-    // 2. Extract Text from PDF
-    const pdfData = await pdf(file.data)
-    const rawText = pdfData.text.replace(/\s+/g, ' ').trim()
+  const dispatch = await dispatchTrainingJob(event, job.id)
 
-    // 3. Chunking (4000 chars per chunk)
-    const chunks = []
-    for (let i = 0; i < rawText.length; i += 4000) {
-      chunks.push(rawText.substring(i, i + 4000))
-    }
-
-    const sourceData = {
-      chatbot_id: chatbotId,
-      user_id: user.id,
-      type: 'file',
-      metadata: { 
-        filename: file.filename,
-        content_type: file.type,
-        pages: pdfData.numpages,
-        chunk_count: chunks.length 
-      },
-      content_text: rawText,
-      status: 'completed',
-      data_size_bytes: file.data.length
-    }
-
-    // 4. Create Data Source record using ADMIN client
-    const { data: source, error: sourceError } = await supabaseAdmin
-      .from('data_sources')
-      .insert(sourceData)
-      .select()
-      .single()
-
-    if (sourceError) throw sourceError
-
-    // 5. Process Embeddings sequentially
-    let processed = 0
-    let totalSize = 0
-    for (const chunk of chunks) {
-      processed++
-      const vector = await getEmbeddings(chunk)
-      totalSize += new TextEncoder().encode(chunk).length
-      console.log(`[File Training] Processing chunk ${processed}/${chunks.length}`)
-      
-      const { error: insertError } = await supabaseAdmin
-        .from('embeddings')
-        .insert({
-          chatbot_id: chatbotId,
-          content: chunk,
-          vec: vector,
-          token_count: Math.ceil(chunk.length / 4)
-        })
-
-      if (insertError) throw insertError
-    }
-
-    // 6. Update Chatbot tracking using ADMIN client
-    const contentSizeMB = totalSize / (1024 * 1024)
-    await supabaseAdmin
-      .from('chatbots')
-      .update({ 
-        current_embedding_mb: (Number(chatbot.current_embedding_mb || 0) + contentSizeMB).toFixed(4)
-      })
-      .eq('id', chatbotId)
-
-    // 7. Record usage
-    await recordTrainingUsage(event, chatbotId, user.id, chunks.length)
-
-    // 8. Finalize Job
-    if (job) {
-      await supabaseAdmin
-        .from('training_jobs')
-        .update({ 
-          status: 'finished', 
-          finished_at: new Date().toISOString(),
-          meta: { ...job.meta as any, pages: pdfData.numpages, chunk_count: chunks.length }
-        })
-        .eq('id', job.id)
-    }
-
-    return { success: true, source }
-
-  } catch (err: any) {
-    console.error('[File Training Error]', err)
-    
-    // Update job to failed
-    if (job) {
-      await supabaseAdmin
-        .from('training_jobs')
-        .update({ 
-          status: 'failed', 
-          meta: { ...job.meta as any, error: err.message } 
-        })
-        .eq('id', job.id)
-    }
-
-    throw createError({ statusCode: 500, statusMessage: err.message || 'Error processing PDF' })
+  return {
+    success: true,
+    queued: true,
+    dispatched: dispatch.dispatched,
+    jobId: job.id,
+    sourceId: source.id,
+    message: dispatch.dispatched
+      ? 'Document training queued. Processing will continue in the background.'
+      : 'Document training queued. The worker endpoint is not configured yet, so the job remains queued.',
   }
 })

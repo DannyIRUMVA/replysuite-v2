@@ -49,18 +49,7 @@ const deleteAccount = async (id: string) => {
 
 <template>
   <div class="w-full space-y-12 pb-20">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
-          <MessageSquare class="w-6 h-6 text-primary" />
-        </div>
-        <div>
-          <h2 class="text-xl font-bold text-foreground uppercase tracking-tight">Active Deployments</h2>
-          <p class="text-[10px] font-black text-foreground/50 uppercase tracking-widest">Managed API Nodes</p>
-        </div>
-      </div>
-
+    <div class="flex justify-end mb-12">
       <NuxtLink to="/dashboard/integrations/whatsapp/setup" class="bg-primary text-black px-10 py-5 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-primary/20 flex items-center gap-3">
         <Plus class="w-4 h-4" />
         Connect New Number

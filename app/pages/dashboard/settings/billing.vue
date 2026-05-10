@@ -132,6 +132,10 @@ const handleUpgrade = async (plan: any) => {
       return
     }
 
+    if (plan.id === 'enterprise-ready') {
+      return navigateTo('/contact')
+    }
+
     if (!plan.productId) {
       notify.error('Configuration sync error. Please contact support.')
       return
@@ -258,7 +262,7 @@ const handleUpgrade = async (plan: any) => {
                   <Loader2 class="w-3 h-3 animate-spin" /> processing
                 </span>
                 <span v-else-if="planSlug === p.id">Current Plan</span>
-                <span v-else>{{ p.id === 'starter' ? 'Choose Starter' : p.id === 'silver' ? 'Choose Silver' : p.id === 'gold' ? 'Choose Gold' : 'Choose Enterprise Ready' }}</span>
+                <span v-else>{{ p.id === 'starter' ? 'Choose Starter' : p.id === 'silver' ? 'Choose Silver' : p.id === 'gold' ? 'Choose Gold' : 'Contact Sales' }}</span>
               </button>
             </div>
           </div>

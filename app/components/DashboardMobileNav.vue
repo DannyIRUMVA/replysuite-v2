@@ -32,19 +32,19 @@ const navLinks = [
 </script>
 
 <template>
-  <nav class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-lg">
-    <div class="glass-dock flex items-center justify-around py-3 px-4 rounded-[2rem] border border-foreground/10 shadow-2xl shadow-foreground/20">
+  <nav class="md:hidden fixed bottom-3 left-1/2 -translate-x-1/2 z-[100] w-[94%] max-w-lg">
+    <div class="glass-dock flex items-center justify-around py-2 px-3 rounded-[1.5rem] border border-foreground/10 shadow-2xl shadow-foreground/20">
       <NuxtLink 
         v-for="link in navLinks" 
         :key="link.name" 
         :to="link.href"
-        class="relative flex flex-col items-center gap-1 py-1 transition-all duration-300 group"
+        class="relative flex flex-col items-center gap-0.5 py-0.5 transition-all duration-300 group"
         :class="[route.path === link.href ? 'text-primary' : 'text-foreground/40']"
       >
         <div class="relative flex items-center justify-center">
            <component 
             :is="iconMap[link.icon]" 
-            class="w-5 h-5 transition-all duration-300" 
+            class="w-4.5 h-4.5 transition-all duration-300" 
             :class="[route.path === link.href ? 'scale-110' : 'group-active:scale-90']"
            />
            
@@ -54,14 +54,14 @@ const navLinks = [
             class="absolute inset-0 bg-primary/20 blur-md rounded-full animate-pulse"
            ></div>
         </div>
-        <span class="text-[9px] font-bold tracking-widest uppercase transition-all duration-300">
+        <span class="text-[8px] font-bold tracking-widest uppercase transition-all duration-300">
           {{ link.name }}
         </span>
         
         <!-- Indicator Dot -->
         <div 
           v-if="route.path === link.href" 
-          class="absolute -bottom-1 w-1 h-1 bg-primary rounded-full"
+          class="absolute -bottom-0.5 w-1 h-1 bg-primary rounded-full"
         ></div>
       </NuxtLink>
     </div>

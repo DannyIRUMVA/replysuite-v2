@@ -64,6 +64,16 @@ const getJobSource = (job: any) => {
     (s.type === 'text' && s.metadata?.title === job.meta?.title)
   )
 }
+
+const getJobType = (job: any) => job.meta?.type || job.job_type || 'batch'
+const getJobTitle = (job: any) => job.meta?.title || job.meta?.filename || job.meta?.url || 'Batch Processing'
+const getJobSubline = (job: any) => job.progress_label || job.meta?.url || job.meta?.filename || 'Manual Entry'
+const getJobProgress = (job: any) => {
+  const value = Math.max(0, Math.min(100, Number(job?.progress || 0)))
+  if (value > 0) return value
+  if (['queued', 'processing'].includes(job?.status)) return 5
+  return 0
+}
 </script>
 
 <template>
@@ -102,6 +112,9 @@ const getJobSource = (job: any) => {
 
     <div v-else class="space-y-6">
       <div class="overflow-hidden bg-foreground/[0.01] rounded-2xl border border-foreground/5">
+      <div v-if="jobs.some(job => ['queued', 'processing'].includes(job.status))" class="px-6 py-4 border-b border-foreground/5 bg-primary/5">
+        <p class="text-[10px] font-bold text-primary uppercase tracking-widest italic-none">Live training progress updates are active</p>
+      </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
@@ -124,33 +137,50 @@ const getJobSource = (job: any) => {
                     </div>
                     <div>
                       <p class="text-[11px] font-bold text-foreground mb-0.5 truncate max-w-[200px]">
-                        {{ job.meta?.title || job.meta?.filename || job.meta?.url || 'Batch Processing' }}
+                        {{ getJobTitle(job) }}
                       </p>
                       <p class="text-[9px] text-foreground/30 font-bold uppercase tracking-widest italic-none truncate max-w-[200px]">
-                        {{ job.meta?.url || job.meta?.filename || 'Manual Entry' }}
+                        {{ getJobSubline(job) }}
                       </p>
                     </div>
                   </div>
                 </td>
                 <td class="px-6 py-4">
                   <span class="px-2 py-0.5 rounded bg-foreground/5 text-[9px] font-bold text-foreground/40 uppercase tracking-widest italic-none">
-                    {{ job.meta?.type || 'BATCH' }}
+                    {{ getJobType(job) }}
                   </span>
                 </td>
                 <td class="px-6 py-4">
-                  <div class="flex items-center gap-2">
-                    <div :class="[
-                      'w-1.5 h-1.5 rounded-full', 
-                      job.status === 'finished' ? 'bg-primary' : 
-                      job.status === 'failed' ? 'bg-red-500' : 'bg-orange-500 animate-pulse'
-                    ]"></div>
-                    <span :class="[
-                      'text-[9px] font-bold uppercase tracking-widest italic-none', 
-                      job.status === 'finished' ? 'text-primary' : 
-                      job.status === 'failed' ? 'text-red-500' : 'text-orange-500'
-                    ]">
-                      {{ job.status }}
-                    </span>
+                  <div class="space-y-2 min-w-[140px]">
+                    <div class="flex items-center gap-2">
+                      <div :class="[
+                        'w-1.5 h-1.5 rounded-full', 
+                        job.status === 'finished' ? 'bg-primary' : 
+                        job.status === 'failed' ? 'bg-red-500' : 'bg-orange-500 animate-pulse'
+                      ]"></div>
+                      <span :class="[
+                        'text-[9px] font-bold uppercase tracking-widest italic-none', 
+                        job.status === 'finished' ? 'text-primary' : 
+                        job.status === 'failed' ? 'text-red-500' : 'text-orange-500'
+                      ]">
+                        {{ job.status }}
+                      </span>
+                      <span v-if="job.status === 'processing'" class="text-[9px] font-bold text-primary uppercase tracking-widest italic-none">
+                        {{ getJobProgress(job) }}%
+                      </span>
+                    </div>
+
+                    <div v-if="job.status === 'processing' || job.status === 'queued'" class="space-y-1">
+                      <div class="h-1.5 w-full bg-foreground/5 rounded-full overflow-hidden">
+                        <div
+                          class="h-full bg-primary transition-all duration-500"
+                          :style="{ width: `${getJobProgress(job)}%` }"
+                        ></div>
+                      </div>
+                      <p class="text-[9px] text-foreground/35 uppercase tracking-widest italic-none truncate">
+                        {{ getJobSubline(job) }}
+                      </p>
+                    </div>
                   </div>
                 </td>
                 <td class="px-6 py-4">

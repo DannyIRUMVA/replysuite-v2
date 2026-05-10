@@ -1,0 +1,18 @@
+name = "replysuite-training-worker"
+main = "training-worker/index.ts"
+compatibility_date = "2025-07-15"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+[build]
+command = ""
+
+[vars]
+# Set via wrangler secret put for production-sensitive values:
+# - SUPABASE_SERVICE_ROLE_KEY
+# - GEMINI_API_KEY
+# - TRAINING_WORKER_SECRET
+# Non-secret values can be set here or via dashboard.

@@ -77,10 +77,13 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
     baseInstructions = chatbot?.system_prompt || `You are a helpful AI assistant connected over WhatsApp.`
     
     // RAG Search
-    const contextResults = await searchKnowledge(supabase, waAccount.chatbot_id, text, 3)
+    const contextResults = await searchKnowledge(supabase, waAccount.chatbot_id, text, 6)
     if (contextResults && contextResults.length > 0) {
        console.log(`   📚 Context Retrieved: ${contextResults.length} chunks`)
-       contextText = contextResults.map((r: any) => r.content).join('\n\n---\n\n')
+       contextText = contextResults.map((r: any, index: number) => {
+         const sourceLabel = [r.title, r.url].filter(Boolean).join(' · ') || r.sourceType || 'Knowledge Source'
+         return `[Source ${index + 1}: ${sourceLabel}]\n${r.content}`
+       }).join('\n\n---\n\n')
     }
   } catch (err) {
     console.error('❌ [WhatsApp AI Error] RAG Retrieval Failed:', err)
