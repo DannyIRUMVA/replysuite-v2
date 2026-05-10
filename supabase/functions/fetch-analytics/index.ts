@@ -43,7 +43,7 @@ serve(async (req) => {
     if (botIds.length === 0) {
       return new Response(JSON.stringify({ 
         summary: { totalSessions: 0, totalMessages: 0, botMessages: 0, userMessages: 0, successRate: 0, activeTriggers: 0 },
-        channels: { whatsapp: 0, web: 0, instagram: 0 },
+        channels: { whatsapp: 0, web: 0 },
         chatbots: [],
         timeline: []
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
@@ -77,7 +77,7 @@ serve(async (req) => {
       activeTriggers: 0 // Placeholder or query from triggers table
     }
 
-    const channelCounts = { whatsapp: 0, web: 0, instagram: 0 }
+    const channelCounts = { whatsapp: 0, web: 0 }
     const timelineMap = new Map()
     const botStats = new Map()
 
@@ -92,7 +92,6 @@ serve(async (req) => {
       // Channels
       const type = (session.metadata?.type || 'web').toLowerCase()
       if (type.includes('whatsapp')) channelCounts.whatsapp++
-      else if (type.includes('instagram')) channelCounts.instagram++
       else channelCounts.web++
 
       // Messages

@@ -250,7 +250,7 @@ const playgroundHtml = computed(() => {
   <div class="w-full space-y-8 pb-20">
     <NuxtLink
       to="/dashboard"
-      class="flex items-center gap-2 text-foreground/50 hover:text-foreground transition-all text-[10px] font-black uppercase tracking-widest mb-2 group w-fit"
+      class="dashboard-back-link group mb-2"
     >
       <ArrowLeft class="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
       Back to Overview

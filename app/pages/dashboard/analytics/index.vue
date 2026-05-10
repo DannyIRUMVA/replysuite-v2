@@ -10,8 +10,7 @@ import {
   Phone,
   Globe,
   Database,
-  CheckCircle2,
-  Instagram
+  CheckCircle2
 } from 'lucide-vue-next'
 import Skeleton from '~~/app/components/Skeleton.vue'
 import CustomSelect from '~~/app/components/CustomSelect.vue'
@@ -79,18 +78,24 @@ const botOptions = computed(() => {
 // ── Chart ───────────────────────────────────────────────────
 const chartData = computed(() => {
   if (!analytics.value?.timeline?.length) return []
-  // Show last 14 days
+
   const rawData = analytics.value.timeline.slice(-14)
   const max = Math.max(...rawData.map((d: any) => d.count), 1)
-  
-  return rawData.map((d: any, i: number) => ({
-    x: rawData.length > 1 ? (i / (rawData.length - 1)) * 100 : 50,
-    y: 100 - (d.count / max) * 85, // 85 to leave room at top
-    height: (d.count / max) * 100,
-    count: d.count,
-    date: d.date,
-    active: false
-  }))
+
+  return rawData.map((d: any, i: number) => {
+    const ratio = d.count / max
+    const displayHeight = d.count > 0 ? Math.max(ratio * 100, 12) : 0
+    const displayY = d.count > 0 ? 100 - Math.max(ratio * 85, 12) : 100
+
+    return {
+      x: rawData.length > 1 ? (i / (rawData.length - 1)) * 100 : 50,
+      y: displayY,
+      height: displayHeight,
+      count: d.count,
+      date: d.date,
+      active: false
+    }
+  })
 })
 
 // Spline calculation for a smooth line
@@ -118,12 +123,11 @@ const splinePath = computed(() => {
 
 // ── Channel bars ─────────────────────────────────────────────
 const channelBars = computed(() => {
-  const c = analytics.value?.channels || { whatsapp: 0, web: 0, instagram: 0 }
-  const total = Math.max(c.whatsapp + c.web + c.instagram, 1)
+  const c = analytics.value?.channels || { whatsapp: 0, web: 0 }
+  const total = Math.max(c.whatsapp + c.web, 1)
   return [
     { label: 'WhatsApp', count: c.whatsapp, pct: Math.round((c.whatsapp / total) * 100), color: '#22c55e', icon: Phone },
     { label: 'Web Chat', count: c.web, pct: Math.round((c.web / total) * 100), color: '#3b82f6', icon: Globe },
-    { label: 'Instagram', count: c.instagram, pct: Math.round((c.instagram / total) * 100), color: '#e1306c', icon: Instagram },
   ]
 })
 
@@ -276,14 +280,14 @@ const formatDate = (d: string) => {
           </div>
 
           <!-- Modern Bar + Line Chart -->
-          <div class="relative flex-1 min-h-[220px] w-full mt-4">
+          <div class="relative flex-1 min-h-[260px] w-full mt-4 rounded-[1.75rem] border border-foreground/5 bg-gradient-to-b from-foreground/[0.03] to-transparent p-4 sm:p-5">
             <!-- Empty state -->
             <div v-if="chartData.every((d: any) => d.count === 0)" class="absolute inset-0 flex flex-col items-center justify-center gap-3">
               <Activity class="w-8 h-8 text-foreground/20" />
               <p class="text-[10px] text-foreground/50 uppercase tracking-widest font-black">No activity recorded yet</p>
             </div>
 
-            <div v-else class="absolute inset-0 flex flex-col">
+            <div v-else class="absolute inset-4 sm:inset-5 flex flex-col">
               <!-- Bars Layer -->
               <div class="flex-1 flex items-end justify-between gap-1 sm:gap-2 px-1">
                 <div 
@@ -302,24 +306,30 @@ const formatDate = (d: string) => {
 
                   <!-- Bar -->
                   <div 
-                    class="w-full bg-foreground/10 rounded-t-lg group-hover:bg-primary/20 transition-all duration-500 relative overflow-hidden"
+                    class="w-full bg-foreground/10 rounded-t-lg group-hover:bg-foreground/15 transition-all duration-500 relative overflow-hidden"
                     :style="{ height: `${point.height}%` }"
                   >
-                    <!-- Highlight Fill -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-primary/70 via-primary/35 to-primary/10 opacity-90 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </div>
               </div>
 
               <!-- Line Layer (Overlay) -->
+              <div class="absolute inset-0 pointer-events-none">
+                <div class="absolute inset-x-0 top-[20%] border-t border-dashed border-foreground/8"></div>
+                <div class="absolute inset-x-0 top-[45%] border-t border-dashed border-foreground/8"></div>
+                <div class="absolute inset-x-0 top-[70%] border-t border-dashed border-foreground/8"></div>
+              </div>
+
               <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible pt-2">
                 <path 
                   :d="splinePath" 
                   fill="none" 
                   stroke="var(--primary)" 
-                  stroke-width="1.2" 
+                  stroke-width="1.6" 
                   stroke-linecap="round" 
-                  class="drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]"
+                  stroke-linejoin="round"
+                  class="drop-shadow-[0_0_10px_rgba(212,175,55,0.45)]"
                 />
               </svg>
 

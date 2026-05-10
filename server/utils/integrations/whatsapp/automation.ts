@@ -44,22 +44,37 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
     has_auto_comment: false 
   }
   
-  // Count current replies this month
+  // Count current assistant replies this month across the user's chatbots.
+  // This keeps WhatsApp and website replies on one consistent usage source of truth.
   const startOfMonth = new Date()
   startOfMonth.setUTCDate(1)
   startOfMonth.setUTCHours(0, 0, 0, 0)
 
-  const { count: replyCount } = await supabase
-    .from('whatsapp_message_jobs')
-    .select('*', { count: 'exact', head: true })
-    .eq('whatsapp_account_id', waAccount.id)
-    .gte('created_at', startOfMonth.toISOString())
+  const { data: userChatbots } = await supabase
+    .from('chatbots')
+    .select('id')
+    .eq('user_id', waAccount.user_id)
+    .is('deleted_at', null)
 
-  if (plan.max_replies_per_month !== -1 && (replyCount || 0) >= (plan.max_replies_per_month || 0)) {
+  const userChatbotIds = (userChatbots || []).map((bot: any) => bot.id)
+
+  let replyCount = 0
+  if (userChatbotIds.length > 0) {
+    const { count } = await supabase
+      .from('chat_messages')
+      .select('id, chat_sessions!inner(chatbot_id)', { count: 'exact', head: true })
+      .in('chat_sessions.chatbot_id', userChatbotIds)
+      .eq('role', 'assistant')
+      .gte('created_at', startOfMonth.toISOString())
+
+    replyCount = count || 0
+  }
+
+  if (plan.max_replies_per_month !== -1 && replyCount >= (plan.max_replies_per_month || 0)) {
     console.warn(`⚠️ [WhatsApp Automation] LIMIT REACHED: ${replyCount}/${plan.max_replies_per_month} replies used this month.`)
     return
   }
-  console.log(`   📊 Plan Check: ${plan.name} (${replyCount || 0}/${plan.max_replies_per_month === -1 ? '∞' : plan.max_replies_per_month})`)
+  console.log(`   📊 Plan Check: ${plan.name} (${replyCount}/${plan.max_replies_per_month === -1 ? '∞' : plan.max_replies_per_month})`)
 
 
   // 3. RAG / Data Retrieval Pipeline

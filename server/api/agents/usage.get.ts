@@ -30,20 +30,13 @@ export default defineEventHandler(async (event) => {
   now.setUTCHours(0, 0, 0, 0)
   const monthStart = now.toISOString()
 
-  const [waRes, webRes] = await Promise.all([
-    supabase.from('whatsapp_message_jobs')
-      .select('*', { count: 'exact', head: true })
-      .eq('chatbot_id', chatbotId)
-      .gte('created_at', monthStart),
+  const { count: assistantReplyCount } = await supabase.from('chat_messages')
+    .select('id, chat_sessions!inner(chatbot_id)', { count: 'exact', head: true })
+    .eq('chat_sessions.chatbot_id', chatbotId)
+    .eq('role', 'assistant')
+    .gte('created_at', monthStart)
 
-    supabase.from('chat_messages')
-      .select('id, chat_sessions!inner(chatbot_id)', { count: 'exact', head: true })
-      .eq('chat_sessions.chatbot_id', chatbotId)
-      .eq('role', 'assistant')
-      .gte('created_at', monthStart)
-  ])
-
-  const totalUsage = (waRes.count || 0) + (webRes.count || 0)
+  const totalUsage = assistantReplyCount || 0
 
   return {
     usage: totalUsage

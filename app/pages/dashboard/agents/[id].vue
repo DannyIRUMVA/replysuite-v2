@@ -324,9 +324,10 @@ const catalogManagerRef = ref<any>(null)
     <div class="flex items-center justify-between gap-4">
       <NuxtLink 
         to="/dashboard/agents"
-        class="p-2.5 bg-foreground/5 hover:bg-foreground/10 rounded-xl border border-foreground/5 transition-all text-foreground/50 hover:text-foreground"
+        class="dashboard-back-link group"
       >
-        <ArrowLeft class="w-5 h-5" />
+        <ArrowLeft class="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+        Back to Agents
       </NuxtLink>
 
       <button 

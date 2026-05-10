@@ -129,12 +129,6 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
 
 <template>
   <div class="space-y-10">
-    <!-- Header -->
-    <div class="max-w-xl">
-        <h2 class="text-xl font-bold text-foreground mb-2 italic-none uppercase">Conversations Analytics</h2>
-        <p class="text-foreground/50 text-sm italic-none">Your comprehensive intelligence overlook across all digital channels.</p>
-    </div>
-
     <!-- Stats Grid (Loading or Locked if not verified) -->
     <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
       <div v-for="i in 4" :key="i" class="glass-card p-8 border-foreground/5 bg-foreground/[0.02]">

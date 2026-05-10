@@ -59,6 +59,14 @@
     @apply px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.2em] shadow-sm;
   }
 
+  .dashboard-back-link {
+    @apply flex items-center gap-2 text-foreground/50 hover:text-foreground transition-all text-[10px] font-black uppercase tracking-widest w-fit;
+  }
+
+  .dashboard-secondary-btn {
+    @apply inline-flex items-center justify-center rounded-2xl border border-foreground/10 bg-background-card px-8 py-5 text-center text-xs font-black uppercase tracking-widest text-foreground transition-all hover:border-primary/20 hover:bg-foreground/5 hover:text-primary;
+  }
+
   .public-page-shell {
     @apply relative min-h-screen bg-background text-foreground selection:bg-primary/30 selection:text-primary-accent overflow-x-hidden;
   }

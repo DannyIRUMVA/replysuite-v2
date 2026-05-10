@@ -305,8 +305,8 @@ const handleDelete = async (id: string) => {
             <component :is="stat.icon" class="w-5 h-5 text-foreground/50" />
           </div>
           <div class="min-h-[44px] flex flex-col justify-center">
-            <p class="text-[10px] font-bold tracking-widest text-foreground/50 mb-0.5 uppercase">{{ stat.label }}</p>
-            <p class="text-lg font-bold text-foreground leading-none italic-none">{{ stat.value }}</p>
+            <p class="text-[13px] font-bold tracking-widest text-foreground/50 mb-0.5 uppercase">{{ stat.label }}</p>
+            <p class="text-[23px] font-bold text-foreground leading-none italic-none">{{ stat.value }}</p>
           </div>
         </div>
       </div>
@@ -357,11 +357,11 @@ const handleDelete = async (id: string) => {
                 <Bot class="w-6 h-6 text-primary" />
               </div>
               <div class="min-w-0">
-                <h4 class="font-bold text-foreground tracking-tight uppercase text-xs truncate">{{ agent.name }}</h4>
+                <h4 class="font-bold text-foreground tracking-tight uppercase text-[15px] truncate">{{ agent.name }}</h4>
                 <div class="flex items-center gap-2 mt-1.5 flex-wrap">
                   <div
                     :class="[
-                      'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-bold tracking-widest uppercase',
+                      'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-bold tracking-widest uppercase',
                       agent.status.tone === 'live' ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : '',
                       agent.status.tone === 'web' ? 'border-sky-500/20 bg-sky-500/10 text-sky-400' : '',
                       agent.status.tone === 'ready' ? 'border-primary/20 bg-primary/10 text-primary' : '',
@@ -386,7 +386,7 @@ const handleDelete = async (id: string) => {
           </div>
 
           <div class="bg-foreground/[0.02] border border-foreground/5 rounded-2xl p-4 mb-6 h-[88px] sm:h-[96px] overflow-hidden">
-            <p class="text-[11px] text-foreground/60 leading-relaxed line-clamp-3 italic-none">
+            <p class="text-[14px] text-foreground/60 leading-relaxed line-clamp-3 italic-none">
               {{ agent.system_prompt || 'No system prompt configured. This agent will use default behavioral patterns.' }}
             </p>
           </div>
@@ -394,27 +394,27 @@ const handleDelete = async (id: string) => {
           <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
             <div class="flex items-center gap-2">
               <Activity class="w-3.5 h-3.5 text-foreground/55" />
-              <span class="text-[10px] font-extrabold text-foreground/80">
+              <span class="text-[13px] font-extrabold text-foreground/80">
                 {{ agent.interaction_count.toLocaleString() }} Interactions
               </span>
             </div>
             <div class="flex items-center gap-2">
               <Clock class="w-3.5 h-3.5 text-foreground/45" />
-              <span class="text-[10px] font-bold text-foreground/55">Deployed {{ new Date(agent.created_at).toLocaleDateString() }}</span>
+              <span class="text-[13px] font-bold text-foreground/55">Deployed {{ new Date(agent.created_at).toLocaleDateString() }}</span>
             </div>
           </div>
 
           <div class="mt-auto pt-8 flex items-center gap-3">
             <NuxtLink 
               :to="`/dashboard/agents/skills/training?id=${agent.id}`"
-              class="flex-1 py-2.5 bg-primary/10 hover:bg-primary/20 text-[10px] font-bold tracking-widest text-primary rounded-xl transition-all border border-primary/10 flex items-center justify-center gap-2 uppercase"
+              class="flex-1 py-2.5 bg-primary/10 hover:bg-primary/20 text-[13px] font-bold tracking-widest text-primary rounded-xl transition-all border border-primary/10 flex items-center justify-center gap-2 uppercase"
             >
               <Database class="w-3.5 h-3.5" />
               Knowledge Base
             </NuxtLink>
             <NuxtLink 
               :to="`/dashboard/agents/${agent.id}`"
-              class="flex-1 py-2.5 bg-foreground/5 hover:bg-foreground/10 text-[10px] font-bold tracking-widest text-foreground rounded-xl transition-all border border-foreground/10 flex items-center justify-center gap-2 uppercase"
+              class="flex-1 py-2.5 bg-foreground/5 hover:bg-foreground/10 text-[13px] font-bold tracking-widest text-foreground rounded-xl transition-all border border-foreground/10 flex items-center justify-center gap-2 uppercase"
             >
               <Edit3 class="w-3.5 h-3.5" />
               Configure
@@ -438,7 +438,7 @@ const handleDelete = async (id: string) => {
         <div class="w-12 h-12 rounded-full bg-foreground/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
           <Plus class="w-6 h-6 text-foreground/50 group-hover:text-primary" />
         </div>
-        <span class="text-[10px] font-bold tracking-widest text-foreground/50 uppercase">
+        <span class="text-[13px] font-bold tracking-widest text-foreground/50 uppercase">
           Forge New Agent
         </span>
       </button>
@@ -451,10 +451,10 @@ const handleDelete = async (id: string) => {
         <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
           <Sparkles class="w-6 h-6 text-primary" />
         </div>
-        <span class="text-[10px] font-bold tracking-widest text-foreground/70 uppercase text-center">
+        <span class="text-[13px] font-bold tracking-widest text-foreground/70 uppercase text-center">
           Agent Limit Reached
         </span>
-        <span class="mt-2 text-[10px] font-bold tracking-widest text-primary uppercase text-center">
+        <span class="mt-2 text-[13px] font-bold tracking-widest text-primary uppercase text-center">
           Upgrade for more agents
         </span>
       </NuxtLink>
@@ -464,12 +464,12 @@ const handleDelete = async (id: string) => {
       <div class="w-20 h-20 bg-primary/5 rounded-3xl flex items-center justify-center mb-6 border border-primary/10">
         <Bot class="w-10 h-10 text-primary" />
       </div>
-      <h3 class="text-xl font-bold text-foreground mb-2 tracking-tight italic-none uppercase">No Agents Forged Yet</h3>
-      <p class="text-foreground/50 text-sm max-w-sm mb-10 leading-relaxed italic-none">Create your first AI agent to start automating your customer service and engagement.</p>
+      <h3 class="text-[26px] font-bold text-foreground mb-2 tracking-tight italic-none uppercase">No Agents Forged Yet</h3>
+      <p class="text-foreground/50 text-[18px] max-w-sm mb-10 leading-relaxed italic-none">Create your first AI agent to start automating your customer service and engagement.</p>
       
       <button 
         @click="showCreateModal = true"
-        class="flex items-center gap-2 text-primary font-bold tracking-widest text-[11px] uppercase"
+        class="flex items-center gap-2 text-primary font-bold tracking-widest text-[14px] uppercase"
       >
         <Plus class="w-4 h-4" />
         Build Your First Agent
@@ -491,7 +491,7 @@ const handleDelete = async (id: string) => {
           
           <div class="space-y-6">
             <div>
-              <label class="block text-[11px] font-bold tracking-widest text-foreground/50 uppercase mb-2">Agent Name</label>
+              <label class="block text-[14px] font-bold tracking-widest text-foreground/50 uppercase mb-2">Agent Name</label>
               <input 
                 v-model="newAgent.name"
                 placeholder="e.g. Sales Pilot"
@@ -500,21 +500,21 @@ const handleDelete = async (id: string) => {
             </div>
             
             <div>
-              <label class="block text-[11px] font-bold tracking-widest text-foreground/50 uppercase mb-2">Behavioral Protocol</label>
+              <label class="block text-[14px] font-bold tracking-widest text-foreground/50 uppercase mb-2">Behavioral Protocol</label>
               <textarea 
                 v-model="newAgent.system_prompt"
                 rows="5"
                 placeholder="Describe how your agent should behave..."
                 class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors resize-none mb-2"
               ></textarea>
-              <p class="text-[10px] text-foreground/50 leading-relaxed italic-none">
+              <p class="text-[13px] text-foreground/50 leading-relaxed italic-none">
                 <Info class="w-3 h-3 inline mr-1" />
                 This protocol defines the agent's personality, tone, and decision-making logic.
               </p>
             </div>
 
             <div>
-              <label class="block text-[11px] font-bold tracking-widest text-foreground/50 uppercase mb-2">Default Language</label>
+              <label class="block text-[14px] font-bold tracking-widest text-foreground/50 uppercase mb-2">Default Language</label>
               <CustomSelect 
                 v-model="newAgent.default_language" 
                 :options="languageOptions"
@@ -526,14 +526,14 @@ const handleDelete = async (id: string) => {
           <div class="mt-10 flex gap-4">
             <button 
               @click="showCreateModal = false"
-              class="flex-1 py-3 text-[11px] font-bold tracking-widest text-foreground/50 hover:bg-foreground/5 rounded-xl transition-all"
+              class="flex-1 py-3 text-[14px] font-bold tracking-widest text-foreground/50 hover:bg-foreground/5 rounded-xl transition-all"
             >
               CANCEL
             </button>
             <button 
               @click="handleCreate"
               :disabled="isCreating || !newAgent.name"
-              class="flex-1 py-3 bg-primary text-black font-bold tracking-widest text-[11px] rounded-xl hover:bg-primary-accent transition-all shadow-lg shadow-primary/10 disabled:opacity-50 flex items-center justify-center gap-2"
+              class="flex-1 py-3 bg-primary text-black font-bold tracking-widest text-[14px] rounded-xl hover:bg-primary-accent transition-all shadow-lg shadow-primary/10 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Loader2 v-if="isCreating" class="w-4 h-4 animate-spin" />
               INITIATE FORGE

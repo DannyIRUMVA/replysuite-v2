@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { 
   LayoutDashboard, 
-  Instagram, 
   MessageSquare, 
   Settings, 
   TrendingUp,
@@ -15,7 +14,6 @@ const route = useRoute()
 // Map strings to components to avoid serialization of functions
 const iconMap: Record<string, any> = {
   LayoutDashboard,
-  Instagram,
   Bot,
   TrendingUp,
   Zap,

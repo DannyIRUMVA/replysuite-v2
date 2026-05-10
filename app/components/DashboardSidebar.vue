@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { 
   LayoutDashboard, 
-  Instagram, 
   MessageSquare, 
   Settings, 
   LogOut, 
@@ -26,7 +25,6 @@ const supabase = useSupabaseClient()
 const iconMap: Record<string, any> = {
   LayoutDashboard,
   TrendingUp,
-  Instagram,
   Megaphone,
   MessageSquare,
   Database,

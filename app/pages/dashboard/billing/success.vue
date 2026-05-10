@@ -70,7 +70,7 @@ onMounted(async () => {
       </NuxtLink>
       <NuxtLink 
         to="/dashboard/settings/billing"
-        class="flex-1 px-8 py-5 bg-foreground/5 border border-foreground/10 text-foreground rounded-2xl font-black text-xs tracking-widest uppercase transition-all hover:bg-foreground/10 text-center"
+        class="dashboard-secondary-btn flex-1"
       >
         View Billing
       </NuxtLink>
