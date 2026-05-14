@@ -28,7 +28,7 @@ const manualGuideUrl = 'https://docs.replysuite.com/integrations/whatsapp'
 
 const submitManualSetup = async () => {
     if (!manualPhone.value || !manualPhoneId.value || !manualWabaId.value || !manualToken.value) {
-        notify.warn('Please fill in all manual mapping attributes.')
+        notify.warn('Please fill in all required WhatsApp setup fields.')
         return
     }
 
@@ -44,11 +44,11 @@ const submitManualSetup = async () => {
             }
         })
         
-        notify.success(response.message || 'Manual Activation Successful!')
+        notify.success(response.message || 'WhatsApp connected successfully!')
         navigateTo('/dashboard/integrations/whatsapp')
     } catch (err: any) {
         console.error('Manual activation error:', err)
-        notify.error(`Manual Activation Failed: ${err.data?.statusMessage || err.message}`)
+        notify.error(`WhatsApp connection failed: ${err.data?.statusMessage || err.message}`)
     } finally {
         isSubmittingManual.value = false
     }
@@ -59,7 +59,7 @@ const submitManualSetup = async () => {
   <div class="w-full max-w-4xl mx-auto space-y-8 pb-20">
     <NuxtLink to="/dashboard/integrations/whatsapp" class="dashboard-back-link group mb-2">
         <ArrowLeft class="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-        Back to WhatsApp Hub
+        Back to WhatsApp
     </NuxtLink>
 
     <div class="grid md:grid-cols-3 gap-8">
@@ -112,7 +112,7 @@ const submitManualSetup = async () => {
         <div class="glass-card p-8 border-foreground/10 bg-foreground/5">
           <h4 class="text-[11px] font-black uppercase tracking-widest text-foreground mb-6 flex items-center gap-2">
             <ShieldCheck class="w-4 h-4 text-primary" />
-            Meta Requirements
+            Before You Connect
           </h4>
           <ul class="space-y-4">
             <li v-for="req in [
@@ -129,9 +129,9 @@ const submitManualSetup = async () => {
 
         <div class="glass-card p-8 border-foreground/10 bg-primary/5">
           <Zap class="w-8 h-8 text-primary mb-4" />
-          <h4 class="text-xs font-black uppercase tracking-widest text-foreground mb-2">Automated Node</h4>
+          <h4 class="text-xs font-black uppercase tracking-widest text-foreground mb-2">WhatsApp AI Support</h4>
           <p class="text-[10px] font-bold text-foreground/50 uppercase tracking-tight leading-relaxed">
-            Once connected, your line becomes a protocol node capable of handling thousands of AI interactions per second.
+            Once connected, your business number can start using AI to answer common customer questions faster.
           </p>
         </div>
       </div>

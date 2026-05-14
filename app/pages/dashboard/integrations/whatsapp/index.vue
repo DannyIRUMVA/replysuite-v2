@@ -59,9 +59,9 @@ const deleteAccount = async (id: string) => {
     <!-- Stats / Overview Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div v-for="stat in [
-            { label: 'Active Nodes', value: accounts?.length || 0, icon: Zap },
-            { label: 'System Health', value: '100%', icon: Activity },
-            { label: 'Protocol', value: 'V21.0', icon: ShieldCheck }
+            { label: 'Connected Numbers', value: accounts?.length || 0, icon: Zap },
+            { label: 'Setup Health', value: '100%', icon: Activity },
+            { label: 'WhatsApp API', value: 'V21.0', icon: ShieldCheck }
         ]" :key="stat.label" class="glass-card p-8 border-foreground/10 bg-foreground/5 flex items-center gap-6">
             <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
                 <component :is="stat.icon" class="w-6 h-6 text-primary" />
@@ -97,7 +97,7 @@ const deleteAccount = async (id: string) => {
                                 </span>
                                 <div class="w-px h-3 bg-foreground/10"></div>
                                 <span class="text-[10px] font-black text-primary uppercase tracking-widest">
-                                    {{ wa.chatbots?.name || 'No Agent Linked' }}
+                                    {{ wa.chatbots?.name || 'No Assistant Linked' }}
                                 </span>
                             </div>
                         </div>
@@ -123,11 +123,11 @@ const deleteAccount = async (id: string) => {
             <Smartphone class="w-10 h-10 text-foreground/50" />
         </div>
         <div class="max-w-md space-y-2">
-            <h3 class="text-2xl font-black text-foreground uppercase tracking-tighter">No Active Protocols</h3>
-            <p class="text-xs text-foreground/50 font-bold uppercase tracking-widest">Connect your first WhatsApp Business Line to begin AI automation.</p>
+            <h3 class="text-2xl font-black text-foreground uppercase tracking-tighter">No WhatsApp Numbers Connected</h3>
+            <p class="text-xs text-foreground/50 font-bold uppercase tracking-widest">Connect your first WhatsApp business number to begin AI customer support.</p>
         </div>
         <NuxtLink to="/dashboard/integrations/whatsapp/setup" class="bg-primary text-black px-12 py-5 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl shadow-primary/20">
-            Establish Connection
+            Connect WhatsApp
         </NuxtLink>
     </div>
   </div>

@@ -62,7 +62,7 @@ const renderMarkdown = (text: string) => {
 }
 
 useHead({
-  title: computed(() => chatbot.value?.name ? `${chatbot.value.name} | Knowledge Ops` : 'Knowledge Ops | ReplySuite'),
+  title: computed(() => chatbot.value?.name ? `${chatbot.value.name} | Train Your AI` : 'Train Your AI | ReplySuite'),
 })
 
 // Form States
@@ -287,7 +287,7 @@ const handleTestChat = async () => {
       <button @click="showChatTest = true"
         class="group flex items-center gap-3 px-6 py-3 bg-foreground/5 hover:bg-primary hover:text-black border border-foreground/10 rounded-2xl transition-all shadow-xl">
         <LucideSparkles class="w-4 h-4 text-primary group-hover:text-black" />
-        <span class="text-[11px] font-bold tracking-widest uppercase italic-none">Test Agent Ability</span>
+        <span class="text-[11px] font-bold tracking-widest uppercase italic-none">Test Your Assistant</span>
       </button>
     </div>
 
@@ -357,7 +357,7 @@ const handleTestChat = async () => {
             <div v-if="activeTab === 'url'" class="space-y-6">
               <div>
                 <label
-                  class="block text-[11px] font-bold tracking-widest text-foreground/40 uppercase mb-3 italic-none">Target
+                  class="block text-[11px] font-bold tracking-widest text-foreground/40 uppercase mb-3 italic-none">Website
                   URL</label>
                 <div class="flex gap-3">
                   <input v-model="urlForm.url" placeholder="https://example.com/docs"
@@ -365,17 +365,17 @@ const handleTestChat = async () => {
                   <button @click="handleUrlTrain" :disabled="isProcessing || !urlForm.url || isOverTrainingLimit"
                     class="px-6 bg-primary text-black font-bold tracking-widest text-[11px] rounded-xl hover:bg-primary-accent transition-all disabled:opacity-50 flex items-center gap-2 uppercase italic-none">
                     <Loader2 v-if="isProcessing" class="w-4 h-4 animate-spin" />
-                    {{ isOverTrainingLimit ? 'LIMIT REACHED' : 'SCRAPE & TRAIN' }}
+                    {{ isOverTrainingLimit ? 'LIMIT REACHED' : 'TRAIN WEBSITE' }}
                   </button>
                 </div>
                 <p v-if="isOverTrainingLimit"
                   class="text-[10px] text-red-500 mt-2 font-bold uppercase tracking-widest italic-none">
-                  Training limit reached for {{ planSlug }} plan. Upgrade for more intelligence sessions.
+                  Training limit reached for {{ planSlug }} plan. Upgrade for more training sessions.
                 </p>
                 <p
                   class="text-[10px] text-foreground/30 mt-3 flex items-center gap-2 italic-none uppercase tracking-widest font-bold">
                   <Search class="w-3 h-3" />
-                  Autonomous extraction & vectorization active.
+                  Website content will be processed and added to your AI knowledge base.
                 </p>
               </div>
             </div>
@@ -391,7 +391,7 @@ const handleTestChat = async () => {
                     <FileText class="w-8 h-8 text-foreground/30" />
                   </div>
                   <p class="text-xs font-bold text-foreground uppercase tracking-widest italic-none">DRAG & DROP OR CLICK TO
-                    SELECT PDF</p>
+                    SELECT A PDF</p>
                   <p class="text-[10px] text-foreground/30 uppercase tracking-widest italic-none">Max File Size: 10MB</p>
                 </div>
                 <div v-else class="space-y-4">
@@ -403,12 +403,12 @@ const handleTestChat = async () => {
                   <button @click.stop="handleFileTrain" :disabled="isProcessing || isOverTrainingLimit"
                     class="mt-4 px-8 py-3 bg-primary text-black font-bold tracking-widest text-[11px] rounded-xl hover:bg-primary-accent transition-all disabled:opacity-50 flex items-center gap-2 mx-auto uppercase italic-none">
                     <Loader2 v-if="isProcessing" class="w-4 h-4 animate-spin" />
-                    {{ isOverTrainingLimit ? 'LIMIT REACHED' : 'Process Knowledge' }}
+                    {{ isOverTrainingLimit ? 'LIMIT REACHED' : 'TRAIN PDF' }}
                   </button>
                 </div>
                 <p v-if="isOverTrainingLimit"
                   class="text-[10px] text-red-500 mt-4 font-bold uppercase tracking-widest italic-none text-center">
-                  Training limit reached. Upgrade to continue adding intelligence sessions.
+                  Training limit reached. Upgrade to continue adding training sessions.
                 </p>
               </div>
             </div>
@@ -425,7 +425,7 @@ const handleTestChat = async () => {
                 </div>
                 <div>
                   <label
-                    class="block text-[11px] font-bold tracking-widest text-foreground/40 uppercase mb-2 italic-none">Knowledge
+                    class="block text-[11px] font-bold tracking-widest text-foreground/40 uppercase mb-2 italic-none">Business
                     Content</label>
                   <textarea v-model="textForm.content" rows="8" placeholder="Paste your knowledge content here..."
                     class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-4 py-3 text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors resize-none mb-2 italic-none"></textarea>
@@ -434,7 +434,7 @@ const handleTestChat = async () => {
                   class="w-full py-3.5 bg-primary text-black font-bold tracking-widest text-[11px] rounded-xl hover:bg-primary-accent transition-all disabled:opacity-50 flex items-center justify-center gap-2 uppercase shadow-lg shadow-primary/10 italic-none">
                   <Plus v-if="!isProcessing" class="w-4 h-4" />
                   <Loader2 v-else class="w-4 h-4 animate-spin" />
-                  {{ isOverTrainingLimit ? 'LIMIT REACHED' : 'Add to Knowledge Base' }}
+                  {{ isOverTrainingLimit ? 'LIMIT REACHED' : 'ADD CONTENT' }}
                 </button>
                 <p v-if="isOverTrainingLimit"
                   class="text-[10px] text-red-500 mt-2 font-bold uppercase tracking-widest italic-none text-center px-8">
@@ -461,15 +461,29 @@ const handleTestChat = async () => {
         <DashboardStats :chatbot="chatbot" :monthly-usage="monthlyUsage" :total-trainings="trainingJobs.length"
           :plan-slug="planSlug" :sources-count="sources.length" :limits="limits" />
 
+        <div class="glass-card border-foreground/10 bg-foreground/[0.02]">
+          <div class="flex items-center gap-3 mb-4">
+            <LucideSparkles class="w-5 h-5 text-primary" />
+            <h4 class="text-[11px] font-bold tracking-widest text-primary uppercase italic-none">Starter Templates Preview</h4>
+          </div>
+          <p class="text-[11px] text-foreground/45 leading-relaxed mb-5 italic-none">
+            Mock preview only for now. Ready-made industry templates can make first setup faster without changing your current training flow.
+          </p>
+          <div class="grid gap-3">
+            <div v-for="item in ['Clinic FAQ starter', 'Restaurant menu + hours starter', 'School admissions FAQ starter']" :key="item" class="rounded-2xl border border-foreground/10 bg-background/60 px-4 py-3">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-foreground/55">{{ item }}</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Strategy Box -->
         <div class="glass-card bg-primary/5 border-primary/10">
           <div class="flex items-center gap-3 mb-4">
             <LucideSparkles class="w-5 h-5 text-primary" />
-            <h4 class="text-[11px] font-bold tracking-widest text-primary uppercase italic-none">Expert Strategy</h4>
+            <h4 class="text-[11px] font-bold tracking-widest text-primary uppercase italic-none">Training Tips</h4>
           </div>
           <p class="text-[11px] text-foreground/40 leading-relaxed mb-6 italic-none">
-            Your agent uses **RAG (Retrieval Augmented Generation)**. It will search this knowledge base before
-            replying.
+            Your assistant searches this knowledge base before replying, so clearer training data usually leads to better customer answers.
           </p>
           <div class="space-y-3">
             <div v-for="tip in ['Keep text clear and distinct', 'Add FAQs as line entries', 'Avoid overly large PDFs']"
@@ -484,7 +498,7 @@ const handleTestChat = async () => {
         <div class="glass-card border-dashed border-foreground/5 opacity-60">
           <div class="flex items-center gap-3 mb-3">
             <AlertTriangle class="w-4 h-4 text-orange-400/50" />
-            <p class="text-[9px] font-bold text-foreground/40 uppercase tracking-widest italic-none">System Note</p>
+            <p class="text-[9px] font-bold text-foreground/40 uppercase tracking-widest italic-none">Important Note</p>
           </div>
           <p class="text-[10px] text-foreground/30 italic-none">Training is irreversible for the current session. Deleting a
             source clears indexed context immediately.</p>
@@ -505,9 +519,9 @@ const handleTestChat = async () => {
               <LucideSparkles class="w-5 h-5" />
             </div>
             <div>
-              <h3 class="text-sm font-bold text-foreground uppercase tracking-widest italic-none">Ability Sandbox</h3>
-              <p class="text-[9px] text-foreground/40 font-bold uppercase tracking-widest italic-none">Test trained knowledge
-                in real-time</p>
+              <h3 class="text-sm font-bold text-foreground uppercase tracking-widest italic-none">Test Your Assistant</h3>
+              <p class="text-[9px] text-foreground/40 font-bold uppercase tracking-widest italic-none">Try real questions
+                against your trained content</p>
             </div>
           </div>
           <button @click="showChatTest = false" class="p-2 hover:bg-foreground/5 rounded-xl transition-all">
@@ -520,8 +534,8 @@ const handleTestChat = async () => {
           <div v-if="testMessages.length === 0"
             class="h-full flex flex-col items-center justify-center text-center opacity-40">
             <Bot class="w-12 h-12 mb-4 text-foreground/30" />
-            <p class="text-[11px] font-bold text-foreground/40 uppercase tracking-widest max-w-[200px]">Ask your agent
-              anything based on the data you provided.</p>
+            <p class="text-[11px] font-bold text-foreground/40 uppercase tracking-widest max-w-[220px]">Ask your assistant
+              a question based on the content you added.</p>
           </div>
 
           <div v-for="(msg, i) in testMessages" :key="i"
@@ -551,7 +565,7 @@ const handleTestChat = async () => {
         <!-- Input Area -->
         <div class="p-8 border-t border-foreground/5 bg-background">
           <div class="relative">
-            <input v-model="testInput" @keyup.enter="handleTestChat" placeholder="Query the agent knowledge..."
+            <input v-model="testInput" @keyup.enter="handleTestChat" placeholder="Ask a question about your training data..."
               class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-6 py-4 text-xs text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-all italic-none" />
             <button @click="handleTestChat" :disabled="!testInput || isTestLoading"
               class="absolute right-2 top-2 bottom-2 px-4 bg-primary text-black rounded-xl hover:bg-primary-accent transition-all disabled:opacity-30 disabled:hover:bg-primary">

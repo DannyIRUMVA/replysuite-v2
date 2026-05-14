@@ -84,6 +84,8 @@ const messages = ref<{ role: 'user' | 'assistant'; content: string }[]>([])
 const input = ref('')
 const isLoading = ref(false)
 const container = ref<HTMLElement | null>(null)
+const widgetSessionId = ref('')
+const widgetStorageKey = computed(() => `replysuite-widget:${chatbotId}`)
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -91,11 +93,64 @@ const scrollToBottom = () => {
   })
 }
 
-const clearChat = () => {
-  if (confirm('Are you sure you want to clear this conversation?')) {
-    messages.value = []
+const persistWidgetState = () => {
+  if (!process.client) return
+
+  try {
+    localStorage.setItem(widgetStorageKey.value, JSON.stringify({
+      sessionId: widgetSessionId.value,
+      messages: messages.value,
+    }))
+  } catch {
+    // Ignore persistence failures silently
   }
 }
+
+const hydrateWidgetState = () => {
+  if (!process.client) return false
+
+  try {
+    const raw = localStorage.getItem(widgetStorageKey.value)
+    if (!raw) return false
+
+    const parsed = JSON.parse(raw)
+    if (parsed?.sessionId && typeof parsed.sessionId === 'string') {
+      widgetSessionId.value = parsed.sessionId
+    }
+
+    if (Array.isArray(parsed?.messages) && parsed.messages.length > 0) {
+      messages.value = parsed.messages
+      return true
+    }
+  } catch {
+    // Ignore corrupted widget state
+  }
+
+  return false
+}
+
+const resetWidgetState = () => {
+  widgetSessionId.value = ''
+  messages.value = [{ role: 'assistant', content: design.value.welcomeMessage }]
+
+  if (process.client) {
+    try {
+      localStorage.removeItem(widgetStorageKey.value)
+    } catch {
+      // Ignore cleanup failures silently
+    }
+  }
+}
+
+const clearChat = () => {
+  if (confirm('Are you sure you want to clear this conversation?')) {
+    resetWidgetState()
+  }
+}
+
+watch([messages, widgetSessionId], () => {
+  persistWidgetState()
+}, { deep: true })
 
 const minimize = () => {
   if (window.parent) window.parent.postMessage({ type: 'replysuite-minimize' }, '*')
@@ -115,11 +170,13 @@ const sendMessage = async () => {
       body: {
         chatbotId,
         message: userMsg,
+        sessionId: widgetSessionId.value || undefined,
         embedToken: widgetEmbedToken.value,
         embedHost: widgetEmbedHost.value,
       },
     })
     if (typeof res === 'object' && res && 'success' in res && res.success) {
+      widgetSessionId.value = typeof (res as any).sessionId === 'string' ? (res as any).sessionId : widgetSessionId.value
       messages.value.push({ role: 'assistant', content: (res as any).response })
     }
   } catch {
@@ -165,13 +222,18 @@ onMounted(async () => {
         chatIconColor: res.chatIconColor || ''
       }
       applyDesignVars()
-      // Set welcome message as the first bot message
-      messages.value = [{ role: 'assistant', content: design.value.welcomeMessage }]
+      if (!hydrateWidgetState()) {
+        messages.value = [{ role: 'assistant', content: design.value.welcomeMessage }]
+      }
     }
   } catch (e) {
     console.error('Failed to load chatbot config')
-    messages.value = [{ role: 'assistant', content: design.value.welcomeMessage }]
+    if (!hydrateWidgetState()) {
+      messages.value = [{ role: 'assistant', content: design.value.welcomeMessage }]
+    }
   }
+
+  scrollToBottom()
 })
 </script>
 

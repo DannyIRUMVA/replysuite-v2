@@ -18,9 +18,9 @@ const channels = [
     icon: MessageSquare
   },
   {
-    name: 'Sales',
+    name: 'Sales & Demo',
     email: 'partnership@replysuite.app',
-    desc: 'Ask about onboarding, volume, or custom help.',
+    desc: 'Ask about onboarding, demos, volume, or custom help.',
     icon: Zap
   },
   {
@@ -52,10 +52,10 @@ const socialLinks = [
       <div class="text-center max-w-3xl mx-auto">
         <span class="badge-gradient mb-10">Contact</span>
         <h1 class="text-5xl md:text-7xl font-extrabold mb-8 tracking-tight leading-[0.95] text-foreground">
-          Need help? Want to talk?
+          Need help getting ReplySuite live?
         </h1>
         <p class="text-lg text-foreground/60 font-medium leading-relaxed">
-          Send us a message. We can help with setup, pricing, and support.
+          Talk to us about setup, pricing, demos, WhatsApp onboarding, or a faster rollout for your business.
         </p>
       </div>
     </section>
@@ -94,7 +94,8 @@ const socialLinks = [
         </div>
 
         <div class="bg-foreground/[0.02] border border-foreground/10 p-10 rounded-[32px] text-center">
-          <h3 class="text-xl font-bold text-foreground mb-8 tracking-tight">Follow updates</h3>
+          <h3 class="text-xl font-bold text-foreground mb-4 tracking-tight">Talk to Founder</h3>
+          <p class="text-sm text-foreground/50 font-medium mb-8">Need a walkthrough before you start? Send a message and we can help you choose the fastest setup path.</p>
           <div class="flex justify-center gap-6">
             <a v-for="item in socialLinks" :key="item.label" :href="item.href" target="_blank" rel="noopener noreferrer" :aria-label="item.label" class="w-14 h-14 rounded-2xl bg-foreground/5 border border-foreground/5 flex items-center justify-center text-foreground/50 hover:text-primary hover:border-primary/20 transition-all hover:-translate-y-1">
               <component :is="item.icon" class="w-6 h-6" />

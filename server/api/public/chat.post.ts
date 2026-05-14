@@ -2,6 +2,14 @@ import { serverSupabaseServiceRole } from '#supabase/server'
 import { searchKnowledge } from '~~/server/utils/ai'
 import { runAgentCycle } from '~~/server/utils/agent/engine'
 import {
+  buildConversationSettingsPrompt,
+  buildConversationStatePrompt,
+  getConversationStateFromMetadata,
+  mergeMetadataWithState,
+  normalizeConversationSettings,
+  updateConversationState,
+} from '~~/server/utils/conversation-intelligence'
+import {
   getRequestOriginContext,
   isAllowedDomainHost,
   isPlatformHost,
@@ -41,7 +49,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: chatbot, error: chatbotError } = await supabase
     .from('chatbots')
-    .select('id, name, system_prompt, is_public, deleted_at, allowed_domains, enabled_tools')
+    .select('id, name, system_prompt, is_public, deleted_at, allowed_domains, enabled_tools, tools_config, default_language')
     .eq('id', chatbotId)
     .single()
 
@@ -85,7 +93,7 @@ export default defineEventHandler(async (event) => {
   if (sessionId) {
     const { data: existingSession, error: sessionError } = await supabase
       .from('chat_sessions')
-      .select('id, chatbot_id')
+      .select('id, chatbot_id, metadata')
       .eq('id', sessionId)
       .maybeSingle()
 
@@ -112,6 +120,19 @@ export default defineEventHandler(async (event) => {
     sessionId = newSession.id
   }
 
+  const conversationSettings = normalizeConversationSettings((chatbot as any)?.tools_config?.conversation_settings)
+  let sessionMetadata: any = null
+
+  if (sessionId) {
+    const { data: currentSession } = await supabase
+      .from('chat_sessions')
+      .select('metadata')
+      .eq('id', sessionId)
+      .maybeSingle()
+
+    sessionMetadata = currentSession?.metadata || null
+  }
+
   try {
     await supabase.from('chat_messages').insert({
       session_id: sessionId,
@@ -127,22 +148,32 @@ export default defineEventHandler(async (event) => {
 
     const baseInstructions = chatbot.system_prompt || `You are an AI assistant for ${chatbot.name}.`
 
+    const sessionState = conversationSettings.sessionMemoryEnabled
+      ? getConversationStateFromMetadata(sessionMetadata)
+      : {}
+
+    const conversationBehavior = buildConversationSettingsPrompt(conversationSettings, 'web')
+    const sessionStatePrompt = buildConversationStatePrompt(sessionState)
+
     const systemPrompt = `
       ${baseInstructions}
+
+      [CONVERSATION BEHAVIOR]
+      ${conversationBehavior}
+
+      [SESSION STATE]
+      ${sessionStatePrompt}
 
       [ADDITIONAL CONTEXT FROM KNOWLEDGE BASE]
       ${contextText || 'No specific background knowledge found for this query.'}
 
       IMPORTANT INSTRUCTIONS:
-      1. Keep your responses EXTREMELY BRIEF and CONCISE (Max 160 characters unless listing products).
-      2. Sound like a real human. Be warm, natural, and conversational. Get straight to the point.
-      3. Use PLAIN, CLEAN language. DO NOT use marketing buzzwords or corporate jargon.
-      4. DO NOT provide long explanations. If you don't know something, just say so simply.
-      5. Always format your responses using clean Markdown.
+      1. If you don't know something, say so simply instead of guessing.
+      2. Always format your responses using clean Markdown.
          - Use standard bullet points (-) for lists.
          - Use **bold text** sparingly to highlight key concepts.
-      6. If the [ADDITIONAL CONTEXT] contradicts your base instructions, prioritize the [ADDITIONAL CONTEXT] for factual accuracy.
-      7. DO NOT blindly recite lists of services or generic company descriptions unless explicitly asked.
+      3. If the [ADDITIONAL CONTEXT] contradicts your base instructions, prioritize the [ADDITIONAL CONTEXT] for factual accuracy.
+      4. Do not blindly recite lists of services or generic company descriptions unless explicitly asked.
     `
 
     let messagesHistory: any[] = []
@@ -177,6 +208,20 @@ export default defineEventHandler(async (event) => {
       role: 'assistant',
       content: response,
     })
+
+    if (conversationSettings.sessionMemoryEnabled) {
+      const nextState = updateConversationState({
+        existingState: getConversationStateFromMetadata(sessionMetadata),
+        userMessage: message,
+        assistantReply: response,
+        defaultLanguage: (chatbot as any)?.default_language || null,
+      })
+
+      await supabase
+        .from('chat_sessions')
+        .update({ metadata: mergeMetadataWithState(sessionMetadata, nextState) })
+        .eq('id', sessionId)
+    }
 
     return {
       success: true,

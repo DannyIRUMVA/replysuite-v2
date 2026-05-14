@@ -47,11 +47,11 @@ const notify = useNotify()
 const isLoading = ref(true)
 const isSaving = ref(false)
 const agent = ref<any>(null)
-const activeTab = ref<'identity' | 'design' | 'security' | 'tools' | 'skills'>('identity')
+const activeTab = ref<'identity' | 'design' | 'conversation' | 'security' | 'tools' | 'skills'>('identity')
 const newDomainInput = ref<string>('')
 
 useHead({
-  title: computed(() => agent.value?.name ? `${agent.value.name} | Agent Settings` : 'Agent Settings | ReplySuite'),
+  title: computed(() => agent.value?.name ? `${agent.value.name} | Assistant Settings` : 'Assistant Settings | ReplySuite'),
 })
 
 const launcherIcons = [
@@ -61,6 +61,20 @@ const launcherIcons = [
   { name: 'Zap', icon: Zap, label: 'Lightning' },
   { name: 'HelpCircle', icon: Info, label: 'Help' }
 ]
+
+const defaultConversationSettings = {
+  tone: 'friendly',
+  responseLength: 'balanced',
+  greetOncePerSession: true,
+  avoidRepeatingQuestions: true,
+  askOneQuestionAtATime: true,
+  continueFromPreviousAnswer: true,
+  sessionMemoryEnabled: true,
+  contactMemoryEnabled: true,
+  websiteReplyStyle: 'guided',
+  whatsappReplyStyle: 'short',
+  leadCaptureMode: 'when-needed',
+}
 
 // Forms
 const form = ref({
@@ -83,7 +97,9 @@ const form = ref({
   chat_icon: 'Bot',
   chat_icon_color: '',
   enabled_tools: [] as string[],
-  tools_config: {} as any,
+  tools_config: {
+    conversation_settings: { ...defaultConversationSettings }
+  } as any,
 })
 
 const languageOptions = [
@@ -201,7 +217,13 @@ const fetchData = async () => {
         chat_icon: data.chat_icon || 'Bot',
         chat_icon_color: data.chat_icon_color || '',
         enabled_tools: data.enabled_tools || [],
-        tools_config: data.tools_config || {},
+        tools_config: {
+          ...(data.tools_config || {}),
+          conversation_settings: {
+            ...defaultConversationSettings,
+            ...(data.tools_config?.conversation_settings || {}),
+          }
+        },
       }
       if (activeTab.value === 'tools') {
         // fetchCatalog was moved to CatalogManager component
@@ -217,7 +239,7 @@ const fetchData = async () => {
 
 onMounted(async () => {
   // Handle tab routing
-  if (route.query.tab && ['identity', 'design', 'security'].includes(route.query.tab as string)) {
+  if (route.query.tab && ['identity', 'design', 'conversation', 'security'].includes(route.query.tab as string)) {
     activeTab.value = route.query.tab as any
   }
   
@@ -347,8 +369,9 @@ const catalogManagerRef = ref<any>(null)
         v-for="tab in [
           { id: 'identity', label: 'Core Identity', icon: Bot }, 
           { id: 'design', label: 'Design & Colors', icon: Palette },
+          { id: 'conversation', label: 'Conversations', icon: MessageSquare },
           { id: 'tools', label: 'Enabled Tools', icon: Zap },
-          { id: 'skills', label: 'Agent Skills', icon: Sparkles },
+          { id: 'skills', label: 'Assistant Skills', icon: Sparkles },
           { id: 'security', label: 'Domain Security', icon: Shield }
         ]"
         :key="tab.id"
@@ -379,7 +402,7 @@ const catalogManagerRef = ref<any>(null)
           <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-8">Core Identity</h3>
           <div class="space-y-6">
             <div>
-              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-3">Agent Designation</label>
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-3">Assistant Name</label>
               <input 
                 v-model="form.name"
                 class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors text-sm placeholder:text-foreground/50"
@@ -387,12 +410,12 @@ const catalogManagerRef = ref<any>(null)
               />
             </div>
             <div>
-              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-3">Behavioral Protocol (System Prompt)</label>
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-3">Assistant Instructions</label>
               <textarea 
                 v-model="form.system_prompt"
                 rows="10"
                 class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-4 py-4 text-xs text-foreground/70 focus:outline-none focus:border-primary/50 transition-colors resize-none leading-relaxed placeholder:text-foreground/50"
-                placeholder="Give your agent a personality, goals, and constraints..."
+                placeholder="Describe your assistant tone, goals, and constraints..."
               />
               <div class="mt-4 p-4 rounded-xl bg-primary/5 border border-primary/10 flex gap-3">
                 <Info class="w-4 h-4 text-primary shrink-0" />
@@ -409,7 +432,7 @@ const catalogManagerRef = ref<any>(null)
           <h3 class="text-[10px] font-bold text-red-500/50 tracking-widest uppercase mb-6">Critical Actions</h3>
           <div class="flex items-center justify-between p-5 rounded-2xl bg-foreground/[0.01] border border-foreground/5">
             <div>
-              <p class="text-sm font-bold text-foreground mb-1">Decommission Agent</p>
+              <p class="text-sm font-bold text-foreground mb-1">Delete Assistant</p>
               <p class="text-[10px] text-foreground/50 uppercase tracking-widest">Permanently remove this intelligence from your fleet.</p>
             </div>
             <button 
@@ -946,6 +969,121 @@ const catalogManagerRef = ref<any>(null)
       </div>
     </div>
 
+    <!-- ─── CONVERSATION TAB ─────────────────────────────────── -->
+    <div v-else-if="activeTab === 'conversation'" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div class="lg:col-span-8 space-y-8">
+        <section class="glass-card p-10">
+          <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-8">Reply Style</h3>
+          <div class="grid md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-3">Tone</label>
+              <select v-model="form.tools_config.conversation_settings.tone" class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/50">
+                <option value="friendly">Friendly</option>
+                <option value="professional">Professional</option>
+                <option value="warm">Warm</option>
+                <option value="direct">Direct</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-3">Response Length</label>
+              <select v-model="form.tools_config.conversation_settings.responseLength" class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/50">
+                <option value="short">Short</option>
+                <option value="balanced">Balanced</option>
+                <option value="detailed">Detailed</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-3">Lead Capture</label>
+              <select v-model="form.tools_config.conversation_settings.leadCaptureMode" class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/50">
+                <option value="off">Off</option>
+                <option value="when-needed">When Needed</option>
+                <option value="always">Always</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="glass-card p-10">
+          <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-8">Conversation Flow</h3>
+          <div class="grid md:grid-cols-2 gap-4">
+            <button @click="form.tools_config.conversation_settings.greetOncePerSession = !form.tools_config.conversation_settings.greetOncePerSession" :class="['p-5 rounded-2xl border text-left transition-all', form.tools_config.conversation_settings.greetOncePerSession ? 'bg-primary/10 border-primary/30' : 'bg-foreground/5 border-foreground/10']">
+              <p class="text-[11px] font-black uppercase tracking-widest text-foreground mb-1">Greet once per session</p>
+              <p class="text-[10px] text-foreground/50 uppercase tracking-wider">Avoid restarting the conversation after it has already begun.</p>
+            </button>
+            <button @click="form.tools_config.conversation_settings.avoidRepeatingQuestions = !form.tools_config.conversation_settings.avoidRepeatingQuestions" :class="['p-5 rounded-2xl border text-left transition-all', form.tools_config.conversation_settings.avoidRepeatingQuestions ? 'bg-primary/10 border-primary/30' : 'bg-foreground/5 border-foreground/10']">
+              <p class="text-[11px] font-black uppercase tracking-widest text-foreground mb-1">Avoid repeated questions</p>
+              <p class="text-[10px] text-foreground/50 uppercase tracking-wider">Do not ask for the same detail again when it is already known.</p>
+            </button>
+            <button @click="form.tools_config.conversation_settings.askOneQuestionAtATime = !form.tools_config.conversation_settings.askOneQuestionAtATime" :class="['p-5 rounded-2xl border text-left transition-all', form.tools_config.conversation_settings.askOneQuestionAtATime ? 'bg-primary/10 border-primary/30' : 'bg-foreground/5 border-foreground/10']">
+              <p class="text-[11px] font-black uppercase tracking-widest text-foreground mb-1">Ask one question at a time</p>
+              <p class="text-[10px] text-foreground/50 uppercase tracking-wider">Keep follow-up simple instead of stacking multiple requests at once.</p>
+            </button>
+            <button @click="form.tools_config.conversation_settings.continueFromPreviousAnswer = !form.tools_config.conversation_settings.continueFromPreviousAnswer" :class="['p-5 rounded-2xl border text-left transition-all', form.tools_config.conversation_settings.continueFromPreviousAnswer ? 'bg-primary/10 border-primary/30' : 'bg-foreground/5 border-foreground/10']">
+              <p class="text-[11px] font-black uppercase tracking-widest text-foreground mb-1">Continue from prior answer</p>
+              <p class="text-[10px] text-foreground/50 uppercase tracking-wider">Treat short customer replies as answers to the last question and move forward.</p>
+            </button>
+          </div>
+        </section>
+
+        <section class="glass-card p-10">
+          <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-8">Channel Behavior</h3>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-3">Website Chat Style</label>
+              <select v-model="form.tools_config.conversation_settings.websiteReplyStyle" class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/50">
+                <option value="guided">Guided</option>
+                <option value="balanced">Balanced</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-3">WhatsApp Reply Style</label>
+              <select v-model="form.tools_config.conversation_settings.whatsappReplyStyle" class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/50">
+                <option value="short">Short</option>
+                <option value="balanced">Balanced</option>
+              </select>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="lg:col-span-4 space-y-6">
+        <section class="glass-card p-8">
+          <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-6">Memory</h3>
+          <div class="space-y-4">
+            <button @click="form.tools_config.conversation_settings.sessionMemoryEnabled = !form.tools_config.conversation_settings.sessionMemoryEnabled" :class="['w-full p-4 rounded-2xl border transition-all flex items-center justify-between text-left', form.tools_config.conversation_settings.sessionMemoryEnabled ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-foreground/5 border-foreground/5 text-foreground/50']">
+              <div>
+                <p class="text-[11px] font-bold uppercase tracking-widest mb-1">Session Memory</p>
+                <p class="text-[9px] opacity-60">Remember what was already said inside the active conversation.</p>
+              </div>
+              <div :class="['w-10 h-5 rounded-full relative transition-colors p-1', form.tools_config.conversation_settings.sessionMemoryEnabled ? 'bg-primary' : 'bg-foreground/10']">
+                <div :class="['w-3 h-3 bg-white rounded-full transition-all', form.tools_config.conversation_settings.sessionMemoryEnabled ? 'translate-x-5' : 'translate-x-0']" />
+              </div>
+            </button>
+
+            <button @click="form.tools_config.conversation_settings.contactMemoryEnabled = !form.tools_config.conversation_settings.contactMemoryEnabled" :class="['w-full p-4 rounded-2xl border transition-all flex items-center justify-between text-left', form.tools_config.conversation_settings.contactMemoryEnabled ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-foreground/5 border-foreground/5 text-foreground/50']">
+              <div>
+                <p class="text-[11px] font-bold uppercase tracking-widest mb-1">Returning Contact Memory</p>
+                <p class="text-[9px] opacity-60">Remember useful context for repeat contacts across sessions, especially on WhatsApp.</p>
+              </div>
+              <div :class="['w-10 h-5 rounded-full relative transition-colors p-1', form.tools_config.conversation_settings.contactMemoryEnabled ? 'bg-primary' : 'bg-foreground/10']">
+                <div :class="['w-3 h-3 bg-white rounded-full transition-all', form.tools_config.conversation_settings.contactMemoryEnabled ? 'translate-x-5' : 'translate-x-0']" />
+              </div>
+            </button>
+          </div>
+        </section>
+
+        <section class="glass-card p-8 border-foreground/10 bg-foreground/[0.02]">
+          <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-4">How this helps</h3>
+          <div class="space-y-3 text-[10px] text-foreground/50 uppercase tracking-wider leading-relaxed font-bold">
+            <p>- Stops repeated greetings</p>
+            <p>- Reduces asking the same question twice</p>
+            <p>- Makes WhatsApp follow-ups feel more natural</p>
+            <p>- Keeps replies better aligned with your support style</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
     <!-- ─── TOOLS TAB ─────────────────────────────────────────── -->
     <div v-else-if="activeTab === 'tools'" class="space-y-10">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -1004,9 +1142,9 @@ const catalogManagerRef = ref<any>(null)
                 <div class="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
                     <Sparkles class="w-10 h-10 text-primary" />
                 </div>
-                <h3 class="text-xl font-bold text-foreground mb-4 uppercase italic-none">Agent Skills Engine</h3>
+                <h3 class="text-xl font-bold text-foreground mb-4 uppercase italic-none">Assistant Skills</h3>
                 <p class="text-xs text-foreground/50 max-w-md mx-auto leading-relaxed uppercase tracking-widest font-bold">
-                    Skills allow your agent to perform specialized tasks and access advanced knowledge domains.
+                    Skills help your assistant handle specialized tasks and stay aligned with your business use case.
                 </p>
                 <div class="mt-10 p-6 rounded-2xl bg-foreground/[0.02] border border-dashed border-foreground/10">
                     <p class="text-[10px] text-foreground/30 font-bold uppercase tracking-[0.2em]">
@@ -1020,14 +1158,14 @@ const catalogManagerRef = ref<any>(null)
             <section class="glass-card p-10">
                 <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-6">Knowledge Base</h3>
                 <p class="text-[11px] text-foreground/40 leading-relaxed mb-8">
-                    Looking to train your agent with custom data? Visit the Knowledge Ops center.
+                    Looking to train your assistant with custom data? Visit the Train Your AI area.
                 </p>
                 <NuxtLink 
                   :to="`/dashboard/agents/skills/training?id=${chatbotId}`"
                   class="w-full py-4 bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 rounded-2xl flex items-center justify-center gap-3 transition-all group"
                 >
                     <Database class="w-4 h-4 text-primary" />
-                    <span class="text-[10px] font-bold tracking-widest uppercase text-foreground/60 group-hover:text-foreground">Open Knowledge Ops</span>
+                    <span class="text-[10px] font-bold tracking-widest uppercase text-foreground/60 group-hover:text-foreground">Open Train Your AI</span>
                 </NuxtLink>
             </section>
         </div>

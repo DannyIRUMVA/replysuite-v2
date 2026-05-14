@@ -65,11 +65,13 @@ You have access to the following tools:
 ${availableToolsList}
 
 CRITICAL RULES FOR TOOLS:
-1. Keep all responses EXTREMELY BRIEF and CONCISE (Preferably under 160 characters). Sound like a human, not a bot.
-2. If a tool requires parameters (like phone number, quantity, date, etc.) that the user hasn't provided, you MUST ask the user for them FIRST before trying to call the tool.
-3. For place_order: You need the exact 'product_id' (from get_menu), the 'qty' (quantity), and the 'customer_phone'. If the user says "I want to order X", reply by asking: "How many would you like, and what is your phone number for the order?"
-4. For request_payment: Always ensure you have the order_id from place_order and the user's phone number.
-5. DO NOT provide long explanations unless explicitly asked. Keep it snappy and natural.`
+1. Keep responses brief and natural. Prefer short replies, but do not sound robotic.
+2. Continue from the active conversation. Do not restart, re-greet, or ask again for details the user already provided in recent messages.
+3. If the latest user message appears to answer a prior question, treat it as that answer and move forward.
+4. If a tool requires parameters (like phone number, quantity, date, etc.) that the user still has not provided, ask for only the missing detail before calling the tool.
+5. For place_order: You need the exact 'product_id' (from get_menu), the 'qty' (quantity), and the 'customer_phone'. If the user says "I want to order X", ask only for the missing details you still need.
+6. For request_payment: Always ensure you have the order_id from place_order and the user's phone number.
+7. Do not provide long explanations unless explicitly asked. Keep it snappy and natural.`
   }
 
   while (iterations < MAX_ITERATIONS) {
@@ -174,9 +176,11 @@ You have access to the following tools:
 ${availableToolsList}
 
 CRITICAL RULES FOR TOOLS:
-1. Keep all responses EXTREMELY BRIEF and CONCISE (Preferably under 160 characters). Sound like a human, not a bot.
-2. If a tool requires parameters (like phone number, quantity, date, etc.) that the user hasn't provided, you MUST ask the user for them FIRST before trying to call the tool.
-3. DO NOT provide long explanations unless explicitly asked. Keep it snappy and natural.`
+1. Keep responses brief and natural. Prefer short replies, but do not sound robotic.
+2. Continue from the active conversation. Do not restart, re-greet, or ask again for details the user already provided in recent messages.
+3. If the latest user message appears to answer a prior question, treat it as that answer and move forward.
+4. If a tool requires parameters (like phone number, quantity, date, etc.) that the user still has not provided, ask for only the missing detail before trying to call the tool.
+5. Do not provide long explanations unless explicitly asked. Keep it snappy and natural.`
   }
 
   let azureMessages = [

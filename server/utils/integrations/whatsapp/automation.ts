@@ -1,5 +1,14 @@
 import { searchKnowledge, getChatCompletion } from '../../ai'
 import { runAgentCycle } from '../../agent/engine'
+import {
+  buildConversationSettingsPrompt,
+  buildConversationStatePrompt,
+  getConversationStateFromMetadata,
+  mergeMetadataWithState,
+  normalizeConversationSettings,
+  updateConversationState,
+} from '../../conversation-intelligence'
+import { safeLoadContactMemory, safeUpsertContactMemory } from '../../contact-memory'
 
 export const processWhatsappMessage = async (supabase: any, messageData: any) => {
   const { phone_number_id, from_number, text, customer_name, message_id } = messageData
@@ -80,6 +89,8 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
   // 3. RAG / Data Retrieval Pipeline
   let contextText = ''
   let baseInstructions = ''
+  let conversationSettings = normalizeConversationSettings(null)
+  let chatbotDefaultLanguage: string | null = null
 
   console.log(`   🧠 Initiating AI Pipeline for chatbot: ${waAccount.chatbot_id}`)
   try {
@@ -90,6 +101,8 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
       .single()
 
     baseInstructions = chatbot?.system_prompt || `You are a helpful AI assistant connected over WhatsApp.`
+    conversationSettings = normalizeConversationSettings(chatbot?.tools_config?.conversation_settings)
+    chatbotDefaultLanguage = chatbot?.default_language || null
     
     // RAG Search
     const contextResults = await searchKnowledge(supabase, waAccount.chatbot_id, text, 6)
@@ -105,18 +118,16 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
   }
 
   // 4. Generate AI Reply (Agentic Loop)
-  const systemPrompt = `
+  const conversationBehavior = buildConversationSettingsPrompt(conversationSettings, 'whatsapp')
+
+  let sessionMetadata: any = null
+  let contactMemory: any = null
+
+  const systemPromptBase = `
     ${baseInstructions}
 
-    [ADDITIONAL CONTEXT FROM KNOWLEDGE BASE]
-    ${contextText || 'No specific background knowledge found for this query.'}
-    
-    IMPORTANT INSTRUCTIONS:
-    1. Be extremely concise, direct, and conversational (Max 160 characters).
-    2. Format specifically for WhatsApp. You can use standard formatting like *bold* or _italics_ natively.
-    3. Do not include markdown headers (#) or markdown horizontal lines (---).
-    4. DO NOT provide long explanations. Get straight to the point.
-    5. Prioritize [ADDITIONAL CONTEXT] for factual accuracy over base instructions.
+    [CONVERSATION BEHAVIOR]
+    ${conversationBehavior}
   `
 
   let replyText = ''
@@ -133,7 +144,7 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
     
     const { data: existingSessions } = await supabase
       .from('chat_sessions')
-      .select('id')
+      .select('id, metadata')
       .eq('chatbot_id', waAccount.chatbot_id)
       .contains('metadata', { phone: from_number })
       .order('created_at', { ascending: false })
@@ -141,6 +152,7 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
 
     if (existingSessions && existingSessions.length > 0) {
       chatSession = existingSessions[0]
+      sessionMetadata = chatSession.metadata || null
       
       const { data: history } = await supabase
         .from('chat_messages')
@@ -154,6 +166,27 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
       }
     }
     
+    if (conversationSettings.contactMemoryEnabled) {
+      contactMemory = await safeLoadContactMemory(supabase, waAccount.chatbot_id, 'whatsapp', from_number)
+    }
+
+    const sessionState = conversationSettings.sessionMemoryEnabled
+      ? getConversationStateFromMetadata(sessionMetadata)
+      : {}
+
+    const systemPrompt = `${systemPromptBase}
+
+[SESSION STATE]
+${buildConversationStatePrompt(sessionState, contactMemory)}
+
+[ADDITIONAL CONTEXT FROM KNOWLEDGE BASE]
+${contextText || 'No specific background knowledge found for this query.'}
+
+IMPORTANT INSTRUCTIONS:
+1. Format specifically for WhatsApp. You can use standard formatting like *bold* or _italics_ natively.
+2. Do not include markdown headers (#) or markdown horizontal lines (---).
+3. Prioritize [ADDITIONAL CONTEXT] for factual accuracy over base instructions.`
+
     // Add current message
     messagesHistory.push({ role: 'user', content: text })
 
@@ -184,13 +217,14 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
         const { data: newSession, error: sessErr } = await supabase.from('chat_sessions').insert({
           chatbot_id: waAccount.chatbot_id,
           metadata: { type: 'whatsapp', phone: from_number, username: customer_name }
-        }).select('id').single()
+        }).select('id, metadata').single()
         
         if (sessErr) {
            console.error('❌ Failed to insert new WhatsApp chat_sessions:', sessErr)
            throw sessErr
         }
         chatSession = newSession
+        sessionMetadata = newSession?.metadata || null
       }
 
       const { error: msgErr } = await supabase.from('chat_messages').insert([
@@ -203,6 +237,40 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
           throw msgErr
       }
       
+      if (conversationSettings.sessionMemoryEnabled) {
+        const nextState = updateConversationState({
+          existingState: getConversationStateFromMetadata(sessionMetadata),
+          userMessage: text,
+          assistantReply: replyText,
+          customerName,
+          customerPhone: from_number,
+          defaultLanguage: chatbotDefaultLanguage,
+        })
+
+        sessionMetadata = mergeMetadataWithState(sessionMetadata, nextState)
+        await supabase
+          .from('chat_sessions')
+          .update({ metadata: sessionMetadata })
+          .eq('id', chatSession.id)
+
+        if (conversationSettings.contactMemoryEnabled) {
+          await safeUpsertContactMemory(supabase, {
+            chatbot_id: waAccount.chatbot_id,
+            channel: 'whatsapp',
+            contact_key: from_number,
+            display_name: customer_name,
+            preferred_language: nextState.preferredLanguage || null,
+            memory: {
+              lastIntent: nextState.currentIntent || null,
+              phone: nextState.collected?.phone || from_number,
+              name: nextState.collected?.name || customer_name,
+              preferredLanguage: nextState.preferredLanguage || null,
+              notes: nextState.openQuestion || null,
+            },
+          })
+        }
+      }
+
       console.log(`   ✅ Chat history securely appended to Session: ${chatSession.id}`)
     } catch (err) { 
         console.error('❌ [WhatsApp Debug] Database Insertion Error:', err)

@@ -80,37 +80,85 @@ export type Database = {
       }
       chatbots: {
         Row: {
+          ai_disclosure: boolean | null
           allow_localhost_testing: boolean | null
+          allowed_domains: Json | null
+          chat_bubble_style: string | null
+          chat_icon: string | null
+          chat_icon_color: string | null
           created_at: string | null
           current_embedding_mb: number | null
+          default_language: string | null
           deleted_at: string | null
+          enabled_tools: Json | null
           id: string
           is_public: boolean | null
+          launcher_color: string | null
+          launcher_icon: string | null
+          launcher_icon_color: string | null
+          launcher_style: string | null
           name: string
+          primary_color: string | null
+          secondary_color: string | null
           system_prompt: string | null
+          tools_config: Json | null
           user_id: string | null
+          welcome_message: string | null
+          widget_position: string | null
         }
         Insert: {
+          ai_disclosure?: boolean | null
           allow_localhost_testing?: boolean | null
+          allowed_domains?: Json | null
+          chat_bubble_style?: string | null
+          chat_icon?: string | null
+          chat_icon_color?: string | null
           created_at?: string | null
           current_embedding_mb?: number | null
+          default_language?: string | null
           deleted_at?: string | null
+          enabled_tools?: Json | null
           id?: string
           is_public?: boolean | null
+          launcher_color?: string | null
+          launcher_icon?: string | null
+          launcher_icon_color?: string | null
+          launcher_style?: string | null
           name: string
+          primary_color?: string | null
+          secondary_color?: string | null
           system_prompt?: string | null
+          tools_config?: Json | null
           user_id?: string | null
+          welcome_message?: string | null
+          widget_position?: string | null
         }
         Update: {
+          ai_disclosure?: boolean | null
           allow_localhost_testing?: boolean | null
+          allowed_domains?: Json | null
+          chat_bubble_style?: string | null
+          chat_icon?: string | null
+          chat_icon_color?: string | null
           created_at?: string | null
           current_embedding_mb?: number | null
+          default_language?: string | null
           deleted_at?: string | null
+          enabled_tools?: Json | null
           id?: string
           is_public?: boolean | null
+          launcher_color?: string | null
+          launcher_icon?: string | null
+          launcher_icon_color?: string | null
+          launcher_style?: string | null
           name?: string
+          primary_color?: string | null
+          secondary_color?: string | null
           system_prompt?: string | null
+          tools_config?: Json | null
           user_id?: string | null
+          welcome_message?: string | null
+          widget_position?: string | null
         }
         Relationships: [
           {
@@ -118,6 +166,53 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatbot_contact_memories: {
+        Row: {
+          channel: string
+          chatbot_id: string
+          contact_key: string
+          created_at: string
+          display_name: string | null
+          id: string
+          last_seen_at: string
+          memory: Json
+          preferred_language: string | null
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          chatbot_id: string
+          contact_key: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          last_seen_at?: string
+          memory?: Json
+          preferred_language?: string | null
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          chatbot_id?: string
+          contact_key?: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          last_seen_at?: string
+          memory?: Json
+          preferred_language?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_contact_memories_chatbot_id_fkey"
+            columns: ["chatbot_id"]
+            isOneToOne: false
+            referencedRelation: "chatbots"
             referencedColumns: ["id"]
           },
         ]

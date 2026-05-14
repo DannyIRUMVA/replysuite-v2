@@ -213,8 +213,8 @@ useHead({
               <Bot class="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h3 class="text-xl font-black text-foreground uppercase tracking-tighter">AI Agent Mapping</h3>
-              <p class="text-[10px] text-foreground/50 font-bold uppercase tracking-widest">Connect an AI Mind to this number</p>
+              <h3 class="text-xl font-black text-foreground uppercase tracking-tighter">Assistant Mapping</h3>
+              <p class="text-[10px] text-foreground/50 font-bold uppercase tracking-widest">Choose which assistant should reply on this number</p>
             </div>
           </div>
 
@@ -225,7 +225,7 @@ useHead({
                 @change="(e: any) => updateMapping(e.target.value || null)"
                 class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-6 py-5 text-sm font-black text-foreground focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer pr-12"
               >
-                <option :value="null" class="bg-background">Select Agent...</option>
+                <option :value="null" class="bg-background">Select Assistant...</option>
                 <option v-for="agent in agents" :key="agent.id" :value="agent.id" class="bg-background">
                   {{ agent.name }}
                 </option>
@@ -237,7 +237,7 @@ useHead({
               <CheckCircle2 class="w-6 h-6 text-green-500" />
               <div>
                 <p class="text-[11px] font-black text-foreground uppercase tracking-widest">Connection Active</p>
-                <p class="text-[9px] font-bold text-green-500/60 uppercase tracking-tighter">Inbound traffic is now being routed to the AI agent.</p>
+                <p class="text-[9px] font-bold text-green-500/60 uppercase tracking-tighter">Inbound WhatsApp messages will now use this assistant.</p>
               </div>
             </div>
           </div>
@@ -255,7 +255,7 @@ useHead({
               </div>
               <div class="w-full h-px bg-foreground/5"></div>
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-black text-foreground/50 uppercase tracking-widest">Asset Category</span>
+                <span class="text-[10px] font-black text-foreground/50 uppercase tracking-widest">Connection Type</span>
                 <span class="text-[10px] font-black text-foreground uppercase tracking-widest italic">Official WABA</span>
               </div>
            </div>
@@ -266,7 +266,7 @@ useHead({
            </button>
            <div v-else class="mt-12 flex items-center gap-3 text-green-500/40">
               <Activity class="w-4 h-4 animate-pulse" />
-              <span class="text-[9px] font-black uppercase tracking-widest">Node Heartbeat Active</span>
+              <span class="text-[9px] font-black uppercase tracking-widest">WhatsApp Connection Active</span>
            </div>
         </div>
       </section>
@@ -285,7 +285,7 @@ useHead({
             <div class="glass-card p-10 bg-foreground/5 border-foreground/10 space-y-8">
                 <div class="flex items-center gap-3">
                     <Send class="w-5 h-5 text-primary/60" />
-                    <span class="text-[10px] font-black uppercase tracking-widest text-foreground">Live Message Testing</span>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-foreground">Live Message Test</span>
                 </div>
                 <div class="space-y-4">
                     <div class="space-y-2">

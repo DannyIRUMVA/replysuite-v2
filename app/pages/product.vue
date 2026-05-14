@@ -27,11 +27,11 @@ const highlights = [
       <div class="relative z-10">
         <span class="badge-gradient mb-6">Product</span>
         <h1 class="text-5xl md:text-7xl font-extrabold mb-8 leading-[0.95] tracking-tight text-foreground">
-          Train one chatbot on your business content.
-          <span class="text-gradient">Use it on your website and WhatsApp.</span>
+          AI customer support for your website and WhatsApp.
+          <span class="text-gradient">Trained on your business content.</span>
         </h1>
         <p class="text-lg text-foreground/50 mb-12 max-w-2xl leading-relaxed font-medium">
-          ReplySuite helps businesses reply faster, support customers better, and miss fewer leads. You train the bot on your content. Then you deploy it where customers already talk to you.
+          ReplySuite helps businesses automate customer support, FAQs, lead capture, and multilingual replies. Train the assistant on your content, then deploy it where customers already talk to you.
         </p>
         <div class="flex flex-col sm:flex-row items-center gap-6">
           <NuxtLink to="/register" class="w-full sm:w-auto btn-gradient px-10 py-5 text-lg flex items-center justify-center gap-3">
@@ -76,7 +76,7 @@ const highlights = [
     <section class="max-w-7xl mx-auto px-6 py-32 border-t border-foreground/5">
       <div class="text-center mb-24">
         <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 text-foreground">How it works</h2>
-        <p class="text-foreground/50 max-w-2xl mx-auto font-medium">Three simple steps. No custom AI project required.</p>
+        <p class="text-foreground/50 max-w-2xl mx-auto font-medium">Three simple steps to launch AI customer support without a custom AI project.</p>
       </div>
 
       <div class="grid md:grid-cols-3 gap-12">
@@ -96,7 +96,7 @@ const highlights = [
       <div class="max-w-7xl mx-auto px-6 relative z-10">
         <div class="text-center mb-16">
           <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground">What you get</h2>
-          <p class="text-foreground/50 max-w-2xl mx-auto mt-6 font-medium">Short setup. Clear value. One place to manage your chatbot.</p>
+          <p class="text-foreground/50 max-w-2xl mx-auto mt-6 font-medium">Short setup. Clear value. One place to manage your AI customer support assistant.</p>
         </div>
         <div class="grid lg:grid-cols-4 gap-8">
           <div v-for="item in highlights" :key="item.title" class="glass-card p-8 border-foreground/10 text-center">

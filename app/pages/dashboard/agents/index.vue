@@ -26,7 +26,7 @@ definePageMeta({
 })
 
 useHead({
-  title: 'AI Agents'
+  title: 'AI Assistants'
 })
 
 const { userId, limits, isVerified, isLoading: authLoading } = useAuth()
@@ -65,7 +65,7 @@ const stats = computed(() => pageData.value?.stats || {
 const isLoading = computed(() => authLoading.value || dataLoading.value)
 
 const fleetStats = computed(() => [
-  { label: 'Active Agents', value: agents.value.length.toString().padStart(2, '0'), icon: Bot },
+  { label: 'Active Assistants', value: agents.value.length.toString().padStart(2, '0'), icon: Bot },
   { label: 'Plan Limit', value: `${agents.value.length} / ${limits.value.maxAgents ?? '∞'}`, icon: Sparkles },
   { label: 'Total Interactions', value: stats.value.totalChats.toLocaleString(), icon: MessageSquare },
   { label: 'Data Sources', value: stats.value.totalDataSources.toLocaleString(), icon: Database }
@@ -213,7 +213,7 @@ const { data: pageData, pending: dataLoading, refresh: refreshAgents } = useAsyn
 const handleCreate = async () => {
   if (!userId.value || !newAgent.value.name) return
   if (!canCreateAgent.value) {
-    notify.warn(`You've reached the limit of ${limits.value.maxAgents} agents for your current plan.`)
+    notify.warn(`You've reached the limit of ${limits.value.maxAgents} assistants for your current plan.`)
     return
   }
   
@@ -272,7 +272,7 @@ const handleDelete = async (id: string) => {
           ]"
         >
           <Plus class="w-5 h-5" />
-          {{ canCreateAgent ? 'Forge New Agent' : 'Agent Limit Reached' }}
+          {{ canCreateAgent ? 'Create New Assistant' : 'Assistant Limit Reached' }}
         </button>
 
         <NuxtLink
@@ -280,7 +280,7 @@ const handleDelete = async (id: string) => {
           to="/dashboard/pricing"
           class="text-[10px] font-bold tracking-widest uppercase text-primary hover:text-primary-accent transition-colors"
         >
-          Need more agents? Upgrade your plan
+          Need more assistants? Upgrade your plan
         </NuxtLink>
       </div>
     </div>
@@ -387,7 +387,7 @@ const handleDelete = async (id: string) => {
 
           <div class="bg-foreground/[0.02] border border-foreground/5 rounded-2xl p-4 mb-6 h-[88px] sm:h-[96px] overflow-hidden">
             <p class="text-[14px] text-foreground/60 leading-relaxed line-clamp-3 italic-none">
-              {{ agent.system_prompt || 'No system prompt configured. This agent will use default behavioral patterns.' }}
+              {{ agent.system_prompt || 'No assistant instructions configured yet. Default behavior will be used until you add custom guidance.' }}
             </p>
           </div>
 
@@ -464,15 +464,15 @@ const handleDelete = async (id: string) => {
       <div class="w-20 h-20 bg-primary/5 rounded-3xl flex items-center justify-center mb-6 border border-primary/10">
         <Bot class="w-10 h-10 text-primary" />
       </div>
-      <h3 class="text-[26px] font-bold text-foreground mb-2 tracking-tight italic-none uppercase">No Agents Forged Yet</h3>
-      <p class="text-foreground/50 text-[18px] max-w-sm mb-10 leading-relaxed italic-none">Create your first AI agent to start automating your customer service and engagement.</p>
+      <h3 class="text-[26px] font-bold text-foreground mb-2 tracking-tight italic-none uppercase">No Assistants Yet</h3>
+      <p class="text-foreground/50 text-[18px] max-w-sm mb-10 leading-relaxed italic-none">Create your first AI assistant to start automating customer support and lead capture.</p>
       
       <button 
         @click="showCreateModal = true"
         class="flex items-center gap-2 text-primary font-bold tracking-widest text-[14px] uppercase"
       >
         <Plus class="w-4 h-4" />
-        Build Your First Agent
+        Create Your First Assistant
       </button>
     </div>
 
@@ -483,7 +483,7 @@ const handleDelete = async (id: string) => {
       <div class="relative w-full max-w-lg bg-background border border-foreground/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
         <div class="p-8">
           <div class="flex items-center justify-between mb-8">
-            <h3 class="text-xl font-bold text-foreground tracking-tight italic-none uppercase">Forge AI Agent</h3>
+            <h3 class="text-xl font-bold text-foreground tracking-tight italic-none uppercase">Create AI Assistant</h3>
             <button @click="showCreateModal = false" class="p-2 text-foreground/50 hover:text-foreground transition-colors">
               <Plus class="w-6 h-6 rotate-45" />
             </button>
@@ -491,7 +491,7 @@ const handleDelete = async (id: string) => {
           
           <div class="space-y-6">
             <div>
-              <label class="block text-[14px] font-bold tracking-widest text-foreground/50 uppercase mb-2">Agent Name</label>
+              <label class="block text-[14px] font-bold tracking-widest text-foreground/50 uppercase mb-2">Assistant Name</label>
               <input 
                 v-model="newAgent.name"
                 placeholder="e.g. Sales Pilot"
@@ -500,16 +500,16 @@ const handleDelete = async (id: string) => {
             </div>
             
             <div>
-              <label class="block text-[14px] font-bold tracking-widest text-foreground/50 uppercase mb-2">Behavioral Protocol</label>
+              <label class="block text-[14px] font-bold tracking-widest text-foreground/50 uppercase mb-2">Assistant Instructions</label>
               <textarea 
                 v-model="newAgent.system_prompt"
                 rows="5"
-                placeholder="Describe how your agent should behave..."
+                placeholder="Describe how your assistant should behave..."
                 class="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors resize-none mb-2"
               ></textarea>
               <p class="text-[13px] text-foreground/50 leading-relaxed italic-none">
                 <Info class="w-3 h-3 inline mr-1" />
-                This protocol defines the agent's personality, tone, and decision-making logic.
+                These instructions define your assistant's tone, behavior, and response style.
               </p>
             </div>
 

@@ -6,14 +6,14 @@ const route = useRoute()
 // Dynamic Header Content
 const pageContext = computed(() => {
   const path = route.path
-  if (path === '/dashboard') return { title: 'Dashboard', subtitle: 'Track your agents, usage, and recent activity.' }
+  if (path === '/dashboard') return { title: 'Dashboard', subtitle: 'Track your assistants, replies, and recent activity.' }
   if (path.startsWith('/dashboard/settings')) return { title: 'Settings', subtitle: 'Manage your account, billing, and workspace preferences.' }
-  if (path.includes('/dashboard/agents/skills/training')) return { title: 'Knowledge Ops', subtitle: 'Train your agent with websites, documents, and custom text.' }
-  if (path.includes('/dashboard/agents')) return { title: 'Agents', subtitle: 'Create, configure, and manage your AI agents.' }
+  if (path.includes('/dashboard/agents/skills/training')) return { title: 'Train Your AI', subtitle: 'Add website pages, documents, and business text to improve reply quality.' }
+  if (path.includes('/dashboard/agents')) return { title: 'Assistants', subtitle: 'Create, configure, and manage your AI assistants.' }
   if (path.includes('/dashboard/analytics')) return { title: 'Analytics', subtitle: 'Review conversations, usage, and performance trends.' }
-  if (path.includes('/dashboard/integrations/whatsapp')) return { title: 'WhatsApp', subtitle: 'Connect numbers and manage WhatsApp automation.' }
-  if (path.includes('/dashboard/integrations/website')) return { title: 'Website', subtitle: 'Connect your chatbot to approved website domains.' }
-  if (path.includes('/dashboard/conversations')) return { title: 'Conversations', subtitle: 'Browse and review your chatbot conversations.' }
+  if (path.includes('/dashboard/integrations/whatsapp')) return { title: 'WhatsApp', subtitle: 'Connect your business number and manage WhatsApp AI support.' }
+  if (path.includes('/dashboard/integrations/website')) return { title: 'Website', subtitle: 'Connect your website chatbot to approved domains.' }
+  if (path.includes('/dashboard/conversations')) return { title: 'Conversations', subtitle: 'Browse and review customer conversations.' }
   if (path.includes('/dashboard/pricing')) return { title: 'Pricing', subtitle: 'Choose the plan that fits your current stage.' }
   return { title: 'Dashboard', subtitle: 'Welcome back to ReplySuite.' }
 })

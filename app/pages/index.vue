@@ -31,10 +31,10 @@ import { marked } from 'marked'
 import xss from 'xss'
 
 useSeoMeta({
-  title: 'ReplySuite | AI chatbot for your website and WhatsApp',
-  ogTitle: 'ReplySuite | Train an AI chatbot on your business content',
-  description: 'Train an AI chatbot on your website, PDFs, FAQs, and business content. Deploy it on your website and WhatsApp to answer questions faster and capture more leads.',
-  ogDescription: 'ReplySuite helps businesses launch AI chatbots trained on their own content for website and WhatsApp support, lead capture, and faster replies.',
+  title: 'AI Customer Support Chatbot for Websites & WhatsApp | ReplySuite',
+  ogTitle: 'AI Customer Support for Websites & WhatsApp | ReplySuite',
+  description: 'Train AI chatbots on your business content and automate customer support, FAQs, bookings, and lead generation on WhatsApp and websites.',
+  ogDescription: 'Train AI chatbots on your business content and automate customer support, FAQs, bookings, and lead generation on WhatsApp and websites.',
 })
 
 useHead({
@@ -60,64 +60,98 @@ const renderMarkdown = (text: string) => {
 }
 
 const outcomePoints = [
-  'Answer customer questions instantly',
-  'Train on your website, PDFs, and custom text',
-  'Deploy on website and WhatsApp without changing your workflow'
+  'Instant replies on your website and WhatsApp',
+  'Train on your website, PDFs, FAQs, and business content',
+  'Capture leads and answer support questions 24/7'
 ]
 
 const proofCards = [
   {
-    title: 'Train on your business content',
-    desc: 'Paste your website URL, upload PDFs, or add custom text so the chatbot answers using your real information.',
-    icon: ScanSearch
-  },
-  {
-    title: 'Deploy where customers already talk',
-    desc: 'Launch on your website first, then connect WhatsApp for higher-value conversations and faster response times.',
+    title: 'Missed WhatsApp messages',
+    desc: 'Customers ask questions, but delayed replies mean lost sales, missed bookings, and colder leads.',
     icon: MessageCircle
   },
   {
-    title: 'Built for real business use',
-    desc: 'Use one dashboard to create agents, manage knowledge, test replies, and control how your assistant behaves.',
-    icon: PanelTop
+    title: 'Repetitive support work',
+    desc: 'Your team keeps answering the same pricing, service, and FAQ questions over and over.',
+    icon: MessageSquare
+  },
+  {
+    title: 'Unavailable staff',
+    desc: 'When your business is closed, customers still expect quick answers and a simple way to keep talking.',
+    icon: Clock3
   }
 ]
 
 const steps = [
   {
     num: '01',
-    title: 'Create your chatbot',
-    desc: 'Start with a website chatbot and give it a name, tone, and purpose.'
+    title: 'Train your AI on your business',
+    desc: 'Use your website, PDFs, FAQs, or custom text so your assistant answers with real business context.'
   },
   {
     num: '02',
-    title: 'Train it on your content',
-    desc: 'Use your website URL, PDFs, FAQs, product info, or custom text so replies stay on-brand and useful.'
+    title: 'Connect your website and WhatsApp',
+    desc: 'Launch your website chatbot first, then expand into WhatsApp support when you are ready.'
   },
   {
     num: '03',
-    title: 'Go live on web and WhatsApp',
-    desc: 'Embed the widget on your site and upgrade into WhatsApp automation when you are ready.'
+    title: 'Reply instantly and capture leads',
+    desc: 'Automate common questions, collect new leads, and give customers answers any time of day.'
   }
 ]
 
 const useCases = [
   {
-    title: 'Website lead capture',
-    desc: 'Turn visitors into conversations by answering pricing, services, delivery, and product questions in real time.',
+    title: 'Clinics',
+    pain: 'Patients ask about services, appointments, pricing, and opening hours when your team is busy.',
+    solution: 'ReplySuite answers common questions instantly and helps capture appointment and inquiry details.',
+    icon: ShieldCheck
+  },
+  {
+    title: 'Restaurants',
+    pain: 'Customers want menus, location details, delivery info, and quick answers before ordering.',
+    solution: 'Use a website chatbot and WhatsApp AI assistant to reply faster and reduce repetitive questions.',
+    icon: MessageSquare
+  },
+  {
+    title: 'Schools',
+    pain: 'Parents and students keep asking about admissions, fees, documents, and schedules.',
+    solution: 'ReplySuite gives instant FAQ answers and helps staff handle more important follow-up.',
+    icon: FileText
+  },
+  {
+    title: 'Hotels',
+    pain: 'Guests ask about room availability, check-in times, amenities, and booking details at all hours.',
+    solution: 'Automate hospitality FAQs, collect guest interest, and keep responses available 24/7.',
     icon: Globe2
   },
   {
-    title: 'WhatsApp customer support',
-    desc: 'Handle repetitive support and pre-sales questions faster on the channel many customers prefer most.',
-    icon: MessageCircle
-  },
-  {
-    title: 'Knowledge-based AI replies',
-    desc: 'Ground answers in your own business data instead of generic AI responses.',
-    icon: BrainCircuit
+    title: 'Real Estate',
+    pain: 'Property inquiries slow down when agents cannot respond immediately to every message.',
+    solution: 'Capture leads faster, answer listing questions, and keep prospects engaged while your team follows up.',
+    icon: Sparkles
   }
 ]
+
+const activeUseCase = ref(0)
+const useCaseCardRefs = ref<HTMLElement[]>([])
+
+const setUseCaseCardRef = (el: Element | null, index: number) => {
+  if (!el) return
+  useCaseCardRefs.value[index] = el as HTMLElement
+}
+
+const focusUseCase = (index: number) => {
+  activeUseCase.value = index
+  nextTick(() => {
+    useCaseCardRefs.value[index]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'start'
+    })
+  })
+}
 
 const reasonsToBuy = [
   {
@@ -196,20 +230,37 @@ const closeDemoVideo = () => {
 
 const testimonialSamples = [
   {
-    quote: 'We added ReplySuite to our website and within a few days it was handling the same questions my team answers over and over. It saved us a lot of time.',
+    quote: 'We added ReplySuite to our website and it immediately reduced the repetitive questions our team handles every day.',
     name: 'Sarah Thompson',
     role: 'Founder, online store'
   },
   {
-    quote: 'What I liked most was how easy it was to train the chatbot on our own content. The replies felt much closer to how we actually talk to customers.',
+    quote: 'Training the assistant on our own content made the replies feel far more useful for real customers.',
     name: 'Kevin Mwangi',
     role: 'Operations manager, service business'
   },
   {
-    quote: 'We started with the website chatbot and later looked at WhatsApp integration. It gave us a simple path instead of trying to set up everything at once.',
+    quote: 'Starting with the website chatbot first made setup much easier, and WhatsApp felt like a natural next step.',
     name: 'Aline Uwase',
     role: 'Customer support lead'
   }
+]
+
+const socialProofMetrics = [
+  { label: 'Website + WhatsApp setup', value: '2 channels' },
+  { label: 'Support coverage', value: '24/7' },
+  { label: 'Business languages supported', value: '10+' }
+]
+
+const logoPills = ['Clinics', 'Restaurants', 'Schools', 'Hotels', 'Real Estate']
+
+const faqItems = [
+  { q: 'Does it support WhatsApp?', a: 'Yes. ReplySuite supports WhatsApp AI assistant workflows for businesses that want faster support and lead capture on WhatsApp.' },
+  { q: 'Can it answer in Kinyarwanda?', a: 'Yes. ReplySuite already supports Kinyarwanda alongside other business languages.' },
+  { q: 'Can I train it with PDFs?', a: 'Yes. You can train your assistant with PDFs, website pages, and custom text.' },
+  { q: 'Does it work 24/7?', a: 'Yes. Once live, your assistant can reply to common questions any time of day.' },
+  { q: 'Can I use it on my website?', a: 'Yes. ReplySuite includes a website chatbot you can embed on approved domains.' },
+  { q: 'How long does setup take?', a: 'Most businesses can create, train, and test their first assistant quickly, then connect WhatsApp as the next step.' }
 ]
 
 const chatbotId = 'cacdbcdb-7157-4e12-92c4-a715aadf3112'
@@ -219,6 +270,7 @@ const isChatbotLoading = ref(true)
 const chatbot = ref<any>(null)
 const demoEmbedToken = ref('')
 const demoEmbedHost = ref('')
+const demoSessionId = ref('')
 const chatMessages = ref<any[]>([])
 const scrollRef = ref<HTMLElement | null>(null)
 
@@ -284,6 +336,8 @@ const fetchChatbot = async () => {
     console.error('Failed to fetch chatbot:', e)
   }
 
+  demoSessionId.value = ''
+
   chatMessages.value = [
     {
       role: 'assistant',
@@ -323,17 +377,19 @@ const sendDemoMessage = async () => {
   isChatLoading.value = true
 
   try {
-    const res = await $fetch<{ success: boolean; response: string }>('/api/public/chat', {
+    const res = await $fetch<{ success: boolean; response: string; sessionId?: string }>('/api/public/chat', {
       method: 'POST',
       body: {
         chatbotId,
         message: userMsg,
+        sessionId: demoSessionId.value || undefined,
         embedToken: demoEmbedToken.value || undefined,
         embedHost: demoEmbedHost.value || undefined,
       }
     })
 
     if (res.success) {
+      demoSessionId.value = res.sessionId || demoSessionId.value
       chatMessages.value.push({ role: 'assistant', content: res.response })
     }
   } catch (err) {
@@ -449,18 +505,17 @@ const handleSelect = async (plan: any) => {
         <div>
           <div class="flex items-center gap-3 mb-8 opacity-80 group cursor-default">
             <div class="h-[1px] w-10 bg-primary/40 group-hover:w-14 transition-all duration-500"></div>
-            <span class="text-[11px] font-bold tracking-[0.3em] text-primary uppercase">AI chatbot for website +
+            <span class="text-[11px] font-bold tracking-[0.3em] text-primary uppercase">AI customer support for websites +
               WhatsApp</span>
           </div>
 
           <h1 class="text-4xl md:text-6xl font-black mb-8 leading-[0.92] text-foreground max-w-3xl">
-            Train an AI chatbot on your business content and deploy it in
-            <span class="text-gradient">minutes.</span>
+            AI Customer Support for
+            <span class="text-gradient">Websites & WhatsApp</span>
           </h1>
 
           <p class="text-lg md:text-xl text-foreground/60 mb-10 max-w-2xl leading-relaxed font-semibold">
-            ReplySuite helps you answer customer questions faster, capture more leads, and support customers on your
-            website and WhatsApp using your own website content, PDFs, FAQs, and custom text.
+            Train an AI assistant on your business content and automate customer support, FAQs, bookings, and lead generation 24/7.
           </p>
 
           <div class="grid sm:grid-cols-1 gap-2.5 mb-10 max-w-xl">
@@ -484,20 +539,20 @@ const handleSelect = async (plan: any) => {
                 class="w-8 h-8 rounded-full bg-foreground/5 flex items-center justify-center group-hover:bg-primary group-hover:text-black transition-all">
                 <Play class="w-3 h-3 fill-current ml-0.5" />
               </div>
-              Watch Demo Video
+              Watch Demo
             </button>
           </div>
 
           <div
             class="mt-10 flex flex-wrap items-center gap-4 text-[11px] font-black uppercase tracking-widest text-foreground/45">
             <span class="inline-flex items-center gap-2">
-              <ShieldCheck class="w-4 h-4 text-primary" /> Train on your own data
+              <ShieldCheck class="w-4 h-4 text-primary" /> Train on your own content
             </span>
             <span class="inline-flex items-center gap-2">
               <Globe2 class="w-4 h-4 text-primary" /> Website widget
             </span>
             <span class="inline-flex items-center gap-2">
-              <MessageCircle class="w-4 h-4 text-primary" /> WhatsApp ready
+              <MessageCircle class="w-4 h-4 text-primary" /> WhatsApp AI assistant
             </span>
           </div>
         </div>
@@ -723,6 +778,16 @@ const handleSelect = async (plan: any) => {
     </section>
 
     <section class="max-w-7xl mx-auto px-6 py-8 md:py-12">
+      <div class="text-center mb-12 max-w-3xl mx-auto">
+        <span class="badge-gradient mb-6">The problem</span>
+        <h2 class="text-4xl md:text-5xl font-extrabold text-foreground mb-5">
+          Businesses lose customers when replies take too long.
+        </h2>
+        <p class="text-foreground/50 font-semibold leading-relaxed">
+          Slow responses create missed leads, frustrated customers, and more repetitive work for your team.
+        </p>
+      </div>
+
       <div class="grid md:grid-cols-3 gap-6">
         <div v-for="card in proofCards" :key="card.title"
           class="glass-card p-8 border-foreground/10 bg-foreground/[0.02]">
@@ -739,15 +804,14 @@ const handleSelect = async (plan: any) => {
     <section id="how-it-works" class="max-w-7xl mx-auto px-6 py-28 border-t border-foreground/5">
       <div class="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
         <div class="max-w-2xl">
-          <span class="badge-gradient mb-6">How it works</span>
+          <span class="badge-gradient mb-6">The solution</span>
           <h2 class="text-4xl md:text-6xl font-extrabold leading-tight text-foreground">
-            From business content to
-            <span class="text-gradient">live chatbot.</span>
+            ReplySuite answers customers instantly
+            <span class="text-gradient">using AI trained on your business.</span>
           </h2>
         </div>
         <p class="text-foreground/50 max-w-xl font-semibold leading-relaxed">
-          This is the simplest way to get a business-trained AI assistant live without building a custom AI stack from
-          scratch.
+          Use one assistant across your website and WhatsApp to automate customer support, multilingual replies, FAQs, and lead capture.
         </p>
       </div>
 
@@ -768,25 +832,48 @@ const handleSelect = async (plan: any) => {
       <div class="text-center mb-16 max-w-3xl mx-auto">
         <span class="badge-gradient mb-6">Use cases</span>
         <h2 class="text-4xl md:text-6xl font-extrabold text-foreground mb-6">
-          Built to help you sell, support, and respond
-          <span class="text-gradient">faster.</span>
+          Built for businesses that need faster replies
+          <span class="text-gradient">every day.</span>
         </h2>
         <p class="text-foreground/50 font-semibold leading-relaxed">
-          ReplySuite is easiest to buy when the outcome is obvious: faster answers, fewer missed leads, and better
-          customer
-          response coverage.
+          Start with the industry that looks most like yours, then train your assistant on the exact information your customers need.
         </p>
       </div>
 
-      <div class="grid md:grid-cols-3 gap-8">
-        <div v-for="item in useCases" :key="item.title"
-          class="glass-card p-10 border-foreground/10 bg-foreground/[0.02] hover:border-primary/20 transition-all duration-500">
-          <div
-            class="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-8">
-            <component :is="item.icon" class="w-7 h-7 text-primary" />
-          </div>
-          <h3 class="text-2xl font-black mb-4 text-foreground tracking-tight">{{ item.title }}</h3>
-          <p class="text-sm text-foreground/55 leading-relaxed font-semibold">{{ item.desc }}</p>
+      <div class="flex items-center justify-center gap-2 mb-8 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">
+        <span>Click a card to focus</span>
+        <div class="h-px w-8 bg-foreground/10"></div>
+        <span>Slide to explore more</span>
+      </div>
+
+      <div class="-mx-6 overflow-x-auto px-6 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div class="flex gap-5 w-max snap-x snap-mandatory">
+          <button
+            v-for="(item, index) in useCases"
+            :key="item.title"
+            :ref="(el) => setUseCaseCardRef(el, index)"
+            @click="focusUseCase(index)"
+            class="glass-card snap-start p-8 text-left border-foreground/10 bg-foreground/[0.02] transition-all duration-500 shrink-0 basis-[86vw] sm:basis-[68vw] lg:basis-[42vw] xl:basis-[38vw] 2xl:basis-[34vw]"
+            :class="activeUseCase === index ? 'border-primary/15 bg-primary/[0.025] shadow-[0_18px_50px_rgba(212,175,55,0.05)] dark:border-primary/20 dark:bg-primary/[0.05] dark:shadow-[0_18px_50px_rgba(212,175,55,0.10)]' : 'hover:border-primary/15'"
+          >
+            <div class="flex items-start justify-between gap-4 mb-6">
+              <div
+                class="w-12 h-12 rounded-2xl border flex items-center justify-center"
+                :class="activeUseCase === index ? 'bg-primary/8 border-primary/15 dark:bg-primary/15 dark:border-primary/25' : 'bg-primary/6 border-primary/12 dark:bg-primary/10 dark:border-primary/20'"
+              >
+                <component :is="item.icon" class="w-6 h-6 text-primary/85 dark:text-primary" />
+              </div>
+              <span class="rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em]"
+                :class="activeUseCase === index ? 'bg-primary/8 text-primary/80 border border-primary/15 dark:bg-primary/15 dark:text-primary dark:border-primary/20' : 'bg-foreground/5 text-foreground/45 border border-foreground/10'">
+                {{ index + 1 }}/{{ useCases.length }}
+              </span>
+            </div>
+            <h3 class="text-xl font-black mb-3 text-foreground tracking-tight">{{ item.title }}</h3>
+            <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/40 mb-2">Customer pain</p>
+            <p class="text-[13px] text-foreground/55 leading-6 font-semibold mb-4">{{ item.pain }}</p>
+            <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-primary mb-2">How ReplySuite helps</p>
+            <p class="text-[13px] text-foreground/70 leading-6 font-semibold">{{ item.solution }}</p>
+          </button>
         </div>
       </div>
     </section>
@@ -796,12 +883,11 @@ const handleSelect = async (plan: any) => {
         <div class="absolute inset-0 bg-primary/5 blur-[90px] -z-10"></div>
         <span class="badge-gradient mb-6">Before vs after</span>
         <h2 class="text-4xl md:text-6xl font-extrabold text-foreground mb-6 leading-tight">
-          Imagine what you could do if you had an expert chatbot
-          <span class="text-gradient">answering questions 24/7.</span>
+          See the difference between slow replies and
+          <span class="text-gradient">AI customer support that works 24/7.</span>
         </h2>
         <p class="text-foreground/50 font-semibold leading-relaxed max-w-3xl mx-auto">
-          The difference is not just "having AI." It is having a chatbot trained on your real business content, deployed
-          where customers already talk, and designed to reduce repetitive support work.
+          The difference is not just "having AI." It is having an assistant trained on your real business content, deployed where customers already talk, and designed to reduce repetitive support work.
         </p>
       </div>
 
@@ -816,7 +902,7 @@ const handleSelect = async (plan: any) => {
               <span class="text-[10px] font-black uppercase tracking-widest text-rose-200">Before</span>
             </div>
             <h3 class="text-2xl md:text-3xl font-black text-foreground tracking-tight mb-3">
-              Fickle, one-size-fits-all chatbots that do more harm than good
+              Generic chatbots that miss business context and frustrate customers
             </h3>
             <p class="text-sm text-foreground/55 font-semibold leading-relaxed mb-8 max-w-xl">
               Too generic, too hard to maintain, and not grounded in the real information your customers actually need.
@@ -856,12 +942,10 @@ const handleSelect = async (plan: any) => {
               <span class="text-[10px] font-black uppercase tracking-widest text-primary">After</span>
             </div>
             <h3 class="text-2xl md:text-3xl font-black text-foreground tracking-tight mb-3">
-              An automated resource that strengthens your support team
+              AI customer support that strengthens your team
             </h3>
             <p class="text-sm text-foreground/55 font-semibold leading-relaxed mb-8 max-w-xl">
-              Train once on your business content, answer faster on your website, and grow into WhatsApp support when
-              you
-              are ready.
+              Train once on your business content, reply faster on your website, and grow into WhatsApp support when you are ready.
             </p>
             <div class="grid sm:grid-cols-2 gap-3 mb-8">
               <div
@@ -900,8 +984,7 @@ const handleSelect = async (plan: any) => {
             <span class="text-gradient">win more conversations.</span>
           </h2>
           <p class="text-foreground/50 font-semibold leading-relaxed max-w-2xl">
-            ReplySuite gives you the tools to train, test, and deploy one business chatbot across your website and
-            WhatsApp.
+            ReplySuite gives you the tools to train, test, and deploy one AI customer support assistant across your website and WhatsApp.
             The value is simple: faster replies, fewer missed leads, and better customer coverage.
           </p>
         </div>
@@ -924,14 +1007,44 @@ const handleSelect = async (plan: any) => {
 
     <section class="max-w-7xl mx-auto px-6 py-28 border-t border-foreground/5">
       <div class="text-center mb-16 max-w-3xl mx-auto">
-        <span class="badge-gradient mb-6">What customers are saying</span>
+        <span class="badge-gradient mb-6">Social proof</span>
         <h2 class="text-4xl md:text-6xl font-extrabold text-foreground mb-6">
-          The kind of feedback
-          <span class="text-gradient">business owners care about.</span>
+          Show customers a product they can
+          <span class="text-gradient">trust quickly.</span>
         </h2>
         <p class="text-foreground/50 font-semibold leading-relaxed">
-          Simple, human feedback focused on setup speed, better replies, and less repetitive work.
+          Use proof that feels business-ready: vertical fit, visible product screens, and simple outcomes buyers care about.
         </p>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-center gap-3 mb-10">
+        <span v-for="logo in logoPills" :key="logo" class="rounded-full border border-foreground/10 bg-foreground/[0.02] px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-foreground/45">
+          {{ logo }}
+        </span>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4 mb-10">
+        <div v-for="metric in socialProofMetrics" :key="metric.label" class="glass-card p-6 border-foreground/10 bg-foreground/[0.02] text-center">
+          <p class="text-3xl font-black text-foreground tracking-tight">{{ metric.value }}</p>
+          <p class="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45">{{ metric.label }}</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-5 mb-12">
+        <div v-for="screen in ['Training screen', 'Conversation screen', 'Analytics screen']" :key="screen" class="glass-card border border-foreground/10 bg-foreground/[0.02] p-5">
+          <div class="aspect-[16/10] rounded-[24px] border border-foreground/10 bg-background/80 p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.16em] text-foreground/35">
+              <span>Product preview</span>
+              <span>ReplySuite</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 opacity-70">
+              <div class="h-16 rounded-2xl bg-foreground/5"></div>
+              <div class="h-16 rounded-2xl bg-foreground/5"></div>
+              <div class="h-16 rounded-2xl bg-foreground/5"></div>
+            </div>
+            <p class="text-sm font-black text-foreground">{{ screen }}</p>
+          </div>
+        </div>
       </div>
 
       <div class="grid lg:grid-cols-3 gap-8">
@@ -948,6 +1061,26 @@ const handleSelect = async (plan: any) => {
             <p class="text-foreground font-black tracking-tight">{{ item.name }}</p>
             <p class="text-foreground/50 text-xs font-semibold uppercase tracking-widest mt-2">{{ item.role }}</p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="max-w-7xl mx-auto px-6 py-28 border-t border-foreground/5">
+      <div class="text-center mb-16 max-w-3xl mx-auto">
+        <span class="badge-gradient mb-6">FAQ</span>
+        <h2 class="text-4xl md:text-6xl font-extrabold text-foreground mb-6">
+          Common questions before you
+          <span class="text-gradient">get started.</span>
+        </h2>
+        <p class="text-foreground/50 font-semibold leading-relaxed">
+          Clear answers for businesses comparing AI chatbot options for customer support and WhatsApp.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div v-for="item in faqItems" :key="item.q" class="glass-card p-8 border-foreground/10 bg-foreground/[0.02]">
+          <h3 class="text-xl font-black text-foreground tracking-tight mb-3">{{ item.q }}</h3>
+          <p class="text-sm text-foreground/55 leading-relaxed font-semibold">{{ item.a }}</p>
         </div>
       </div>
     </section>
@@ -1014,14 +1147,12 @@ const handleSelect = async (plan: any) => {
         <div class="absolute inset-0 bg-primary/5 blur-[120px]"></div>
 
         <h2 class="text-4xl md:text-6xl font-extrabold mb-8 relative z-10 leading-tight text-foreground">
-          Launch your first business-trained chatbot
+          Launch your first AI customer support assistant
           <span class="text-foreground/55">today.</span>
         </h2>
 
         <p class="text-foreground/55 max-w-2xl mx-auto mb-10 relative z-10 font-semibold leading-relaxed">
-          Start with your website, train the bot on your content, and expand into WhatsApp when you want more revenue
-          and
-          support automation.
+          Start with your website, train the assistant on your content, and expand into WhatsApp when you want more support automation and faster replies.
         </p>
 
         <div class="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
@@ -1029,6 +1160,11 @@ const handleSelect = async (plan: any) => {
             class="bg-foreground text-background px-10 py-5 rounded-full font-bold text-lg inline-flex items-center justify-center gap-3 hover:bg-foreground/90 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-foreground/10">
             Start Free
             <ArrowRight class="w-5 h-5" />
+          </NuxtLink>
+          <NuxtLink to="/contact"
+            class="px-10 py-5 rounded-full font-bold text-lg inline-flex items-center justify-center gap-3 border border-foreground/10 text-foreground hover:bg-foreground/[0.04] transition-all">
+            Talk to Founder
+            <MessageCircle class="w-5 h-5" />
           </NuxtLink>
           <button @click="scrollToSection('pricing')"
             class="px-10 py-5 rounded-full font-bold text-lg inline-flex items-center justify-center gap-3 border border-foreground/10 text-foreground hover:bg-foreground/[0.04] transition-all">
@@ -1038,7 +1174,7 @@ const handleSelect = async (plan: any) => {
         </div>
 
         <p class="text-foreground/50 mt-10 text-xs relative z-10 tracking-[0.2em] font-bold uppercase">
-          No credit card required • Start with one chatbot • Upgrade when you need more
+          No credit card required • Start with one assistant • Upgrade when you need more
         </p>
       </div>
     </section>

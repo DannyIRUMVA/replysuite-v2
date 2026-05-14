@@ -2,10 +2,10 @@
 import { Check, ArrowRight, HelpCircle, Loader2 } from 'lucide-vue-next'
 
 useSeoMeta({
-  title: 'Pricing | ReplySuite',
-  description: 'Simple pricing for website and WhatsApp AI chatbots. Start free, then upgrade as your volume grows.',
+  title: 'AI Customer Support Pricing for Websites & WhatsApp | ReplySuite',
+  description: 'Simple pricing for AI customer support on websites and WhatsApp. Start free, then upgrade as your reply volume grows.',
   ogTitle: 'ReplySuite Pricing',
-  ogDescription: 'Start free. Train your chatbot on your own content. Upgrade when you need more replies, training, or WhatsApp.',
+  ogDescription: 'Start free. Train your AI customer support assistant on your business content, then upgrade when you need more replies, training, or WhatsApp.',
   ogUrl: 'https://replysuite.app/pricing',
   twitterCard: 'summary_large_image',
   twitterTitle: 'ReplySuite Pricing',
@@ -187,11 +187,11 @@ const faqs = [
       <div class="text-center max-w-3xl mx-auto mb-24 border-b border-foreground/5 pb-16">
         <span class="badge-gradient mb-8">Pricing</span>
         <h1 class="text-5xl md:text-7xl font-extrabold mb-8 tracking-tight leading-[0.95] text-foreground">
-          Simple pricing.
+          Simple pricing for AI customer support.
           <span class="text-gradient">Clear upgrade path.</span>
         </h1>
         <p class="text-lg text-foreground/50 font-medium leading-relaxed">
-          Start with one chatbot. Upgrade when you need more domains, more training, more replies, or a larger rollout.
+          Start with one website chatbot, then upgrade when you need more domains, more training, more replies, or WhatsApp AI support.
         </p>
       </div>
 

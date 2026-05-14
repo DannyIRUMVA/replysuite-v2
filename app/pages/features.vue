@@ -60,10 +60,10 @@ const features = [
       <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10 animate-pulse"></div>
       <span class="badge-gradient mb-10">Features</span>
       <h1 class="text-5xl md:text-7xl font-extrabold mb-10 tracking-tight leading-[0.95] text-foreground">
-        Features that help you reply faster and support customers better.
+        Features for faster replies, better support, and more captured leads.
       </h1>
       <p class="text-lg text-foreground/50 max-w-3xl mx-auto leading-relaxed font-medium">
-        ReplySuite is built for practical business use. Train on your own data, launch on your website, and expand when you are ready.
+        ReplySuite is built for practical business use. Train on your business content, launch on your website, and expand into WhatsApp AI support when you are ready.
       </p>
     </section>
 
@@ -99,7 +99,7 @@ const features = [
         <div>
           <div class="aspect-video glass-card border-foreground/10 p-12 flex flex-col items-center justify-center relative bg-background/40 overflow-hidden">
             <div class="absolute inset-0 bg-primary/5 blur-[100px]"></div>
-            <div class="absolute top-6 right-6 px-4 py-1 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-bold text-primary uppercase tracking-[0.2em] relative z-10">trained answers</div>
+            <div class="absolute top-6 right-6 px-4 py-1 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-bold text-primary uppercase tracking-[0.2em] relative z-10">customer support ai</div>
             <div class="w-28 h-28 rounded-full bg-primary/10 flex items-center justify-center relative z-10 shadow-2xl shadow-primary/20">
               <MessageSquare class="w-14 h-14 text-primary" />
             </div>
@@ -121,7 +121,7 @@ const features = [
             Start on web. Expand when ready.
           </h2>
           <p class="text-foreground/50 text-lg mb-10 leading-relaxed font-medium">
-            The easiest first step is your website. When the core setup works, you can grow into WhatsApp and more advanced automation.
+            The easiest first step is your website chatbot. When the core setup works, you can grow into WhatsApp AI support and more advanced automation.
           </p>
           <NuxtLink to="/register" class="btn-gradient inline-flex items-center gap-4 px-10 py-5 text-lg group">
             Start Free

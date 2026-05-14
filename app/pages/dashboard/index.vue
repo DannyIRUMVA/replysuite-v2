@@ -50,7 +50,7 @@ const { data: realStats, pending: statsLoading } = useAsyncData('dashboard-metri
   return [
     { id: 'messages', name: 'Total Conversations', value: (sessionsRes.count || 0).toLocaleString(), change: 'Live', changeType: 'increase' },
     { id: 'leads', name: 'Connected Channels', value: totalChannels.toString(), change: `${whatsappRes.count || 0} WA`, changeType: totalChannels > 0 ? 'increase' : 'neutral' },
-    { id: 'agents', name: 'Forged Agents', value: (agentsRes.count || 0).toString(), change: `${botIds.length} Active`, changeType: botIds.length > 0 ? 'increase' : 'neutral' },
+    { id: 'agents', name: 'AI Assistants', value: (agentsRes.count || 0).toString(), change: `${botIds.length} Active`, changeType: botIds.length > 0 ? 'increase' : 'neutral' },
     { id: 'activity', name: 'System Status', value: 'Optimal', change: '100%', changeType: 'neutral' },
   ]
 }, { watch: [userId] })
@@ -102,7 +102,7 @@ const stats = computed(() => {
   return [
     { id: 'messages', name: 'Total Conversations', value: '0', change: '0%', changeType: 'neutral' },
     { id: 'leads', name: 'Connected Channels', value: '0', change: '0%', changeType: 'neutral' },
-    { id: 'agents', name: 'Forged Agents', value: '0', change: '0', changeType: 'neutral' },
+    { id: 'agents', name: 'AI Assistants', value: '0', change: '0', changeType: 'neutral' },
     { id: 'activity', name: 'System Status', value: 'Idle', change: '0', changeType: 'neutral' },
   ]
 })
@@ -128,7 +128,7 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
 </script>
 
 <template>
-  <div class="space-y-10">
+  <div class="mt-4 md:mt-6 space-y-10">
     <!-- Stats Grid (Loading or Locked if not verified) -->
     <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
       <div v-for="i in 4" :key="i" class="glass-card p-8 border-foreground/5 bg-foreground/[0.02]">
@@ -155,22 +155,67 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
       </div>
     </div>
 
+    <div v-if="!loading" class="grid gap-4 lg:grid-cols-3">
+      <NuxtLink to="/dashboard/agents" class="glass-card p-6 border-foreground/5 bg-foreground/[0.02] hover:border-primary/20 transition-all">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-11 h-11 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <Bot class="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Step 1</p>
+            <h3 class="text-lg font-black text-foreground tracking-tight">Create your assistant</h3>
+          </div>
+        </div>
+        <p class="text-sm text-foreground/55 font-medium leading-relaxed">Set up your chatbot name, tone, and purpose so you can start training it on your business.</p>
+      </NuxtLink>
+
+      <NuxtLink to="/dashboard/agents" class="glass-card p-6 border-foreground/5 bg-foreground/[0.02] hover:border-primary/20 transition-all">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-11 h-11 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <MessageSquare class="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Step 2</p>
+            <h3 class="text-lg font-black text-foreground tracking-tight">Train your AI</h3>
+          </div>
+        </div>
+        <p class="text-sm text-foreground/55 font-medium leading-relaxed">Add your website, PDFs, FAQs, and business text so replies feel useful and on-brand.</p>
+      </NuxtLink>
+
+      <div class="glass-card p-6 border-foreground/5 bg-foreground/[0.02]">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-11 h-11 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <Zap class="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Step 3</p>
+            <h3 class="text-lg font-black text-foreground tracking-tight">Go live</h3>
+          </div>
+        </div>
+        <p class="text-sm text-foreground/55 font-medium leading-relaxed">Connect your website first, then add WhatsApp support when you are ready for another customer channel.</p>
+        <div class="mt-4 flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.16em]">
+          <NuxtLink to="/dashboard/integrations/website" class="rounded-full border border-foreground/10 px-3 py-2 text-foreground/55 hover:border-primary/20 hover:text-primary transition-all">Website</NuxtLink>
+          <NuxtLink to="/dashboard/integrations/whatsapp" class="rounded-full border border-foreground/10 px-3 py-2 text-foreground/55 hover:border-primary/20 hover:text-primary transition-all">WhatsApp</NuxtLink>
+        </div>
+      </div>
+    </div>
+
     <!-- Feature Teasers for unverified (Secondary call to action) -->
      <div v-if="!isVerified && !loading" class="grid grid-cols-1 lg:grid-cols-2 gap-8 relative mt-20">
         <div class="absolute inset-x-0 -top-12 z-10 flex items-center justify-center">
            <div class="px-6 py-2 rounded-full bg-background border border-primary/30 text-[10px] font-bold text-primary tracking-[0.2em] shadow-2xl shadow-primary/20 uppercase">
-              Unlock Elite Features
+              Complete Setup Faster
            </div>
         </div>
         <div class="glass-card p-12 border-foreground/5 opacity-10 flex flex-col items-center text-center">
            <Bot class="w-20 h-20 text-foreground/40 mb-8" />
-           <h3 class="text-2xl font-bold mb-4 tracking-widest uppercase">Autonomous Agents</h3>
-           <p class="text-foreground/50 font-medium">Scale your conversations with high-performance AI engines.</p>
+           <h3 class="text-2xl font-bold mb-4 tracking-widest uppercase">Train Your AI</h3>
+           <p class="text-foreground/50 font-medium">Add your website, PDFs, FAQs, and business text to improve replies.</p>
         </div>
         <div class="glass-card p-12 border-foreground/5 opacity-10 flex flex-col items-center text-center">
            <Target class="w-20 h-20 text-foreground/50 mb-8" />
-           <h3 class="text-2xl font-bold mb-4 tracking-widest uppercase">Lead Intelligence</h3>
-           <p class="text-foreground/50 font-medium">Identify and nurture high-value prospects automatically.</p>
+           <h3 class="text-2xl font-bold mb-4 tracking-widest uppercase">Connect WhatsApp</h3>
+           <p class="text-foreground/50 font-medium">Bring faster AI replies to your business number when you are ready.</p>
         </div>
      </div>
 
@@ -183,12 +228,12 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
               </div>
            </div>
            <div class="text-[10px] font-bold text-foreground/50 uppercase tracking-widest">
-              Global Edge Presence: <span class="text-foreground">Active</span>
+              Setup Status: <span class="text-foreground">Ready</span>
            </div>
         </div>
         <div class="flex items-center gap-2">
            <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-           <span class="text-[9px] font-black text-foreground/50 uppercase tracking-tighter">EU AI Act Compliant</span>
+           <span class="text-[9px] font-black text-foreground/50 uppercase tracking-tighter">Website + WhatsApp</span>
         </div>
      </div>
 
@@ -228,15 +273,15 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
                     <MessageSquare class="w-10 h-10 text-primary" />
                 </div>
                 
-                <h3 class="text-2xl font-black text-foreground uppercase mb-2">Conversations Hub</h3>
-                <p class="text-foreground/50 font-bold uppercase tracking-[0.2em] text-[10px] mb-8 max-w-[200px] leading-relaxed">
-                    Real-time monitoring and management of all active AI sessions
+                <h3 class="text-2xl font-black text-foreground uppercase mb-2">Customer Conversations</h3>
+                <p class="text-foreground/50 font-bold uppercase tracking-[0.2em] text-[10px] mb-8 max-w-[220px] leading-relaxed">
+                    Review live chats, reply coverage, and recent customer activity
                 </p>
 
                 <div class="flex items-center gap-12 mb-10">
                     <div class="flex flex-col">
                         <span class="text-3xl font-black text-foreground"> {{ stats.find(s => s.id === 'messages')?.value || '0' }}</span>
-                        <span class="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Total Threads</span>
+                        <span class="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Total Conversations</span>
                     </div>
                     <div class="w-px h-10 bg-foreground/5"></div>
                     <div class="flex flex-col">
@@ -246,7 +291,7 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
                 </div>
 
                 <NuxtLink to="/dashboard/conversations" class="group/btn relative px-10 py-4 rounded-xl bg-primary text-black font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-[0_0_50px_rgba(var(--primary),0.2)] flex items-center gap-3">
-                    View more
+                    Open conversations
                     <ChevronRight class="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                 </NuxtLink>
             </div>
@@ -262,7 +307,7 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
         
         <!-- Recent Activity Feed -->
         <div class="glass-card p-10 border-foreground/5 flex flex-col">
-           <h3 class="text-lg font-bold mb-8 tracking-tight uppercase italic-none text-center">Protocol Logs</h3>
+           <h3 class="text-lg font-bold mb-8 tracking-tight uppercase italic-none text-center">Recent activity</h3>
            
            <div v-if="activities && activities.length > 0" class="space-y-8 flex-1">
               <div v-for="activity in activities" :key="activity.id" class="flex gap-4 relative">
@@ -282,12 +327,12 @@ const loading = computed(() => !isMounted.value || isLoading.value || statsLoadi
             </div>
             <div v-else class="flex-1 flex flex-col items-center justify-center text-center py-12">
                <Activity class="w-12 h-12 text-foreground/20 mb-4 opacity-20" />
-               <p class="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">Protocol Logs Empty</p>
-               <p class="text-foreground/20 text-[9px] mt-2 tracking-tighter italic">System standby: awaiting events</p>
+               <p class="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">No recent activity yet</p>
+               <p class="text-foreground/20 text-[9px] mt-2 tracking-tighter italic">Your training, setup, and conversation updates will appear here.</p>
             </div>
 
            <button class="mt-8 py-3 w-full border border-foreground/5 rounded-xl text-[10px] font-bold text-foreground/50 tracking-[0.2em] uppercase hover:border-primary/30 hover:text-primary transition-all">
-              View more
+              View activity
            </button>
         </div>
      </div>
