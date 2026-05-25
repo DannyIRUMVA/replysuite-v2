@@ -51,6 +51,8 @@ useHead({
         <DashboardMobileNav />
       </main>
     </div>
+
+    <DashboardOnboardingModal />
     
     <!-- Global Feedback Modal -->
     <Transition

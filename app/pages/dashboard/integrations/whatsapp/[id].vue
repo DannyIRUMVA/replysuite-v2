@@ -23,6 +23,7 @@ const route = useRoute()
 const accountId = route.params.id as string
 const { user, setInteracting, planSlug } = useAuth()
 const supabase = useSupabaseClient()
+const isLocked = computed(() => planSlug.value === 'starter' || !planSlug.value)
 const notify = useNotify()
 const config = useRuntimeConfig()
 
@@ -47,6 +48,11 @@ const { data: agentsData } = useAsyncData('agents-list-whatsapp-config', async (
 const agents = computed(() => agentsData.value || [])
 
 const fetchAccount = async () => {
+  if (isLocked.value) {
+    isLoading.value = false
+    return
+  }
+
   isLoading.value = true
   try {
     const { data, error } = await supabase
@@ -176,7 +182,15 @@ useHead({
 </script>
 
 <template>
-  <div class="w-full space-y-12 pb-20">
+  <WhatsAppUpgradeGate
+    v-if="isLocked"
+    title="Upgrade to manage WhatsApp"
+    description="Viewing and managing WhatsApp numbers is locked on Starter. Upgrade your plan to unlock number mapping, test messages, and deployment controls."
+    back-to="/dashboard"
+    back-label="Back to dashboard"
+  />
+
+  <div v-else class="w-full space-y-12 pb-20">
     <NuxtLink to="/dashboard/integrations/whatsapp" class="dashboard-back-link group mb-2">
         <ArrowLeft class="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
         Back to WhatsApp Hub

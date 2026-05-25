@@ -18,6 +18,7 @@ definePageMeta({
 const { user, setInteracting, planSlug } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()
+const isLocked = computed(() => planSlug.value === 'starter' || !planSlug.value)
 
 const manualPhone = ref('')
 const manualPhoneId = ref('')
@@ -56,7 +57,15 @@ const submitManualSetup = async () => {
 </script>
 
 <template>
-  <div class="w-full max-w-4xl mx-auto space-y-8 pb-20">
+  <WhatsAppUpgradeGate
+    v-if="isLocked"
+    title="Upgrade before connecting WhatsApp"
+    description="WhatsApp setup is only available on higher plans. Upgrade to unlock business number connection, templates, and AI reply automation."
+    back-to="/dashboard/integrations/website"
+    back-label="Back to website integration"
+  />
+
+  <div v-else class="w-full max-w-4xl mx-auto space-y-8 pb-20">
     <NuxtLink to="/dashboard/integrations/whatsapp" class="dashboard-back-link group mb-2">
         <ArrowLeft class="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
         Back to WhatsApp

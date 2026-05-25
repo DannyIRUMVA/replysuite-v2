@@ -22,20 +22,16 @@ definePageMeta({
 const { user, planSlug } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()
-
-onMounted(() => {
-  if (planSlug.value === 'starter' || !planSlug.value) {
-    navigateTo('/pricing')
-  }
-})
+const isLocked = computed(() => planSlug.value === 'starter' || !planSlug.value)
 
 const { data: accounts, pending: isLoading, refresh } = useAsyncData('whatsapp-accounts-list', async () => {
+    if (isLocked.value) return []
     const { data } = await supabase
         .from('whatsapp_accounts')
         .select('*, chatbots(name)')
         .order('created_at', { ascending: false })
     return data || []
-})
+}, { watch: [isLocked] })
 
 const deleteAccount = async (id: string) => {
     if (!(await notify.confirm('Disconnect this number?'))) return
@@ -48,7 +44,15 @@ const deleteAccount = async (id: string) => {
 </script>
 
 <template>
-  <div class="w-full space-y-12 pb-20">
+  <WhatsAppUpgradeGate
+    v-if="isLocked"
+    title="Upgrade to unlock WhatsApp"
+    description="Starter includes website automation only. Upgrade your plan to connect WhatsApp, manage numbers, and unlock AI replies on your business line."
+    back-to="/dashboard"
+    back-label="Back to dashboard"
+  />
+
+  <div v-else class="w-full space-y-12 pb-20">
     <div class="flex justify-end mb-12">
       <NuxtLink to="/dashboard/integrations/whatsapp/setup" class="bg-primary text-black px-10 py-5 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-primary/20 flex items-center gap-3">
         <Plus class="w-4 h-4" />

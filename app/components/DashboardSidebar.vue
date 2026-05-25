@@ -36,7 +36,9 @@ const iconMap: Record<string, any> = {
 }
 
 
-const showComingSoon = ref(false)
+const showLockedFeatureModal = ref(false)
+const lockedFeatureName = ref('')
+const lockedFeatureReason = ref<'upgrade' | 'coming-soon'>('coming-soon')
 
 const daysLeft = computed(() => {
   if (!membership.value?.ends_at) return 0
@@ -82,6 +84,14 @@ const sections = computed(() => [
   }
 ])
 
+const openLockedFeatureModal = (link: any) => {
+  lockedFeatureName.value = link.name || 'This feature'
+  lockedFeatureReason.value = link.name === 'WhatsApp' && (planSlug.value === 'starter' || !planSlug.value)
+    ? 'upgrade'
+    : 'coming-soon'
+  showLockedFeatureModal.value = true
+}
+
 const handleLogout = async () => {
   await supabase.auth.signOut()
   navigateTo('/login')
@@ -89,9 +99,9 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <aside class="hidden md:flex w-72 border-r border-foreground/5 bg-[#f8f8f8] dark:bg-[#050505] flex-col p-6 overflow-y-auto shrink-0 relative">
+  <aside class="hidden md:flex md:w-64 xl:w-72 h-screen max-h-screen border-r border-foreground/5 bg-[#f8f8f8] dark:bg-[#050505] flex-col px-4 py-5 xl:p-6 overflow-hidden shrink-0 relative">
     <!-- Brand -->
-    <div class="flex items-center gap-3 mb-12 px-2">
+    <div class="flex items-center gap-3 mb-8 xl:mb-10 px-2 shrink-0">
       <div class="w-10 h-10 bg-gradient-to-tr from-primary to-primary-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
         <Zap class="text-black w-6 h-6 fill-current" />
       </div>
@@ -99,7 +109,7 @@ const handleLogout = async () => {
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-1 space-y-8">
+    <nav class="flex-1 min-h-0 overflow-y-auto pr-1 -mr-1 space-y-8 sidebar-scroll">
       <div v-for="section in sections" :key="section.title" class="space-y-3">
         <h5 class="px-4 text-[10px] font-bold tracking-[0.2em] text-foreground/50 uppercase">{{ section.title }}</h5>
         <div class="space-y-1">
@@ -133,7 +143,7 @@ const handleLogout = async () => {
             <!-- Locked Link -->
             <button 
               v-else
-              @click="showComingSoon = true"
+              @click="openLockedFeatureModal(link)"
               class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-foreground/50 hover:text-foreground/80 group cursor-pointer"
             >
               <component :is="iconMap[link.icon]" class="w-4 h-4 grayscale opacity-50 group-hover:opacity-100 transition-all" />
@@ -146,7 +156,7 @@ const handleLogout = async () => {
     </nav>
 
     <!-- Subscription Card (Skeleton while loading) -->
-    <div v-if="isLoading" class="mt-8 mb-4">
+    <div v-if="isLoading" class="mt-6 mb-4 shrink-0">
       <div class="glass-card p-5 border border-foreground/5 bg-foreground/[0.02]">
         <div class="flex items-center justify-between mb-3">
           <Skeleton width="60px" height="10px" />
@@ -159,7 +169,7 @@ const handleLogout = async () => {
     </div>
 
     <!-- Subscription Card (Actual Data) -->
-    <div v-else-if="membership" class="mt-8 mb-4">
+    <div v-else-if="membership" class="mt-6 mb-4 shrink-0">
       <div class="glass-card p-5 border border-primary/20 bg-gradient-to-b from-primary/5 to-transparent relative overflow-hidden group">
         <div class="absolute -right-10 -bottom-10 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
         
@@ -184,7 +194,7 @@ const handleLogout = async () => {
     </div>
 
     <!-- User Menu -->
-    <div class="pt-6 border-t border-foreground/5 mt-auto">
+    <div class="pt-5 border-t border-foreground/5 mt-auto shrink-0">
       <button @click="handleLogout" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-400/10 transition-all border border-transparent hover:border-red-400/20 text-sm font-medium">
         <LogOut class="w-5 h-5" />
         Logout
@@ -200,25 +210,39 @@ const handleLogout = async () => {
       leave-from-class="transform opacity-100 scale-100"
       leave-to-class="transform opacity-0 scale-95"
     >
-      <div v-if="showComingSoon" class="fixed inset-0 z-[200] flex items-center justify-center p-6">
-        <div class="absolute inset-0 bg-background/80 backdrop-blur-md" @click="showComingSoon = false"></div>
+      <div v-if="showLockedFeatureModal" class="fixed inset-0 z-[200] flex items-center justify-center p-6">
+        <div class="absolute inset-0 bg-background/80 backdrop-blur-md" @click="showLockedFeatureModal = false"></div>
         <div class="relative w-full max-w-sm bg-background border border-foreground/10 rounded-[24px] p-10 shadow-2xl text-center">
-            <button @click="showComingSoon = false" class="absolute top-6 right-6 p-2 text-foreground/50 hover:text-foreground transition-colors">
+            <button @click="showLockedFeatureModal = false" class="absolute top-6 right-6 p-2 text-foreground/50 hover:text-foreground transition-colors">
                 <X class="w-5 h-5" />
             </button>
             <div class="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-primary/20">
                 <Lock class="w-10 h-10 text-primary" />
             </div>
-            <h3 class="text-2xl font-bold text-foreground mb-4">Coming Soon</h3>
+            <h3 class="text-2xl font-bold text-foreground mb-4">
+              {{ lockedFeatureReason === 'upgrade' ? 'Upgrade to unlock WhatsApp' : 'Coming Soon' }}
+            </h3>
             <p class="text-foreground/50 text-sm leading-relaxed mb-8">
-                We're currently perfecting this channel to ensure it meets our elite performance standards. Stay tuned!
+              {{ lockedFeatureReason === 'upgrade'
+                ? 'WhatsApp is not available on the Starter plan. Upgrade your plan to unlock WhatsApp automation and connect your business number.'
+                : `We're currently perfecting ${lockedFeatureName} to ensure it meets our elite performance standards. Stay tuned!` }}
             </p>
-            <button 
-                @click="showComingSoon = false"
-                class="w-full py-4 bg-primary text-black font-bold rounded-xl hover:bg-primary-accent transition-all shadow-lg shadow-primary/10"
-            >
-                Understood
-            </button>
+            <div class="space-y-3">
+              <NuxtLink
+                v-if="lockedFeatureReason === 'upgrade'"
+                to="/dashboard/pricing"
+                @click="showLockedFeatureModal = false"
+                class="block w-full py-4 bg-primary text-black font-bold rounded-xl hover:bg-primary-accent transition-all shadow-lg shadow-primary/10"
+              >
+                Upgrade Plan
+              </NuxtLink>
+              <button 
+                  @click="showLockedFeatureModal = false"
+                  class="w-full py-4 border border-foreground/10 text-foreground/70 font-bold rounded-xl hover:border-foreground/20 hover:text-foreground transition-all"
+              >
+                  {{ lockedFeatureReason === 'upgrade' ? 'Maybe later' : 'Understood' }}
+              </button>
+            </div>
         </div>
       </div>
     </Transition>
@@ -227,5 +251,25 @@ const handleLogout = async () => {
 </template>
 
 <style scoped>
-/* Sidebar specific styles if any */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 55, 0.22) transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.18);
+  border-radius: 9999px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.3);
+}
 </style>
