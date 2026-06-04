@@ -19,6 +19,7 @@ import {
   Globe
 } from 'lucide-vue-next'
 import Skeleton from '~~/app/components/Skeleton.vue'
+import { chatbotLanguageOptions, getChatbotLanguageCode, normalizeChatbotLanguageName } from '~~/app/utils/chatbotLanguages'
 
 definePageMeta({
   middleware: 'auth',
@@ -43,17 +44,7 @@ const newAgent = ref({
   default_language: 'English'
 })
 
-const languageOptions = [
-  { label: 'Kinyarwanda', value: 'Kinyarwanda' },
-  { label: 'English', value: 'English' },
-  { label: 'French', value: 'French' },
-  { label: 'Chinese', value: 'Chinese' },
-  { label: 'Kirundi', value: 'Kirundi' },
-  { label: 'Swahili', value: 'Swahili' },
-  { label: 'Spanish', value: 'Spanish' },
-  { label: 'Portuguese', value: 'Portuguese' },
-  { label: 'German', value: 'German' }
-]
+const languageOptions = chatbotLanguageOptions
 
 const agents = computed(() => pageData.value?.agents || [])
 const stats = computed(() => pageData.value?.stats || {
@@ -225,13 +216,30 @@ const handleCreate = async () => {
         user_id: userId.value,
         name: newAgent.value.name,
         system_prompt: newAgent.value.system_prompt,
-        default_language: newAgent.value.default_language
+        default_language: normalizeChatbotLanguageName(newAgent.value.default_language)
       })
       .select()
       .single()
 
     if (error) throw error
     if (data) {
+      const primaryCode = getChatbotLanguageCode(newAgent.value.default_language)
+      const languageRows = Array.from(new Set([primaryCode, 'en'])).map((code) => ({
+        chatbot_id: data.id,
+        language_code: code,
+        is_primary: code === primaryCode,
+        is_fallback: code === 'en',
+        is_enabled: true,
+      }))
+
+      const { error: languageError } = await (supabase as any)
+        .from('chatbot_languages')
+        .upsert(languageRows, { onConflict: 'chatbot_id,language_code' })
+
+      if (languageError) {
+        console.warn('[Languages] New agent language mapping will sync after migration deployment:', languageError)
+      }
+
       await refreshAgents()
       showCreateModal.value = false
       newAgent.value = { name: '', system_prompt: '', default_language: 'English' }

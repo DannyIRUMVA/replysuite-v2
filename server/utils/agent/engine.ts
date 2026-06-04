@@ -1,4 +1,5 @@
 import { TOOLS, TOOL_HANDLERS } from './registry'
+import { buildAzureChatCompletionsUrl, getGeminiChatModels } from '../ai-provider'
 
 export interface AgentOptions {
   systemPrompt: string
@@ -83,8 +84,7 @@ CRITICAL RULES FOR TOOLS:
       tools: activeTools.length > 0 ? activeTools : undefined
     }
 
-    // Using gemini-2.5-flash for the highest free tier limits, falling back to pro and 2.0.
-    const models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-exp']
+    const models = getGeminiChatModels(config)
     let response: any
     let data: any
     let success = false
@@ -135,11 +135,9 @@ CRITICAL RULES FOR TOOLS:
 
 async function runAzureAgent(messages: any[], options: AgentOptions, activeTools: any[], config: any) {
   const apiKey = config.azureOpenAiKey
-  const endpoint = config.azureOpenAiEndpoint
-  const deployment = config.azureOpenAiDeploymentName
-  if (!apiKey || !endpoint || !deployment) throw new Error('Azure credentials missing')
+  if (!apiKey) throw new Error('Azure credentials missing')
 
-  const azureUrl = `${endpoint.replace(/\/$/, '')}/openai/deployments/${deployment}/chat/completions?api-version=2024-02-15-preview`
+  const azureUrl = buildAzureChatCompletionsUrl(config)
 
 function convertSchemaToLowercase(schema: any): any {
   if (Array.isArray(schema)) return schema.map(convertSchemaToLowercase)

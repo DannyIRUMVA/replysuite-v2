@@ -1,5 +1,6 @@
 import { searchKnowledge, getChatCompletion } from '../../ai'
 import { runAgentCycle } from '../../agent/engine'
+import { buildChatbotLanguagePolicy } from '../../language-policy'
 import {
   buildConversationSettingsPrompt,
   buildConversationStatePrompt,
@@ -91,6 +92,8 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
   let baseInstructions = ''
   let conversationSettings = normalizeConversationSettings(null)
   let chatbotDefaultLanguage: string | null = null
+  let chatbotIdentity: any = null
+  let activeLanguageName: string | null = null
 
   console.log(`   🧠 Initiating AI Pipeline for chatbot: ${waAccount.chatbot_id}`)
   try {
@@ -100,6 +103,7 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
       .eq('id', waAccount.chatbot_id)
       .single()
 
+    chatbotIdentity = chatbot
     baseInstructions = chatbot?.system_prompt || `You are a helpful AI assistant connected over WhatsApp.`
     conversationSettings = normalizeConversationSettings(chatbot?.tools_config?.conversation_settings)
     chatbotDefaultLanguage = chatbot?.default_language || null
@@ -174,7 +178,18 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
       ? getConversationStateFromMetadata(sessionMetadata)
       : {}
 
+    const languagePolicy = await buildChatbotLanguagePolicy({
+      supabase,
+      chatbot: chatbotIdentity || { id: waAccount.chatbot_id, default_language: chatbotDefaultLanguage },
+      userMessage: text,
+      sessionPreferredLanguage: sessionState.preferredLanguage || contactMemory?.memory?.preferredLanguage || null,
+    })
+    activeLanguageName = languagePolicy.activeLanguage.name
+
     const systemPrompt = `${systemPromptBase}
+
+[LANGUAGE POLICY]
+${languagePolicy.prompt}
 
 [SESSION STATE]
 ${buildConversationStatePrompt(sessionState, contactMemory)}
@@ -244,7 +259,7 @@ IMPORTANT INSTRUCTIONS:
           assistantReply: replyText,
           customerName,
           customerPhone: from_number,
-          defaultLanguage: chatbotDefaultLanguage,
+          defaultLanguage: activeLanguageName || chatbotDefaultLanguage,
         })
 
         sessionMetadata = mergeMetadataWithState(sessionMetadata, nextState)

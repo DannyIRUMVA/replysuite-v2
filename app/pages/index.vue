@@ -25,7 +25,9 @@ import {
   Info,
   X,
   Paperclip,
-  SmilePlus
+  SmilePlus,
+  Quote,
+  Star
 } from 'lucide-vue-next'
 import { marked } from 'marked'
 import xss from 'xss'
@@ -213,6 +215,29 @@ const afterPoints = [
   }
 ]
 
+const beforeAfterRows = [
+  {
+    area: 'Answers',
+    before: 'Generic replies that miss policies, pricing, files, and real business context.',
+    after: 'Replies grounded in your website, PDFs, FAQs, and custom training text.'
+  },
+  {
+    area: 'Speed',
+    before: 'Customers wait for staff to repeat the same answers manually.',
+    after: 'Instant first responses on your website, with WhatsApp available as you scale.'
+  },
+  {
+    area: 'Maintenance',
+    before: 'Fragile custom bots become expensive to update when the business changes.',
+    after: 'Update training content from the dashboard and keep the assistant aligned.'
+  },
+  {
+    area: 'Team workload',
+    before: 'Support teams lose time to repetitive pre-sales and FAQ conversations.',
+    after: 'Common questions are automated so humans can focus on high-value follow-up.'
+  }
+]
+
 const demoVideoUrl = 'https://www.youtube-nocookie.com/embed/drp1wlRRSr4?autoplay=1&rel=0'
 const isDemoVideoOpen = ref(false)
 const demoAccent = '#D4AF37'
@@ -230,19 +255,28 @@ const closeDemoVideo = () => {
 
 const testimonialSamples = [
   {
-    quote: 'We added ReplySuite to our website and it immediately reduced the repetitive questions our team handles every day.',
+    quote: 'ReplySuite helped us answer repeated questions much faster. Customers now get the basics immediately, and our team only steps in for the important follow-up.',
     name: 'Sarah Thompson',
-    role: 'Founder, online store'
+    role: 'Founder',
+    company: 'Online retail brand',
+    initials: 'ST',
+    channel: 'Website chatbot'
   },
   {
-    quote: 'Training the assistant on our own content made the replies feel far more useful for real customers.',
+    quote: 'Training the assistant on our own content made a big difference. The replies feel specific to our services instead of sounding like a generic chatbot.',
     name: 'Kevin Mwangi',
-    role: 'Operations manager, service business'
+    role: 'Operations manager',
+    company: 'Service business',
+    initials: 'KM',
+    channel: 'Training sources'
   },
   {
-    quote: 'Starting with the website chatbot first made setup much easier, and WhatsApp felt like a natural next step.',
+    quote: 'We started with the website assistant, tested the most common questions, and then planned WhatsApp as the next support channel. The setup path was clear.',
     name: 'Aline Uwase',
-    role: 'Customer support lead'
+    role: 'Customer support lead',
+    company: 'Growing local team',
+    initials: 'AU',
+    channel: 'Support workflow'
   }
 ]
 
@@ -252,15 +286,23 @@ const socialProofMetrics = [
   { label: 'Business languages supported', value: '10+' }
 ]
 
+const socialProofRows = [
+  { label: 'Website deployment', value: 'Embed chatbot on approved domains', detail: 'Included from Free Starter upward' },
+  { label: 'WhatsApp automation', value: 'Available from Gold', detail: 'Built for higher-volume customer conversations' },
+  { label: 'Training sources', value: 'Website, PDFs, FAQs, custom text', detail: 'Keeps answers closer to your business content' },
+  { label: 'Monthly AI replies', value: '100 to 500,000', detail: 'Scale from Starter to Enterprise Ready' },
+  { label: 'Training sessions', value: '10 to 1,000 / month', detail: 'Plan limits match launch, growth, and rollout needs' },
+  { label: 'Supported languages', value: '10+ business languages', detail: 'Includes English, Kinyarwanda, Swahili, Kirundi, Luganda, Arabic, and more' }
+]
+
 const logoPills = ['Clinics', 'Restaurants', 'Schools', 'Hotels', 'Real Estate']
 
 const faqItems = [
-  { q: 'Does it support WhatsApp?', a: 'Yes. ReplySuite supports WhatsApp AI assistant workflows for businesses that want faster support and lead capture on WhatsApp.' },
-  { q: 'Can it answer in Kinyarwanda?', a: 'Yes. ReplySuite already supports Kinyarwanda alongside other business languages.' },
-  { q: 'Can I train it with PDFs?', a: 'Yes. You can train your assistant with PDFs, website pages, and custom text.' },
-  { q: 'Does it work 24/7?', a: 'Yes. Once live, your assistant can reply to common questions any time of day.' },
-  { q: 'Can I use it on my website?', a: 'Yes. ReplySuite includes a website chatbot you can embed on approved domains.' },
-  { q: 'How long does setup take?', a: 'Most businesses can create, train, and test their first assistant quickly, then connect WhatsApp as the next step.' }
+  { q: 'How fast can I launch my first chatbot?', a: 'Most businesses can create, train, and test their first assistant quickly from the dashboard, then improve it as they add more content.' },
+  { q: 'Can I train it with my own business content?', a: 'Yes. You can train your assistant with website pages, PDFs, FAQs, and custom text so replies stay closer to your real business information.' },
+  { q: 'Does ReplySuite support WhatsApp?', a: 'Yes. ReplySuite supports WhatsApp AI assistant workflows for businesses that want faster support and lead capture on WhatsApp.' },
+  { q: 'Can it answer in local languages?', a: 'Yes. ReplySuite supports Kinyarwanda, Swahili, Kirundi, Luganda, Arabic, English, and more business languages.' },
+  { q: 'Is there a free plan?', a: 'Yes. Free Starter lets you launch one website chatbot with basic monthly limits, then upgrade when you need more replies, training, or channels.' }
 ]
 
 const chatbotId = 'cacdbcdb-7157-4e12-92c4-a715aadf3112'
@@ -408,7 +450,7 @@ const isProcessing = ref<string | null>(null)
 
 const plans = [
   {
-    name: 'Free',
+    name: 'Free Starter',
     id: 'starter',
     price: '0.00',
     desc: 'Best for launching one chatbot on one website domain.',
@@ -443,6 +485,9 @@ const plans = [
     popular: false
   }
 ]
+
+const paidPlans = computed(() => plans.filter((plan) => plan.id !== 'starter'))
+const freeStarterPlan = computed(() => plans.find((plan) => plan.id === 'starter'))
 
 onMounted(() => {
   fetchChatbot()
@@ -801,7 +846,7 @@ const handleSelect = async (plan: any) => {
       </div>
     </section>
 
-    <section id="how-it-works" class="max-w-7xl mx-auto px-6 py-28 border-t border-foreground/5">
+    <section id="how-it-works" class="max-w-7xl mx-auto px-6 py-20 md:py-24 border-t border-foreground/5">
       <div class="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
         <div class="max-w-2xl">
           <span class="badge-gradient mb-6">The solution</span>
@@ -828,7 +873,7 @@ const handleSelect = async (plan: any) => {
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-28 border-t border-foreground/5">
+    <section class="max-w-7xl mx-auto px-6 py-20 md:py-24 border-t border-foreground/5">
       <div class="text-center mb-16 max-w-3xl mx-auto">
         <span class="badge-gradient mb-6">Use cases</span>
         <h2 class="text-4xl md:text-6xl font-extrabold text-foreground mb-6">
@@ -878,104 +923,54 @@ const handleSelect = async (plan: any) => {
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-28 border-t border-foreground/5 overflow-hidden">
-      <div class="text-center mb-16 max-w-4xl mx-auto relative">
+    <section class="max-w-7xl mx-auto px-6 py-24 border-t border-foreground/5 overflow-hidden">
+      <div class="text-center mb-12 max-w-4xl mx-auto relative">
         <div class="absolute inset-0 bg-primary/5 blur-[90px] -z-10"></div>
         <span class="badge-gradient mb-6">Before vs after</span>
         <h2 class="text-4xl md:text-6xl font-extrabold text-foreground mb-6 leading-tight">
-          See the difference between slow replies and
-          <span class="text-gradient">AI customer support that works 24/7.</span>
+          From slow manual replies to
+          <span class="text-gradient">instant trained support.</span>
         </h2>
         <p class="text-foreground/50 font-semibold leading-relaxed max-w-3xl mx-auto">
-          The difference is not just "having AI." It is having an assistant trained on your real business content, deployed where customers already talk, and designed to reduce repetitive support work.
+          See how ReplySuite replaces generic answers, delayed follow-up, and repetitive support tasks with a chatbot trained on your real business content.
         </p>
       </div>
 
-      <div class="grid lg:grid-cols-[1fr_auto_1fr] gap-8 items-stretch">
-        <div
-          class="glass-card relative p-10 md:p-12 border border-rose-500/20 bg-[linear-gradient(180deg,rgba(244,63,94,0.10),rgba(255,255,255,0.02))] overflow-hidden">
-          <div class="absolute -top-16 -left-10 w-40 h-40 rounded-full bg-rose-500/10 blur-3xl"></div>
-          <div class="relative">
-            <div
-              class="inline-flex items-center gap-3 rounded-full border border-rose-500/20 bg-rose-500/10 px-4 py-2 mb-8">
+      <div class="glass-card border border-foreground/10 bg-foreground/[0.02] overflow-hidden">
+        <div class="grid grid-cols-1 md:grid-cols-[0.52fr_1fr_1fr] border-b border-foreground/10 bg-foreground/[0.03]">
+          <div class="hidden md:block p-5 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45">Area</div>
+          <div class="p-5 border-t md:border-t-0 md:border-l border-foreground/10">
+            <div class="inline-flex items-center gap-3 rounded-full border border-rose-500/20 bg-rose-500/10 px-4 py-2">
               <X class="w-4 h-4 text-rose-300" />
               <span class="text-[10px] font-black uppercase tracking-widest text-rose-200">Before</span>
             </div>
-            <h3 class="text-2xl md:text-3xl font-black text-foreground tracking-tight mb-3">
-              Generic chatbots that miss business context and frustrate customers
-            </h3>
-            <p class="text-sm text-foreground/55 font-semibold leading-relaxed mb-8 max-w-xl">
-              Too generic, too hard to maintain, and not grounded in the real information your customers actually need.
-            </p>
-            <div class="space-y-4">
-              <div v-for="item in beforePoints" :key="item.title"
-                class="rounded-[24px] border border-white/5 bg-black/15 p-5">
-                <div class="flex items-start gap-4">
-                  <div
-                    class="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <X class="w-4 h-4 text-rose-300" />
-                  </div>
-                  <div>
-                    <h4 class="text-base font-black text-foreground tracking-tight mb-1">{{ item.title }}</h4>
-                    <p class="text-sm text-foreground/60 leading-relaxed font-semibold">{{ item.desc }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
-        </div>
-
-        <div class="hidden lg:flex items-center justify-center">
-          <div
-            class="w-16 h-16 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center shadow-[0_0_40px_rgba(168,85,247,0.18)]">
-            <ArrowRight class="w-7 h-7 text-primary" />
-          </div>
-        </div>
-
-        <div
-          class="glass-card relative p-10 md:p-12 border border-primary/20 bg-[linear-gradient(180deg,rgba(168,85,247,0.12),rgba(255,255,255,0.02))] overflow-hidden">
-          <div class="absolute -bottom-16 -right-10 w-44 h-44 rounded-full bg-primary/10 blur-3xl"></div>
-          <div class="relative">
-            <div
-              class="inline-flex items-center gap-3 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 mb-8">
+          <div class="p-5 border-t md:border-t-0 md:border-l border-foreground/10">
+            <div class="inline-flex items-center gap-3 rounded-full border border-primary/20 bg-primary/10 px-4 py-2">
               <Check class="w-4 h-4 text-primary" />
               <span class="text-[10px] font-black uppercase tracking-widest text-primary">After</span>
             </div>
-            <h3 class="text-2xl md:text-3xl font-black text-foreground tracking-tight mb-3">
-              AI customer support that strengthens your team
-            </h3>
-            <p class="text-sm text-foreground/55 font-semibold leading-relaxed mb-8 max-w-xl">
-              Train once on your business content, reply faster on your website, and grow into WhatsApp support when you are ready.
-            </p>
-            <div class="grid sm:grid-cols-2 gap-3 mb-8">
-              <div
-                class="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-[11px] font-black uppercase tracking-widest text-primary text-center">
-                Train on website + PDFs</div>
-              <div
-                class="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-[11px] font-black uppercase tracking-widest text-primary text-center">
-                Website first, WhatsApp next</div>
-            </div>
-            <div class="space-y-4">
-              <div v-for="item in afterPoints" :key="item.title"
-                class="rounded-[24px] border border-white/5 bg-black/15 p-5">
-                <div class="flex items-start gap-4">
-                  <div
-                    class="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Check class="w-4 h-4 text-primary" />
-                  </div>
-                  <div>
-                    <h4 class="text-base font-black text-foreground tracking-tight mb-1">{{ item.title }}</h4>
-                    <p class="text-sm text-foreground/60 leading-relaxed font-semibold">{{ item.desc }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          </div>
+        </div>
+
+        <div v-for="row in beforeAfterRows" :key="row.area" class="grid grid-cols-1 md:grid-cols-[0.52fr_1fr_1fr] border-b border-foreground/10 last:border-b-0">
+          <div class="p-5 bg-foreground/[0.025]">
+            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 md:hidden mb-2">Area</p>
+            <h3 class="text-base font-black text-foreground tracking-tight">{{ row.area }}</h3>
+          </div>
+          <div class="p-5 md:border-l border-foreground/10 bg-rose-500/[0.035]">
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-rose-200/80 md:hidden mb-2">Before</p>
+            <p class="text-sm text-foreground/62 leading-relaxed font-semibold">{{ row.before }}</p>
+          </div>
+          <div class="p-5 md:border-l border-foreground/10 bg-primary/[0.035]">
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary md:hidden mb-2">After</p>
+            <p class="text-sm text-foreground/72 leading-relaxed font-semibold">{{ row.after }}</p>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-28 border-t border-foreground/5">
+    <section class="max-w-7xl mx-auto px-6 py-20 md:py-24 border-t border-foreground/5">
       <div class="grid lg:grid-cols-2 gap-10 items-start">
         <div>
           <span class="badge-gradient mb-6">Why businesses buy</span>
@@ -1005,101 +1000,183 @@ const handleSelect = async (plan: any) => {
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-28 border-t border-foreground/5">
-      <div class="text-center mb-16 max-w-3xl mx-auto">
-        <span class="badge-gradient mb-6">Social proof</span>
+    <section class="max-w-7xl mx-auto px-6 py-24 border-t border-foreground/5">
+      <div class="text-center mb-12 max-w-3xl mx-auto">
+        <span class="badge-gradient mb-6">Plan data</span>
         <h2 class="text-4xl md:text-6xl font-extrabold text-foreground mb-6">
-          Show customers a product they can
-          <span class="text-gradient">trust quickly.</span>
+          Clear limits for launch,
+          <span class="text-gradient">growth, and scale.</span>
         </h2>
         <p class="text-foreground/50 font-semibold leading-relaxed">
-          Use proof that feels business-ready: vertical fit, visible product screens, and simple outcomes buyers care about.
+          Review the practical details buyers care about: channels, AI reply volume, training capacity, WhatsApp availability, and multilingual coverage.
         </p>
       </div>
 
-      <div class="flex flex-wrap items-center justify-center gap-3 mb-10">
-        <span v-for="logo in logoPills" :key="logo" class="rounded-full border border-foreground/10 bg-foreground/[0.02] px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-foreground/45">
-          {{ logo }}
-        </span>
-      </div>
-
-      <div class="grid md:grid-cols-3 gap-4 mb-10">
+      <div class="grid md:grid-cols-3 gap-4 mb-8">
         <div v-for="metric in socialProofMetrics" :key="metric.label" class="glass-card p-6 border-foreground/10 bg-foreground/[0.02] text-center">
           <p class="text-3xl font-black text-foreground tracking-tight">{{ metric.value }}</p>
           <p class="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45">{{ metric.label }}</p>
         </div>
       </div>
 
-      <div class="grid md:grid-cols-3 gap-5 mb-12">
-        <div v-for="screen in ['Training screen', 'Conversation screen', 'Analytics screen']" :key="screen" class="glass-card border border-foreground/10 bg-foreground/[0.02] p-5">
-          <div class="aspect-[16/10] rounded-[24px] border border-foreground/10 bg-background/80 p-4 flex flex-col justify-between">
-            <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.16em] text-foreground/35">
-              <span>Product preview</span>
-              <span>ReplySuite</span>
-            </div>
-            <div class="grid grid-cols-3 gap-2 opacity-70">
-              <div class="h-16 rounded-2xl bg-foreground/5"></div>
-              <div class="h-16 rounded-2xl bg-foreground/5"></div>
-              <div class="h-16 rounded-2xl bg-foreground/5"></div>
-            </div>
-            <p class="text-sm font-black text-foreground">{{ screen }}</p>
+      <div class="glass-card border border-foreground/10 bg-foreground/[0.02] overflow-hidden mb-8">
+        <div class="grid grid-cols-[0.8fr_1fr_1.2fr] max-md:hidden bg-foreground/[0.03] border-b border-foreground/10">
+          <div class="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45">Data point</div>
+          <div class="p-4 border-l border-foreground/10 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45">Current value</div>
+          <div class="p-4 border-l border-foreground/10 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45">What it means</div>
+        </div>
+        <div v-for="row in socialProofRows" :key="row.label" class="grid md:grid-cols-[0.8fr_1fr_1.2fr] border-b border-foreground/10 last:border-b-0">
+          <div class="p-5 bg-foreground/[0.025]">
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40 md:hidden mb-2">Data point</p>
+            <h3 class="text-sm font-black text-foreground tracking-tight">{{ row.label }}</h3>
+          </div>
+          <div class="p-5 md:border-l border-foreground/10">
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40 md:hidden mb-2">Current value</p>
+            <p class="text-sm font-black text-primary tracking-tight">{{ row.value }}</p>
+          </div>
+          <div class="p-5 md:border-l border-foreground/10">
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40 md:hidden mb-2">What it means</p>
+            <p class="text-sm text-foreground/60 leading-relaxed font-semibold">{{ row.detail }}</p>
           </div>
         </div>
       </div>
 
-      <div class="grid lg:grid-cols-3 gap-8">
-        <div v-for="item in testimonialSamples" :key="item.name"
-          class="glass-card p-10 border-foreground/10 bg-foreground/[0.02]">
-          <div
-            class="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-8">
-            <MessageSquareMore class="w-7 h-7 text-primary" />
-          </div>
-          <p class="text-foreground/75 leading-relaxed font-semibold text-sm mb-8">
-            “{{ item.quote }}”
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <span v-for="logo in logoPills" :key="logo" class="rounded-full border border-foreground/10 bg-foreground/[0.02] px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-foreground/45">
+          {{ logo }}
+        </span>
+      </div>
+    </section>
+
+    <section class="max-w-7xl mx-auto px-6 py-20 md:py-24 border-t border-foreground/5 relative overflow-hidden">
+      <div class="absolute left-1/2 top-16 h-72 w-[70%] -translate-x-1/2 rounded-full bg-primary/10 blur-[130px] -z-10"></div>
+      <div class="grid lg:grid-cols-[0.82fr_1.18fr] gap-8 lg:gap-12 items-start">
+        <div class="lg:sticky lg:top-28">
+          <span class="badge-gradient mb-6">Customer feedback</span>
+          <h2 class="text-3xl md:text-5xl font-extrabold text-foreground mb-5 leading-tight">
+            Businesses use ReplySuite to reply faster and
+            <span class="text-gradient">miss fewer conversations.</span>
+          </h2>
+          <p class="text-foreground/55 font-semibold leading-relaxed max-w-xl">
+            Testimonials from teams using AI support to reduce repetitive questions, improve first replies, and create a clearer support workflow.
           </p>
-          <div class="pt-6 border-t border-foreground/10">
-            <p class="text-foreground font-black tracking-tight">{{ item.name }}</p>
-            <p class="text-foreground/50 text-xs font-semibold uppercase tracking-widest mt-2">{{ item.role }}</p>
+
+          <div class="mt-8 grid sm:grid-cols-3 lg:grid-cols-1 gap-3">
+            <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Customer goal</p>
+              <p class="mt-1 text-sm font-bold text-foreground">Faster first replies</p>
+            </div>
+            <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Best for</p>
+              <p class="mt-1 text-sm font-bold text-foreground">Support + sales teams</p>
+            </div>
+            <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Common win</p>
+              <p class="mt-1 text-sm font-bold text-foreground">Less repeated work</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-5 lg:gap-6">
+          <article v-for="(item, index) in testimonialSamples" :key="item.name" class="glass-card border border-foreground/10 bg-foreground/[0.02] p-6 md:p-7 relative overflow-hidden" :class="index === 0 ? 'md:col-span-2' : ''">
+            <div class="absolute -right-14 -top-14 h-40 w-40 rounded-full bg-primary/10 blur-[70px]"></div>
+            <div class="relative flex items-center justify-between gap-4 mb-6">
+              <div class="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/10 px-3 py-1.5" aria-label="Five star rating">
+                <Star v-for="n in 5" :key="n" class="h-3.5 w-3.5 fill-primary text-primary" />
+              </div>
+              <span class="rounded-full border border-foreground/10 bg-background/55 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-foreground/45 backdrop-blur-xl">
+                {{ item.channel }}
+              </span>
+            </div>
+
+            <Quote class="relative h-9 w-9 text-primary/70 mb-5" />
+            <p class="relative text-base md:text-lg text-foreground/72 leading-relaxed font-semibold mb-7">
+              “{{ item.quote }}”
+            </p>
+
+            <div class="relative flex items-center gap-4 pt-5 border-t border-foreground/10">
+              <div class="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/15 flex items-center justify-center text-sm font-black text-primary">
+                {{ item.initials }}
+              </div>
+              <div>
+                <h3 class="text-sm font-black text-foreground tracking-tight">{{ item.name }}</h3>
+                <p class="text-xs text-foreground/50 font-semibold">{{ item.role }} · {{ item.company }}</p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="max-w-7xl mx-auto px-6 py-20 md:py-24 border-t border-foreground/5">
+      <div class="relative overflow-hidden rounded-[40px] border border-foreground/10 bg-foreground/[0.025] p-6 md:p-8 lg:p-10">
+        <div class="absolute -top-24 -left-16 h-64 w-64 rounded-full bg-primary/15 blur-[100px]"></div>
+        <div class="absolute -bottom-28 right-0 h-72 w-72 rounded-full bg-sky-400/10 blur-[110px]"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-primary/[0.035]"></div>
+
+        <div class="relative grid lg:grid-cols-[0.85fr_1.35fr] gap-8 lg:gap-12 items-start">
+          <div class="lg:sticky lg:top-28">
+            <span class="badge-gradient mb-6">FAQ</span>
+            <h2 class="text-3xl md:text-5xl font-extrabold text-foreground mb-5 leading-tight">
+              Common questions before you
+              <span class="text-gradient">get started.</span>
+            </h2>
+            <p class="text-foreground/55 font-semibold leading-relaxed max-w-xl">
+              Quick answers about setup, WhatsApp, languages, training sources, and how ReplySuite fits into your customer support workflow.
+            </p>
+            <div class="mt-8 grid sm:grid-cols-3 lg:grid-cols-1 gap-3">
+              <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Setup</p>
+                <p class="mt-1 text-sm font-bold text-foreground">Website first</p>
+              </div>
+              <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Channels</p>
+                <p class="mt-1 text-sm font-bold text-foreground">Web + WhatsApp</p>
+              </div>
+              <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Languages</p>
+                <p class="mt-1 text-sm font-bold text-foreground">10+ supported</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <details v-for="(item, index) in faqItems" :key="item.q" class="group rounded-3xl border border-foreground/10 bg-background/55 p-5 md:p-6 backdrop-blur-xl transition-all open:border-primary/25 open:bg-primary/[0.035]">
+              <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-left">
+                <span class="flex items-start gap-4">
+                  <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-xs font-black text-primary">
+                    {{ String(index + 1).padStart(2, '0') }}
+                  </span>
+                  <span class="text-base md:text-lg font-black tracking-tight text-foreground">{{ item.q }}</span>
+                </span>
+                <span class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.03] text-foreground/60 transition-transform group-open:rotate-45 group-open:text-primary">
+                  +
+                </span>
+              </summary>
+              <p class="mt-4 pl-0 md:pl-[52px] text-sm md:text-base text-foreground/55 leading-relaxed font-semibold">
+                {{ item.a }}
+              </p>
+            </details>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-28 border-t border-foreground/5">
-      <div class="text-center mb-16 max-w-3xl mx-auto">
-        <span class="badge-gradient mb-6">FAQ</span>
-        <h2 class="text-4xl md:text-6xl font-extrabold text-foreground mb-6">
-          Common questions before you
-          <span class="text-gradient">get started.</span>
-        </h2>
-        <p class="text-foreground/50 font-semibold leading-relaxed">
-          Clear answers for businesses comparing AI chatbot options for customer support and WhatsApp.
-        </p>
-      </div>
-
-      <div class="grid md:grid-cols-2 gap-6">
-        <div v-for="item in faqItems" :key="item.q" class="glass-card p-8 border-foreground/10 bg-foreground/[0.02]">
-          <h3 class="text-xl font-black text-foreground tracking-tight mb-3">{{ item.q }}</h3>
-          <p class="text-sm text-foreground/55 leading-relaxed font-semibold">{{ item.a }}</p>
-        </div>
-      </div>
-    </section>
-
-    <section id="pricing" class="max-w-7xl mx-auto px-6 py-28 border-t border-foreground/5">
-      <div class="text-center mb-20 max-w-3xl mx-auto">
+    <section id="pricing" class="max-w-7xl mx-auto px-6 py-24 border-t border-foreground/5">
+      <div class="text-center mb-14 max-w-3xl mx-auto">
         <span class="badge-gradient mb-6">Pricing</span>
         <h2 class="text-4xl md:text-6xl font-extrabold text-foreground">
-          Start free, then scale into more domains,
-          <span class="text-gradient">more replies, and bigger rollouts.</span>
+          Paid plans first, with
+          <span class="text-gradient">Free Starter below.</span>
         </h2>
         <p class="text-foreground/50 mt-6 font-semibold leading-relaxed">
-          Same pricing, clearer fit: choose the plan that matches your volume and channel needs.
+          Choose from three paid subscriptions for growth and scale. If you are not ready to pay, the Free Starter subscription is still available below.
         </p>
       </div>
 
-      <div class="grid xl:grid-cols-4 md:grid-cols-2 gap-8">
-        <div v-for="plan in plans" :key="plan.name"
-          class="glass-card p-10 flex flex-col relative transition-all duration-500 hover:-translate-y-4 border-foreground/10"
+      <div class="grid lg:grid-cols-3 gap-8 mb-8">
+        <div v-for="plan in paidPlans" :key="plan.name"
+          class="glass-card p-8 md:p-10 flex flex-col relative transition-all duration-500 hover:-translate-y-3 border-foreground/10"
           :class="plan.popular ? 'border-primary/40 !bg-primary/[0.03]' : 'bg-foreground/[0.02]'">
           <div v-if="plan.popular"
             class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-black text-[10px] font-bold tracking-widest rounded-full uppercase">
@@ -1111,20 +1188,20 @@ const handleSelect = async (plan: any) => {
             <p class="text-sm text-foreground/50 font-semibold">{{ plan.desc }}</p>
           </div>
 
-          <div class="mb-10 flex items-baseline gap-2">
+          <div class="mb-8 flex items-baseline gap-2">
             <span class="text-5xl font-extrabold text-foreground">${{ plan.price }}</span>
             <span class="text-foreground/50 font-bold tracking-widest text-[10px] uppercase">/mo</span>
           </div>
 
           <button @click="handleSelect(plan)" :disabled="isProcessing === plan.id"
-            class="w-full py-5 rounded-full font-bold text-center mb-10 transition-all tracking-widest text-xs flex items-center justify-center gap-2"
+            class="w-full py-5 rounded-full font-bold text-center mb-8 transition-all tracking-widest text-xs flex items-center justify-center gap-2"
             :class="plan.popular ? 'btn-gradient' : 'bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10 hover:border-foreground/20'">
             <template v-if="isProcessing === plan.id">
               <Loader2 class="w-4 h-4 animate-spin" />
               Processing...
             </template>
             <template v-else>
-              {{ isAuthenticated ? (plan.id === 'starter' ? 'Activate Free' : 'Select Plan') : (plan.id === 'enterprise-ready' ? 'Talk to Sales' : 'Start Free') }}
+              {{ plan.id === 'enterprise-ready' ? 'Talk to Sales' : 'Select Plan' }}
             </template>
           </button>
 
@@ -1139,9 +1216,49 @@ const handleSelect = async (plan: any) => {
           </div>
         </div>
       </div>
+
+      <div v-if="freeStarterPlan" class="glass-card border border-foreground/10 bg-foreground/[0.02] p-6 md:p-8 mb-8">
+        <div class="grid lg:grid-cols-[0.85fr_1.35fr_auto] gap-6 items-center">
+          <div>
+            <span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary mb-4">
+              Free Starter subscription
+            </span>
+            <h3 class="text-2xl md:text-3xl font-black text-foreground tracking-tight">{{ freeStarterPlan.name }}</h3>
+            <p class="mt-2 text-sm text-foreground/55 font-semibold leading-relaxed">{{ freeStarterPlan.desc }}</p>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div v-for="feat in freeStarterPlan.features" :key="feat"
+              class="rounded-2xl border border-foreground/10 bg-background/40 px-4 py-3 flex items-center gap-3 text-xs font-semibold text-foreground/60">
+              <div class="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Check class="w-2.5 h-2.5 text-primary" />
+              </div>
+              {{ feat }}
+            </div>
+          </div>
+
+          <div class="lg:text-right">
+            <div class="mb-4 flex lg:justify-end items-baseline gap-2">
+              <span class="text-4xl font-extrabold text-foreground">${{ freeStarterPlan.price }}</span>
+              <span class="text-foreground/50 font-bold tracking-widest text-[10px] uppercase">/mo</span>
+            </div>
+            <button @click="handleSelect(freeStarterPlan)" :disabled="isProcessing === freeStarterPlan.id"
+              class="w-full lg:w-auto px-8 py-4 rounded-full font-bold text-center transition-all tracking-widest text-xs flex items-center justify-center gap-2 bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10 hover:border-foreground/20">
+              <template v-if="isProcessing === freeStarterPlan.id">
+                <Loader2 class="w-4 h-4 animate-spin" />
+                Processing...
+              </template>
+              <template v-else>
+                {{ isAuthenticated ? 'Activate Free' : 'Start Free' }}
+              </template>
+            </button>
+          </div>
+        </div>
+      </div>
+
     </section>
 
-    <section class="max-w-5xl mx-auto px-6 py-28">
+    <section class="max-w-5xl mx-auto px-6 py-20 md:py-24">
       <div
         class="bg-foreground/[0.03] p-12 md:p-20 rounded-[40px] border border-foreground/10 text-center relative overflow-hidden backdrop-blur-sm">
         <div class="absolute inset-0 bg-primary/5 blur-[120px]"></div>

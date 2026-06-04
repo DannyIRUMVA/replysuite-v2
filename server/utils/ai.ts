@@ -3,6 +3,11 @@
  * Supports Gemini (Primary) and Azure (Secondary/Gold fallback)
  * Hardened for SSR Stability: No top-level Supabase imports.
  */
+import {
+  buildAzureChatCompletionsUrl,
+  getGeminiChatModels,
+  getGeminiEmbeddingModels,
+} from './ai-provider'
 
 export const getEmbeddings = async (text: string) => {
   const config = useRuntimeConfig()
@@ -11,8 +16,8 @@ export const getEmbeddings = async (text: string) => {
 
   const input = text.replace(/\n/g, ' ').substring(0, 8000)
 
-  // 1. Try Gemini Embeddings with different model aliases
-  const models = ['text-embedding-004', 'embedding-001', 'gemini-embedding-2', 'gemini-embedding-001']
+  // 1. Try Gemini embeddings using configured or default model aliases
+  const models = getGeminiEmbeddingModels(config)
   let lastError = ''
 
   for (const model of models) {
@@ -68,7 +73,7 @@ export const getChatCompletion = async (messages: ChatMessage[], options: { syst
       parts: [{ text: m.content }]
     }))
 
-    const models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-exp']
+    const models = getGeminiChatModels(config)
     let lastError = ''
 
     for (const model of models) {
@@ -99,11 +104,9 @@ export const getChatCompletion = async (messages: ChatMessage[], options: { syst
   // Helper for Azure
   async function getAzure(msgs: ChatMessage[], sys?: string) {
     const apiKey = config.azureOpenAiKey
-    const endpoint = config.azureOpenAiEndpoint
-    const deployment = config.azureOpenAiDeploymentName
-    if (!apiKey || !endpoint || !deployment) throw new Error('Azure credentials missing')
+    if (!apiKey) throw new Error('Azure credentials missing')
 
-    const azureUrl = `${endpoint.replace(/\/$/, '')}/openai/deployments/${deployment}/chat/completions?api-version=2024-02-15-preview`
+    const azureUrl = buildAzureChatCompletionsUrl(config)
     const body = {
       messages: sys ? [{ role: 'system', content: sys }, ...msgs] : msgs
     }
@@ -136,7 +139,14 @@ export const getChatCompletion = async (messages: ChatMessage[], options: { syst
  * @param supabase - The Supabase client (passed from event handler)
  */
 export const searchKnowledge = async (supabase: any, chatbotId: string, query: string, limit = 6) => {
-  const embedding = await getEmbeddings(query)
+  let embedding: number[]
+
+  try {
+    embedding = await getEmbeddings(query)
+  } catch (error: any) {
+    console.warn('[Knowledge Search] Embeddings unavailable, continuing without KB context:', error?.message || error)
+    return []
+  }
 
   const candidateLimit = Math.max(limit * 2, 8)
   const { data, error } = await supabase.rpc('match_embeddings', {

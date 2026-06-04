@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Zap, Menu, X, ChevronRight, Layout, Sparkles, CreditCard, Info, LogIn } from 'lucide-vue-next'
+import { Zap, Menu, X, ChevronRight, Layout, Sparkles, CreditCard, Info, LogIn, Building2 } from 'lucide-vue-next'
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 
 const isMenuOpen = ref(false)
@@ -11,6 +11,7 @@ const navLinks = [
   { name: 'Product', href: '/product', icon: Layout },
   { name: 'Features', href: '/features', icon: Sparkles },
   { name: 'Pricing', href: '/pricing', icon: CreditCard },
+  { name: 'Company', href: '/company', icon: Building2 },
   { name: 'Contact', href: '/contact', icon: Info }
 ]
 
@@ -51,7 +52,7 @@ watch(() => route.fullPath, () => {
       <div
         class="hidden lg:flex items-center gap-1 p-1 bg-foreground/[0.02] backdrop-blur-md rounded-full border border-foreground/10">
         <NuxtLink v-for="link in navLinks" :key="link.name" :to="link.href"
-          class="px-5 py-2 rounded-full text-sm font-semibold text-foreground/40 hover:text-foreground hover:bg-foreground/5 transition-all flex items-center gap-2"
+          class="px-4 xl:px-5 py-2 rounded-full text-sm font-semibold text-foreground/40 hover:text-foreground hover:bg-foreground/5 transition-all flex items-center gap-2"
           active-class="text-primary bg-primary/5">
           <component :is="link.icon" class="w-4 h-4" />
           {{ link.name }}

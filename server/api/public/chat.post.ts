@@ -1,6 +1,7 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { searchKnowledge } from '~~/server/utils/ai'
 import { runAgentCycle } from '~~/server/utils/agent/engine'
+import { buildChatbotLanguagePolicy } from '~~/server/utils/language-policy'
 import {
   buildConversationSettingsPrompt,
   buildConversationStatePrompt,
@@ -154,12 +155,21 @@ export default defineEventHandler(async (event) => {
 
     const conversationBehavior = buildConversationSettingsPrompt(conversationSettings, 'web')
     const sessionStatePrompt = buildConversationStatePrompt(sessionState)
+    const languagePolicy = await buildChatbotLanguagePolicy({
+      supabase,
+      chatbot,
+      userMessage: message,
+      sessionPreferredLanguage: sessionState.preferredLanguage,
+    })
 
     const systemPrompt = `
       ${baseInstructions}
 
       [CONVERSATION BEHAVIOR]
       ${conversationBehavior}
+
+      [LANGUAGE POLICY]
+      ${languagePolicy.prompt}
 
       [SESSION STATE]
       ${sessionStatePrompt}
@@ -214,7 +224,7 @@ export default defineEventHandler(async (event) => {
         existingState: getConversationStateFromMetadata(sessionMetadata),
         userMessage: message,
         assistantReply: response,
-        defaultLanguage: (chatbot as any)?.default_language || null,
+        defaultLanguage: languagePolicy.activeLanguage.name || (chatbot as any)?.default_language || null,
       })
 
       await supabase

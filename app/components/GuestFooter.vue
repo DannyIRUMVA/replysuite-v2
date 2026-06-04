@@ -19,32 +19,36 @@ const socialLinks = [
 </script>
 
 <template>
-  <footer class="max-w-7xl mx-auto px-6 py-24 border-t border-foreground/5">
-    <!-- Top Brand Row -->
-    <div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-20 pb-20 border-b border-foreground/5">
+  <footer class="relative overflow-hidden border-t border-foreground/10 bg-background-card/70">
+    <div class="absolute inset-0 pointer-events-none footer-glow"></div>
+    <div class="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+
+    <div class="relative max-w-7xl mx-auto px-6 py-16 md:py-20">
+      <!-- Top Brand Row -->
+      <div class="flex flex-col md:flex-row justify-between items-start gap-10 mb-14 pb-14 border-b border-foreground/10">
       <div class="max-w-md">
         <div class="flex items-center gap-3 mb-8">
           <Zap class="text-primary w-8 h-8 fill-current" />
           <span class="text-3xl font-bold tracking-tighter text-foreground">ReplySuite</span>
         </div>
         <p class="text-foreground/50 leading-relaxed font-medium">
-          Embeddable AI chatbot for your website with WhatsApp integration. Train it on your business content, answer faster, and support customers better.
+          AI chatbots for websites and WhatsApp. Train on your content and answer faster.
         </p>
       </div>
       <div class="flex gap-4">
         <a v-for="item in socialLinks" :key="item.label" :href="item.href" target="_blank" rel="noopener noreferrer"
           :aria-label="item.label"
-          class="p-4 rounded-2xl bg-foreground/[0.02] border border-foreground/5 text-foreground/50 hover:text-primary hover:border-primary/20 transition-all hover:-translate-y-1">
+          class="p-4 rounded-2xl border border-foreground/10 bg-background/35 text-foreground/50 shadow-sm backdrop-blur-xl hover:text-primary hover:border-primary/20 hover:bg-primary/10 transition-all hover:-translate-y-1">
           <component :is="item.icon" class="w-5 h-5" />
         </a>
       </div>
     </div>
 
     <!-- 4 Column Links Grid -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-16 mb-20">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-14 mb-14">
       <!-- Column 1: Product -->
       <div>
-        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-10">Product</h4>
+        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Product</h4>
         <ul class="space-y-4">
           <li v-for="link in [
             { name: 'Multi-Channel DM', to: '/features' },
@@ -61,7 +65,7 @@ const socialLinks = [
 
       <!-- Column 2: Resources -->
       <div>
-        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-10">Resources</h4>
+        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Resources</h4>
         <ul class="space-y-4">
           <li v-for="link in [
             { name: 'Blog & Insights', to: '/blog' },
@@ -78,9 +82,10 @@ const socialLinks = [
 
       <!-- Column 3: Company -->
       <div>
-        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-10">Company</h4>
+        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Company</h4>
         <ul class="space-y-4">
           <li v-for="link in [
+            { name: 'Company', to: '/company' },
             { name: 'Our Story', to: '/about' },
             { name: 'Contact Sales', to: '/contact' },
             { name: 'Institutional Email', to: 'mailto:support@replysuite.app' }
@@ -99,7 +104,7 @@ const socialLinks = [
 
       <!-- Column 4: Trust & Legal -->
       <div>
-        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-10">Trust & Legal</h4>
+        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Trust & Legal</h4>
         <ul class="space-y-4">
           <li v-for="link in [
             { name: 'AI Ethics', to: '/ethics' },
@@ -116,7 +121,7 @@ const socialLinks = [
     </div>
 
     <!-- Bottom Bar -->
-    <div class="pt-10 border-t border-foreground/5 flex flex-col md:flex-row items-center justify-between gap-8">
+      <div class="pt-8 border-t border-foreground/10 flex flex-col md:flex-row items-center justify-between gap-8">
       <div class="flex flex-col gap-3">
         <div class="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">
           © 2026 ReplySuite Ltd. All rights reserved.
@@ -131,7 +136,7 @@ const socialLinks = [
 
       <div class="flex items-center gap-8">
         <div
-          class="flex items-center gap-3 px-4 py-2 rounded-full bg-green-500/5 border border-green-500/10 text-[10px] font-bold text-green-500/80 uppercase tracking-widest">
+          class="flex items-center gap-3 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/15 shadow-sm backdrop-blur-xl text-[10px] font-bold text-green-500/80 uppercase tracking-widest">
           <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
           All Systems Operational
         </div>
@@ -148,11 +153,17 @@ const socialLinks = [
             </select>
           </div>
         </div>
+        </div>
       </div>
     </div>
   </footer>
 </template>
 
 <style scoped>
-/* No additional styles needed with Tailwind */
+.footer-glow {
+  background:
+    radial-gradient(circle at 12% 12%, rgb(var(--primary) / 0.14), transparent 28%),
+    radial-gradient(circle at 88% 8%, rgba(59, 130, 246, 0.10), transparent 24%),
+    linear-gradient(180deg, rgb(var(--surface) / 0.72), rgb(var(--background) / 0.92));
+}
 </style>

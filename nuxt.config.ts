@@ -159,9 +159,12 @@ export default defineNuxtConfig({
     polarServer: process.env.POLAR_SERVER,
     polarOrganizationId: process.env.POLAR_ORGANIZATION_ID,
     geminiApiKey: process.env.GEMINI_API_KEY,
+    geminiChatModels: process.env.GEMINI_CHAT_MODELS,
+    geminiEmbeddingModels: process.env.GEMINI_EMBEDDING_MODELS,
     azureOpenAiKey: process.env.AZURE_OPENAI_KEY,
     azureOpenAiEndpoint: process.env.AZURE_OPENAI_ENDPOINT,
     azureOpenAiDeploymentName: process.env.AZURE_OPENAI_DEPLOYMENT_NAME,
+    azureOpenAiApiVersion: process.env.AZURE_OPENAI_API_VERSION,
     slackWebhookUrl: process.env.SLACK_WEBHOOK_URL,
   },
   vite: {

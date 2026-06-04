@@ -23,10 +23,10 @@ useHead({
   ]
 })
 
-// Global Font Scaling (10% Increase)
+// Keep public pages compact and responsive.
 useHead({
   htmlAttrs: {
-    style: 'font-size: 17.6px' // 16px * 1.1 = 17.6px
+    style: 'font-size: 16px'
   }
 })
 </script>
@@ -38,7 +38,7 @@ useHead({
     <div class="relative z-10">
       <GuestNavbar />
       <!-- Spacer for fixed navbar -->
-      <div class="h-[10vh]"></div>
+      <div class="h-20 sm:h-24"></div>
       <slot />
       <GuestFooter />
     </div>

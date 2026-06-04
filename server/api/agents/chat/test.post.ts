@@ -1,5 +1,6 @@
 import { serverSupabaseClient, serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 import { searchKnowledge, getChatCompletion } from '~~/server/utils/ai'
+import { buildChatbotLanguagePolicy } from '~~/server/utils/language-policy'
 import { isUuid } from '~~/server/utils/public-chatbot'
 
 export default defineEventHandler(async (event) => {
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
   // 1. Verify ownership with the user-scoped client
   const { data: chatbot, error: chatbotError } = await supabase
     .from('chatbots')
-    .select('id, name, system_prompt, user_id')
+    .select('id, name, system_prompt, user_id, default_language')
     .eq('id', chatbotId)
     .maybeSingle()
 
@@ -76,9 +77,18 @@ export default defineEventHandler(async (event) => {
 
     // 5. Construct System Prompt with Knowledge
     const baseInstructions = chatbot.system_prompt || `You are an AI assistant for ${chatbot.name}.`
+    const languagePolicy = await buildChatbotLanguagePolicy({
+      supabase: supabaseAdmin,
+      chatbot,
+      userMessage: message,
+      sessionPreferredLanguage: null,
+    })
 
     const systemPrompt = `
       ${baseInstructions}
+
+      [LANGUAGE POLICY]
+      ${languagePolicy.prompt}
 
       [ADDITIONAL CONTEXT FROM KNOWLEDGE BASE]
       ${contextText || 'No specific background knowledge found for this query.'}

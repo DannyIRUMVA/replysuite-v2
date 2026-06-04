@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { chatbotLanguageNames, getChatbotLanguageCode, normalizeChatbotLanguageName } from '~~/app/utils/chatbotLanguages'
 import {
   ArrowRight,
   Bot,
@@ -43,17 +44,7 @@ const agentDraft = ref({
   default_language: 'English',
 })
 
-const languageOptions = [
-  'English',
-  'Kinyarwanda',
-  'French',
-  'Swahili',
-  'Kirundi',
-  'Portuguese',
-  'Spanish',
-  'German',
-  'Chinese',
-]
+const languageOptions = chatbotLanguageNames
 
 const { data: onboardingState, pending, refresh } = useAsyncData('dashboard-onboarding-modal', async () => {
   if (!userId.value) {
@@ -305,12 +296,31 @@ const createChatbot = async () => {
         user_id: userId.value,
         name: agentDraft.value.name.trim(),
         system_prompt: agentDraft.value.system_prompt.trim(),
-        default_language: agentDraft.value.default_language,
+        default_language: normalizeChatbotLanguageName(agentDraft.value.default_language),
       })
       .select('id')
       .single()
 
     if (error) throw error
+
+    if (data?.id) {
+      const primaryCode = getChatbotLanguageCode(agentDraft.value.default_language)
+      const languageRows = Array.from(new Set([primaryCode, 'en'])).map((code) => ({
+        chatbot_id: data.id,
+        language_code: code,
+        is_primary: code === primaryCode,
+        is_fallback: code === 'en',
+        is_enabled: true,
+      }))
+
+      const { error: languageError } = await (supabase as any)
+        .from('chatbot_languages')
+        .upsert(languageRows, { onConflict: 'chatbot_id,language_code' })
+
+      if (languageError) {
+        console.warn('[Onboarding] Chatbot language mapping will sync after migration deployment:', languageError)
+      }
+    }
 
     await syncStep('create_chatbot')
     createdAgentId.value = data?.id || null

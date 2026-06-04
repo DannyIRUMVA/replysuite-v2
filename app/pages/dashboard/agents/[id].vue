@@ -26,6 +26,7 @@ import {
   Plus
 } from 'lucide-vue-next'
 import CustomSelect from '~~/app/components/CustomSelect.vue'
+import { chatbotLanguageCodeOptions, chatbotLanguageOptions, getChatbotLanguageCode, getChatbotLanguageName, normalizeChatbotLanguageName } from '~~/app/utils/chatbotLanguages'
 import ToolSelector from '~/components/agents/tools/ToolSelector.vue'
 import CatalogManager from '~/components/agents/tools/CatalogManager.vue'
 import PaypackConfig from '~/components/agents/tools/PaypackConfig.vue'
@@ -102,17 +103,58 @@ const form = ref({
   } as any,
 })
 
-const languageOptions = [
-  { label: 'Kinyarwanda', value: 'Kinyarwanda' },
-  { label: 'English', value: 'English' },
-  { label: 'French', value: 'French' },
-  { label: 'Chinese', value: 'Chinese' },
-  { label: 'Kirundi', value: 'Kirundi' },
-  { label: 'Swahili', value: 'Swahili' },
-  { label: 'Spanish', value: 'Spanish' },
-  { label: 'Portuguese', value: 'Portuguese' },
-  { label: 'German', value: 'German' },
-]
+const languageOptions = chatbotLanguageOptions
+const languageCodeOptions = chatbotLanguageCodeOptions
+const languageSettings = ref({
+  supportedCodes: ['en'] as string[],
+  fallbackLanguage: 'English',
+  tableAvailable: false,
+})
+
+const selectedLanguageCodes = computed({
+  get: () => languageSettings.value.supportedCodes,
+  set: (codes: string[]) => {
+    const uniqueCodes = Array.from(new Set(codes.length ? codes : ['en']))
+    const primaryCode = getChatbotLanguageCode(form.value.default_language)
+    const fallbackCode = getChatbotLanguageCode(languageSettings.value.fallbackLanguage)
+
+    if (!uniqueCodes.includes(primaryCode)) uniqueCodes.unshift(primaryCode)
+    if (!uniqueCodes.includes(fallbackCode)) uniqueCodes.push(fallbackCode)
+    languageSettings.value.supportedCodes = uniqueCodes
+  }
+})
+
+const fallbackLanguageOptions = computed(() => languageCodeOptions
+  .filter((language) => selectedLanguageCodes.value.includes(language.code))
+  .map((language) => ({ label: language.label, value: language.label })))
+
+const primaryLanguageCode = computed(() => getChatbotLanguageCode(form.value.default_language))
+const fallbackLanguageCode = computed(() => getChatbotLanguageCode(languageSettings.value.fallbackLanguage))
+
+const toggleSupportedLanguage = (code: string) => {
+  const current = new Set(selectedLanguageCodes.value)
+  if (current.has(code)) {
+    if (code === primaryLanguageCode.value || code === fallbackLanguageCode.value) return
+    current.delete(code)
+  } else {
+    current.add(code)
+  }
+  selectedLanguageCodes.value = Array.from(current)
+}
+
+watch(() => form.value.default_language, (language) => {
+  const code = getChatbotLanguageCode(language)
+  if (!selectedLanguageCodes.value.includes(code)) {
+    selectedLanguageCodes.value = [code, ...selectedLanguageCodes.value]
+  }
+})
+
+watch(() => languageSettings.value.fallbackLanguage, (language) => {
+  const code = getChatbotLanguageCode(language)
+  if (!selectedLanguageCodes.value.includes(code)) {
+    selectedLanguageCodes.value = [...selectedLanguageCodes.value, code]
+  }
+})
 
 const bubbleStyleOptions = [
   { label: 'Rounded (Soft)', value: 'rounded' },
@@ -182,6 +224,79 @@ const addAllowedDomain = () => {
   newDomainInput.value = ''
 }
 
+const setFallbackLanguageDefaults = () => {
+  const primaryCode = getChatbotLanguageCode(form.value.default_language)
+  const fallbackCode = getChatbotLanguageCode(languageSettings.value.fallbackLanguage)
+  selectedLanguageCodes.value = Array.from(new Set([primaryCode, ...selectedLanguageCodes.value, fallbackCode, 'en']))
+}
+
+const fetchChatbotLanguages = async () => {
+  try {
+    const { data, error } = await (supabase as any)
+      .from('chatbot_languages')
+      .select('language_code, is_primary, is_fallback, is_enabled')
+      .eq('chatbot_id', chatbotId)
+      .eq('is_enabled', true)
+
+    if (error) throw error
+
+    const rows = Array.isArray(data) ? data : []
+    if (!rows.length) {
+      languageSettings.value.tableAvailable = true
+      setFallbackLanguageDefaults()
+      return
+    }
+
+    const primary = rows.find((row: any) => row.is_primary) || rows[0]
+    const fallback = rows.find((row: any) => row.is_fallback) || rows.find((row: any) => row.language_code === 'en') || primary
+
+    form.value.default_language = getChatbotLanguageName(primary.language_code)
+    languageSettings.value = {
+      supportedCodes: Array.from(new Set(rows.map((row: any) => row.language_code).filter(Boolean))),
+      fallbackLanguage: getChatbotLanguageName(fallback.language_code),
+      tableAvailable: true,
+    }
+    setFallbackLanguageDefaults()
+  } catch (err) {
+    console.warn('[Languages] chatbot_languages unavailable, using legacy default_language only:', err)
+    languageSettings.value.tableAvailable = false
+    setFallbackLanguageDefaults()
+  }
+}
+
+const saveChatbotLanguages = async () => {
+  const primaryCode = getChatbotLanguageCode(form.value.default_language)
+  const fallbackCode = getChatbotLanguageCode(languageSettings.value.fallbackLanguage)
+  const codes = Array.from(new Set([primaryCode, ...selectedLanguageCodes.value, fallbackCode]))
+
+  try {
+    const table = (supabase as any).from('chatbot_languages')
+    const { error: clearError } = await table
+      .update({ is_primary: false, is_fallback: false, is_enabled: false })
+      .eq('chatbot_id', chatbotId)
+
+    if (clearError) throw clearError
+
+    const rows = codes.map((code) => ({
+      chatbot_id: chatbotId,
+      language_code: code,
+      is_primary: code === primaryCode,
+      is_fallback: code === fallbackCode,
+      is_enabled: true,
+    }))
+
+    const { error: upsertError } = await (supabase as any)
+      .from('chatbot_languages')
+      .upsert(rows, { onConflict: 'chatbot_id,language_code' })
+
+    if (upsertError) throw upsertError
+    languageSettings.value.tableAvailable = true
+  } catch (err) {
+    console.warn('[Languages] Could not persist chatbot language mappings yet:', err)
+    languageSettings.value.tableAvailable = false
+  }
+}
+
 // Fetch Data
 const fetchData = async () => {
   if (!chatbotId || !userId.value) return
@@ -201,7 +316,7 @@ const fetchData = async () => {
         name: data.name || '',
         system_prompt: data.system_prompt || '',
         is_public: data.is_public || false,
-        default_language: data.default_language || 'English',
+        default_language: normalizeChatbotLanguageName(data.default_language || 'English'),
         primary_color: data.primary_color || '#D4AF37',
         secondary_color: data.secondary_color || '#1a1a1a',
         chat_bubble_style: data.chat_bubble_style || 'rounded',
@@ -225,6 +340,7 @@ const fetchData = async () => {
           }
         },
       }
+      await fetchChatbotLanguages()
       if (activeTab.value === 'tools') {
         // fetchCatalog was moved to CatalogManager component
       }
@@ -267,7 +383,7 @@ const handleSave = async () => {
         name: form.value.name,
         system_prompt: form.value.system_prompt,
         is_public: form.value.is_public,
-        default_language: form.value.default_language,
+        default_language: normalizeChatbotLanguageName(form.value.default_language),
         primary_color: form.value.primary_color,
         secondary_color: form.value.secondary_color,
         chat_bubble_style: form.value.chat_bubble_style,
@@ -288,8 +404,11 @@ const handleSave = async () => {
       .eq('id', chatbotId)
 
     if (error) throw error
+    await saveChatbotLanguages()
     agent.value = { ...agent.value, ...form.value }
-    notify.success('Agent settings saved successfully.')
+    notify.success(languageSettings.value.tableAvailable
+      ? 'Agent settings and language support saved successfully.'
+      : 'Agent settings saved. Language mappings will sync after the language migration is deployed.')
   } catch (err) {
     console.error('Error saving settings:', err)
     notify.error('Failed to save changes.')
@@ -477,13 +596,62 @@ const catalogManagerRef = ref<any>(null)
         <!-- Linguistic Engine -->
         <div class="glass-card p-8 relative z-10">
           <div class="flex items-center justify-between mb-6">
-            <h4 class="text-[10px] font-bold tracking-widest text-foreground/50 uppercase">Linguistic Engine</h4>
+            <div>
+              <h4 class="text-[10px] font-bold tracking-widest text-foreground/50 uppercase">Linguistic Engine</h4>
+              <p class="mt-1 text-[9px] text-foreground/40 uppercase tracking-wider">Primary, supported and fallback languages</p>
+            </div>
             <Globe class="w-4 h-4 text-primary opacity-50" />
           </div>
-          <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-2">Default Language</label>
-          <CustomSelect v-model="form.default_language" :options="languageOptions" placeholder="Select Language" />
-          <p class="text-[9px] text-foreground/50 leading-relaxed uppercase tracking-wider mt-4">
-            Your agent will strictly adhere to this language for native interactions.
+
+          <div class="space-y-5">
+            <div>
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-2">Primary Language</label>
+              <CustomSelect v-model="form.default_language" :options="languageOptions" placeholder="Select Language" />
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-2">Fallback Language</label>
+              <CustomSelect v-model="languageSettings.fallbackLanguage" :options="fallbackLanguageOptions" placeholder="Select Fallback" />
+              <p class="text-[9px] text-foreground/45 leading-relaxed mt-2">
+                Used when the visitor writes in an unsupported or unclear language.
+              </p>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold tracking-widest text-foreground/50 uppercase mb-3">Supported Languages</label>
+              <div class="grid grid-cols-1 gap-2">
+                <button
+                  v-for="language in languageCodeOptions"
+                  :key="language.code"
+                  type="button"
+                  @click="toggleSupportedLanguage(language.code)"
+                  :class="[
+                    'w-full rounded-xl border px-3 py-3 text-left transition-all flex items-center justify-between gap-3',
+                    selectedLanguageCodes.includes(language.code)
+                      ? 'border-primary/40 bg-primary/10 text-foreground'
+                      : 'border-foreground/5 bg-foreground/5 text-foreground/45 hover:text-foreground/70'
+                  ]"
+                >
+                  <span>
+                    <span class="block text-[11px] font-bold">{{ language.label }}</span>
+                    <span class="block text-[9px] opacity-60">{{ language.nativeName }} · {{ language.focus }}</span>
+                  </span>
+                  <span
+                    :class="[
+                      'h-4 w-4 rounded-full border flex-shrink-0',
+                      selectedLanguageCodes.includes(language.code) ? 'bg-primary border-primary' : 'border-foreground/20'
+                    ]"
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <p class="text-[9px] text-foreground/50 leading-relaxed uppercase tracking-wider mt-5">
+            The runtime detects each visitor message and replies in a supported language. Keep English as fallback for safest recovery.
+          </p>
+          <p v-if="!languageSettings.tableAvailable" class="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[9px] text-amber-300 leading-relaxed">
+            Legacy mode active until the language database migration is deployed. The chatbot still uses runtime language detection.
           </p>
         </div>
 
