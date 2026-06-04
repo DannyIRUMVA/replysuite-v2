@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, Zap, Rocket, Shield, ArrowRight, HelpCircle, Loader2 } from 'lucide-vue-next'
+import { Check, ArrowRight, Loader2, Shield, RefreshCcw } from 'lucide-vue-next'
 
 definePageMeta({
   layout: 'dashboard',
@@ -11,38 +11,35 @@ useSeoMeta({
   description: 'Unlock the full power of ReplySuite AI automation.',
 })
 
-const { isAuthenticated, refreshAuth, planSlug, polarCustomerId, syncWithPolar, isLoading: isAuthLoading } = useAuth()
+const { refreshAuth, planSlug, polarCustomerId, syncWithPolar, isLoading: isAuthLoading } = useAuth()
 const isProcessing = ref<string | null>(null)
 const notify = useNotify()
 
 const isMounted = ref(false)
 const isLoading = computed(() => !isMounted.value || isAuthLoading.value)
 
-// Automatically sync with Polar on mount if identity is missing or to verify deep status
 onMounted(async () => {
   isMounted.value = true
-  
+
   if (window.PolarEmbedCheckout) {
     window.PolarEmbedCheckout.init()
   }
 
-  // Listen for successful checkout
-  window.addEventListener("polar:checkout:confirmed", async (event) => {
-    console.log("[Pricing] Checkout confirmed:", event)
+  window.addEventListener('polar:checkout:confirmed', async (event) => {
+    console.log('[Dashboard Pricing] Checkout confirmed:', event)
     notify.success('Payment successful! Your plan is being updated.')
     await syncWithPolar()
   })
 
   if (!polarCustomerId.value) {
-    console.log('[Pricing] Missing Polar identity. Syncing...')
+    console.log('[Dashboard Pricing] Missing Polar identity. Syncing...')
     await syncWithPolar()
   }
 })
 
 const handleSelect = async (plan: any) => {
-  // Allow re-selecting for troubleshooting or explicit upgrades
   isProcessing.value = plan.id
-  
+
   try {
     if (plan.id === 'starter') {
       const res = await $fetch('/api/billing/onboard-free', { method: 'POST' })
@@ -85,218 +82,208 @@ const handleSelect = async (plan: any) => {
 
 const plans = [
   {
-    name: 'Free',
     id: 'starter',
+    name: 'Free Starter',
     price: '0.00',
     desc: 'Best for launching one chatbot on one website domain.',
-    features: ['1 website chatbot', '1 connected website domain', '100 AI replies / mo', '10 training sessions', 'Email support'],
-    popular: false,
-    accent: 'start'
+    features: ['1 website chatbot', '1 connected domain / chatbot', '100 AI replies / mo', '10 training sessions', 'Email support'],
+    popular: false
   },
   {
-    name: 'Silver',
     id: 'silver',
+    name: 'Silver',
     productId: 'dc070937-6444-40a6-8a02-fd8b25df7aae',
     price: '17.88',
-    desc: 'Best for growing teams that need more domains and more replies.',
+    desc: 'Best for growing businesses that need more domains and more replies.',
     features: ['3 website chatbots', '5 connected domains / chatbot', '4,000 AI replies / mo', '30 training sessions', 'Priority support'],
-    popular: true,
-    accent: 'growth'
+    popular: true
   },
   {
-    name: 'Gold',
     id: 'gold',
+    name: 'Gold',
     productId: 'd0493f6f-16bc-4d3c-97bb-7be920840f12',
     price: '26.88',
-    desc: 'Built for higher volume web and WhatsApp deployments.',
-    features: ['5 website chatbots', '10 connected domains / chatbot', '10,000 AI replies / mo', '100 training sessions', 'WhatsApp integration'],
-    popular: false,
-    accent: 'multichannel'
+    desc: 'Best for higher volume web and WhatsApp automation.',
+    features: ['5 website chatbots', '10 connected domains / chatbot', '10,000 AI replies / mo', '100 training sessions', 'Official WhatsApp API'],
+    popular: false
   },
   {
-    name: 'Enterprise Ready',
     id: 'enterprise-ready',
+    name: 'Enterprise Ready',
     productId: '3e4e4e1a-e1da-4f3f-be5a-298e409c7c1e',
     price: '350.88',
-    desc: 'For larger rollouts that need scale, control, and starter templates.',
+    desc: 'Best for larger rollouts that need scale, control, and ready-start templates.',
     features: ['50 website chatbots', '100 connected domains / chatbot', '500,000 AI replies / mo', '1,000 training sessions', 'Custom-ready starter templates'],
-    popular: false,
-    accent: 'enterprise'
+    popular: false
   }
 ]
 
-const openPortal = async () => {
-  try {
-    const res = await $fetch('/api/billing/portal')
-    if (res.url) {
-      window.open(res.url, '_blank')
-    }
-  } catch (err) {
-    notify.error('Failed to open billing portal')
-  }
+const paidPlans = computed(() => plans.filter((plan) => plan.id !== 'starter'))
+const freeStarterPlan = computed(() => plans.find((plan) => plan.id === 'starter'))
+const currentPlanName = computed(() => plans.find((plan) => plan.id === planSlug.value)?.name || 'No active plan')
+
+const getCtaLabel = (plan: any) => {
+  if (planSlug.value === plan.id) return 'Current Plan'
+  if (plan.id === 'starter') return 'Activate Free'
+  if (plan.id === 'enterprise-ready') return 'Talk to Sales'
+  return 'Select Plan'
 }
 </script>
 
 <template>
-  <div class="px-2 md:px-4 py-8 w-full max-w-none">
-    <div class="grid xl:grid-cols-4 md:grid-cols-2 gap-4 mb-12">
-      <div class="rounded-3xl border border-foreground/10 bg-foreground/[0.02] p-5">
-        <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary mb-2">New here?</p>
-        <h3 class="text-sm font-bold text-foreground mb-2">Start with Starter</h3>
-        <p class="text-sm text-foreground/55 leading-relaxed">Best for launching your first website chatbot on one domain.</p>
-      </div>
-      <div class="rounded-3xl border border-foreground/10 bg-foreground/[0.02] p-5">
-        <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary mb-2">Need more websites?</p>
-        <h3 class="text-sm font-bold text-foreground mb-2">Choose Silver</h3>
-        <p class="text-sm text-foreground/55 leading-relaxed">A better fit for growing businesses managing more web traffic.</p>
-      </div>
-      <div class="rounded-3xl border border-foreground/10 bg-foreground/[0.02] p-5">
-        <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary mb-2">Need WhatsApp too?</p>
-        <h3 class="text-sm font-bold text-foreground mb-2">Choose Gold</h3>
-        <p class="text-sm text-foreground/55 leading-relaxed">Best for businesses that want website and WhatsApp automation together.</p>
-      </div>
-      <div class="rounded-3xl border border-foreground/10 bg-foreground/[0.02] p-5">
-        <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary mb-2">Running at scale?</p>
-        <h3 class="text-sm font-bold text-foreground mb-2">Go Enterprise Ready</h3>
-        <p class="text-sm text-foreground/55 leading-relaxed">For bigger deployments, higher volume, and template-led team rollout.</p>
-      </div>
-    </div>
+  <div class="relative space-y-8 overflow-hidden pb-24 lg:pb-8">
+    <div class="pointer-events-none absolute -top-28 left-8 h-64 w-64 rounded-full bg-primary/10 blur-[100px]"></div>
+    <div class="pointer-events-none absolute top-40 right-0 h-72 w-72 rounded-full bg-sky-400/10 blur-[110px]"></div>
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex flex-col items-center justify-center min-h-[40vh] py-20">
-      <Loader2 class="w-12 h-12 text-primary animate-spin mb-6" />
-      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/50">Loading plans...</p>
-    </div>
-
-    <!-- Pricing Grid -->
-    <div v-else class="grid xl:grid-cols-4 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div 
-        v-for="plan in plans" 
-        :key="plan.name"
-        class="glass-card p-10 flex flex-col relative transition-all duration-300 hover:border-primary/30 border-foreground/5"
-        :class="[
-          plan.popular ? 'border-primary/30 bg-primary/[0.03] shadow-xl shadow-primary/5 -translate-y-1' : '',
-          plan.id === 'enterprise-ready' ? 'border-cyan-400/20 bg-cyan-400/[0.03]' : ''
-        ]"
-      >
-        <div v-if="plan.popular" class="absolute -top-3 left-6 px-4 py-1 bg-primary text-black text-[9px] font-bold tracking-widest rounded-full uppercase">
-          Most popular
-        </div>
-        <div v-else-if="plan.id === 'enterprise-ready'" class="absolute -top-3 left-6 px-4 py-1 bg-cyan-400 text-black text-[9px] font-bold tracking-widest rounded-full uppercase">
-          Talk to sales
-        </div>
-
-        <div class="mb-8">
-          <div class="flex items-center justify-between gap-3 mb-3">
-            <h3 class="text-2xl font-bold text-foreground">{{ plan.name }}</h3>
-            <span class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">
-              {{ plan.id === 'starter' ? 'Start here' : plan.id === 'silver' ? 'Growth' : plan.id === 'gold' ? 'Website + WhatsApp' : 'Sales-assisted' }}
-            </span>
-          </div>
-          <p class="text-sm text-foreground/55 font-medium leading-relaxed">{{ plan.desc }}</p>
-        </div>
-
-        <div class="mb-4 flex items-baseline gap-2">
-          <span class="text-4xl font-extrabold text-foreground">${{ plan.price }}</span>
-          <span class="text-[10px] text-foreground/50 font-bold tracking-widest">/mo</span>
-        </div>
-
-        <div class="mb-8 rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4">
-          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45 mb-2">Best for</p>
-          <p class="text-sm text-foreground/70 leading-relaxed">
-            {{ plan.id === 'starter'
-              ? 'Testing your first website chatbot.'
-              : plan.id === 'silver'
-                ? 'Growing businesses that need more web coverage.'
-                : plan.id === 'gold'
-                  ? 'Businesses ready for both website and WhatsApp conversations.'
-                  : 'Teams that want onboarding help, larger rollout support, and scale.' }}
+    <section class="relative overflow-hidden rounded-[34px] border border-foreground/10 bg-foreground/[0.025] p-6 md:p-8 lg:p-10">
+      <div class="absolute inset-0 bg-gradient-to-br from-white/[0.045] via-transparent to-primary/[0.035]"></div>
+      <div class="relative grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+        <div>
+          <span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+            Pricing subscription
+          </span>
+          <h1 class="mt-5 max-w-3xl text-2xl font-extrabold leading-tight tracking-tight text-foreground md:text-4xl">
+            Choose the subscription that fits your business.
+          </h1>
+          <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">
+            Upgrade your ReplySuite limits when you need more assistants, more replies, more training, and WhatsApp automation.
           </p>
         </div>
 
-        <button 
-          @click="handleSelect(plan)"
-          :disabled="isProcessing === plan.id"
-          class="w-full py-4 rounded-xl font-bold text-[11px] tracking-widest transition-all mb-10 flex items-center justify-center gap-2"
-          :class="planSlug === plan.id ? 'bg-primary/20 text-primary border border-primary/30' : (plan.popular ? 'bg-primary text-black hover:bg-primary/90' : 'bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10')"
-        >
-          <template v-if="isProcessing === plan.id">
-            <Loader2 class="w-4 h-4 animate-spin" />
-            processing...
-          </template>
-          <template v-else-if="planSlug === plan.id">
-            current plan
-          </template>
-          <template v-else>
-            {{ plan.id === 'starter' ? 'Start with Starter' : plan.id === 'silver' ? 'Choose Silver' : plan.id === 'gold' ? 'Choose Gold' : 'Contact Sales' }}
-          </template>
-        </button>
-
-        <div class="space-y-4">
-          <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-3 text-[11px] font-medium text-foreground/50">
-            <div class="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Check class="w-2.5 h-2.5 text-primary" />
+        <div class="rounded-[28px] border border-foreground/10 bg-background/60 p-5 backdrop-blur-xl">
+          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Active subscription</p>
+          <div class="mt-3 flex items-center justify-between gap-4">
+            <div>
+              <p class="text-xl font-black tracking-tight text-foreground md:text-2xl">{{ currentPlanName }}</p>
+              <p class="mt-1 text-xs font-medium text-foreground/50">Sync if your checkout just completed.</p>
             </div>
-            {{ feat }}
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Shield class="h-6 w-6" />
+            </div>
+          </div>
+          <button
+            @click="syncWithPolar"
+            class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-foreground transition-all hover:bg-foreground/10"
+          >
+            <RefreshCcw class="h-3.5 w-3.5" />
+            Sync plan status
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div v-if="isLoading" class="glass-card flex min-h-[40vh] flex-col items-center justify-center py-20">
+      <Loader2 class="mb-6 h-12 w-12 animate-spin text-primary" />
+      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/50">Loading plans...</p>
+    </div>
+
+    <template v-else>
+      <section class="relative">
+        <div class="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+              Pricing subscriptions
+            </span>
+            <h2 class="mt-3 text-xl font-extrabold tracking-tight text-foreground md:text-2xl">Choose your growth plan.</h2>
+          </div>
+          <p class="max-w-md text-sm font-medium leading-relaxed text-foreground/50">Silver is the best upgrade path for most growing teams. Gold adds WhatsApp, Enterprise Ready adds scale.</p>
+        </div>
+
+        <div class="grid gap-5 xl:grid-cols-3">
+          <div
+            v-for="plan in paidPlans"
+            :key="plan.id"
+            class="glass-card relative flex flex-col border-foreground/10 bg-foreground/[0.02] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 md:p-7"
+            :class="[
+              plan.popular ? 'border-primary/40 !bg-primary/[0.035] shadow-xl shadow-primary/5' : '',
+              planSlug === plan.id ? 'ring-1 ring-primary/40' : ''
+            ]"
+          >
+            <div v-if="plan.popular" class="absolute -top-3 left-6 rounded-full bg-primary px-4 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-black shadow-xl shadow-primary/20">
+              Best Value
+            </div>
+            <div v-if="planSlug === plan.id" class="absolute right-5 top-5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+              Current
+            </div>
+
+            <div class="mb-7">
+              <h3 class="text-xl font-black tracking-tight text-foreground">{{ plan.name }}</h3>
+              <p class="mt-3 min-h-[42px] text-sm font-medium leading-relaxed text-foreground/50">{{ plan.desc }}</p>
+            </div>
+
+            <div class="mb-7 flex items-baseline gap-2">
+              <span class="text-4xl font-extrabold tracking-tighter text-foreground md:text-5xl">${{ plan.price }}</span>
+              <span class="text-[10px] font-bold uppercase tracking-[0.1em] text-foreground/50">/month</span>
+            </div>
+
+            <button
+              @click="handleSelect(plan)"
+              :disabled="isProcessing === plan.id || planSlug === plan.id"
+              class="mb-8 flex w-full items-center justify-center gap-2 rounded-full py-4 text-sm font-bold tracking-[0.1em] transition-all disabled:cursor-default disabled:opacity-80"
+              :class="plan.popular ? 'btn-gradient' : 'border border-foreground/10 bg-foreground/5 text-foreground hover:bg-foreground/10 hover:border-foreground/20'"
+            >
+              <template v-if="isProcessing === plan.id">
+                <Loader2 class="h-4 w-4 animate-spin" />
+                Processing...
+              </template>
+              <template v-else>
+                {{ getCtaLabel(plan) }}
+                <ArrowRight v-if="planSlug !== plan.id" class="h-4 w-4" />
+              </template>
+            </button>
+
+            <div class="space-y-4">
+              <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-3 text-sm font-medium text-foreground/55">
+                <div class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <Check class="h-3 w-3 text-primary" />
+                </div>
+                {{ feat }}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <div class="mt-12 rounded-[32px] border border-primary/15 bg-primary/[0.03] p-6 md:p-8">
-      <div class="grid lg:grid-cols-3 gap-6">
-        <div>
-          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary mb-2">What happens next?</p>
-          <h3 class="text-lg font-bold text-foreground mb-2">You will not get lost after choosing a plan.</h3>
-          <p class="text-sm text-foreground/60 leading-relaxed">Once you select a plan, you can create your chatbot, connect your website, train it on your content, and test it before going live.</p>
-        </div>
-        <div class="rounded-2xl border border-foreground/10 bg-background/60 p-5">
-          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45 mb-2">Step 1</p>
-          <p class="text-sm font-semibold text-foreground">Create your chatbot</p>
-          <p class="text-sm text-foreground/55 mt-2">Start with one bot, set its tone, then prepare it for your website.</p>
-        </div>
-        <div class="rounded-2xl border border-foreground/10 bg-background/60 p-5">
-          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45 mb-2">Step 2</p>
-          <p class="text-sm font-semibold text-foreground">Connect, train, and test</p>
-          <p class="text-sm text-foreground/55 mt-2">Add your domain, train your bot on real content, then test locally before launch.</p>
-        </div>
-      </div>
-    </div>
+      <section v-if="freeStarterPlan" class="glass-card border border-foreground/10 bg-foreground/[0.02] p-6 md:p-8">
+        <div class="grid gap-6 lg:grid-cols-[0.85fr_1.35fr_auto] lg:items-center">
+          <div>
+            <span class="mb-4 inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+              Free Starter subscription
+            </span>
+            <h3 class="text-xl font-black tracking-tight text-foreground md:text-2xl">{{ freeStarterPlan.name }}</h3>
+            <p class="mt-2 text-sm font-medium leading-relaxed text-foreground/50">{{ freeStarterPlan.desc }}</p>
+          </div>
 
-    <!-- Sync and Manage Portal -->
-    <div class="mt-12 flex flex-col md:flex-row items-center justify-between gap-6 p-8 rounded-[32px] bg-foreground/[0.01] border border-foreground/5 relative overflow-hidden">
-      <div class="flex items-center gap-4 relative z-10">
-        <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-          <Shield class="w-6 h-6" />
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div v-for="feat in freeStarterPlan.features" :key="feat" class="flex items-center gap-3 rounded-2xl border border-foreground/10 bg-background/40 px-4 py-3 text-xs font-medium text-foreground/55">
+              <div class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <Check class="h-2.5 w-2.5 text-primary" />
+              </div>
+              {{ feat }}
+            </div>
+          </div>
+
+          <div class="lg:text-right">
+            <div class="mb-4 flex items-baseline gap-2 lg:justify-end">
+              <span class="text-4xl font-extrabold tracking-tighter text-foreground">${{ freeStarterPlan.price }}</span>
+              <span class="text-[10px] font-bold uppercase tracking-[0.1em] text-foreground/50">/month</span>
+            </div>
+            <button
+              @click="handleSelect(freeStarterPlan)"
+              :disabled="isProcessing === freeStarterPlan.id || planSlug === freeStarterPlan.id"
+              class="flex w-full items-center justify-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-8 py-4 text-sm font-bold tracking-[0.1em] text-foreground transition-all hover:border-foreground/20 hover:bg-foreground/10 disabled:cursor-default disabled:opacity-80 lg:w-auto"
+            >
+              <template v-if="isProcessing === freeStarterPlan.id">
+                <Loader2 class="h-4 w-4 animate-spin" />
+                Processing...
+              </template>
+              <template v-else>
+                {{ getCtaLabel(freeStarterPlan) }}
+              </template>
+            </button>
+          </div>
         </div>
-        <div>
-          <p class="text-[12px] font-bold text-foreground tracking-widest mb-1">Billing Management</p>
-          <p class="text-[11px] text-foreground/50 font-medium">Payments are managed via Polar. Update your card, review billing, or cancel from the portal.</p>
-        </div>
-      </div>
-      
-      <div class="flex items-center gap-4 relative z-10 w-full md:w-auto">
-        <button 
-          @click="syncWithPolar" 
-          class="flex-1 md:flex-none px-6 py-3 rounded-xl border border-foreground/10 hover:bg-foreground/5 text-[10px] font-bold tracking-widest transition-all uppercase"
-        >
-          Sync Plan Status
-        </button>
-        <button 
-          v-if="planSlug && planSlug !== 'starter'"
-          @click="openPortal" 
-          class="flex-1 md:flex-none px-6 py-3 rounded-xl bg-foreground/5 hover:bg-foreground/10 text-[10px] font-bold tracking-widest transition-all uppercase"
-        >
-          Manage Subscription
-        </button>
-      </div>
-    </div>
+      </section>
+    </template>
   </div>
 </template>
-
-
-<style scoped>
-.text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60;
-}
-</style>

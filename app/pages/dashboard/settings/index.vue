@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import {
-  User,
   Save,
   Globe,
   Mail,
   Phone,
   Building2,
-  Clock
+  Clock,
+  UserCircle,
+  BadgeCheck
 } from 'lucide-vue-next'
 
 definePageMeta({
@@ -72,7 +73,7 @@ const updateProfile = async () => {
         .eq('id', userId.value)
 
       if (error) throw error
-    notify.success('Identity Updated. Gold Standard Applied!')
+    notify.success('Profile updated successfully.')
   } catch (err: any) {
     notify.error(err.message)
   } finally {
@@ -92,90 +93,126 @@ const timezoneOptions = [
 </script>
 
 <template>
-  <div class="max-w-8xl mx-auto">
-    <div class="flex flex-col lg:flex-row gap-12">
-      <!-- Navigation Sidebar -->
+  <div class="space-y-6 pb-24 lg:pb-0">
+    <section class="rounded-[24px] border border-foreground/10 bg-foreground/[0.02] p-5 md:p-6">
+      <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Settings</p>
+          <h1 class="mt-1 text-2xl font-black tracking-tight text-foreground md:text-3xl">Profile settings</h1>
+          <p class="mt-2 max-w-2xl text-sm leading-6 text-foreground/55">
+            Keep your business identity, contact details, and timezone aligned with your ReplySuite workspace.
+          </p>
+        </div>
+        <div class="flex items-center gap-3 rounded-2xl border border-foreground/10 bg-background/70 p-3">
+          <img
+            :src="profile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (user?.email || 'default')"
+            class="h-12 w-12 rounded-xl border border-foreground/10 object-cover"
+            alt="Profile avatar"
+          >
+          <div class="min-w-0">
+            <p class="truncate text-sm font-black text-foreground">{{ profile.full_name || user?.email || 'Your profile' }}</p>
+            <p class="truncate text-xs text-foreground/45">{{ profile.company_name || 'No company name yet' }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid gap-6 xl:grid-cols-[240px_minmax(0,1fr)]">
       <SettingsNavigation />
 
-      <!-- Main Section -->
-      <main class="flex-1 glass-card p-10 border-foreground/10 bg-background min-h-[600px] relative z-50 overflow-hidden pointer-events-auto">
-        <div class="absolute -right-20 -top-20 w-80 h-80 bg-primary/5 rounded-full blur-[100px] -z-10"></div>
-
-        <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div class="flex items-center gap-6 mb-12">
-            <div class="w-24 h-24 rounded-3xl bg-primary/10 p-1 group relative cursor-pointer overflow-hidden">
-              <img :src="profile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (user?.email || 'default')"
-                class="w-full h-full rounded-[20px] object-cover" />
-              <div
-                class="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                <Save class="w-6 h-6 text-foreground" />
+      <main class="overflow-hidden rounded-[24px] border border-foreground/10 bg-background shadow-[0_18px_50px_rgba(0,0,0,0.05)]">
+        <div class="border-b border-foreground/10 bg-foreground/[0.015] p-5 md:p-6">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/15 bg-primary/10">
+                <UserCircle class="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 class="text-base font-black uppercase tracking-widest text-foreground">Identity details</h2>
+                <p class="mt-1 text-xs text-foreground/50">Used across invoices, assistant setup, and support context.</p>
               </div>
             </div>
-            <div>
-              <h3 class="text-xl font-black tracking-wide text-primary leading-tight">Identity</h3>
-              <p class="text-foreground/50 text-sm font-medium">Your brand avatar and display information.</p>
+            <div class="inline-flex items-center gap-2 rounded-full border border-emerald-500/15 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-400">
+              <BadgeCheck class="h-3.5 w-3.5" />
+              Secure profile
             </div>
           </div>
+        </div>
 
-          <form @submit.prevent="updateProfile" class="grid md:grid-cols-2 gap-8">
-            <div class="col-span-2 md:col-span-1">
+        <form @submit.prevent="updateProfile" class="p-5 md:p-6">
+          <div class="grid gap-5 md:grid-cols-2">
+            <div>
               <label class="input-label">
-                <Building2 class="w-4 h-4" /> Full Name
+                <UserCircle class="h-4 w-4" /> Full name
               </label>
-              <input v-model="profile.full_name" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" class="setting-input" placeholder="Your Name" />
+              <input v-model="profile.full_name" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" class="setting-input" placeholder="Your name" />
             </div>
-            <div class="col-span-2 md:col-span-1">
+
+            <div>
               <label class="input-label">
-                <Building2 class="w-4 h-4" /> Company Name
+                <Building2 class="h-4 w-4" /> Company name
               </label>
-              <input v-model="profile.company_name" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" class="setting-input" placeholder="Brand Name" />
+              <input v-model="profile.company_name" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" class="setting-input" placeholder="Business or brand name" />
             </div>
-            <div class="col-span-2">
-              <label class="input-label">Short Bio</label>
-              <textarea v-model="profile.bio" @focus="setInteracting(true)" @blur="setInteracting(false)" class="setting-input min-h-[100px] py-4 rounded-[24px]"
-                placeholder="Tell us about your brand..."></textarea>
+
+            <div class="md:col-span-2">
+              <label class="input-label">Short bio</label>
+              <textarea
+                v-model="profile.bio"
+                @focus="setInteracting(true)"
+                @blur="setInteracting(false)"
+                class="setting-input min-h-[110px] resize-none rounded-2xl py-3.5"
+                placeholder="Briefly describe your business, tone, and what customers should know..."
+              />
             </div>
-            <div class="col-span-2 md:col-span-1">
+
+            <div>
               <label class="input-label">
-                <Globe class="w-4 h-4" /> Website URL
+                <Globe class="h-4 w-4" /> Website URL
               </label>
-              <input v-model="profile.website" @focus="setInteracting(true)" @blur="setInteracting(false)" type="url" class="setting-input" placeholder="https://..." />
+              <input v-model="profile.website" @focus="setInteracting(true)" @blur="setInteracting(false)" type="url" class="setting-input" placeholder="https://example.com" />
             </div>
-            <div class="col-span-2 md:col-span-1">
+
+            <div>
               <label class="input-label">
-                <Mail class="w-4 h-4" /> Business Email
+                <Mail class="h-4 w-4" /> Business email
               </label>
-              <input v-model="profile.contact_email" @focus="setInteracting(true)" @blur="setInteracting(false)" type="email" class="setting-input"
-                placeholder="contact@brand.com" />
+              <input v-model="profile.contact_email" @focus="setInteracting(true)" @blur="setInteracting(false)" type="email" class="setting-input" placeholder="contact@example.com" />
             </div>
-            <div class="col-span-2 md:col-span-1">
+
+            <div>
               <label class="input-label">
-                <Phone class="w-4 h-4" /> Contact Phone
+                <Phone class="h-4 w-4" /> Contact phone
               </label>
               <input v-model="profile.phone" @focus="setInteracting(true)" @blur="setInteracting(false)" type="tel" class="setting-input" placeholder="+250..." />
             </div>
-            <div class="col-span-2 md:col-span-1">
+
+            <div>
               <label class="input-label">
-                <Clock class="w-4 h-4" /> Timezone
+                <Clock class="h-4 w-4" /> Timezone
               </label>
               <CustomSelect
                 v-model="profile.timezone"
                 :options="timezoneOptions"
-                placeholder="Select Timezone"
+                placeholder="Select timezone"
               />
             </div>
+          </div>
 
-            <div class="col-span-2 pt-10 flex items-center justify-between border-t border-foreground/10 mt-4">
-              <div></div>
-
-              <button type="submit" :disabled="loading"
-                class="btn-gradient px-12 py-4 flex items-center gap-3 group whitespace-nowrap">
-                <Save class="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                {{ loading ? 'Securing...' : 'Save Profile' }}
-              </button>
-            </div>
-          </form>
-        </div>
+          <div class="mt-6 flex flex-col gap-3 border-t border-foreground/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-xs leading-5 text-foreground/45">
+              Changes are saved to your account profile and may be used to personalize assistant setup.
+            </p>
+            <button
+              type="submit"
+              :disabled="loading"
+              class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-[11px] font-black uppercase tracking-widest text-black shadow-lg shadow-primary/10 transition-all hover:bg-primary-accent disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Save class="h-4 w-4" :class="loading ? 'animate-pulse' : ''" />
+              {{ loading ? 'Saving...' : 'Save profile' }}
+            </button>
+          </div>
+        </form>
       </main>
     </div>
   </div>
@@ -183,14 +220,10 @@ const timezoneOptions = [
 
 <style scoped>
 .setting-input {
-  @apply w-full bg-background border border-foreground/10 rounded-full px-8 py-5 focus:outline-none focus:border-primary/50 transition-all text-foreground placeholder-foreground/20 font-medium;
+  @apply w-full rounded-xl border border-foreground/10 bg-foreground/[0.025] px-4 py-3 text-sm font-medium text-foreground outline-none transition-all placeholder:text-foreground/25 focus:border-primary/45 focus:bg-background;
 }
 
 .input-label {
-  @apply flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-foreground/50 mb-4 ml-4;
-}
-
-.glass-card {
-  @apply rounded-[48px];
+  @apply mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45;
 }
 </style>

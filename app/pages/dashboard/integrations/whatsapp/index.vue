@@ -3,15 +3,11 @@ import {
   Plus, 
   MessageSquare, 
   Smartphone, 
-  ArrowRight, 
-  Activity, 
   ShieldCheck,
   Zap,
-  Globe,
   Settings,
   MoreVertical,
-  Trash2,
-  Loader2
+  Trash2
 } from 'lucide-vue-next'
 
 definePageMeta({
@@ -19,10 +15,27 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-const { user, planSlug } = useAuth()
+const { planSlug } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()
 const isLocked = computed(() => planSlug.value === 'starter' || !planSlug.value)
+const openActionMenuId = ref<string | null>(null)
+const actionMenuPosition = ref({ top: 0, left: 0 })
+
+const toggleActionMenu = (accountId: string, event: MouseEvent) => {
+    if (openActionMenuId.value === accountId) {
+        openActionMenuId.value = null
+        return
+    }
+
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+    const menuWidth = 208
+    actionMenuPosition.value = {
+        top: rect.bottom + 8,
+        left: Math.max(12, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 12)),
+    }
+    openActionMenuId.value = accountId
+}
 
 const { data: accounts, pending: isLoading, refresh } = useAsyncData('whatsapp-accounts-list', async () => {
     if (isLocked.value) return []
@@ -32,6 +45,8 @@ const { data: accounts, pending: isLoading, refresh } = useAsyncData('whatsapp-a
         .order('created_at', { ascending: false })
     return data || []
 }, { watch: [isLocked] })
+
+const linkedAssistantCount = computed(() => (accounts.value || []).filter((item: any) => item.chatbots?.name).length)
 
 const deleteAccount = async (id: string) => {
     if (!(await notify.confirm('Disconnect this number?'))) return
@@ -52,87 +67,183 @@ const deleteAccount = async (id: string) => {
     back-label="Back to dashboard"
   />
 
-  <div v-else class="w-full space-y-12 pb-20">
-    <div class="flex justify-end mb-12">
-      <NuxtLink to="/dashboard/integrations/whatsapp/setup" class="bg-primary text-black px-10 py-5 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-primary/20 flex items-center gap-3">
-        <Plus class="w-4 h-4" />
-        Connect New Number
+  <div v-else class="w-full space-y-6 pb-20">
+    <div class="flex flex-col gap-4 rounded-[24px] border border-foreground/10 bg-foreground/[0.02] p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">WhatsApp numbers</p>
+        <h2 class="mt-1 text-xl font-black tracking-tight text-foreground md:text-2xl">Connected business lines</h2>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-foreground/55">
+          Review each WhatsApp number, its setup status, and the assistant currently connected to it.
+        </p>
+      </div>
+      <NuxtLink
+        to="/dashboard/integrations/whatsapp/setup"
+        class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-widest text-black shadow-lg shadow-primary/10 transition-all hover:bg-primary-accent"
+      >
+        <Plus class="h-4 w-4" />
+        Connect Number
       </NuxtLink>
     </div>
 
-    <!-- Stats / Overview Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div v-for="stat in [
-            { label: 'Connected Numbers', value: accounts?.length || 0, icon: Zap },
-            { label: 'Setup Health', value: '100%', icon: Activity },
-            { label: 'WhatsApp API', value: 'V21.0', icon: ShieldCheck }
-        ]" :key="stat.label" class="glass-card p-8 border-foreground/10 bg-foreground/5 flex items-center gap-6">
-            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
-                <component :is="stat.icon" class="w-6 h-6 text-primary" />
-            </div>
-            <div>
-                <p class="text-[9px] font-black text-foreground/50 uppercase tracking-widest">{{ stat.label }}</p>
-                <p class="text-2xl font-black text-foreground tracking-tighter">{{ stat.value }}</p>
-            </div>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div
+        v-for="stat in [
+          { label: 'Connected Numbers', value: accounts?.length || 0, icon: Zap },
+          { label: 'Linked Assistants', value: linkedAssistantCount, icon: MessageSquare },
+          { label: 'WhatsApp API', value: 'V21.0', icon: ShieldCheck }
+        ]"
+        :key="stat.label"
+        class="rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4"
+      >
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/15 bg-primary/10">
+            <component :is="stat.icon" class="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p class="text-[9px] font-black uppercase tracking-widest text-foreground/45">{{ stat.label }}</p>
+            <p class="mt-0.5 text-xl font-black text-foreground">{{ stat.value }}</p>
+          </div>
         </div>
+      </div>
     </div>
 
-    <!-- Main Content -->
-    <div v-if="isLoading" class="grid gap-6">
-        <div v-for="i in 3" :key="i" class="h-32 bg-foreground/5 rounded-2xl animate-pulse"></div>
+    <div v-if="isLoading" class="overflow-hidden rounded-[24px] border border-foreground/10 bg-foreground/[0.01]">
+      <div class="border-b border-foreground/5 p-5">
+        <div class="h-4 w-40 animate-pulse rounded bg-foreground/10" />
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[920px] text-left">
+          <thead class="bg-foreground/[0.02]">
+            <tr>
+              <th v-for="heading in ['Number', 'Status', 'Connected Assistant', 'Asset Reference', 'Created', 'Actions']" :key="heading" class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40" :class="heading === 'Actions' ? 'text-right' : ''">
+                {{ heading }}
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-foreground/5">
+            <tr v-for="i in 4" :key="i">
+              <td v-for="j in 6" :key="j" class="px-5 py-4">
+                <div class="h-4 animate-pulse rounded bg-foreground/10" :class="j === 1 ? 'w-36' : j === 6 ? 'ml-auto w-9' : 'w-24'" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <div v-else-if="accounts && accounts.length > 0" class="grid gap-6">
-        <div v-for="wa in accounts" :key="wa.id" class="group relative">
-            <NuxtLink :to="`/dashboard/integrations/whatsapp/${wa.id}`" class="block glass-card p-10 bg-background border-foreground/10 hover:border-primary/20 hover:bg-foreground/[0.03] transition-all duration-500 overflow-hidden relative">
-                <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700"></div>
-                
-                <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-                    <div class="flex items-center gap-6">
-                        <div class="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                            <MessageSquare class="w-8 h-8 text-primary" />
-                        </div>
-                        <div>
-                            <h3 class="text-3xl font-black text-foreground tracking-tighter uppercase">{{ wa.phone_number }}</h3>
-                            <div class="flex items-center gap-4 mt-2">
-                                <span class="text-[10px] font-black text-foreground/50 uppercase tracking-widest flex items-center gap-2">
-                                    <div :class="['w-1.5 h-1.5 rounded-full', wa.status === 'deployed' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]']"></div>
-                                    {{ wa.status }}
-                                </span>
-                                <div class="w-px h-3 bg-foreground/10"></div>
-                                <span class="text-[10px] font-black text-primary uppercase tracking-widest">
-                                    {{ wa.chatbots?.name || 'No Assistant Linked' }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+    <div v-else-if="accounts && accounts.length > 0" class="overflow-hidden rounded-[24px] border border-foreground/10 bg-background shadow-[0_18px_50px_rgba(0,0,0,0.05)]">
+      <div class="flex flex-col gap-2 border-b border-foreground/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 class="text-sm font-black uppercase tracking-widest text-foreground">WhatsApp connections</h3>
+          <p class="mt-1 text-xs text-foreground/50">Number, assistant link, and setup status in one clean table.</p>
+        </div>
+        <span class="rounded-full border border-foreground/10 bg-foreground/[0.02] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-foreground/45">
+          {{ accounts.length }} total
+        </span>
+      </div>
 
-                    <div class="flex items-center gap-6">
-                        <div class="text-right hidden lg:block">
-                            <p class="text-[9px] font-black text-foreground/50 uppercase tracking-[0.2em] mb-1">Asset Reference</p>
-                            <p class="text-[10px] font-mono text-foreground/50">{{ wa.waba_id }}</p>
-                        </div>
-                        <div class="w-12 h-12 rounded-xl bg-foreground/5 flex items-center justify-center border border-foreground/10 group-hover:bg-primary group-hover:text-black transition-all duration-500">
-                            <ArrowRight class="w-5 h-5" />
-                        </div>
-                    </div>
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[920px] text-left">
+          <thead class="bg-foreground/[0.02]">
+            <tr>
+              <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Number</th>
+              <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Status</th>
+              <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Connected Assistant</th>
+              <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Asset Reference</th>
+              <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Created</th>
+              <th class="px-5 py-3 text-right text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-foreground/5">
+            <tr v-for="wa in accounts" :key="wa.id" class="transition-colors hover:bg-foreground/[0.025]">
+              <td class="px-5 py-4 align-middle">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10">
+                    <Smartphone class="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <NuxtLink :to="`/dashboard/integrations/whatsapp/${wa.id}`" class="text-sm font-black tracking-tight text-foreground transition-colors hover:text-primary">
+                      {{ wa.phone_number }}
+                    </NuxtLink>
+                    <p class="mt-1 text-[10px] font-bold uppercase tracking-widest text-foreground/35">Business number</p>
+                  </div>
                 </div>
-            </NuxtLink>
-        </div>
+              </td>
+              <td class="px-5 py-4 align-middle">
+                <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-widest" :class="wa.status === 'deployed' || wa.status === 'active' ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : 'border-orange-500/20 bg-orange-500/10 text-orange-400'">
+                  <span class="h-1.5 w-1.5 rounded-full" :class="wa.status === 'deployed' || wa.status === 'active' ? 'bg-emerald-400' : 'bg-orange-400'" />
+                  {{ wa.status || 'Pending' }}
+                </span>
+              </td>
+              <td class="px-5 py-4 align-middle">
+                <div class="inline-flex items-center gap-2 text-[12px] font-bold" :class="wa.chatbots?.name ? 'text-foreground/75' : 'text-foreground/35'">
+                  <MessageSquare class="h-3.5 w-3.5 text-primary" />
+                  {{ wa.chatbots?.name || 'No assistant connected' }}
+                </div>
+              </td>
+              <td class="px-5 py-4 align-middle">
+                <p class="max-w-[180px] truncate font-mono text-[11px] text-foreground/45" :title="wa.waba_id">
+                  {{ wa.waba_id || '—' }}
+                </p>
+              </td>
+              <td class="px-5 py-4 align-middle">
+                <p class="text-[12px] font-bold text-foreground/55">
+                  {{ new Date(wa.created_at).toLocaleDateString() }}
+                </p>
+              </td>
+              <td class="px-5 py-4 align-middle">
+                <div class="flex justify-end">
+                  <button
+                    @click.stop="toggleActionMenu(wa.id, $event)"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-foreground/10 bg-foreground/5 text-foreground/50 transition-all hover:bg-foreground/10 hover:text-foreground"
+                    title="WhatsApp actions"
+                    aria-label="WhatsApp actions"
+                  >
+                    <MoreVertical class="h-4 w-4" />
+                  </button>
+
+                  <Teleport to="body">
+                    <div
+                      v-if="openActionMenuId === wa.id"
+                      class="fixed z-[120] w-52 overflow-hidden rounded-2xl border border-foreground/10 bg-background p-1.5 text-left shadow-2xl shadow-black/15"
+                      :style="{ top: `${actionMenuPosition.top}px`, left: `${actionMenuPosition.left}px` }"
+                      @click.stop
+                    >
+                      <NuxtLink
+                        :to="`/dashboard/integrations/whatsapp/${wa.id}`"
+                        @click="openActionMenuId = null"
+                        class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-widest text-primary transition-all hover:bg-primary/10"
+                      >
+                        <Settings class="h-3.5 w-3.5" />
+                        Manage
+                      </NuxtLink>
+                      <button
+                        @click="openActionMenuId = null; deleteAccount(wa.id)"
+                        class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-widest text-red-400 transition-all hover:bg-red-400/10"
+                      >
+                        <Trash2 class="h-3.5 w-3.5" />
+                        Disconnect
+                      </button>
+                    </div>
+                  </Teleport>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Empty State -->
-    <div v-else class="glass-card p-20 bg-foreground/[0.01] border-foreground/10 border-dashed flex flex-col items-center text-center space-y-8">
-        <div class="w-24 h-24 rounded-2xl bg-foreground/5 flex items-center justify-center">
-            <Smartphone class="w-10 h-10 text-foreground/50" />
-        </div>
-        <div class="max-w-md space-y-2">
-            <h3 class="text-2xl font-black text-foreground uppercase tracking-tighter">No WhatsApp Numbers Connected</h3>
-            <p class="text-xs text-foreground/50 font-bold uppercase tracking-widest">Connect your first WhatsApp business number to begin AI customer support.</p>
-        </div>
-        <NuxtLink to="/dashboard/integrations/whatsapp/setup" class="bg-primary text-black px-12 py-5 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl shadow-primary/20">
-            Connect WhatsApp
-        </NuxtLink>
+    <div v-else class="flex flex-col items-center rounded-[24px] border border-dashed border-foreground/10 bg-foreground/[0.01] px-6 py-16 text-center">
+      <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-foreground/5">
+        <Smartphone class="h-9 w-9 text-foreground/50" />
+      </div>
+      <h3 class="text-xl font-black uppercase tracking-tight text-foreground">No WhatsApp numbers connected</h3>
+      <p class="mt-3 max-w-md text-sm leading-6 text-foreground/50">Connect your first WhatsApp business number and choose which assistant should reply from it.</p>
+      <NuxtLink to="/dashboard/integrations/whatsapp/setup" class="mt-8 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-[11px] font-black uppercase tracking-widest text-black shadow-lg shadow-primary/10 transition-all hover:bg-primary-accent">
+        <Plus class="h-4 w-4" />
+        Connect WhatsApp
+      </NuxtLink>
     </div>
   </div>
 </template>

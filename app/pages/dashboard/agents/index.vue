@@ -37,6 +37,23 @@ const notify = useNotify()
 // State
 const isCreating = ref(false)
 const showCreateModal = ref(false)
+const openActionMenuId = ref<string | null>(null)
+const actionMenuPosition = ref({ top: 0, left: 0 })
+
+const toggleActionMenu = (agentId: string, event: MouseEvent) => {
+  if (openActionMenuId.value === agentId) {
+    openActionMenuId.value = null
+    return
+  }
+
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const menuWidth = 208
+  actionMenuPosition.value = {
+    top: rect.bottom + 8,
+    left: Math.max(12, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 12)),
+  }
+  openActionMenuId.value = agentId
+}
 
 const newAgent = ref({
   name: '',
@@ -320,152 +337,200 @@ const handleDelete = async (id: string) => {
       </div>
     </div>
 
-    <!-- Agents Grid -->
-    <div v-if="isLoading" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div v-for="i in 2" :key="i" class="glass-card !p-0 overflow-hidden bg-foreground/[0.01] opacity-60">
-        <div class="p-6">
-          <div class="flex items-start justify-between mb-6">
-            <div class="flex items-center gap-4">
-               <Skeleton width="3rem" height="3rem" radius="1rem" />
-               <div class="space-y-2">
-                  <Skeleton width="8rem" height="1rem" />
-                  <Skeleton width="4rem" height="0.5rem" />
-               </div>
-            </div>
-            <Skeleton width="2rem" height="2rem" radius="0.5rem" />
-          </div>
-          <Skeleton width="100%" height="4rem" radius="1rem" class="mb-6" />
-          <div class="flex gap-4">
-             <Skeleton width="6rem" height="0.75rem" />
-             <Skeleton width="8rem" height="0.75rem" />
-          </div>
-          <div class="mt-8 flex gap-3">
-             <Skeleton width="40%" height="2.5rem" radius="0.75rem" />
-             <Skeleton width="40%" height="2.5rem" radius="0.75rem" />
-             <Skeleton width="3rem" height="2.5rem" radius="0.75rem" />
-          </div>
-        </div>
+    <!-- Agents Table -->
+    <div v-if="isLoading" class="glass-card !p-0 overflow-hidden bg-foreground/[0.01]">
+      <div class="border-b border-foreground/5 p-5">
+        <Skeleton width="10rem" height="1rem" />
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[860px] text-left">
+          <thead class="bg-foreground/[0.02]">
+            <tr>
+              <th v-for="heading in ['Assistant', 'Status', 'Language', 'Interactions', 'Knowledge', 'Created', 'Actions']" :key="heading" class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">
+                {{ heading }}
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-foreground/5">
+            <tr v-for="i in 4" :key="i">
+              <td class="px-5 py-4">
+                <div class="flex items-center gap-3">
+                  <Skeleton width="2.25rem" height="2.25rem" radius="0.75rem" />
+                  <div class="space-y-2">
+                    <Skeleton width="8rem" height="0.85rem" />
+                    <Skeleton width="12rem" height="0.6rem" />
+                  </div>
+                </div>
+              </td>
+              <td class="px-5 py-4"><Skeleton width="7rem" height="1.25rem" radius="999px" /></td>
+              <td class="px-5 py-4"><Skeleton width="5rem" height="0.8rem" /></td>
+              <td class="px-5 py-4"><Skeleton width="4rem" height="0.8rem" /></td>
+              <td class="px-5 py-4"><Skeleton width="4rem" height="0.8rem" /></td>
+              <td class="px-5 py-4"><Skeleton width="6rem" height="0.8rem" /></td>
+              <td class="px-5 py-4"><Skeleton width="8rem" height="2rem" radius="0.75rem" /></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <div v-else-if="agents.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div 
-        v-for="agent in agents" 
-        :key="agent.id"
-        class="glass-card hover:border-primary/20 transition-all group relative overflow-hidden bg-foreground/[0.01] h-full"
-      >
-        <div class="absolute top-0 right-0 p-6 opacity-[0.035] group-hover:opacity-[0.06] transition-opacity pointer-events-none">
-          <Zap class="w-24 h-24 text-foreground" />
+    <div v-else-if="agents.length > 0" class="glass-card !p-0 overflow-hidden bg-foreground/[0.01]">
+      <div class="flex flex-col gap-3 border-b border-foreground/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 class="text-sm font-bold tracking-widest text-foreground uppercase">Assistants</h3>
+          <p class="mt-1 text-[12px] text-foreground/50">Manage configuration, knowledge, status, and assistant activity in one table.</p>
         </div>
-
-        <div class="relative z-10 p-6 flex h-full flex-col">
-          <div class="flex items-start justify-between mb-6 gap-4">
-            <div class="flex items-center gap-4 min-w-0">
-              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary-accent/5 flex items-center justify-center border border-foreground/5 shadow-inner shrink-0">
-                <Bot class="w-6 h-6 text-primary" />
-              </div>
-              <div class="min-w-0">
-                <h4 class="font-bold text-foreground tracking-tight uppercase text-[15px] truncate">{{ agent.name }}</h4>
-                <div class="flex items-center gap-2 mt-1.5 flex-wrap">
-                  <div
-                    :class="[
-                      'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-bold tracking-widest uppercase',
-                      agent.status.tone === 'live' ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : '',
-                      agent.status.tone === 'web' ? 'border-sky-500/20 bg-sky-500/10 text-sky-400' : '',
-                      agent.status.tone === 'ready' ? 'border-primary/20 bg-primary/10 text-primary' : '',
-                      agent.status.tone === 'draft' ? 'border-foreground/10 bg-foreground/5 text-foreground/55' : ''
-                    ]"
-                  >
-                    <span
-                      :class="[
-                        'w-1.5 h-1.5 rounded-full',
-                        agent.status.tone === 'live' ? 'bg-emerald-400' : '',
-                        agent.status.tone === 'web' ? 'bg-sky-400' : '',
-                        agent.status.tone === 'ready' ? 'bg-primary' : '',
-                        agent.status.tone === 'draft' ? 'bg-foreground/35' : '',
-                        agent.status.pulse ? 'animate-pulse' : ''
-                      ]"
-                    />
-                    {{ agent.status.label }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-foreground/[0.02] border border-foreground/5 rounded-2xl p-4 mb-6 h-[88px] sm:h-[96px] overflow-hidden">
-            <p class="text-[14px] text-foreground/60 leading-relaxed line-clamp-3 italic-none">
-              {{ agent.system_prompt || 'No assistant instructions configured yet. Default behavior will be used until you add custom guidance.' }}
-            </p>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-            <div class="flex items-center gap-2">
-              <Activity class="w-3.5 h-3.5 text-foreground/55" />
-              <span class="text-[13px] font-extrabold text-foreground/80">
-                {{ agent.interaction_count.toLocaleString() }} Interactions
-              </span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Clock class="w-3.5 h-3.5 text-foreground/45" />
-              <span class="text-[13px] font-bold text-foreground/55">Deployed {{ new Date(agent.created_at).toLocaleDateString() }}</span>
-            </div>
-          </div>
-
-          <div class="mt-auto pt-8 flex items-center gap-3">
-            <NuxtLink 
-              :to="`/dashboard/agents/skills/training?id=${agent.id}`"
-              class="flex-1 py-2.5 bg-primary/10 hover:bg-primary/20 text-[13px] font-bold tracking-widest text-primary rounded-xl transition-all border border-primary/10 flex items-center justify-center gap-2 uppercase"
-            >
-              <Database class="w-3.5 h-3.5" />
-              Knowledge Base
-            </NuxtLink>
-            <NuxtLink 
-              :to="`/dashboard/agents/${agent.id}`"
-              class="flex-1 py-2.5 bg-foreground/5 hover:bg-foreground/10 text-[13px] font-bold tracking-widest text-foreground rounded-xl transition-all border border-foreground/10 flex items-center justify-center gap-2 uppercase"
-            >
-              <Edit3 class="w-3.5 h-3.5" />
-              Configure
-            </NuxtLink>
-            <button 
-              @click="handleDelete(agent.id)"
-              class="w-10 h-10 shrink-0 flex items-center justify-center bg-transparent hover:bg-red-400/8 rounded-xl border border-foreground/5 hover:border-red-400/20 text-foreground/35 hover:text-red-400 transition-all uppercase"
-              title="Delete agent"
-            >
-              <Trash2 class="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
+        <button
+          v-if="canCreateAgent"
+          @click="showCreateModal = true"
+          class="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/10 bg-primary/10 px-4 py-2 text-[11px] font-bold tracking-widest text-primary transition-all hover:bg-primary/20 uppercase"
+        >
+          <Plus class="h-3.5 w-3.5" />
+          New Assistant
+        </button>
+        <NuxtLink
+          v-else
+          to="/dashboard/pricing"
+          class="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/10 bg-primary/10 px-4 py-2 text-[11px] font-bold tracking-widest text-primary transition-all hover:bg-primary/20 uppercase"
+        >
+          <Sparkles class="h-3.5 w-3.5" />
+          Upgrade Plan
+        </NuxtLink>
       </div>
 
-      <button 
-        v-if="canCreateAgent"
-        @click="showCreateModal = true"
-        class="glass-card border-dashed transition-all flex flex-col items-center justify-center py-12 group bg-foreground/[0.01] border-foreground/10 hover:border-primary/30"
-      >
-        <div class="w-12 h-12 rounded-full bg-foreground/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-          <Plus class="w-6 h-6 text-foreground/50 group-hover:text-primary" />
-        </div>
-        <span class="text-[13px] font-bold tracking-widest text-foreground/50 uppercase">
-          Forge New Agent
-        </span>
-      </button>
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[1080px] text-left">
+          <thead class="bg-foreground/[0.02]">
+            <tr>
+              <th class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Assistant</th>
+              <th class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Status</th>
+              <th class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Language</th>
+              <th class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Interactions</th>
+              <th class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Knowledge</th>
+              <th class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Created</th>
+              <th class="px-5 py-3 text-right text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-foreground/5">
+            <tr
+              v-for="agent in agents"
+              :key="agent.id"
+              class="group transition-colors hover:bg-foreground/[0.025]"
+            >
+              <td class="px-5 py-4 align-middle">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-foreground/5 bg-gradient-to-br from-primary/20 to-primary-accent/5 shadow-inner">
+                    <Bot class="h-5 w-5 text-primary" />
+                  </div>
+                  <div class="min-w-0">
+                    <NuxtLink :to="`/dashboard/agents/${agent.id}`" class="block max-w-[220px] truncate text-[13px] font-bold tracking-tight text-foreground transition-colors hover:text-primary uppercase">
+                      {{ agent.name }}
+                    </NuxtLink>
+                    <p class="mt-1 max-w-[320px] truncate text-[12px] text-foreground/45">
+                      {{ agent.system_prompt || 'No assistant instructions configured yet.' }}
+                    </p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-5 py-4 align-middle">
+                <div
+                  :class="[
+                    'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase',
+                    agent.status.tone === 'live' ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : '',
+                    agent.status.tone === 'web' ? 'border-sky-500/20 bg-sky-500/10 text-sky-400' : '',
+                    agent.status.tone === 'ready' ? 'border-primary/20 bg-primary/10 text-primary' : '',
+                    agent.status.tone === 'draft' ? 'border-foreground/10 bg-foreground/5 text-foreground/55' : ''
+                  ]"
+                >
+                  <span
+                    :class="[
+                      'h-1.5 w-1.5 rounded-full',
+                      agent.status.tone === 'live' ? 'bg-emerald-400' : '',
+                      agent.status.tone === 'web' ? 'bg-sky-400' : '',
+                      agent.status.tone === 'ready' ? 'bg-primary' : '',
+                      agent.status.tone === 'draft' ? 'bg-foreground/35' : '',
+                      agent.status.pulse ? 'animate-pulse' : ''
+                    ]"
+                  />
+                  {{ agent.status.label }}
+                </div>
+              </td>
+              <td class="px-5 py-4 align-middle">
+                <div class="inline-flex items-center gap-2 text-[12px] font-bold text-foreground/70">
+                  <Globe class="h-3.5 w-3.5 text-foreground/35" />
+                  {{ agent.default_language || 'English' }}
+                </div>
+              </td>
+              <td class="px-5 py-4 align-middle">
+                <div class="inline-flex items-center gap-2 text-[12px] font-extrabold text-foreground/75">
+                  <Activity class="h-3.5 w-3.5 text-foreground/40" />
+                  {{ agent.interaction_count.toLocaleString() }}
+                </div>
+              </td>
+              <td class="px-5 py-4 align-middle">
+                <NuxtLink
+                  :to="`/dashboard/agents/skills/training?id=${agent.id}`"
+                  class="inline-flex items-center gap-2 rounded-lg border border-primary/10 bg-primary/5 px-2.5 py-1.5 text-[11px] font-bold tracking-widest text-primary transition-all hover:bg-primary/10 uppercase"
+                >
+                  <Database class="h-3.5 w-3.5" />
+                  {{ agent.data_source_count.toLocaleString() }} Sources
+                </NuxtLink>
+              </td>
+              <td class="px-5 py-4 align-middle">
+                <div class="inline-flex items-center gap-2 text-[12px] font-bold text-foreground/55">
+                  <Clock class="h-3.5 w-3.5 text-foreground/35" />
+                  {{ new Date(agent.created_at).toLocaleDateString() }}
+                </div>
+              </td>
+              <td class="px-5 py-4 align-middle">
+                <div class="flex flex-col items-end gap-2">
+                  <button
+                    @click.stop="toggleActionMenu(agent.id, $event)"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-foreground/10 bg-foreground/5 text-foreground/50 transition-all hover:bg-foreground/10 hover:text-foreground"
+                    title="Assistant actions"
+                    aria-label="Assistant actions"
+                  >
+                    <MoreVertical class="h-4 w-4" />
+                  </button>
 
-      <NuxtLink
-        v-else
-        to="/dashboard/pricing"
-        class="glass-card border-dashed transition-all flex flex-col items-center justify-center py-12 group bg-foreground/[0.01] border-foreground/10 hover:border-primary/30"
-      >
-        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
-          <Sparkles class="w-6 h-6 text-primary" />
-        </div>
-        <span class="text-[13px] font-bold tracking-widest text-foreground/70 uppercase text-center">
-          Agent Limit Reached
-        </span>
-        <span class="mt-2 text-[13px] font-bold tracking-widest text-primary uppercase text-center">
-          Upgrade for more agents
-        </span>
-      </NuxtLink>
+                  <Teleport to="body">
+                    <div
+                      v-if="openActionMenuId === agent.id"
+                      class="fixed z-[120] w-52 overflow-hidden rounded-2xl border border-foreground/10 bg-background p-1.5 text-left shadow-2xl shadow-black/15"
+                      :style="{ top: `${actionMenuPosition.top}px`, left: `${actionMenuPosition.left}px` }"
+                      @click.stop
+                    >
+                    <NuxtLink
+                      :to="`/dashboard/agents/skills?id=${agent.id}`"
+                      @click="openActionMenuId = null"
+                      class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[11px] font-bold tracking-widest text-primary transition-all hover:bg-primary/10 uppercase"
+                    >
+                      <Sparkles class="h-3.5 w-3.5" />
+                      Tools & Skills
+                    </NuxtLink>
+                    <NuxtLink
+                      :to="`/dashboard/agents/${agent.id}`"
+                      @click="openActionMenuId = null"
+                      class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[11px] font-bold tracking-widest text-foreground/70 transition-all hover:bg-foreground/5 hover:text-foreground uppercase"
+                    >
+                      <Edit3 class="h-3.5 w-3.5" />
+                      Configure
+                    </NuxtLink>
+                    <button
+                      @click="openActionMenuId = null; handleDelete(agent.id)"
+                      class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[11px] font-bold tracking-widest text-red-400 transition-all hover:bg-red-400/10 uppercase"
+                    >
+                      <Trash2 class="h-3.5 w-3.5" />
+                      Delete
+                    </button>
+                    </div>
+                  </Teleport>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <div v-else class="glass-card flex flex-col items-center py-20 text-center border-dashed border-foreground/10 bg-foreground/[0.01]">

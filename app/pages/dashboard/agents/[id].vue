@@ -355,7 +355,7 @@ const fetchData = async () => {
 
 onMounted(async () => {
   // Handle tab routing
-  if (route.query.tab && ['identity', 'design', 'conversation', 'security'].includes(route.query.tab as string)) {
+  if (route.query.tab && ['identity', 'design', 'conversation', 'tools', 'skills', 'security'].includes(route.query.tab as string)) {
     activeTab.value = route.query.tab as any
   }
   
@@ -1314,11 +1314,13 @@ const catalogManagerRef = ref<any>(null)
                 <p class="text-xs text-foreground/50 max-w-md mx-auto leading-relaxed uppercase tracking-widest font-bold">
                     Skills help your assistant handle specialized tasks and stay aligned with your business use case.
                 </p>
-                <div class="mt-10 p-6 rounded-2xl bg-foreground/[0.02] border border-dashed border-foreground/10">
-                    <p class="text-[10px] text-foreground/30 font-bold uppercase tracking-[0.2em]">
-                        Advanced skills architecture is coming soon.
-                    </p>
-                </div>
+                <NuxtLink
+                  :to="`/dashboard/agents/skills?id=${chatbotId}`"
+                  class="mt-10 inline-flex items-center justify-center gap-3 rounded-2xl bg-primary px-6 py-4 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:opacity-90"
+                >
+                    <Sparkles class="w-4 h-4" />
+                    Open Tools & Skills Directory
+                </NuxtLink>
             </section>
         </div>
 

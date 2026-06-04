@@ -1,5 +1,6 @@
 import { searchKnowledge, getChatCompletion } from '../../ai'
 import { runAgentCycle } from '../../agent/engine'
+import { buildAssistantSkillsPrompt } from '../../agent/skills'
 import { buildChatbotLanguagePolicy } from '../../language-policy'
 import {
   buildConversationSettingsPrompt,
@@ -193,6 +194,9 @@ ${languagePolicy.prompt}
 
 [SESSION STATE]
 ${buildConversationStatePrompt(sessionState, contactMemory)}
+
+[ASSIGNED ASSISTANT SKILLS]
+${buildAssistantSkillsPrompt((chatbot as any)?.tools_config)}
 
 [ADDITIONAL CONTEXT FROM KNOWLEDGE BASE]
 ${contextText || 'No specific background knowledge found for this query.'}

@@ -1,6 +1,7 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { searchKnowledge } from '~~/server/utils/ai'
 import { runAgentCycle } from '~~/server/utils/agent/engine'
+import { buildAssistantSkillsPrompt } from '~~/server/utils/agent/skills'
 import { buildChatbotLanguagePolicy } from '~~/server/utils/language-policy'
 import {
   buildConversationSettingsPrompt,
@@ -170,6 +171,9 @@ export default defineEventHandler(async (event) => {
 
       [LANGUAGE POLICY]
       ${languagePolicy.prompt}
+
+      [ASSIGNED ASSISTANT SKILLS]
+      ${buildAssistantSkillsPrompt((chatbot as any)?.tools_config)}
 
       [SESSION STATE]
       ${sessionStatePrompt}

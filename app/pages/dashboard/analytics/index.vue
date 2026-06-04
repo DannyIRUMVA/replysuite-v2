@@ -1,470 +1,526 @@
 <script setup lang="ts">
 import {
   Activity,
-  TrendingUp,
-  Zap,
-  Bot,
-  MessageCircle,
   AlertCircle,
+  Bot,
+  Globe2,
+  MessageCircle,
   RefreshCw,
-  Phone,
-  Globe,
-  Database,
-  CheckCircle2
+  TrendingUp
 } from 'lucide-vue-next'
-import Skeleton from '~~/app/components/Skeleton.vue'
 import CustomSelect from '~~/app/components/CustomSelect.vue'
 
-definePageMeta({
-  middleware: 'auth',
-  layout: 'dashboard'
-})
+definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 
-useHead({
-  title: 'Intelligence Analytics'
-})
+useHead({ title: 'Analytics' })
 
-// ── Supabase client + auth ─────────────────────────────────
+const { userId } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()
 
-// ── Chatbot filter ──────────────────────────────────────────
-const selectedBotId = ref<string>('all')
-
-const analytics = ref<any>(null)
-const isLoading = ref(true)
+const selectedBotId = ref('all')
+const selectedChannel = ref<'all' | 'whatsapp' | 'web'>('all')
 const isRefreshing = ref(false)
 
-const fetchAnalytics = async (force = false) => {
-  if (isLoading.value && analytics.value && !force) return
-  
-  if (analytics.value) isRefreshing.value = true
-  else isLoading.value = true
+type ChatbotOption = { id: string; name: string }
+type ChatMessage = { id: string; role: string | null; content: string | null; created_at: string | null }
+type RawSession = {
+  id: string
+  chatbot_id: string | null
+  created_at: string | null
+  metadata: any
+  chat_messages?: ChatMessage[]
+}
 
+const channelOptions = [
+  { label: 'All', value: 'all' as const },
+  { label: 'WhatsApp', value: 'whatsapp' as const },
+  { label: 'Website', value: 'web' as const }
+]
+
+const { data: chatbots, pending: loadingChatbots, refresh: refreshChatbots } = await useAsyncData('analytics-chatbots', async () => {
+  if (!userId.value) return []
+
+  const { data, error } = await supabase
+    .from('chatbots')
+    .select('id, name')
+    .eq('user_id', userId.value)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('[Analytics chatbots]', error)
+    notify.error('Failed to load chatbots.')
+    return []
+  }
+
+  return (data || []) as ChatbotOption[]
+}, { watch: [userId] })
+
+const botOptions = computed(() => [
+  { label: 'All chatbots', value: 'all' },
+  ...(chatbots.value || []).map((bot) => ({ label: bot.name, value: bot.id }))
+])
+
+const activeBotIds = computed(() => {
+  const ids = (chatbots.value || []).map((bot) => bot.id)
+  if (selectedBotId.value !== 'all' && ids.includes(selectedBotId.value)) return [selectedBotId.value]
+  return ids
+})
+
+const selectedBotName = computed(() => {
+  if (selectedBotId.value === 'all') return 'All chatbots'
+  return (chatbots.value || []).find((bot) => bot.id === selectedBotId.value)?.name || 'Selected chatbot'
+})
+
+const { data: rawSessions, pending: loadingSessions, refresh: refreshSessions } = await useAsyncData('analytics-conversation-sessions', async () => {
+  if (!userId.value || activeBotIds.value.length === 0) return []
+
+  const { data, error } = await supabase
+    .from('chat_sessions')
+    .select(`
+      id,
+      chatbot_id,
+      created_at,
+      metadata,
+      chat_messages (
+        id,
+        role,
+        content,
+        created_at
+      )
+    `)
+    .in('chatbot_id', activeBotIds.value)
+    .order('created_at', { ascending: false })
+    .limit(500)
+
+  if (error) {
+    console.error('[Analytics sessions]', error)
+    notify.error('Failed to load conversation analytics.')
+    return []
+  }
+
+  return ((data || []) as RawSession[]).map((session) => ({
+    ...session,
+    chat_messages: (session.chat_messages || []).sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime())
+  }))
+}, { watch: [userId, selectedBotId, chatbots] })
+
+const isLoading = computed(() => loadingChatbots.value || loadingSessions.value)
+
+const refreshAnalytics = async () => {
+  isRefreshing.value = true
   try {
-    // Ensure session is active to prevent lock contention
-    await supabase.auth.getSession()
-
-    const { data, error } = await supabase.functions.invoke('fetch-analytics', {
-      body: { botId: selectedBotId.value }
-    })
-
-    if (error) throw error
-    analytics.value = data
-  } catch (err: any) {
-    console.error('[Analytics Error]', err)
-    notify.error('Failed to load analytics data. Please try again.')
-    analytics.value = null
+    await refreshChatbots()
+    await refreshSessions()
+  } catch (err) {
+    console.error('[Analytics refresh]', err)
+    notify.error('Failed to refresh analytics.')
   } finally {
-    isLoading.value = false
     isRefreshing.value = false
   }
 }
 
-// Re-fetch when bot filter changes
-watch(selectedBotId, () => fetchAnalytics())
-onMounted(() => fetchAnalytics())
+const getSessionChannel = (session: RawSession): 'whatsapp' | 'web' => {
+  const type = String(session?.metadata?.type || session?.metadata?.channel || 'web').toLowerCase()
+  return type === 'whatsapp' ? 'whatsapp' : 'web'
+}
 
+const getChatbotName = (chatbotId: string | null) => {
+  return (chatbots.value || []).find((bot) => bot.id === chatbotId)?.name || 'Unknown chatbot'
+}
 
-// Chatbot selector options
-const botOptions = computed(() => {
-  const bots = analytics.value?.chatbots || []
-  return [
-    { label: 'All Agents', value: 'all' },
-    ...bots.map((b: any) => ({ label: b.name, value: b.id })),
-  ]
+const allSessions = computed(() => rawSessions.value || [])
+
+const channelFilteredSessions = computed(() => {
+  if (selectedChannel.value === 'all') return allSessions.value
+  return allSessions.value.filter((session) => getSessionChannel(session) === selectedChannel.value)
 })
 
-// ── Chart ───────────────────────────────────────────────────
-const chartData = computed(() => {
-  if (!analytics.value?.timeline?.length) return []
-
-  const rawData = analytics.value.timeline.slice(-14)
-  const max = Math.max(...rawData.map((d: any) => d.count), 1)
-
-  return rawData.map((d: any, i: number) => {
-    const ratio = d.count / max
-    const displayHeight = d.count > 0 ? Math.max(ratio * 100, 12) : 0
-    const displayY = d.count > 0 ? 100 - Math.max(ratio * 85, 12) : 100
+const conversations = computed(() => channelFilteredSessions.value
+  .map((session) => {
+    const messages = session.chat_messages || []
+    const userMessages = messages.filter((message) => message.role === 'user').length
+    const botMessages = messages.filter((message) => message.role === 'assistant').length
+    const lastMessage = messages[messages.length - 1]
+    const lastReply = [...messages].reverse().find((message) => message.role === 'assistant')
 
     return {
-      x: rawData.length > 1 ? (i / (rawData.length - 1)) * 100 : 50,
-      y: displayY,
-      height: displayHeight,
-      count: d.count,
-      date: d.date,
-      active: false
+      id: session.id,
+      chatbotId: session.chatbot_id,
+      chatbotName: getChatbotName(session.chatbot_id),
+      channel: getSessionChannel(session),
+      createdAt: session.created_at,
+      lastMessageAt: lastMessage?.created_at || session.created_at,
+      lastReplyAt: lastReply?.created_at || null,
+      messageCount: messages.length,
+      userMessages,
+      botMessages,
+      preview: truncatePreview(lastMessage?.content || ''),
+      lastReply: truncatePreview(lastReply?.content || '')
     }
   })
-})
+  .filter((conversation) => conversation.messageCount > 0)
+  .sort((a, b) => new Date(b.lastMessageAt || b.createdAt || 0).getTime() - new Date(a.lastMessageAt || a.createdAt || 0).getTime())
+)
 
-// Spline calculation for a smooth line
-const splinePath = computed(() => {
-  if (chartData.value.length < 2) return ''
-  const points = chartData.value
-  let path = `M ${points[0].x} ${points[0].y}`
-  
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[i === 0 ? i : i - 1]
-    const p1 = points[i]
-    const p2 = points[i + 1]
-    const p3 = points[i + 2 === points.length ? i + 1 : i + 2]
-    
-    // Smooth control points
-    const cp1x = p1.x + (p2.x - p0.x) / 6
-    const cp1y = p1.y + (p2.y - p0.y) / 6
-    const cp2x = p2.x - (p3.x - p1.x) / 6
-    const cp2y = p2.y - (p3.y - p1.y) / 6
-    
-    path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`
+const summary = computed(() => {
+  const list = conversations.value
+  const totalMessages = list.reduce((sum, conversation) => sum + conversation.messageCount, 0)
+  const botReplies = list.reduce((sum, conversation) => sum + conversation.botMessages, 0)
+  const userMessages = list.reduce((sum, conversation) => sum + conversation.userMessages, 0)
+  const whatsapp = list.filter((conversation) => conversation.channel === 'whatsapp').length
+  const web = list.filter((conversation) => conversation.channel === 'web').length
+
+  return {
+    conversations: list.length,
+    totalMessages,
+    userMessages,
+    botReplies,
+    whatsapp,
+    web
   }
-  return path
 })
 
-// ── Channel bars ─────────────────────────────────────────────
-const channelBars = computed(() => {
-  const c = analytics.value?.channels || { whatsapp: 0, web: 0 }
-  const total = Math.max(c.whatsapp + c.web, 1)
+const stats = computed(() => [
+  { label: 'Conversations', value: summary.value.conversations, sub: `${summary.value.totalMessages.toLocaleString()} total messages`, icon: MessageCircle },
+  { label: 'AI replies', value: summary.value.botReplies, sub: `${summary.value.userMessages.toLocaleString()} user messages`, icon: Bot },
+  { label: 'Channels', value: summary.value.web + summary.value.whatsapp, sub: `${summary.value.web} website · ${summary.value.whatsapp} WhatsApp`, icon: Globe2 }
+])
+
+const chatbotReports = computed(() => {
+  return (chatbots.value || [])
+    .filter((bot) => selectedBotId.value === 'all' || bot.id === selectedBotId.value)
+    .map((bot) => {
+      const list = conversations.value.filter((conversation) => conversation.chatbotId === bot.id)
+      const totalMessages = list.reduce((sum, conversation) => sum + conversation.messageCount, 0)
+      const userMessages = list.reduce((sum, conversation) => sum + conversation.userMessages, 0)
+      const botReplies = list.reduce((sum, conversation) => sum + conversation.botMessages, 0)
+      const lastActivity = list[0]?.lastMessageAt || null
+
+      return {
+        id: bot.id,
+        name: bot.name,
+        conversations: list.length,
+        website: list.filter((conversation) => conversation.channel === 'web').length,
+        whatsapp: list.filter((conversation) => conversation.channel === 'whatsapp').length,
+        totalMessages,
+        userMessages,
+        botReplies,
+        lastActivity
+      }
+    })
+    .sort((a, b) => b.conversations - a.conversations)
+})
+
+const chartData = computed(() => {
+  const days = []
+  for (let i = 13; i >= 0; i--) {
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    const list = conversations.value.filter((conversation) => conversation.createdAt?.startsWith(dateStr))
+    const userMessages = list.reduce((sum, conversation) => sum + conversation.userMessages, 0)
+    const botReplies = list.reduce((sum, conversation) => sum + conversation.botMessages, 0)
+    const totalMessages = list.reduce((sum, conversation) => sum + conversation.messageCount, 0)
+
+    days.push({
+      date: dateStr,
+      count: list.length,
+      userMessages,
+      botReplies,
+      totalMessages,
+      website: list.filter((conversation) => conversation.channel === 'web').length,
+      whatsapp: list.filter((conversation) => conversation.channel === 'whatsapp').length
+    })
+  }
+
+  const maxConversations = Math.max(...days.map((point) => point.count), 1)
+  const maxMessages = Math.max(...days.map((point) => point.totalMessages), 1)
+
+  return days.map((point) => ({
+    ...point,
+    height: point.count > 0 ? Math.max((point.count / maxConversations) * 100, 10) : 2,
+    messageHeight: point.totalMessages > 0 ? Math.max((point.totalMessages / maxMessages) * 100, 10) : 2,
+    replyShare: point.totalMessages > 0 ? Math.round((point.botReplies / point.totalMessages) * 100) : 0
+  }))
+})
+
+const hasChartActivity = computed(() => chartData.value.some((point) => point.count > 0 || point.totalMessages > 0))
+
+const analysisCards = computed(() => {
+  const avgMessages = summary.value.conversations > 0 ? summary.value.totalMessages / summary.value.conversations : 0
+  const replyRate = summary.value.userMessages > 0 ? (summary.value.botReplies / summary.value.userMessages) * 100 : 0
+  const peakDay = [...chartData.value].sort((a, b) => b.count - a.count)[0]
+
   return [
-    { label: 'WhatsApp', count: c.whatsapp, pct: Math.round((c.whatsapp / total) * 100), color: '#22c55e', icon: Phone },
-    { label: 'Web Chat', count: c.web, pct: Math.round((c.web / total) * 100), color: '#3b82f6', icon: Globe },
+    {
+      label: 'Avg. messages / conversation',
+      value: avgMessages.toFixed(1),
+      detail: `${formatNumber(summary.value.totalMessages)} total messages`,
+      icon: Activity
+    },
+    {
+      label: 'AI reply coverage',
+      value: `${Math.round(replyRate)}%`,
+      detail: `${formatNumber(summary.value.botReplies)} replies to ${formatNumber(summary.value.userMessages)} user messages`,
+      icon: Bot
+    },
+    {
+      label: 'Peak conversation day',
+      value: peakDay?.count ? formatDate(peakDay.date) : '—',
+      detail: peakDay?.count ? `${peakDay.count} conversations · ${peakDay.totalMessages} messages` : 'No activity yet',
+      icon: TrendingUp
+    }
   ]
 })
 
-// ── Stat cards ───────────────────────────────────────────────
-const statCards = computed(() => {
-  const s = analytics.value?.summary
-  if (!s) return []
+const channelBreakdown = computed(() => {
+  const total = Math.max(summary.value.web + summary.value.whatsapp, 1)
   return [
-    {
-      label: 'Total Conversations',
-      value: s.totalSessions.toLocaleString(),
-      sub: `${s.totalMessages.toLocaleString()} messages exchanged`,
-      icon: MessageCircle,
-      trend: 'Live',
-      trendColor: '#22c55e',
-    },
-    {
-      label: 'AI Responses',
-      value: s.botMessages.toLocaleString(),
-      sub: `${s.userMessages.toLocaleString()} from users`,
-      icon: Bot,
-      trend: 'AI Optimized',
-      trendColor: '#D4AF37',
-    },
-    {
-      label: 'Success Rate',
-      value: `${s.successRate}%`,
-      sub: 'Sessions with AI replies',
-      icon: CheckCircle2,
-      trend: 'Active',
-      trendColor: '#22c55e',
-    },
-    {
-      label: 'Active Automations',
-      value: s.activeTriggers.toString(),
-      sub: `${s.totalDataSources} sources indexed`,
-      icon: Zap,
-      trend: 'Automated',
-      trendColor: '#D4AF37',
-    },
+    { label: 'Website', value: summary.value.web, percent: Math.round((summary.value.web / total) * 100), color: 'bg-blue-500' },
+    { label: 'WhatsApp', value: summary.value.whatsapp, percent: Math.round((summary.value.whatsapp / total) * 100), color: 'bg-emerald-500' }
   ]
 })
 
-const chartTotal = computed(() => chartData.value.reduce((a: number, d: any) => a + d.count, 0))
-const chartPeak = computed(() => chartData.value.length ? Math.max(...chartData.value.map((d: any) => d.count)) : 0)
-const chartAvg = computed(() => chartData.value.length ? (chartTotal.value / chartData.value.length).toFixed(1) : '0.0')
+const channelLabel = computed(() => {
+  if (selectedChannel.value === 'whatsapp') return 'WhatsApp'
+  if (selectedChannel.value === 'web') return 'Website'
+  return 'All channels'
+})
 
-const formatDate = (d: string) => {
-  const [, m, day] = d.split('-')
-  return `${day}/${m}`
+const formatDate = (date: string | null) => {
+  if (!date) return '—'
+  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(date))
 }
+
+const formatDateTime = (date: string | null) => {
+  if (!date) return '—'
+  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(date))
+}
+
+const truncatePreview = (content: string) => {
+  const clean = String(content || '').replace(/\s+/g, ' ').trim()
+  return clean.length > 120 ? `${clean.slice(0, 120)}…` : clean
+}
+
+const formatNumber = (value: number) => value.toLocaleString()
 </script>
 
 <template>
-  <div class="space-y-8 pb-24">
-
-    <div class="flex justify-end">
-      <div class="flex items-center gap-3 flex-wrap">
-        <!-- Chatbot selector -->
-        <div class="w-52">
-          <CustomSelect
-            v-model="selectedBotId"
-            :options="botOptions"
-            placeholder="Filter by Agent"
-          />
-        </div>
-        <!-- Refresh -->
-        <button
-          @click="fetchAnalytics(true)"
-          :disabled="isLoading || isRefreshing"
-          class="bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 rounded-xl px-5 py-3 flex items-center gap-2 transition-all group active:scale-95"
-        >
-          <RefreshCw :class="['w-4 h-4 text-primary transition-transform duration-700', (isLoading || isRefreshing) ? 'animate-spin' : 'group-hover:rotate-180']" />
-          <span class="text-[10px] font-bold text-foreground uppercase tracking-widest">Refresh</span>
-        </button>
+  <div class="space-y-5 pb-24 lg:pb-0">
+    <template v-if="isLoading && !rawSessions">
+      <div class="grid gap-3 md:grid-cols-3">
+        <div v-for="i in 3" :key="i" class="h-24 animate-pulse rounded-xl border border-foreground/10 bg-foreground/5" />
       </div>
-    </div>
-
-    <!-- LOADING -->
-    <template v-if="isLoading && !analytics">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div v-for="i in 4" :key="i" class="bg-foreground/5 border border-foreground/10 p-7 rounded-[2rem]">
-          <Skeleton width="48px" height="48px" rounded="14px" class="mb-5" />
-          <Skeleton width="100px" height="10px" class="mb-3" />
-          <Skeleton width="130px" height="30px" />
-        </div>
-      </div>
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 bg-foreground/5 border border-foreground/10 rounded-[2.5rem] p-10 min-h-[320px]">
-          <Skeleton width="40%" height="2rem" class="mb-2" />
-          <Skeleton width="60%" height="1rem" class="mb-10" />
-          <Skeleton width="100%" height="12rem" rounded="1rem" />
-        </div>
-        <div class="bg-foreground/5 border border-foreground/10 rounded-[2.5rem] p-10">
-          <Skeleton width="50%" height="2rem" class="mb-8" />
-          <div class="space-y-5">
-            <div v-for="i in 3" :key="i" class="flex gap-4 items-center">
-              <Skeleton width="2.5rem" height="2.5rem" rounded="1rem" />
-              <div class="flex-1 space-y-2">
-                <Skeleton width="50%" height="0.75rem" />
-                <Skeleton width="100%" height="0.4rem" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <div class="h-[320px] animate-pulse rounded-2xl border border-foreground/10 bg-foreground/5" />
+      <div class="h-[380px] animate-pulse rounded-2xl border border-foreground/10 bg-foreground/5" />
     </template>
 
-    <!-- DATA -->
-    <template v-else-if="analytics">
-
-      <!-- KPI Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div
-          v-for="card in statCards"
-          :key="card.label"
-          class="bg-foreground/[0.02] border border-foreground/5 rounded-[2rem] p-7 space-y-4 hover:border-foreground/10 transition-all group relative overflow-hidden"
-        >
-          <div class="absolute -top-10 -right-10 w-28 h-28 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
-          <div class="flex items-center justify-between relative">
-            <div class="bg-foreground/5 p-3 rounded-2xl border border-foreground/5">
-              <component :is="card.icon" class="w-5 h-5 text-primary" />
+    <template v-else>
+      <div class="grid gap-3 md:grid-cols-3">
+        <article v-for="stat in stats" :key="stat.label" class="rounded-2xl border border-foreground/10 bg-background p-4">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <component :is="stat.icon" class="h-5 w-5" />
             </div>
-            <span class="text-[9px] font-black uppercase tracking-widest flex items-center gap-1" :style="{ color: card.trendColor }">
-              <TrendingUp class="w-3 h-3" />{{ card.trend }}
-            </span>
+            <span class="text-[10px] font-black uppercase tracking-widest text-foreground/35">{{ selectedBotName }}</span>
           </div>
-          <div class="relative">
-            <p class="text-[9px] font-black text-foreground/50 uppercase tracking-[0.2em] mb-1">{{ card.label }}</p>
-            <h3 class="text-3xl font-black text-foreground tracking-tight tabular-nums">{{ card.value }}</h3>
-            <p class="text-[10px] text-foreground/50 mt-1 font-medium">{{ card.sub }}</p>
-          </div>
-        </div>
+          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">{{ stat.label }}</p>
+          <p class="mt-1 text-3xl font-black tracking-tight text-foreground tabular-nums">{{ formatNumber(stat.value) }}</p>
+          <p class="mt-1 text-xs text-foreground/45">{{ stat.sub }}</p>
+        </article>
       </div>
 
-      <!-- Main Row: Chart + Right Panel -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        <!-- Timeline Chart -->
-        <div class="lg:col-span-2 bg-foreground/[0.02] border border-foreground/5 rounded-[2.5rem] p-10 space-y-8 relative overflow-hidden flex flex-col">
-          <div class="absolute top-8 right-8 flex items-center gap-2">
-            <div class="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span class="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Active Monitoring</span>
-          </div>
-          <div>
-            <h2 class="text-xl font-black text-foreground tracking-tight uppercase">AI Reply Activity</h2>
-            <p class="text-[10px] font-bold text-foreground/50 uppercase tracking-widest mt-1">
-              {{ selectedBotId === 'all' ? 'Aggregate Replies' : 'Selected Agent Activity' }} — Last 14 Days
-            </p>
-          </div>
-
-          <!-- Modern Bar + Line Chart -->
-          <div class="relative flex-1 min-h-[260px] w-full mt-4 rounded-[1.75rem] border border-foreground/5 bg-gradient-to-b from-foreground/[0.03] to-transparent p-4 sm:p-5">
-            <!-- Empty state -->
-            <div v-if="chartData.every((d: any) => d.count === 0)" class="absolute inset-0 flex flex-col items-center justify-center gap-3">
-              <Activity class="w-8 h-8 text-foreground/20" />
-              <p class="text-[10px] text-foreground/50 uppercase tracking-widest font-black">No activity recorded yet</p>
-            </div>
-
-            <div v-else class="absolute inset-4 sm:inset-5 flex flex-col">
-              <!-- Bars Layer -->
-              <div class="flex-1 flex items-end justify-between gap-1 sm:gap-2 px-1">
-                <div 
-                  v-for="point in chartData" 
-                  :key="point.date"
-                  class="flex-1 group relative flex flex-col items-center"
-                >
-                  <!-- Tooltip -->
-                  <div class="absolute bottom-full mb-3 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 z-10 pointer-events-none">
-                    <div class="bg-foreground text-background text-[10px] font-black px-3 py-1.5 rounded-lg whitespace-nowrap shadow-xl border border-foreground/10 uppercase tracking-tighter">
-                      {{ point.count }} Replies
-                      <div class="text-[8px] opacity-50">{{ point.date }}</div>
-                    </div>
-                    <div class="w-2 h-2 bg-foreground rotate-45 mx-auto -mt-1" />
-                  </div>
-
-                  <!-- Bar -->
-                  <div 
-                    class="w-full bg-foreground/10 rounded-t-lg group-hover:bg-foreground/15 transition-all duration-500 relative overflow-hidden"
-                    :style="{ height: `${point.height}%` }"
-                  >
-                    <div class="absolute inset-0 bg-gradient-to-t from-primary/70 via-primary/35 to-primary/10 opacity-90 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </div>
-              </div>
-
-              <!-- Line Layer (Overlay) -->
-              <div class="absolute inset-0 pointer-events-none">
-                <div class="absolute inset-x-0 top-[20%] border-t border-dashed border-foreground/8"></div>
-                <div class="absolute inset-x-0 top-[45%] border-t border-dashed border-foreground/8"></div>
-                <div class="absolute inset-x-0 top-[70%] border-t border-dashed border-foreground/8"></div>
-              </div>
-
-              <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible pt-2">
-                <path 
-                  :d="splinePath" 
-                  fill="none" 
-                  stroke="var(--primary)" 
-                  stroke-width="1.6" 
-                  stroke-linecap="round" 
-                  stroke-linejoin="round"
-                  class="drop-shadow-[0_0_10px_rgba(212,175,55,0.45)]"
-                />
-              </svg>
-
-              <!-- X-Axis Labels -->
-              <div class="flex justify-between px-1 mt-6 border-t border-foreground/5 pt-4">
-                <span
-                  v-for="(point, i) in chartData"
-                  :key="point.date"
-                  v-show="i === 0 || i === chartData.length - 1 || i === Math.floor(chartData.length / 2)"
-                  class="text-[8px] font-black text-foreground/40 uppercase tracking-widest"
-                >
-                  {{ formatDate(point.date) }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Chart Footer -->
-          <div class="grid grid-cols-3 gap-4 pt-6 border-t border-foreground/5">
-            <div class="text-center">
-              <p class="text-[9px] text-foreground/50 uppercase tracking-widest font-black mb-1">Peak Day</p>
-              <p class="text-lg font-black text-foreground tabular-nums">{{ chartPeak }}</p>
-            </div>
-            <div class="text-center border-x border-foreground/5">
-              <p class="text-[9px] text-foreground/50 uppercase tracking-widest font-black mb-1">Total (14d)</p>
-              <p class="text-lg font-black text-foreground tabular-nums">{{ chartTotal }}</p>
-            </div>
-            <div class="text-center">
-              <p class="text-[9px] text-foreground/50 uppercase tracking-widest font-black mb-1">Daily Avg</p>
-              <p class="text-lg font-black text-foreground tabular-nums">{{ chartAvg }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right: Channel Breakdown + Top Agents -->
-        <div class="space-y-5">
-
-          <!-- Channel Breakdown -->
-          <div class="bg-foreground/[0.02] border border-foreground/5 rounded-[2rem] p-7 space-y-5">
+      <section class="overflow-hidden rounded-2xl border border-foreground/10 bg-background">
+        <div class="space-y-4 border-b border-foreground/10 p-4">
+          <div class="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
             <div>
-              <h3 class="text-sm font-black text-foreground uppercase tracking-tight">Channel Breakdown</h3>
-              <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-0.5">Sessions by source</p>
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Analytics</p>
+              <h2 class="mt-1 text-xl font-black tracking-tight text-foreground">{{ selectedBotName }} · {{ channelLabel }}</h2>
+              <p class="mt-1 text-sm text-foreground/45">Conversation, message, reply, and channel trends for the last 14 days.</p>
             </div>
-            <div class="space-y-4">
-              <div v-for="ch in channelBars" :key="ch.label" class="space-y-1.5">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <component :is="ch.icon" class="w-3.5 h-3.5" :style="{ color: ch.color }" />
-                    <span class="text-[10px] font-black text-foreground uppercase tracking-wider">{{ ch.label }}</span>
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-[11px] font-black text-foreground tabular-nums">{{ ch.count }}</span>
-                    <span class="text-[9px] font-bold text-foreground/50">{{ ch.pct }}%</span>
-                  </div>
-                </div>
-                <div class="w-full h-1.5 bg-foreground/5 rounded-full overflow-hidden">
-                  <div
-                    class="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-transparent"
-                    :style="{ width: `${ch.pct || 0}%`, backgroundColor: ch.color }"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- Top Agents -->
-          <div class="bg-foreground/[0.02] border border-foreground/5 rounded-[2rem] p-7 space-y-5">
-            <div>
-              <h3 class="text-sm font-black text-foreground uppercase tracking-tight">Top Performance</h3>
-              <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-0.5">Agents by session volume</p>
-            </div>
-            <div v-if="!analytics.chatbots?.length" class="flex flex-col items-center py-6 text-foreground/30">
-              <Bot class="w-7 h-7 opacity-20 mb-2" />
-              <p class="text-[9px] uppercase tracking-widest font-black">No agent data yet</p>
-            </div>
-            <div v-else class="space-y-3">
-              <div
-                v-for="(agent, idx) in analytics.chatbots.sort((a: any, b: any) => b.sessions - a.sessions).slice(0, 5)"
-                :key="agent.id"
-                class="flex items-center gap-3 p-4 rounded-2xl bg-foreground/[0.01] border border-foreground/[0.03] hover:border-primary/20 transition-all group cursor-default"
+            <div class="grid gap-3 md:grid-cols-[minmax(180px,240px)_minmax(280px,1fr)_auto] md:items-center">
+              <CustomSelect v-model="selectedBotId" :options="botOptions" placeholder="Select chatbot" />
+
+              <div class="grid grid-cols-3 gap-1 rounded-xl border border-foreground/10 bg-foreground/[0.03] p-1">
+                <button
+                  v-for="option in channelOptions"
+                  :key="option.value"
+                  type="button"
+                  @click="selectedChannel = option.value"
+                  :class="[
+                    'rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all',
+                    selectedChannel === option.value ? 'bg-primary text-black shadow-sm' : 'text-foreground/50 hover:bg-foreground/5 hover:text-foreground'
+                  ]"
+                >
+                  {{ option.label }}
+                </button>
+              </div>
+
+              <button
+                @click="refreshAnalytics"
+                :disabled="isLoading || isRefreshing"
+                class="inline-flex items-center justify-center gap-2 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-foreground/65 transition-all hover:bg-foreground/10 disabled:opacity-50"
               >
-                <div class="w-8 h-8 rounded-xl bg-foreground/5 flex items-center justify-center text-[10px] font-black text-foreground/40 group-hover:bg-primary/10 group-hover:text-primary transition-all shrink-0">
-                  {{ idx + 1 }}
+                <RefreshCw :class="['h-4 w-4 text-primary transition-transform duration-700', (isLoading || isRefreshing) ? 'animate-spin' : '']" />
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          <div class="grid gap-3 md:grid-cols-3">
+            <article v-for="item in analysisCards" :key="item.label" class="rounded-xl border border-foreground/10 bg-foreground/[0.025] p-3.5">
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/40">{{ item.label }}</p>
+                <component :is="item.icon" class="h-4 w-4 text-primary" />
+              </div>
+              <p class="mt-3 text-2xl font-black tracking-tight text-foreground">{{ item.value }}</p>
+              <p class="mt-1 text-xs text-foreground/45">{{ item.detail }}</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="grid gap-4 p-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
+          <div class="relative min-h-[300px] rounded-xl border border-foreground/10 bg-gradient-to-b from-foreground/[0.035] to-transparent p-4">
+            <div class="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p class="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/40">Daily volume</p>
+                <p class="text-sm font-bold text-foreground/70">Conversations with message intensity</p>
+              </div>
+              <p class="text-xs font-bold text-foreground/40">Last 14 days</p>
+            </div>
+
+            <div v-if="!hasChartActivity" class="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
+              <MessageCircle class="h-9 w-9 text-foreground/20" />
+              <p class="text-[10px] font-black uppercase tracking-widest text-foreground/45">No activity recorded yet</p>
+            </div>
+
+            <div v-else class="absolute inset-x-4 bottom-4 top-20 flex items-end justify-between gap-1.5 sm:gap-2">
+              <div v-for="(point, index) in chartData" :key="point.date" class="group relative flex h-full flex-1 items-end justify-center">
+                <div
+                  :class="[
+                    'pointer-events-none absolute bottom-full z-30 mb-2 w-36 translate-y-2 opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100',
+                    index < 3 ? 'left-0' : index > chartData.length - 4 ? 'right-0' : 'left-1/2 -translate-x-1/2'
+                  ]"
+                >
+                  <div class="rounded-lg bg-foreground px-2.5 py-2 text-[9px] font-bold text-background shadow-xl ring-1 ring-background/10">
+                    <div class="font-black uppercase tracking-tight">{{ formatDate(point.date) }}</div>
+                    <div class="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 opacity-75">
+                      <span>Conversations</span><span class="text-right">{{ point.count }}</span>
+                      <span>Messages</span><span class="text-right">{{ point.totalMessages }}</span>
+                      <span>User</span><span class="text-right">{{ point.userMessages }}</span>
+                      <span>AI replies</span><span class="text-right">{{ point.botReplies }}</span>
+                    </div>
+                  </div>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex justify-between items-center mb-1.5">
-                    <p class="text-[10px] font-black text-foreground uppercase truncate">{{ agent.name }}</p>
-                    <span class="text-[10px] font-black text-foreground tabular-nums">{{ agent.sessions }}</span>
-                  </div>
-                  <div class="w-full h-1 bg-foreground/5 rounded-full overflow-hidden">
-                    <div
-                      class="h-full bg-gradient-to-r from-primary/50 to-primary rounded-full transition-all duration-1000"
-                      :style="{ width: analytics.chatbots[0]?.sessions > 0 ? `${(agent.sessions / analytics.chatbots[0].sessions) * 100}%` : '0%' }"
-                    />
-                  </div>
+                <div class="relative flex h-full w-full max-w-9 items-end justify-center">
+                  <div class="absolute bottom-0 w-full rounded-t-xl bg-primary/15" :style="{ height: `${point.messageHeight}%` }" />
+                  <div class="relative z-[1] w-2/3 rounded-t-xl bg-gradient-to-t from-primary/90 via-primary/55 to-primary/20 shadow-sm shadow-primary/20 transition-all group-hover:from-primary" :style="{ height: `${point.height}%` }" />
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Bottom Stats Row -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-foreground/[0.02] border border-foreground/5 rounded-[2rem] p-6 text-center hover:border-foreground/10 transition-all">
-          <Database class="w-5 h-5 text-primary mx-auto mb-3" />
-          <p class="text-2xl font-black text-foreground tabular-nums">{{ analytics.summary.totalDataSources }}</p>
-          <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-1 font-black">Data Sources</p>
+          <aside class="space-y-3">
+            <div class="rounded-xl border border-foreground/10 bg-foreground/[0.025] p-4">
+              <p class="text-[10px] font-black uppercase tracking-[0.16em] text-primary">Channel mix</p>
+              <div class="mt-4 space-y-4">
+                <div v-for="channel in channelBreakdown" :key="channel.label">
+                  <div class="mb-2 flex items-center justify-between text-xs font-bold text-foreground/55">
+                    <span>{{ channel.label }}</span>
+                    <span>{{ channel.value }} · {{ channel.percent }}%</span>
+                  </div>
+                  <div class="h-2 overflow-hidden rounded-full bg-foreground/10">
+                    <div :class="['h-full rounded-full', channel.color]" :style="{ width: `${channel.percent}%` }" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-foreground/10 bg-foreground/[0.025] p-4">
+              <p class="text-[10px] font-black uppercase tracking-[0.16em] text-primary">Message split</p>
+              <div class="mt-4 grid grid-cols-2 gap-3">
+                <div class="rounded-xl bg-background p-3">
+                  <p class="text-[10px] font-black uppercase tracking-widest text-foreground/35">User</p>
+                  <p class="mt-1 text-2xl font-black text-foreground">{{ formatNumber(summary.userMessages) }}</p>
+                </div>
+                <div class="rounded-xl bg-background p-3">
+                  <p class="text-[10px] font-black uppercase tracking-widest text-foreground/35">AI replies</p>
+                  <p class="mt-1 text-2xl font-black text-primary">{{ formatNumber(summary.botReplies) }}</p>
+                </div>
+              </div>
+              <div class="mt-4 h-2 overflow-hidden rounded-full bg-foreground/10">
+                <div class="h-full rounded-full bg-primary" :style="{ width: `${summary.totalMessages ? Math.round((summary.botReplies / summary.totalMessages) * 100) : 0}%` }" />
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="overflow-hidden rounded-2xl border border-foreground/10 bg-background">
+        <div class="border-b border-foreground/10 p-4">
+          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Chatbot report</p>
+          <h2 class="mt-1 text-xl font-black tracking-tight text-foreground">Replies and conversations by chatbot</h2>
         </div>
 
-        <div class="bg-foreground/[0.02] border border-foreground/5 rounded-[2rem] p-6 text-center hover:border-foreground/10 transition-all">
-          <Phone class="w-5 h-5 text-green-500 mx-auto mb-3" />
-          <p class="text-2xl font-black text-foreground tabular-nums">{{ analytics.summary.totalWhatsappAccounts }}</p>
-          <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-1 font-black">WhatsApp Lines</p>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[860px] text-left">
+            <thead class="border-b border-foreground/10 bg-foreground/[0.02]">
+              <tr>
+                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Chatbot</th>
+                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Conversations</th>
+                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Website</th>
+                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">WhatsApp</th>
+                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">User messages</th>
+                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">AI replies</th>
+                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Last activity</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-foreground/10">
+              <tr v-for="report in chatbotReports" :key="report.id" class="transition-colors hover:bg-foreground/[0.02]">
+                <td class="px-5 py-4">
+                  <div class="flex items-center gap-2">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary"><Bot class="h-4 w-4" /></span>
+                    <span class="max-w-56 truncate text-sm font-black text-foreground">{{ report.name }}</span>
+                  </div>
+                </td>
+                <td class="px-5 py-4 text-sm font-black tabular-nums text-foreground">{{ report.conversations }}</td>
+                <td class="px-5 py-4 text-sm font-bold tabular-nums text-foreground/60">{{ report.website }}</td>
+                <td class="px-5 py-4 text-sm font-bold tabular-nums text-foreground/60">{{ report.whatsapp }}</td>
+                <td class="px-5 py-4 text-sm font-bold tabular-nums text-foreground/60">{{ report.userMessages }}</td>
+                <td class="px-5 py-4 text-sm font-black tabular-nums text-primary">{{ report.botReplies }}</td>
+                <td class="px-5 py-4 text-sm font-medium text-foreground/55">{{ formatDateTime(report.lastActivity) }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div class="bg-foreground/[0.02] border border-foreground/5 rounded-[2rem] p-6 text-center hover:border-foreground/10 transition-all">
-          <Zap class="w-5 h-5 text-yellow-400 mx-auto mb-3" />
-          <p class="text-2xl font-black text-foreground tabular-nums">{{ analytics.summary.activeTriggers }}</p>
-          <p class="text-[9px] text-foreground/50 uppercase tracking-widest mt-1 font-black">Active Rules</p>
-        </div>
-      </div>
+      </section>
 
+      <section class="rounded-2xl border border-foreground/10 bg-background p-4">
+        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Conversations</p>
+            <h2 class="mt-1 text-xl font-black tracking-tight text-foreground">View full conversation history</h2>
+            <p class="mt-1 text-sm text-foreground/50">Open the conversations page to search, inspect, export, and analyze individual customer threads.</p>
+          </div>
+          <NuxtLink
+            to="/dashboard/conversations"
+            class="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-xs font-black uppercase tracking-widest text-black transition-all hover:translate-y-[-1px] hover:shadow-lg hover:shadow-primary/20"
+          >
+            View conversations
+          </NuxtLink>
+        </div>
+      </section>
     </template>
 
-    <!-- Error State -->
-    <div v-else class="text-center py-36 bg-foreground/[0.02] rounded-[3rem] border border-dashed border-foreground/10">
-      <div class="bg-red-500/10 text-red-500 w-16 h-16 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-        <AlertCircle class="w-8 h-8" />
+    <section v-if="!isLoading && !(chatbots || []).length" class="rounded-2xl border border-dashed border-foreground/10 bg-background p-6 text-center">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-foreground/5 text-foreground/25">
+        <AlertCircle class="h-8 w-8" />
       </div>
-      <h2 class="text-xl font-black text-foreground tracking-tight uppercase">Failed to Load Analytics</h2>
-      <p class="text-foreground/50 text-xs font-bold tracking-widest uppercase mt-2">Unable to retrieve your intelligence data.</p>
-      <button @click="refresh()" class="mt-6 bg-primary text-black text-[10px] font-black uppercase tracking-[0.2em] px-8 py-3.5 rounded-xl hover:opacity-90 transition-all">
-        Retry
-      </button>
-    </div>
-
+      <h2 class="mt-5 text-xl font-black tracking-tight text-foreground">No chatbots found</h2>
+      <p class="mt-2 text-sm text-foreground/50">Create a chatbot first, then analytics will appear here.</p>
+    </section>
   </div>
 </template>
