@@ -7,12 +7,23 @@ workers_dev = true
 [observability]
 enabled = true
 
+[triggers]
+crons = ["*/10 * * * *"]
+
 [build]
 command = ""
 
 [vars]
+TRAINING_RUNTIME_PROFILE = "free"
+TRAINING_MAX_RUN_MS = "18000"
+TRAINING_EMBEDDING_BATCH_SIZE = "1"
+TRAINING_MAX_TEXT_CHARS = "120000"
+TRAINING_MAX_CRAWL_PAGES = "4"
+TRAINING_MAX_CRAWL_DURATION_MS = "14000"
+TRAINING_MAX_PDF_MB = "2"
+TRAINING_CRON_BATCH_SIZE = "1"
 # Set via wrangler secret put for production-sensitive values:
+# - SUPABASE_URL
 # - SUPABASE_SERVICE_ROLE_KEY
 # - GEMINI_API_KEY
 # - TRAINING_WORKER_SECRET
-# Non-secret values can be set here or via dashboard.

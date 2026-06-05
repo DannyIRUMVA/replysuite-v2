@@ -28,7 +28,31 @@ const { data: polarTransactionData, pending: loadingTransactions, refresh: refre
   { server: false, immediate: false }
 )
 
-const polarTransactions = computed(() => polarTransactionData.value?.transactions || [])
+const polarTransactions = computed(() => {
+  return (polarTransactionData.value?.transactions || []).filter((transaction: any) => {
+    const billingReason = String(transaction?.billingReason || '').toLowerCase()
+    return Boolean(transaction?.subscriptionId) || billingReason.includes('subscription')
+  })
+})
+const transactionPage = ref(1)
+const transactionsPerPage = 5
+
+const totalTransactionPages = computed(() => Math.max(1, Math.ceil(polarTransactions.value.length / transactionsPerPage)))
+
+const paginatedPolarTransactions = computed(() => {
+  const start = (transactionPage.value - 1) * transactionsPerPage
+  return polarTransactions.value.slice(start, start + transactionsPerPage)
+})
+
+watch(() => polarTransactions.value.length, () => {
+  transactionPage.value = 1
+})
+
+watch(totalTransactionPages, (pages) => {
+  if (transactionPage.value > pages) {
+    transactionPage.value = pages
+  }
+})
 
 onMounted(async () => {
   isMounted.value = true
@@ -75,8 +99,8 @@ const getPlanIcon = (slug?: string | null) => {
 
 <template>
   <div class="space-y-6 pb-24 lg:pb-0">
-    <div class="grid gap-6 xl:grid-cols-[240px_minmax(0,1fr)]">
-      <SettingsNavigation />
+    <div class="grid items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <SettingsNavigation align-on-lg />
 
       <main class="space-y-6 overflow-hidden">
         <div v-if="isLoading" class="flex min-h-[320px] items-center justify-center rounded-[24px] border border-foreground/10 bg-background">
@@ -118,9 +142,9 @@ const getPlanIcon = (slug?: string | null) => {
           <section class="overflow-hidden rounded-[24px] border border-foreground/10 bg-background">
             <div class="flex flex-col gap-3 border-b border-foreground/10 bg-foreground/[0.015] p-5 md:flex-row md:items-center md:justify-between">
               <div>
-                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Polar transactions</p>
-                <h2 class="mt-1 text-lg font-black tracking-tight text-foreground">All transactions from Polar</h2>
-                <p class="mt-1 text-sm text-foreground/50">Orders, renewals, and payment records connected to your Polar customer profile.</p>
+                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Polar subscriptions</p>
+                <h2 class="mt-1 text-lg font-black tracking-tight text-foreground">Subscription billing from Polar</h2>
+                <p class="mt-1 text-sm text-foreground/50">Only subscription orders and renewals connected to your Polar customer profile.</p>
               </div>
               <button
                 @click="refreshPolarTransactions"
@@ -141,17 +165,18 @@ const getPlanIcon = (slug?: string | null) => {
               <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-foreground/5 text-foreground/40">
                 <CreditCard class="h-7 w-7" />
               </div>
-              <h3 class="mt-4 text-base font-black text-foreground">No Polar transactions found</h3>
+              <h3 class="mt-4 text-base font-black text-foreground">No Polar subscriptions found</h3>
               <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-foreground/50">
-                Completed checkout orders and renewals from Polar will appear here after they are associated with your customer profile.
+                Subscription checkout orders and renewals from Polar will appear here after they are associated with your customer profile.
               </p>
             </div>
 
-            <div v-else class="overflow-x-auto">
-              <table class="w-full min-w-[920px] text-left">
+            <div v-else>
+              <div class="overflow-x-auto">
+                <table class="w-full min-w-[920px] text-left">
                 <thead class="border-b border-foreground/10 bg-foreground/[0.02] text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">
                   <tr>
-                    <th class="px-5 py-4">Transaction</th>
+                    <th class="px-5 py-4">Subscription</th>
                     <th class="px-5 py-4">Status</th>
                     <th class="px-5 py-4">Amount</th>
                     <th class="px-5 py-4">Date</th>
@@ -160,7 +185,7 @@ const getPlanIcon = (slug?: string | null) => {
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-foreground/10">
-                  <tr v-for="transaction in polarTransactions" :key="transaction.id" class="transition-colors hover:bg-foreground/[0.02]">
+                  <tr v-for="transaction in paginatedPolarTransactions" :key="transaction.id" class="transition-colors hover:bg-foreground/[0.02]">
                     <td class="px-5 py-4">
                       <div class="flex items-center gap-3">
                         <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -192,7 +217,33 @@ const getPlanIcon = (slug?: string | null) => {
                     </td>
                   </tr>
                 </tbody>
-              </table>
+                </table>
+              </div>
+
+              <div class="flex flex-col gap-3 border-t border-foreground/10 bg-foreground/[0.015] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-xs font-bold text-foreground/45">
+                  Showing {{ ((transactionPage - 1) * transactionsPerPage) + 1 }}-{{ Math.min(transactionPage * transactionsPerPage, polarTransactions.length) }} of {{ polarTransactions.length }} subscriptions
+                </p>
+                <div class="flex items-center gap-2">
+                  <button
+                    @click="transactionPage = Math.max(1, transactionPage - 1)"
+                    :disabled="transactionPage === 1"
+                    class="rounded-xl border border-foreground/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-foreground/50 transition-all hover:bg-foreground/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+                  >
+                    Previous
+                  </button>
+                  <span class="rounded-xl border border-foreground/10 bg-background px-3 py-2 text-xs font-black text-foreground/60">
+                    {{ transactionPage }} / {{ totalTransactionPages }}
+                  </span>
+                  <button
+                    @click="transactionPage = Math.min(totalTransactionPages, transactionPage + 1)"
+                    :disabled="transactionPage === totalTransactionPages"
+                    class="rounded-xl border border-foreground/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-foreground/50 transition-all hover:bg-foreground/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
             </div>
           </section>
         </template>

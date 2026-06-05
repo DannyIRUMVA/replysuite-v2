@@ -19,16 +19,6 @@ const pageContext = computed(() => {
   return { title: 'Dashboard', subtitle: 'Welcome back to ReplySuite.' }
 })
 
-const isMounted = ref(false)
-onMounted(() => { isMounted.value = true })
-
-const greeting = computed(() => {
-  if (!isMounted.value) return 'Welcome Back'
-  const hour = new Date().getHours()
-  if (hour < 12) return 'Good Morning'
-  if (hour < 17) return 'Good Afternoon'
-  return 'Good Evening'
-})
 </script>
 
 <template>
@@ -49,10 +39,6 @@ const greeting = computed(() => {
     </div>
 
     <div class="animate-in fade-in slide-in-from-left-4 duration-500">
-      <div class="flex items-center gap-2 mb-0.5">
-         <span class="text-[9px] font-bold tracking-widest text-primary capitalize">{{ greeting }}</span>
-         <div class="h-[1px] w-3 bg-primary/30"></div>
-      </div>
       <h1 class="text-lg md:text-xl font-black text-foreground leading-tight">
         {{ pageContext.title }}
       </h1>

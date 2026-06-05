@@ -8,15 +8,13 @@ import {
   Plus,
   Loader2,
   Search,
-  History,
-  AlertTriangle,
-  Activity as LucideActivity,
   Zap as LucideZap,
   Sparkles as LucideSparkles
 } from 'lucide-vue-next'
 import HistoryTable from '~/components/agents/skills/HistoryTable.vue'
 import DashboardStats from '~/components/agents/skills/DashboardStats.vue'
 import ExtractionModal from '~/components/agents/skills/ExtractionModal.vue'
+import Skeleton from '~~/app/components/Skeleton.vue'
 import { marked } from 'marked'
 import xss from 'xss'
 
@@ -42,18 +40,7 @@ const monthlyUsage = ref(0)
 const totalTrainings = ref(0)
 
 const isPremium = computed(() => ['silver', 'gold', 'enterprise-ready'].includes(planSlug.value || ''))
-const activeTrainingJobs = computed(() =>
-  trainingJobs.value.filter(job => ['queued', 'processing'].includes(job.status))
-)
-
-const getJobTitle = (job: any) => job?.meta?.title || job?.meta?.filename || job?.meta?.url || 'Knowledge source'
-const getJobProgress = (job: any) => {
-  const value = Math.max(0, Math.min(100, Number(job?.progress || 0)))
-  if (value > 0) return value
-  if (['queued', 'processing'].includes(job?.status)) return 5
-  return 0
-}
-const getJobProgressLabel = (job: any) => job?.progress_label || (job?.status === 'queued' ? 'Waiting for worker' : 'Processing knowledge')
+const activeJobStatuses = ['queued', 'processing', 'retry_wait']
 
 const renderMarkdown = (text: string) => {
   if (!text) return ''
@@ -73,10 +60,14 @@ const selectedFile = ref<File | null>(null)
 // Extraction Viewer State
 const showExtractionModal = ref(false)
 const selectedExtraction = ref<{ title: string, content: string } | null>(null)
+const rerunningJobId = ref<string | null>(null)
 
 // Fetch Data
 const fetchData = async () => {
-  if (!chatbotId || !userId.value) return
+  if (!chatbotId || !userId.value) {
+    isLoading.value = false
+    return
+  }
 
   try {
     const [chatbotRes, sourcesRes, jobsRes, usageRes, embeddingsRes] = await Promise.all([
@@ -104,9 +95,9 @@ const fetchData = async () => {
 // Polling for processing jobs
 let pollInterval: any = null
 watch(trainingJobs, (newJobs) => {
-  const hasActiveJobs = newJobs.some(j => ['queued', 'processing'].includes(j.status))
+  const hasActiveJobs = newJobs.some(j => activeJobStatuses.includes(j.status))
   if (hasActiveJobs && !pollInterval) {
-    pollInterval = setInterval(fetchData, 3000)
+    pollInterval = setInterval(fetchData, 5000)
   } else if (!hasActiveJobs && pollInterval) {
     clearInterval(pollInterval)
     pollInterval = null
@@ -150,6 +141,7 @@ const handleUrlTrain = async () => {
     const res: any = await trainPromise
     if (res.success) {
       urlForm.value.url = ''
+      showTrainingModal.value = false
       notify.success(res.message || 'Website training queued successfully.')
     }
   } catch (err: any) {
@@ -176,6 +168,7 @@ const handleTextTrain = async () => {
     const res: any = await trainPromise
     if (res.success) {
       textForm.value = { title: '', content: '' }
+      showTrainingModal.value = false
       notify.success(res.message || 'Text training queued successfully.')
     }
   } catch (err: any) {
@@ -213,6 +206,7 @@ const handleFileTrain = async () => {
     const res: any = await trainPromise
     if (res.success) {
       selectedFile.value = null
+      showTrainingModal.value = false
       notify.success(res.message || 'Document training queued successfully.')
     }
   } catch (err: any) {
@@ -237,6 +231,26 @@ const handleDeleteSource = async (id: string) => {
   }
 }
 
+const handleRerunJob = async (job: any) => {
+  if (!job?.id || rerunningJobId.value) return
+
+  rerunningJobId.value = job.id
+  try {
+    const res: any = await $fetch('/api/agents/train/rerun', {
+      method: 'POST',
+      body: { jobId: job.id }
+    })
+
+    notify.success(res?.message || 'Failed training job queued again.')
+    await fetchData()
+  } catch (err: any) {
+    console.error('[Training Rerun Error]', err)
+    notify.error(err?.data?.message || err?.message || 'Failed to rerun training job.')
+  } finally {
+    rerunningJobId.value = null
+  }
+}
+
 // UI Helper
 const isOverTrainingLimit = computed(() => {
   if (!limits.value?.maxTrainings) return false
@@ -246,6 +260,7 @@ const isOverTrainingLimit = computed(() => {
 
 // Chat Test State
 const showChatTest = ref(false)
+const showTrainingModal = ref(false)
 const testInput = ref('')
 const testMessages = ref<{ role: 'user' | 'assistant', content: string }[]>([])
 const isTestLoading = ref(false)
@@ -276,68 +291,85 @@ const handleTestChat = async () => {
 </script>
 
 <template>
-  <div class="space-y-8 pb-20 relative">
-    <div class="flex items-center justify-between gap-4">
+  <div class="relative space-y-6 pb-20">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <NuxtLink to="/dashboard/agents"
         class="dashboard-back-link group">
         <ArrowLeft class="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
         Back to Agents
       </NuxtLink>
 
-      <button @click="showChatTest = true"
-        class="group flex items-center gap-3 px-6 py-3 bg-foreground/5 hover:bg-primary hover:text-black border border-foreground/10 rounded-2xl transition-all shadow-xl">
-        <LucideSparkles class="w-4 h-4 text-primary group-hover:text-black" />
-        <span class="text-[11px] font-bold tracking-widest uppercase italic-none">Test Your Assistant</span>
-      </button>
     </div>
 
-    <div v-if="isLoading" class="flex justify-center py-20">
-      <Loader2 class="w-8 h-8 text-primary animate-spin" />
-    </div>
-
-    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Left: Training Interface -->
-      <div class="lg:col-span-2 space-y-6 min-w-0">
-        <div v-if="activeTrainingJobs.length" class="glass-card !bg-primary/[0.04] border-primary/10 space-y-4">
-          <div class="flex items-center justify-between gap-4">
-            <div>
-              <p class="text-[11px] font-bold tracking-widest text-primary uppercase italic-none">Training in Progress</p>
-              <p class="text-[10px] text-foreground/40 uppercase tracking-widest italic-none">
-                {{ activeTrainingJobs.length }} active {{ activeTrainingJobs.length === 1 ? 'job' : 'jobs' }} updating automatically
-              </p>
+    <div v-if="isLoading" class="space-y-6">
+      <div class="glass-card !rounded-2xl !p-0 overflow-hidden">
+        <div class="grid grid-cols-1 divide-y divide-foreground/5 md:grid-cols-2 md:divide-x md:divide-y-0">
+          <div v-for="item in 2" :key="item" class="space-y-5 p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-4">
+              <Skeleton width="7rem" height="0.65rem" />
+              <Skeleton width="2rem" height="2rem" radius="0.75rem" />
             </div>
-            <Loader2 class="w-4 h-4 text-primary animate-spin" />
-          </div>
-
-          <div class="space-y-3">
-            <div
-              v-for="job in activeTrainingJobs"
-              :key="job.id"
-              class="rounded-2xl border border-primary/10 bg-background/40 p-4"
-            >
-              <div class="flex items-start justify-between gap-4 mb-2">
-                <div class="min-w-0">
-                  <p class="text-xs font-bold text-foreground truncate">{{ getJobTitle(job) }}</p>
-                  <p class="text-[10px] text-foreground/40 uppercase tracking-widest italic-none truncate">
-                    {{ getJobProgressLabel(job) }}
-                  </p>
-                </div>
-                <span class="text-xs font-bold text-primary whitespace-nowrap">{{ getJobProgress(job) }}%</span>
-              </div>
-
-              <div class="h-2 w-full bg-foreground/5 rounded-full overflow-hidden">
-                <div
-                  class="h-full bg-primary transition-all duration-500 shadow-[0_0_12px_rgba(var(--primary),0.25)]"
-                  :style="{ width: `${getJobProgress(job)}%` }"
-                ></div>
-              </div>
-            </div>
+            <Skeleton width="45%" height="1.9rem" radius="0.85rem" />
+            <Skeleton width="100%" height="0.5rem" radius="999px" />
+            <Skeleton width="70%" height="0.65rem" />
           </div>
         </div>
+      </div>
 
+      <div class="glass-card space-y-4">
+        <div class="flex items-center justify-between gap-4">
+          <Skeleton width="10rem" height="0.85rem" />
+          <Skeleton width="6rem" height="2rem" radius="0.75rem" />
+        </div>
+        <div class="space-y-3">
+          <Skeleton v-for="row in 4" :key="row" height="3.5rem" radius="0.9rem" />
+        </div>
+      </div>
+    </div>
+
+    <div v-else class="space-y-6">
+      <DashboardStats :chatbot="chatbot" :monthly-usage="monthlyUsage" :total-trainings="trainingJobs.length"
+        :plan-slug="planSlug" :sources-count="sources.length" :limits="limits"
+        @train-assistant="showTrainingModal = true"
+        @test-assistant="showChatTest = true" />
+
+      <!-- Training Registry -->
+      <div class="space-y-6 min-w-0">
+        <!-- Training Registry (Recorded History) -->
+        <HistoryTable 
+          :jobs="trainingJobs" 
+          :sources="sources" 
+          :is-premium="isPremium"
+          :rerunning-job-id="rerunningJobId"
+          @view-extraction="viewExtraction" 
+          @delete-source="handleDeleteSource" 
+          @rerun-job="handleRerunJob"
+        />
+      </div>
+
+    </div>
+
+    <!-- Training Modal -->
+    <div v-if="showTrainingModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+      <div class="absolute inset-0 bg-background/70 backdrop-blur-sm" @click="showTrainingModal = false"></div>
+
+      <div class="relative z-10 flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-foreground/10 bg-background shadow-2xl">
+        <div class="flex items-center justify-between gap-4 border-b border-foreground/5 p-5 sm:p-6">
+          <div>
+            <h3 class="text-sm font-bold uppercase tracking-widest text-foreground italic-none">Train Assistant</h3>
+            <p class="mt-1 text-[9px] font-bold uppercase tracking-widest text-foreground/40 italic-none">
+              Add website, PDF, or custom knowledge in the background.
+            </p>
+          </div>
+          <button @click="showTrainingModal = false" class="rounded-xl p-2 transition-all hover:bg-foreground/5">
+            <Plus class="h-5 w-5 rotate-45 text-foreground/40" />
+          </button>
+        </div>
+
+        <div class="overflow-y-auto p-4 sm:p-5">
         <div class="glass-card !bg-foreground/[0.01]">
           <!-- Tabs -->
-          <div class="flex items-center gap-1 p-1 bg-foreground/5 rounded-2xl mb-8">
+          <div class="mb-6 flex flex-col gap-1 rounded-xl bg-foreground/5 p-1 sm:flex-row">
             <button v-for="tab in [
               { id: 'url', label: 'Website URL', icon: Globe },
               { id: 'file', label: 'PDF Document', icon: FileText },
@@ -359,11 +391,11 @@ const handleTestChat = async () => {
                 <label
                   class="block text-[11px] font-bold tracking-widest text-foreground/40 uppercase mb-3 italic-none">Website
                   URL</label>
-                <div class="flex gap-3">
+                <div class="flex flex-col gap-3 sm:flex-row">
                   <input v-model="urlForm.url" placeholder="https://example.com/docs"
                     class="flex-1 bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors italic-none" />
                   <button @click="handleUrlTrain" :disabled="isProcessing || !urlForm.url || isOverTrainingLimit"
-                    class="px-6 bg-primary text-black font-bold tracking-widest text-[11px] rounded-xl hover:bg-primary-accent transition-all disabled:opacity-50 flex items-center gap-2 uppercase italic-none">
+                    class="flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-black transition-all hover:bg-primary-accent disabled:opacity-50 sm:py-0 italic-none">
                     <Loader2 v-if="isProcessing" class="w-4 h-4 animate-spin" />
                     {{ isOverTrainingLimit ? 'LIMIT REACHED' : 'TRAIN WEBSITE' }}
                   </button>
@@ -375,7 +407,7 @@ const handleTestChat = async () => {
                 <p
                   class="text-[10px] text-foreground/30 mt-3 flex items-center gap-2 italic-none uppercase tracking-widest font-bold">
                   <Search class="w-3 h-3" />
-                  Website content will be processed and added to your AI knowledge base.
+                  Website content trains in small background slices and resumes automatically if rate-limited.
                 </p>
               </div>
             </div>
@@ -383,7 +415,7 @@ const handleTestChat = async () => {
             <!-- File Form -->
             <div v-if="activeTab === 'file'" class="space-y-6">
               <div
-                class="border-2 border-dashed border-foreground/10 rounded-3xl p-10 text-center hover:border-primary/30 transition-all cursor-pointer bg-foreground/[0.01]"
+                class="cursor-pointer rounded-2xl border-2 border-dashed border-foreground/10 bg-foreground/[0.01] p-6 text-center transition-all hover:border-primary/30 sm:p-8"
                 @click="$refs.fileInput.click()">
                 <input type="file" ref="fileInput" class="hidden" accept=".pdf" @change="handleFileChange" />
                 <div v-if="!selectedFile" class="space-y-4">
@@ -392,7 +424,7 @@ const handleTestChat = async () => {
                   </div>
                   <p class="text-xs font-bold text-foreground uppercase tracking-widest italic-none">DRAG & DROP OR CLICK TO
                     SELECT A PDF</p>
-                  <p class="text-[10px] text-foreground/30 uppercase tracking-widest italic-none">Max File Size: 10MB</p>
+                  <p class="text-[10px] text-foreground/30 uppercase tracking-widest italic-none">Free-mode PDF max: 2MB</p>
                 </div>
                 <div v-else class="space-y-4">
                   <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -414,7 +446,7 @@ const handleTestChat = async () => {
             </div>
 
             <!-- Text Form -->
-            <div v-if="activeTab === 'text'" class="space-y-6 space-x-6">
+            <div v-if="activeTab === 'text'" class="space-y-6">
               <div class="space-y-4">
                 <div>
                   <label
@@ -445,63 +477,6 @@ const handleTestChat = async () => {
           </div>
         </div>
 
-
-        <!-- Training Registry (Recorded History) -->
-        <HistoryTable 
-          :jobs="trainingJobs" 
-          :sources="sources" 
-          :is-premium="isPremium"
-          @view-extraction="viewExtraction" 
-          @delete-source="handleDeleteSource" 
-        />
-      </div>
-
-      <!-- Right Column: Meter & Strategy -->
-      <div class="space-y-6 min-w-0">
-        <DashboardStats :chatbot="chatbot" :monthly-usage="monthlyUsage" :total-trainings="trainingJobs.length"
-          :plan-slug="planSlug" :sources-count="sources.length" :limits="limits" />
-
-        <div class="glass-card border-foreground/10 bg-foreground/[0.02]">
-          <div class="flex items-center gap-3 mb-4">
-            <LucideSparkles class="w-5 h-5 text-primary" />
-            <h4 class="text-[11px] font-bold tracking-widest text-primary uppercase italic-none">Starter Templates Preview</h4>
-          </div>
-          <p class="text-[11px] text-foreground/45 leading-relaxed mb-5 italic-none">
-            Mock preview only for now. Ready-made industry templates can make first setup faster without changing your current training flow.
-          </p>
-          <div class="grid gap-3">
-            <div v-for="item in ['Clinic FAQ starter', 'Restaurant menu + hours starter', 'School admissions FAQ starter']" :key="item" class="rounded-2xl border border-foreground/10 bg-background/60 px-4 py-3">
-              <p class="text-[10px] font-bold uppercase tracking-widest text-foreground/55">{{ item }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Strategy Box -->
-        <div class="glass-card bg-primary/5 border-primary/10">
-          <div class="flex items-center gap-3 mb-4">
-            <LucideSparkles class="w-5 h-5 text-primary" />
-            <h4 class="text-[11px] font-bold tracking-widest text-primary uppercase italic-none">Training Tips</h4>
-          </div>
-          <p class="text-[11px] text-foreground/40 leading-relaxed mb-6 italic-none">
-            Your assistant searches this knowledge base before replying, so clearer training data usually leads to better customer answers.
-          </p>
-          <div class="space-y-3">
-            <div v-for="tip in ['Keep text clear and distinct', 'Add FAQs as line entries', 'Avoid overly large PDFs']"
-              :key="tip" class="flex items-center gap-2">
-              <div class="w-1 h-1 rounded-full bg-primary/40"></div>
-              <span class="text-[10px] font-bold text-foreground/30 uppercase tracking-widest italic-none">{{ tip }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Help box -->
-        <div class="glass-card border-dashed border-foreground/5 opacity-60">
-          <div class="flex items-center gap-3 mb-3">
-            <AlertTriangle class="w-4 h-4 text-orange-400/50" />
-            <p class="text-[9px] font-bold text-foreground/40 uppercase tracking-widest italic-none">Important Note</p>
-          </div>
-          <p class="text-[10px] text-foreground/30 italic-none">Training is irreversible for the current session. Deleting a
-            source clears indexed context immediately.</p>
         </div>
       </div>
     </div>
@@ -583,7 +558,7 @@ const handleTestChat = async () => {
 
 <style scoped>
 .glass-card {
-  @apply bg-foreground/[0.03] backdrop-blur-xl border border-foreground/5 p-8 rounded-[2rem];
+  @apply rounded-2xl border border-foreground/5 bg-foreground/[0.03] p-5 backdrop-blur-xl sm:p-6;
 }
 
 .italic-none {

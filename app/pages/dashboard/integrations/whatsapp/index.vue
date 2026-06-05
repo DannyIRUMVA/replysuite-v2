@@ -67,24 +67,7 @@ const deleteAccount = async (id: string) => {
     back-label="Back to dashboard"
   />
 
-  <div v-else class="w-full space-y-6 pb-20">
-    <div class="flex flex-col gap-4 rounded-[24px] border border-foreground/10 bg-foreground/[0.02] p-5 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">WhatsApp numbers</p>
-        <h2 class="mt-1 text-xl font-black tracking-tight text-foreground md:text-2xl">Connected business lines</h2>
-        <p class="mt-2 max-w-2xl text-sm leading-6 text-foreground/55">
-          Review each WhatsApp number, its setup status, and the assistant currently connected to it.
-        </p>
-      </div>
-      <NuxtLink
-        to="/dashboard/integrations/whatsapp/setup"
-        class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-widest text-black shadow-lg shadow-primary/10 transition-all hover:bg-primary-accent"
-      >
-        <Plus class="h-4 w-4" />
-        Connect Number
-      </NuxtLink>
-    </div>
-
+  <div v-else class="w-full space-y-6 pb-20 pt-5">
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
       <div
         v-for="stat in [
@@ -137,9 +120,18 @@ const deleteAccount = async (id: string) => {
           <h3 class="text-sm font-black uppercase tracking-widest text-foreground">WhatsApp connections</h3>
           <p class="mt-1 text-xs text-foreground/50">Number, assistant link, and setup status in one clean table.</p>
         </div>
-        <span class="rounded-full border border-foreground/10 bg-foreground/[0.02] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-foreground/45">
-          {{ accounts.length }} total
-        </span>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded-full border border-foreground/10 bg-foreground/[0.02] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-foreground/45">
+            {{ accounts.length }} total
+          </span>
+          <NuxtLink
+            to="/dashboard/integrations/whatsapp/setup"
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black shadow-lg shadow-primary/10 transition-all hover:bg-primary-accent"
+          >
+            <Plus class="h-3.5 w-3.5" />
+            Connect Number
+          </NuxtLink>
+        </div>
       </div>
 
       <div class="overflow-x-auto">

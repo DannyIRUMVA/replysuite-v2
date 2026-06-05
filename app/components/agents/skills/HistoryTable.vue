@@ -12,23 +12,26 @@ import {
   Search,
   ArrowLeft,
   Eye,
-  Lock
+  Lock,
+  RotateCcw
 } from 'lucide-vue-next'
 
 const props = defineProps<{
   jobs: any[]
   sources: any[]
   isPremium: boolean
+  rerunningJobId?: string | null
 }>()
 
 const emit = defineEmits<{
   (e: 'view-extraction', job: any): void
   (e: 'delete-source', id: string): void
+  (e: 'rerun-job', job: any): void
 }>()
 
 // Filter & Pagination State
 const searchQuery = ref('')
-const statusFilter = ref<'all' | 'finished' | 'failed' | 'processing'>('all')
+const statusFilter = ref<'all' | 'finished' | 'failed' | 'queued' | 'processing' | 'retry_wait'>('all')
 const typeFilter = ref<'all' | 'url' | 'file' | 'text'>('all')
 const currentPage = ref(1)
 const itemsPerPage = 5
@@ -71,8 +74,25 @@ const getJobSubline = (job: any) => job.progress_label || job.meta?.url || job.m
 const getJobProgress = (job: any) => {
   const value = Math.max(0, Math.min(100, Number(job?.progress || 0)))
   if (value > 0) return value
-  if (['queued', 'processing'].includes(job?.status)) return 5
+  if (['queued', 'processing', 'retry_wait'].includes(job?.status)) return 5
   return 0
+}
+
+const getStatusTone = (status: string) => {
+  if (status === 'finished') return 'bg-primary text-primary'
+  if (status === 'failed') return 'bg-red-500 text-red-500'
+  if (status === 'retry_wait') return 'bg-amber-500 text-amber-500'
+  return 'bg-orange-500 text-orange-500'
+}
+
+const getRetryHint = (job: any) => {
+  const nextRunAfter = job?.meta?.worker?.nextRunAfter
+  if (!nextRunAfter) return getJobSubline(job)
+
+  const retryDate = new Date(nextRunAfter)
+  if (Number.isNaN(retryDate.getTime())) return getJobSubline(job)
+
+  return `Retry scheduled ${retryDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
 }
 </script>
 
@@ -90,7 +110,9 @@ const getJobProgress = (job: any) => {
           <option value="all">ALL STATUS</option>
           <option value="finished">FINISHED</option>
           <option value="failed">FAILED</option>
+          <option value="queued">QUEUED</option>
           <option value="processing">PROCESSING</option>
+          <option value="retry_wait">RETRY WAIT</option>
         </select>
         
         <select v-model="typeFilter" class="bg-foreground/5 border border-foreground/5 rounded-2xl px-4 py-3 text-[10px] font-bold text-foreground/40 uppercase tracking-widest focus:outline-none focus:border-primary/30 transition-all cursor-pointer">
@@ -112,8 +134,8 @@ const getJobProgress = (job: any) => {
 
     <div v-else class="space-y-6">
       <div class="overflow-hidden bg-foreground/[0.01] rounded-2xl border border-foreground/5">
-      <div v-if="jobs.some(job => ['queued', 'processing'].includes(job.status))" class="px-6 py-4 border-b border-foreground/5 bg-primary/5">
-        <p class="text-[10px] font-bold text-primary uppercase tracking-widest italic-none">Live training progress updates are active</p>
+      <div v-if="jobs.some(job => ['queued', 'processing', 'retry_wait'].includes(job.status))" class="px-6 py-4 border-b border-foreground/5 bg-primary/5">
+        <p class="text-[10px] font-bold text-primary uppercase tracking-widest italic-none">Live training progress and retry updates are active</p>
       </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
@@ -154,14 +176,13 @@ const getJobProgress = (job: any) => {
                   <div class="space-y-2 min-w-[140px]">
                     <div class="flex items-center gap-2">
                       <div :class="[
-                        'w-1.5 h-1.5 rounded-full', 
-                        job.status === 'finished' ? 'bg-primary' : 
-                        job.status === 'failed' ? 'bg-red-500' : 'bg-orange-500 animate-pulse'
+                        'w-1.5 h-1.5 rounded-full',
+                        getStatusTone(job.status).split(' ')[0],
+                        ['queued', 'processing'].includes(job.status) ? 'animate-pulse' : ''
                       ]"></div>
                       <span :class="[
-                        'text-[9px] font-bold uppercase tracking-widest italic-none', 
-                        job.status === 'finished' ? 'text-primary' : 
-                        job.status === 'failed' ? 'text-red-500' : 'text-orange-500'
+                        'text-[9px] font-bold uppercase tracking-widest italic-none',
+                        getStatusTone(job.status).split(' ')[1]
                       ]">
                         {{ job.status }}
                       </span>
@@ -170,15 +191,15 @@ const getJobProgress = (job: any) => {
                       </span>
                     </div>
 
-                    <div v-if="job.status === 'processing' || job.status === 'queued'" class="space-y-1">
+                    <div v-if="job.status === 'processing' || job.status === 'queued' || job.status === 'retry_wait'" class="space-y-1">
                       <div class="h-1.5 w-full bg-foreground/5 rounded-full overflow-hidden">
                         <div
-                          class="h-full bg-primary transition-all duration-500"
+                          :class="['h-full transition-all duration-500', job.status === 'retry_wait' ? 'bg-amber-500' : 'bg-primary']"
                           :style="{ width: `${getJobProgress(job)}%` }"
                         ></div>
                       </div>
                       <p class="text-[9px] text-foreground/35 uppercase tracking-widest italic-none truncate">
-                        {{ getJobSubline(job) }}
+                        {{ job.status === 'retry_wait' ? getRetryHint(job) : getJobSubline(job) }}
                       </p>
                     </div>
                   </div>
@@ -191,6 +212,17 @@ const getJobProgress = (job: any) => {
                 </td>
                 <td class="px-6 py-4 text-right">
                   <div class="flex items-center justify-end gap-3">
+                    <button 
+                      v-if="job.status === 'failed'"
+                      @click="emit('rerun-job', job)"
+                      :disabled="props.rerunningJobId === job.id"
+                      class="px-3 py-1.5 flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all border bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500/20 disabled:cursor-wait disabled:opacity-60"
+                    >
+                      <Loader2 v-if="props.rerunningJobId === job.id" class="w-3.5 h-3.5 animate-spin" />
+                      <RotateCcw v-else class="w-3.5 h-3.5" />
+                      Rerun
+                    </button>
+
                     <button 
                       v-if="job.status === 'finished' || job.status === 'failed'"
                       @click="isPremium ? emit('view-extraction', job) : null"
@@ -218,6 +250,7 @@ const getJobProgress = (job: any) => {
   
                     <CheckCircle2 v-if="job.status === 'finished'" class="w-4 h-4 text-primary" />
                     <AlertTriangle v-else-if="job.status === 'failed'" class="w-4 h-4 text-red-500" />
+                    <Clock v-else-if="job.status === 'retry_wait'" class="w-4 h-4 text-amber-500" />
                     <Loader2 v-else class="w-4 h-4 text-orange-500 animate-spin" />
                   </div>
                 </td>

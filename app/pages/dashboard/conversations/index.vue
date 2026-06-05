@@ -341,7 +341,7 @@ const analyzeSelectedAgent = async () => {
 </script>
 
 <template>
-  <div class="space-y-5 pb-24">
+  <div class="space-y-5 pb-24 lg:flex lg:h-[calc(109vh-153px)] lg:min-h-0 lg:flex-col lg:overflow-hidden lg:pb-4">
     <section class="rounded-[22px] border border-foreground/10 bg-foreground/[0.03] p-5 backdrop-blur-xl md:p-6">
       <div class="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_auto] lg:items-end">
         <div>
@@ -402,8 +402,8 @@ const analyzeSelectedAgent = async () => {
       </div>
     </section>
 
-    <section class="grid overflow-hidden rounded-[22px] border border-foreground/10 bg-background shadow-[0_18px_50px_rgba(0,0,0,0.06)] lg:min-h-[72vh] lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[380px_minmax(0,1fr)]">
-      <aside class="flex min-h-[420px] flex-col border-b border-foreground/10 bg-foreground/[0.02] lg:border-b-0 lg:border-r">
+    <section class="grid overflow-hidden rounded-[22px] border border-foreground/10 bg-background shadow-[0_18px_50px_rgba(0,0,0,0.06)] lg:min-h-0 lg:flex-1 lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[380px_minmax(0,1fr)]">
+      <aside class="flex min-h-[420px] flex-col border-b border-foreground/10 bg-foreground/[0.02] lg:min-h-0 lg:border-b-0 lg:border-r">
         <div class="flex items-center justify-between gap-3 border-b border-foreground/10 p-4">
           <div><p class="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Recent sessions</p><p class="mt-1 text-sm font-bold text-foreground">{{ selectedAgentLabel }}</p></div>
           <button @click="refreshSessions()" class="rounded-xl border border-foreground/10 bg-background px-3 py-2 text-foreground/50 transition-all hover:text-primary" aria-label="Refresh conversations"><Activity class="h-4 w-4" /></button>
@@ -423,13 +423,13 @@ const analyzeSelectedAgent = async () => {
         <div v-if="totalPages > 1" class="flex items-center justify-between border-t border-foreground/10 bg-background px-4 py-3"><button @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1" class="rounded-xl border border-foreground/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-foreground/50 disabled:opacity-30">Prev</button><p class="text-xs font-bold text-foreground/55">{{ currentPage }} / {{ totalPages }}</p><button @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage === totalPages" class="rounded-xl border border-foreground/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-foreground/50 disabled:opacity-30">Next</button></div>
       </aside>
 
-      <main class="min-h-[520px] bg-background">
+      <main class="min-h-[520px] bg-background lg:min-h-0 lg:overflow-hidden">
         <template v-if="activeSession">
-          <div class="flex h-full min-h-[520px] flex-col">
+          <div class="flex h-full min-h-[520px] flex-col lg:min-h-0">
             <header class="border-b border-foreground/10 bg-background/95 px-5 py-4 backdrop-blur-xl">
               <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><div class="flex flex-wrap items-center gap-2"><h3 class="text-lg font-black text-foreground">{{ getSessionContact(activeSession) }}</h3><span class="rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-widest" :class="getSessionChannelBadge(activeSession)">{{ getSessionChannelLabel(activeSession) }}</span></div><p class="mt-1 text-xs font-medium text-foreground/50">Selected conversation thread</p></div><div v-if="activeSessionFacts" class="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-widest text-foreground/40"><span class="rounded-full border border-foreground/10 bg-foreground/[0.02] px-3 py-1.5">{{ activeSessionFacts.messageCount }} messages</span><span class="rounded-full border border-foreground/10 bg-foreground/[0.02] px-3 py-1.5">{{ formatDate(activeSessionFacts.lastActivity) }}</span></div></div>
             </header>
-            <div class="flex-1 overflow-y-auto bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_55%)] px-4 py-6 sm:px-6">
+            <div class="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_55%)] px-4 py-6 sm:px-6">
               <div v-if="activeSession.chat_messages?.length" class="mx-auto max-w-4xl space-y-5">
                 <div v-for="msg in activeSession.chat_messages" :key="msg.id" class="flex" :class="msg.role === 'assistant' ? 'justify-start' : 'justify-end'"><div class="max-w-[92%] sm:max-w-[76%]"><div class="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest" :class="msg.role === 'assistant' ? 'text-foreground/40' : 'justify-end text-primary'"><template v-if="msg.role === 'assistant'"><Bot class="h-3.5 w-3.5" />Assistant</template><template v-else>Visitor<User class="h-3.5 w-3.5" /></template></div><div class="rounded-2xl border px-4 py-3 text-sm leading-7 shadow-sm" :class="msg.role === 'assistant' ? 'border-foreground/10 bg-foreground/[0.03] text-foreground/80 rounded-tl-sm' : 'border-primary/20 bg-primary text-black rounded-tr-sm'">{{ msg.content }}</div><p class="mt-2 text-[10px] font-black uppercase tracking-widest text-foreground/35" :class="msg.role === 'assistant' ? '' : 'text-right'">{{ formatLongDate(msg.created_at) }}</p></div></div>
               </div>

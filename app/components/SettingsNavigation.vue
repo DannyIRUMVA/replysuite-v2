@@ -5,6 +5,12 @@ import {
   Shield
 } from 'lucide-vue-next'
 
+const props = withDefaults(defineProps<{
+  alignOnLg?: boolean
+}>(), {
+  alignOnLg: false
+})
+
 const route = useRoute()
 
 const tabs = [
@@ -22,8 +28,15 @@ const isActive = (href: string) => {
 </script>
 
 <template>
-  <aside class="rounded-[22px] border border-foreground/10 bg-foreground/[0.02] p-2 xl:sticky xl:top-24 xl:self-start">
-    <nav class="grid gap-1 sm:grid-cols-3 xl:grid-cols-1" aria-label="Settings sections">
+  <aside
+    class="rounded-[22px] border border-foreground/10 bg-foreground/[0.02] p-2"
+    :class="props.alignOnLg ? 'lg:sticky lg:top-24 lg:self-start' : 'xl:sticky xl:top-24 xl:self-start'"
+  >
+    <nav
+      class="grid gap-1 sm:grid-cols-3"
+      :class="props.alignOnLg ? 'lg:grid-cols-1' : 'xl:grid-cols-1'"
+      aria-label="Settings sections"
+    >
       <NuxtLink 
         v-for="tab in tabs" 
         :key="tab.id" 
