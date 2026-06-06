@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: job, error: jobError } = await supabase
     .from('training_jobs')
-    .select('id, user_id, chatbot_id, data_source_id, status, job_type, meta')
+    .select('id, user_id, chatbot_id, data_source_id, status, job_type, meta, started_at')
     .eq('id', jobId)
     .eq('user_id', userId)
     .maybeSingle()
@@ -34,11 +34,16 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Training job not found' })
   }
 
-  if (job.status !== 'failed') {
-    throw createError({ statusCode: 409, statusMessage: 'Only failed training jobs can be rerun.' })
-  }
-
   const now = new Date().toISOString()
+  const workerMeta = typeof (job.meta as any)?.worker === 'object' && (job.meta as any)?.worker ? (job.meta as any).worker : {}
+  const heartbeat = workerMeta.lastHeartbeatAt || (job as any).started_at || null
+  const heartbeatAgeMs = heartbeat ? Date.now() - Date.parse(heartbeat) : Number.POSITIVE_INFINITY
+  const isStaleProcessing = job.status === 'processing' && (!Number.isFinite(heartbeatAgeMs) || heartbeatAgeMs > 15 * 60 * 1000)
+  const canRerun = job.status === 'failed' || isStaleProcessing
+
+  if (!canRerun) {
+    throw createError({ statusCode: 409, statusMessage: 'Only failed or stalled training jobs can be rerun.' })
+  }
   const meta = typeof job.meta === 'object' && job.meta !== null ? job.meta as Record<string, any> : {}
   const resetMeta = {
     ...meta,
@@ -73,7 +78,7 @@ export default defineEventHandler(async (event) => {
     .update({
       status: 'queued',
       progress: 5,
-      progress_label: 'Queued for rerun',
+      progress_label: isStaleProcessing ? 'Queued to resume stalled training' : 'Queued for rerun',
       error_message: null,
       started_at: null,
       finished_at: null,
@@ -81,13 +86,13 @@ export default defineEventHandler(async (event) => {
     })
     .eq('id', job.id)
     .eq('user_id', userId)
-    .eq('status', 'failed')
+    .in('status', ['failed', 'processing'])
     .select('id')
     .maybeSingle()
 
   if (updateError || !updatedJob?.id) {
     console.error('[Training Rerun] Job reset failed:', updateError)
-    throw createError({ statusCode: 500, statusMessage: 'Could not queue failed training job again.' })
+    throw createError({ statusCode: 500, statusMessage: 'Could not queue training job again.' })
   }
 
   const dispatch = await dispatchTrainingJob(event, updatedJob.id)
@@ -98,7 +103,7 @@ export default defineEventHandler(async (event) => {
     dispatched: dispatch.dispatched,
     jobId: updatedJob.id,
     message: dispatch.dispatched
-      ? 'Failed training job queued again. Processing will continue in the background.'
-      : 'Failed training job queued again. The worker endpoint is not configured yet, so it remains queued.',
+      ? `${isStaleProcessing ? 'Stalled' : 'Failed'} training job queued again. Processing will continue in the background.`
+      : `${isStaleProcessing ? 'Stalled' : 'Failed'} training job queued again. The worker endpoint is not configured yet, so it remains queued.`,
   }
 })

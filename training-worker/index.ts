@@ -484,18 +484,15 @@ async function processUrlJob(env: Env, supabase: ReturnType<typeof getSupabase>,
     .join('\n\n---\n\n')
     .slice(0, getMaxTextContent(env))
 
-  const chunks = pages.flatMap((page) =>
-    chunkText(page.text).map((content, index) => ({
-      content,
-      metadata: {
-        page_url: page.url,
-        page_title: page.title,
-        root_url: startUrl,
-        type: 'url',
-      },
-      chunkIndex: index,
-    }))
-  )
+  const chunks = chunkText(combinedText).map((content, index) => ({
+    content,
+    metadata: {
+      root_url: startUrl,
+      pages: pages.map((page) => ({ url: page.url, title: page.title })).slice(0, 20),
+      type: 'url',
+    },
+    chunkIndex: index,
+  }))
 
   console.log('[Training Worker] Starting embedding write', { jobId: job.id, chunkCount: chunks.length })
 
@@ -763,6 +760,21 @@ async function writeEmbeddingsForSource(
         embeddingReset: true,
       }),
     })
+  }
+
+  if (Date.now() + 3_000 > deadline) {
+    await pauseJobForRetry(env, job, {
+      progress: 93,
+      label: `Finalizing after ${chunks.length}/${chunks.length} chunks`,
+      checkpoint: {
+        stage: 'finalize',
+        nextChunkIndex: chunks.length,
+        totalChunks: chunks.length,
+        embeddingReset: true,
+      },
+      retryAfterSeconds: isFreeMode(env) ? 45 : 10,
+    })
+    return
   }
 
   await finalizeTrainingJob(env, supabase, job, source, rawText, totalBytes, chunks.length, options)

@@ -73,7 +73,7 @@ const fetchData = async () => {
     const [chatbotRes, sourcesRes, jobsRes, usageRes, embeddingsRes] = await Promise.all([
       supabase.from('chatbots').select('*').eq('id', chatbotId).single(),
       supabase.from('data_sources').select('*').eq('chatbot_id', chatbotId),
-      supabase.from('training_jobs').select('*').eq('chatbot_id', chatbotId),
+      supabase.from('training_jobs').select('*').eq('chatbot_id', chatbotId).order('started_at', { ascending: false, nullsFirst: false }),
       $fetch(`/api/agents/usage?chatbotId=${chatbotId}`),
       supabase.from('embeddings').select('*', { count: 'exact', head: true }).eq('chatbot_id', chatbotId)
     ])
@@ -81,7 +81,7 @@ const fetchData = async () => {
     if (chatbotRes.error) throw chatbotRes.error
     chatbot.value = chatbotRes.data
     sources.value = (sourcesRes.data || []).reverse()
-    trainingJobs.value = (jobsRes.data || []).reverse()
+    trainingJobs.value = jobsRes.data || []
     totalTrainings.value = trainingJobs.value.length
     monthlyUsage.value = (usageRes as any).usage || 0
     chatbot.value.embeddings_count = embeddingsRes.count || 0
@@ -241,7 +241,7 @@ const handleRerunJob = async (job: any) => {
       body: { jobId: job.id }
     })
 
-    notify.success(res?.message || 'Failed training job queued again.')
+    notify.success(res?.message || 'Training job queued again.')
     await fetchData()
   } catch (err: any) {
     console.error('[Training Rerun Error]', err)
