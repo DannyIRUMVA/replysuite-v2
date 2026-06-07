@@ -174,7 +174,7 @@ const limitPercent = (used: number, limit: number) => {
 
 <template>
   <div class="mt-4 space-y-5 pb-20">
-    <section v-if="loading" class="glass-card border-foreground/5 bg-foreground/[0.02] p-5 sm:p-6">
+    <section v-if="loading" class="rounded-[1.65rem] bg-background-card/80 p-5 shadow-sm shadow-black/10 ring-1 ring-foreground/[0.06] sm:p-6">
       <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div class="flex min-w-0 items-center gap-4">
           <Skeleton width="56px" height="56px" rounded="18px" />
@@ -190,22 +190,21 @@ const limitPercent = (used: number, limit: number) => {
       </div>
     </section>
 
-    <section v-else class="glass-card overflow-hidden border-foreground/5 bg-foreground/[0.02] p-0">
+    <section v-else class="overflow-hidden rounded-[1.75rem] bg-background-card/80 shadow-sm shadow-black/10 ring-1 ring-foreground/[0.06]">
       <div class="grid gap-0 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <div class="relative overflow-hidden p-5 sm:p-6">
-          <div class="absolute -left-10 -top-16 h-44 w-44 rounded-full bg-primary/10 blur-3xl"></div>
-          <div class="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div class="p-5 sm:p-6">
+          <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex min-w-0 items-center gap-4">
-              <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-lg font-black text-primary shadow-sm shadow-primary/10">
+              <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.15rem] bg-foreground/[0.06] text-lg font-black text-foreground ring-1 ring-foreground/[0.08]">
                 {{ accountInitials }}
               </div>
               <div class="min-w-0">
                 <div class="mb-1 flex flex-wrap items-center gap-2">
-                  <span class="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-primary">
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-foreground/[0.06] px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-foreground/65 ring-1 ring-foreground/[0.06]">
                     <ShieldCheck class="h-3 w-3" />
                     {{ isVerified ? 'Verified' : 'Unverified' }}
                   </span>
-                  <span class="inline-flex rounded-full border border-foreground/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-foreground/45">{{ planName }}</span>
+                  <span class="inline-flex rounded-full bg-foreground/[0.04] px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-foreground/45 ring-1 ring-foreground/[0.06]">{{ planName }}</span>
                 </div>
                 <h1 class="truncate text-2xl font-black tracking-tight text-foreground sm:text-3xl">{{ accountName }}</h1>
                 <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-foreground/50">
@@ -216,34 +215,34 @@ const limitPercent = (used: number, limit: number) => {
             </div>
 
             <div class="grid grid-cols-2 gap-2 sm:w-[250px]">
-              <NuxtLink to="/dashboard/agents" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-3 text-[10px] font-black uppercase tracking-widest text-black transition hover:brightness-95">
+              <NuxtLink to="/dashboard/agents" class="inline-flex h-10 items-center justify-center gap-2 rounded-[0.95rem] bg-foreground px-3 text-[10px] font-black uppercase tracking-widest text-background transition hover:bg-foreground/90">
                 Assistants
                 <ArrowUpRight class="h-3.5 w-3.5" />
               </NuxtLink>
-              <NuxtLink to="/dashboard/settings/account" class="inline-flex h-10 items-center justify-center rounded-xl border border-foreground/10 px-3 text-[10px] font-black uppercase tracking-widest text-foreground/55 transition hover:border-primary/30 hover:text-primary">
+              <NuxtLink to="/dashboard/settings/account" class="inline-flex h-10 items-center justify-center rounded-[0.95rem] bg-foreground/[0.04] px-3 text-[10px] font-black uppercase tracking-widest text-foreground/55 ring-1 ring-foreground/[0.06] transition hover:bg-foreground/[0.07] hover:text-foreground">
                 Account
               </NuxtLink>
             </div>
           </div>
         </div>
 
-        <div class="border-t border-foreground/8 bg-background/45 p-5 lg:border-l lg:border-t-0">
+        <div class="bg-foreground/[0.025] p-5 ring-1 ring-inset ring-foreground/[0.04] lg:rounded-l-[1.5rem]">
           <div class="mb-4 flex items-center justify-between gap-4">
             <div>
-              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Setup health</p>
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Setup health</p>
               <p class="mt-1 text-sm font-black text-foreground">{{ setupScore }}% ready</p>
             </div>
             <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-foreground/5 text-foreground/45">
               <Gauge class="h-5 w-5" />
             </div>
           </div>
-          <div class="mb-4 h-1.5 overflow-hidden rounded-full bg-foreground/5">
-            <div class="h-full rounded-full bg-primary transition-all" :style="{ width: `${setupScore}%` }"></div>
+          <div class="mb-4 h-1.5 overflow-hidden rounded-full bg-foreground/[0.06]">
+            <div class="h-full rounded-full bg-foreground/70 transition-all" :style="{ width: `${setupScore}%` }"></div>
           </div>
           <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-            <div v-for="item in setupChecklist" :key="item.label" class="flex items-center justify-between gap-3 rounded-xl border border-foreground/8 bg-background/55 px-3 py-2.5">
+            <div v-for="item in setupChecklist" :key="item.label" class="flex items-center justify-between gap-3 rounded-[1rem] bg-background/45 px-3 py-2.5 ring-1 ring-foreground/[0.05]">
               <span class="text-xs font-bold text-foreground/60">{{ item.label }}</span>
-              <CheckCircle2 v-if="item.done" class="h-4 w-4 shrink-0 text-primary" />
+              <CheckCircle2 v-if="item.done" class="h-4 w-4 shrink-0 text-foreground/65" />
               <span v-else class="h-4 w-4 shrink-0 rounded-full border border-foreground/15"></span>
             </div>
           </div>
@@ -252,7 +251,7 @@ const limitPercent = (used: number, limit: number) => {
     </section>
 
     <div v-if="loading" class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <div v-for="i in 4" :key="i" class="glass-card border-foreground/5 bg-foreground/[0.02] p-5">
+      <div v-for="i in 4" :key="i" class="rounded-[1.35rem] bg-background-card/75 p-5 shadow-sm shadow-black/5 ring-1 ring-foreground/[0.06]">
         <div class="mb-5 flex items-center justify-between">
           <Skeleton width="42px" height="42px" rounded="12px" />
           <Skeleton width="44px" height="12px" />
@@ -263,13 +262,12 @@ const limitPercent = (used: number, limit: number) => {
     </div>
 
     <div v-else class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <div v-for="stat in stats" :key="stat.name" class="glass-card group relative overflow-hidden border-foreground/5 bg-foreground/[0.02] p-5 transition-all hover:border-primary/30">
-        <div class="absolute -bottom-6 -right-6 h-20 w-20 rounded-full bg-primary/5 blur-2xl transition group-hover:bg-primary/10"></div>
-        <div class="relative mb-4 flex items-center justify-between">
-          <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-foreground/5 text-foreground/45 transition group-hover:bg-primary/10 group-hover:text-primary">
+      <div v-for="stat in stats" :key="stat.name" class="group rounded-[1.35rem] bg-background-card/75 p-5 shadow-sm shadow-black/5 ring-1 ring-foreground/[0.06] transition hover:bg-foreground/[0.025]">
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex h-10 w-10 items-center justify-center rounded-[1rem] bg-foreground/[0.05] text-foreground/45 transition group-hover:text-foreground/70">
             <component :is="getIcon(stat.id)" class="h-5 w-5" />
           </div>
-          <span :class="stat.changeType === 'increase' ? 'text-green-500' : 'text-foreground/45'" class="text-[10px] font-black uppercase tracking-widest">{{ stat.change }}</span>
+          <span class="text-[10px] font-black uppercase tracking-widest text-foreground/40">{{ stat.change }}</span>
         </div>
         <p class="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/45">{{ stat.name }}</p>
         <p class="mt-2 text-3xl font-black tracking-tight text-foreground">{{ stat.value }}</p>
@@ -277,37 +275,37 @@ const limitPercent = (used: number, limit: number) => {
     </div>
 
     <div v-if="loading" class="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
-      <div class="glass-card min-h-[360px] p-6">
+      <div class="rounded-[1.5rem] bg-background-card/75 p-6 ring-1 ring-foreground/[0.06]">
         <Skeleton width="12rem" height="1.4rem" class="mb-6" />
         <div class="space-y-4">
           <Skeleton v-for="row in 5" :key="row" height="4rem" radius="1rem" />
         </div>
       </div>
-      <div class="glass-card p-6">
+      <div class="rounded-[1.5rem] bg-background-card/75 p-6 ring-1 ring-foreground/[0.06]">
         <Skeleton width="9rem" height="1.2rem" class="mb-6" />
         <Skeleton v-for="row in 4" :key="row" height="4.5rem" radius="1rem" class="mb-4" />
       </div>
     </div>
 
     <div v-else class="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
-      <section class="glass-card border-foreground/5 bg-foreground/[0.02] p-5 sm:p-6">
+      <section class="rounded-[1.5rem] bg-background-card/75 p-5 shadow-sm shadow-black/5 ring-1 ring-foreground/[0.06] sm:p-6">
         <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Latest conversation</p>
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Latest conversations</p>
             <h2 class="mt-2 text-xl font-black tracking-tight text-foreground">Recent customer chats</h2>
           </div>
-          <NuxtLink to="/dashboard/conversations" class="inline-flex items-center gap-2 rounded-xl border border-foreground/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-foreground/55 transition hover:border-primary/30 hover:text-primary">
+          <NuxtLink to="/dashboard/conversations" class="inline-flex items-center gap-2 rounded-[0.95rem] bg-foreground/[0.04] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-foreground/55 ring-1 ring-foreground/[0.06] transition hover:bg-foreground/[0.07] hover:text-foreground">
             Open inbox
             <ArrowUpRight class="h-3.5 w-3.5" />
           </NuxtLink>
         </div>
 
         <div v-if="recentSessions && recentSessions.length" class="space-y-3">
-          <NuxtLink v-for="session in recentSessions" :key="session.id" to="/dashboard/conversations" class="group block rounded-2xl border border-foreground/8 bg-background/55 p-4 transition hover:border-primary/25 hover:bg-primary/[0.03]">
+          <NuxtLink v-for="session in recentSessions" :key="session.id" to="/dashboard/conversations" class="group block rounded-[1.2rem] bg-background/45 p-4 ring-1 ring-foreground/[0.05] transition hover:bg-foreground/[0.035]">
             <div class="flex items-start justify-between gap-4">
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
-                  <span class="h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_rgba(212,175,55,0.6)]"></span>
+                  <span class="h-2 w-2 rounded-full bg-foreground/30"></span>
                   <p class="truncate text-sm font-black text-foreground">{{ session.chatbots?.name || 'Assistant conversation' }}</p>
                 </div>
                 <p class="mt-2 line-clamp-2 text-sm leading-relaxed text-foreground/55">
@@ -322,11 +320,11 @@ const limitPercent = (used: number, limit: number) => {
           </NuxtLink>
         </div>
 
-        <div v-else class="flex min-h-[300px] flex-col items-center justify-center rounded-3xl border border-dashed border-foreground/10 bg-background/40 p-8 text-center">
+        <div v-else class="flex min-h-[300px] flex-col items-center justify-center rounded-[1.4rem] border border-dashed border-foreground/[0.08] bg-background/35 p-8 text-center">
           <MessageSquare class="mb-4 h-12 w-12 text-foreground/20" />
           <h3 class="text-lg font-black text-foreground">No conversations yet</h3>
           <p class="mt-2 max-w-md text-sm leading-relaxed text-foreground/50">Train your assistant and connect a website widget. New customer conversations will appear here first.</p>
-          <NuxtLink to="/dashboard/agents/skills" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-[10px] font-black uppercase tracking-widest text-black transition hover:brightness-95">
+          <NuxtLink to="/dashboard/agents/skills" class="mt-5 inline-flex items-center gap-2 rounded-[0.95rem] bg-foreground px-5 py-3 text-[10px] font-black uppercase tracking-widest text-background transition hover:bg-foreground/90">
             Train assistant
             <ChevronRight class="h-4 w-4" />
           </NuxtLink>
@@ -334,43 +332,43 @@ const limitPercent = (used: number, limit: number) => {
       </section>
 
       <aside class="space-y-6">
-        <section class="glass-card border-foreground/5 bg-foreground/[0.02] p-5 sm:p-6">
+        <section class="rounded-[1.5rem] bg-background-card/75 p-5 shadow-sm shadow-black/5 ring-1 ring-foreground/[0.06] sm:p-6">
           <div class="mb-5 flex items-center justify-between gap-4">
             <div>
-              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Limits comparison</p>
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Limits comparison</p>
               <h2 class="mt-2 text-xl font-black tracking-tight text-foreground">Plan usage</h2>
             </div>
-            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <div class="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-foreground/[0.05] text-foreground/45">
               <Gauge class="h-5 w-5" />
             </div>
           </div>
 
           <div class="space-y-4">
-            <div v-for="row in limitRows" :key="row.label" class="rounded-2xl border border-foreground/8 bg-background/55 p-4">
+            <div v-for="row in limitRows" :key="row.label" class="rounded-[1.15rem] bg-background/45 p-4 ring-1 ring-foreground/[0.05]">
               <div class="mb-3 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-2">
                   <Lock v-if="row.locked" class="h-3.5 w-3.5 text-foreground/35" />
-                  <CheckCircle2 v-else class="h-3.5 w-3.5 text-primary" />
+                  <CheckCircle2 v-else class="h-3.5 w-3.5 text-foreground/55" />
                   <p class="text-xs font-black uppercase tracking-widest text-foreground/60">{{ row.label }}</p>
                 </div>
                 <p class="text-xs font-black text-foreground">{{ row.used }} / {{ formatLimit(row.limit) }}</p>
               </div>
               <div class="h-1.5 overflow-hidden rounded-full bg-foreground/5">
-                <div class="h-full rounded-full transition-all" :class="row.locked ? 'bg-foreground/20' : 'bg-primary'" :style="{ width: `${limitPercent(row.used, row.limit)}%` }"></div>
+                <div class="h-full rounded-full transition-all" :class="row.locked ? 'bg-foreground/[0.18]' : 'bg-foreground/65'" :style="{ width: `${limitPercent(row.used, row.limit)}%` }"></div>
               </div>
             </div>
           </div>
 
-          <NuxtLink to="/dashboard/pricing" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-foreground/10 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/55 transition hover:border-primary/30 hover:text-primary">
+          <NuxtLink to="/dashboard/pricing" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] bg-foreground/[0.04] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/55 ring-1 ring-foreground/[0.06] transition hover:bg-foreground/[0.07] hover:text-foreground">
             Compare plans
             <ChevronRight class="h-4 w-4" />
           </NuxtLink>
         </section>
 
-        <section class="glass-card border-foreground/5 bg-foreground/[0.02] p-5 sm:p-6">
+        <section class="rounded-[1.5rem] bg-background-card/75 p-5 shadow-sm shadow-black/5 ring-1 ring-foreground/[0.06] sm:p-6">
           <div class="mb-5 flex items-center justify-between gap-4">
             <div>
-              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Activity</p>
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Activity</p>
               <h2 class="mt-2 text-lg font-black tracking-tight text-foreground">Recent updates</h2>
             </div>
             <Activity class="h-5 w-5 text-foreground/35" />
@@ -379,7 +377,7 @@ const limitPercent = (used: number, limit: number) => {
           <div v-if="activities && activities.length" class="space-y-4">
             <div v-for="activity in activities" :key="activity.id" class="flex gap-3">
               <div class="flex flex-col items-center pt-1">
-                <div class="h-2 w-2 rounded-full bg-primary"></div>
+                <div class="h-2 w-2 rounded-full bg-foreground/35"></div>
                 <div class="my-2 w-px flex-1 bg-foreground/10"></div>
               </div>
               <div class="pb-2">
@@ -390,7 +388,7 @@ const limitPercent = (used: number, limit: number) => {
           </div>
 
           <div v-else-if="activitiesLoading" class="flex items-center justify-center py-10">
-            <div class="h-8 w-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary"></div>
+            <div class="h-8 w-8 animate-spin rounded-full border-2 border-foreground/10 border-t-foreground/60"></div>
           </div>
           <div v-else class="py-10 text-center">
             <Activity class="mx-auto mb-3 h-10 w-10 text-foreground/15" />
