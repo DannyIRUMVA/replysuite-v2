@@ -72,25 +72,33 @@ export default defineEventHandler(async (event) => {
             if (val.messages && val.messages.length > 0) {
               const msg = val.messages[0]
               
-              if (msg.type === 'text') {
-                const messageData = {
-                  waba_id: val.metadata.display_phone_number,
-                  phone_number_id: val.metadata.phone_number_id,
-                  from_number: msg.from,
-                   text: msg.text.body,
-                   message_id: msg.id,
-                   customer_name: val.contacts?.[0]?.profile?.name || msg.from,
-                   _event: event
-                 }
-                
-                console.log(`[WhatsApp Webhook] Incoming message to ${messageData.phone_number_id} from ${messageData.from_number}: "${messageData.text}"`)
-                
-                // Throw it to the background automation worker
-                const supabase = serverSupabaseServiceRole(event)
-                event.waitUntil(processWhatsappMessage(supabase, messageData).catch(err => {
-                  console.error('[WhatsApp Webhook Background Error]', err)
-                }))
+              const text =
+                msg.type === 'text'
+                  ? msg.text?.body
+                  : msg.type === 'interactive'
+                    ? (msg.interactive?.button_reply?.title || msg.interactive?.list_reply?.title || msg.interactive?.button_reply?.id || msg.interactive?.list_reply?.id)
+                    : msg.type === 'button'
+                      ? (msg.button?.text || msg.button?.payload)
+                      : msg[msg.type]?.caption || `[${msg.type || 'unknown'} message received]`
+
+              const messageData = {
+                waba_id: val.metadata.display_phone_number,
+                phone_number_id: val.metadata.phone_number_id,
+                from_number: msg.from,
+                text,
+                message_id: msg.id,
+                customer_name: val.contacts?.[0]?.profile?.name || msg.from,
+                message_type: msg.type,
+                _event: event
               }
+              
+              console.log(`[WhatsApp Webhook] Incoming ${messageData.message_type} message to ${messageData.phone_number_id} from ${messageData.from_number}: "${messageData.text}"`)
+              
+              // Throw it to the background automation worker
+              const supabase = serverSupabaseServiceRole(event)
+              event.waitUntil(processWhatsappMessage(supabase, messageData).catch(err => {
+                console.error('[WhatsApp Webhook Background Error]', err)
+              }))
             }
           }
         }

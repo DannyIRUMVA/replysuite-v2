@@ -12,8 +12,24 @@ import {
 } from '../../conversation-intelligence'
 import { safeLoadContactMemory, safeUpsertContactMemory } from '../../contact-memory'
 
+const normalizeWhatsappMessageIds = (metadata: any) => {
+  const ids = metadata?.whatsapp_message_ids
+  return Array.isArray(ids) ? ids.filter(Boolean).map(String) : []
+}
+
+const mergeWhatsappSessionMetadata = (metadata: any, updates: Record<string, any>) => ({
+  ...(metadata || {}),
+  type: 'whatsapp',
+  channel: 'whatsapp',
+  ...updates,
+})
+
 export const processWhatsappMessage = async (supabase: any, messageData: any) => {
   const { phone_number_id, from_number, text, customer_name, message_id } = messageData
+  let chatSession: any = null
+  let sessionMetadata: any = null
+  let inboundAlreadyRecorded = false
+  let inboundRecorded = false
 
   console.log(`\n🚀 [WhatsApp Automation] START: Processing message from ${customer_name} (${from_number})`)
   console.log(`   📝 Text: "${text}"`)
@@ -41,6 +57,77 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
     return
   }
   console.log(`   ✅ Account Found: ${waAccount.phone_number} (Status: ${waAccount.status})`)
+
+  // Persist inbound WhatsApp messages before AI generation so conversations are not lost
+  // when plan limits, provider errors, or Meta retries interrupt the reply path.
+  try {
+    const { data: existingSessions } = await supabase
+      .from('chat_sessions')
+      .select('id, metadata')
+      .eq('chatbot_id', waAccount.chatbot_id)
+      .contains('metadata', { phone: from_number })
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (existingSessions && existingSessions.length > 0) {
+      chatSession = existingSessions[0]
+      sessionMetadata = chatSession.metadata || {}
+    } else {
+      const initialMetadata = mergeWhatsappSessionMetadata(null, {
+        phone: from_number,
+        username: customer_name,
+        whatsapp_phone_number_id: phone_number_id,
+        whatsapp_message_ids: [],
+      })
+
+      const { data: newSession, error: sessErr } = await supabase
+        .from('chat_sessions')
+        .insert({ chatbot_id: waAccount.chatbot_id, metadata: initialMetadata })
+        .select('id, metadata')
+        .single()
+
+      if (sessErr) throw sessErr
+      chatSession = newSession
+      sessionMetadata = newSession?.metadata || initialMetadata
+    }
+
+    const recordedMessageIds = normalizeWhatsappMessageIds(sessionMetadata)
+    inboundAlreadyRecorded = !!message_id && recordedMessageIds.includes(String(message_id))
+
+    if (inboundAlreadyRecorded) {
+      console.warn(`⚠️ [WhatsApp Automation] Duplicate inbound message skipped: ${message_id}`)
+      return
+    }
+
+    const { error: inboundErr } = await supabase
+      .from('chat_messages')
+      .insert({ session_id: chatSession.id, role: 'user', content: text })
+
+    if (inboundErr) throw inboundErr
+    inboundRecorded = true
+
+    const nextMessageIds = message_id
+      ? [...recordedMessageIds, String(message_id)].slice(-50)
+      : recordedMessageIds
+
+    sessionMetadata = mergeWhatsappSessionMetadata(sessionMetadata, {
+      phone: from_number,
+      username: customer_name,
+      whatsapp_phone_number_id: phone_number_id,
+      last_inbound_at: new Date().toISOString(),
+      last_inbound_text: text,
+      whatsapp_message_ids: nextMessageIds,
+    })
+
+    await supabase
+      .from('chat_sessions')
+      .update({ metadata: sessionMetadata })
+      .eq('id', chatSession.id)
+
+    console.log(`   ✅ Inbound WhatsApp message recorded in Session: ${chatSession.id}`)
+  } catch (err) {
+    console.error('❌ [WhatsApp Debug] Failed to record inbound message:', err)
+  }
 
   // 2. Check User Plan & Limits
   const { data: profile } = await supabase
@@ -125,7 +212,6 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
   // 4. Generate AI Reply (Agentic Loop)
   const conversationBehavior = buildConversationSettingsPrompt(conversationSettings, 'whatsapp')
 
-  let sessionMetadata: any = null
   let contactMemory: any = null
 
   const systemPromptBase = `
@@ -136,7 +222,6 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
   `
 
   let replyText = ''
-  let chatSession: any = null
   try {
     const { data: chatbot } = await supabase
       .from('chatbots')
@@ -206,8 +291,12 @@ IMPORTANT INSTRUCTIONS:
 2. Do not include markdown headers (#) or markdown horizontal lines (---).
 3. Prioritize [ADDITIONAL CONTEXT] for factual accuracy over base instructions.`
 
-    // Add current message
-    messagesHistory.push({ role: 'user', content: text })
+    // Use the persisted inbound message for context. If recording failed, still include
+    // the current text so the assistant can answer.
+    const latestUserMessage = [...messagesHistory].reverse().find((msg: any) => msg.role === 'user')
+    if (!latestUserMessage || latestUserMessage.content !== text) {
+      messagesHistory.push({ role: 'user', content: text })
+    }
 
     replyText = await runAgentCycle(messagesHistory, { 
       systemPrompt, 
@@ -233,9 +322,16 @@ IMPORTANT INSTRUCTIONS:
     console.log(`\n[WhatsApp Debug] Saving chat into chat_sessions...`)
     try {
       if (!chatSession) {
+        const fallbackMetadata = mergeWhatsappSessionMetadata(null, {
+          phone: from_number,
+          username: customer_name,
+          whatsapp_phone_number_id: phone_number_id,
+          whatsapp_message_ids: message_id ? [String(message_id)] : [],
+        })
+
         const { data: newSession, error: sessErr } = await supabase.from('chat_sessions').insert({
           chatbot_id: waAccount.chatbot_id,
-          metadata: { type: 'whatsapp', phone: from_number, username: customer_name }
+          metadata: fallbackMetadata
         }).select('id, metadata').single()
         
         if (sessErr) {
@@ -243,13 +339,15 @@ IMPORTANT INSTRUCTIONS:
            throw sessErr
         }
         chatSession = newSession
-        sessionMetadata = newSession?.metadata || null
+        sessionMetadata = newSession?.metadata || fallbackMetadata
       }
 
-      const { error: msgErr } = await supabase.from('chat_messages').insert([
-        { session_id: chatSession.id, role: 'user', content: text },
+      const messagesToInsert = [
+        ...(!inboundRecorded ? [{ session_id: chatSession.id, role: 'user', content: text }] : []),
         { session_id: chatSession.id, role: 'assistant', content: replyText }
-      ])
+      ]
+
+      const { error: msgErr } = await supabase.from('chat_messages').insert(messagesToInsert)
       
       if (msgErr) {
           console.error('❌ Failed to insert WhatsApp chat_messages:', msgErr)
