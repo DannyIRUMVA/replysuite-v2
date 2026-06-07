@@ -3,12 +3,14 @@ import {
   Activity,
   ArrowUpRight,
   Bot,
+  Building2,
   CheckCircle2,
   ChevronRight,
   Gauge,
   Globe,
   Lock,
   MessageSquare,
+  ShieldCheck,
   Zap,
 } from 'lucide-vue-next'
 import Skeleton from '~~/app/components/Skeleton.vue'
@@ -17,7 +19,7 @@ definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 
 useHead({ title: 'Dashboard' })
 
-const { isLoading, userId, limits, planSlug } = useAuth()
+const { isLoading, userId, profile, plan, limits, planSlug, isVerified } = useAuth()
 const supabase = useSupabaseClient()
 const isMounted = ref(false)
 onMounted(() => { isMounted.value = true })
@@ -71,7 +73,7 @@ const { data: recentSessions, pending: sessionsLoading } = useAsyncData('dashboa
     .select('id, created_at, metadata, chatbots(name), chat_messages(content, role, created_at)')
     .in('chatbot_id', botIds)
     .order('created_at', { ascending: false })
-    .limit(5)
+    .limit(3)
 
   return (data || []).map((session: any) => {
     const messages = Array.isArray(session.chat_messages) ? session.chat_messages : []
@@ -98,6 +100,24 @@ const { data: activities, pending: activitiesLoading } = useAsyncData('dashboard
 
   return data || []
 }, { watch: [userId] })
+
+const accountName = computed(() => profile.value?.company_name || profile.value?.full_name || 'Your account')
+const accountInitials = computed(() => {
+  const words = String(accountName.value || 'RS').trim().split(/\s+/).slice(0, 2)
+  return words.map((word) => word[0]?.toUpperCase()).join('') || 'RS'
+})
+const planName = computed(() => plan.value?.name || (planSlug.value ? `${String(planSlug.value).charAt(0).toUpperCase()}${String(planSlug.value).slice(1)} plan` : 'Current plan'))
+const setupChecklist = computed(() => [
+  { label: 'Account verified', done: isVerified.value },
+  { label: 'Assistant created', done: (overview.value?.bots.length || 0) > 0 },
+  { label: 'Website domain added', done: (overview.value?.websiteDomainCount || 0) > 0 },
+  { label: 'First conversation captured', done: (overview.value?.sessionCount || 0) > 0 },
+])
+const setupScore = computed(() => {
+  const items = setupChecklist.value
+  if (!items.length) return 0
+  return Math.round((items.filter((item) => item.done).length / items.length) * 100)
+})
 
 const stats = computed(() => [
   { id: 'messages', name: 'Conversations', value: (overview.value?.sessionCount || 0).toLocaleString(), change: 'Live', changeType: (overview.value?.sessionCount || 0) > 0 ? 'increase' : 'neutral' },
@@ -153,7 +173,84 @@ const limitPercent = (used: number, limit: number) => {
 </script>
 
 <template>
-  <div class="mt-4 space-y-6 pb-20">
+  <div class="mt-4 space-y-5 pb-20">
+    <section v-if="loading" class="glass-card border-foreground/5 bg-foreground/[0.02] p-5 sm:p-6">
+      <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex min-w-0 items-center gap-4">
+          <Skeleton width="56px" height="56px" rounded="18px" />
+          <div class="min-w-0 flex-1">
+            <Skeleton width="12rem" height="1rem" class="mb-3" />
+            <Skeleton width="18rem" height="1.7rem" class="mb-3" />
+            <Skeleton width="14rem" height="0.8rem" />
+          </div>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-2 lg:w-[420px]">
+          <Skeleton v-for="item in 4" :key="item" height="3rem" radius="1rem" />
+        </div>
+      </div>
+    </section>
+
+    <section v-else class="glass-card overflow-hidden border-foreground/5 bg-foreground/[0.02] p-0">
+      <div class="grid gap-0 lg:grid-cols-[minmax(0,1fr)_420px]">
+        <div class="relative overflow-hidden p-5 sm:p-6">
+          <div class="absolute -left-10 -top-16 h-44 w-44 rounded-full bg-primary/10 blur-3xl"></div>
+          <div class="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex min-w-0 items-center gap-4">
+              <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-lg font-black text-primary shadow-sm shadow-primary/10">
+                {{ accountInitials }}
+              </div>
+              <div class="min-w-0">
+                <div class="mb-1 flex flex-wrap items-center gap-2">
+                  <span class="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-primary">
+                    <ShieldCheck class="h-3 w-3" />
+                    {{ isVerified ? 'Verified' : 'Unverified' }}
+                  </span>
+                  <span class="inline-flex rounded-full border border-foreground/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-foreground/45">{{ planName }}</span>
+                </div>
+                <h1 class="truncate text-2xl font-black tracking-tight text-foreground sm:text-3xl">{{ accountName }}</h1>
+                <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-foreground/50">
+                  <span class="inline-flex items-center gap-1.5"><Globe class="h-3.5 w-3.5" />{{ profile?.website || 'No website set' }}</span>
+                  <span class="inline-flex items-center gap-1.5"><Building2 class="h-3.5 w-3.5" />{{ profile?.country || 'Market not set' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 sm:w-[250px]">
+              <NuxtLink to="/dashboard/agents" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-3 text-[10px] font-black uppercase tracking-widest text-black transition hover:brightness-95">
+                Assistants
+                <ArrowUpRight class="h-3.5 w-3.5" />
+              </NuxtLink>
+              <NuxtLink to="/dashboard/settings/account" class="inline-flex h-10 items-center justify-center rounded-xl border border-foreground/10 px-3 text-[10px] font-black uppercase tracking-widest text-foreground/55 transition hover:border-primary/30 hover:text-primary">
+                Account
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-foreground/8 bg-background/45 p-5 lg:border-l lg:border-t-0">
+          <div class="mb-4 flex items-center justify-between gap-4">
+            <div>
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Setup health</p>
+              <p class="mt-1 text-sm font-black text-foreground">{{ setupScore }}% ready</p>
+            </div>
+            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-foreground/5 text-foreground/45">
+              <Gauge class="h-5 w-5" />
+            </div>
+          </div>
+          <div class="mb-4 h-1.5 overflow-hidden rounded-full bg-foreground/5">
+            <div class="h-full rounded-full bg-primary transition-all" :style="{ width: `${setupScore}%` }"></div>
+          </div>
+          <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+            <div v-for="item in setupChecklist" :key="item.label" class="flex items-center justify-between gap-3 rounded-xl border border-foreground/8 bg-background/55 px-3 py-2.5">
+              <span class="text-xs font-bold text-foreground/60">{{ item.label }}</span>
+              <CheckCircle2 v-if="item.done" class="h-4 w-4 shrink-0 text-primary" />
+              <span v-else class="h-4 w-4 shrink-0 rounded-full border border-foreground/15"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <div v-if="loading" class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       <div v-for="i in 4" :key="i" class="glass-card border-foreground/5 bg-foreground/[0.02] p-5">
         <div class="mb-5 flex items-center justify-between">
