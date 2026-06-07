@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Zap, Menu, X, ChevronRight, Layout, Sparkles, CreditCard, Info, LogIn, Building2 } from 'lucide-vue-next'
+import { Zap, Menu, X, ChevronRight, Layout, Sparkles, CreditCard, Info, LogIn, Building2, BookOpen } from 'lucide-vue-next'
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 
 const isMenuOpen = ref(false)
@@ -11,6 +11,7 @@ const navLinks = [
   { name: 'Product', href: '/product', icon: Layout },
   { name: 'Features', href: '/features', icon: Sparkles },
   { name: 'Pricing', href: '/pricing', icon: CreditCard },
+  { name: 'Docs', href: '/docs', icon: BookOpen },
   { name: 'Company', href: '/company', icon: Building2 },
   { name: 'Contact', href: '/contact', icon: Info }
 ]
