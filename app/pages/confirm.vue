@@ -2,11 +2,22 @@
 useHead({ title: 'Signing you in | ReplySuite' })
 
 const user = useSupabaseUser()
+const { track } = useActivity()
+const loginTracked = ref(false)
 
-watch(user, (user) => {
-  if (user) {
-    return navigateTo('/dashboard')
+watch(user, async (currentUser) => {
+  if (!currentUser) return
+
+  if (process.client && !loginTracked.value) {
+    loginTracked.value = true
+    await track('LOGIN_SUCCESS', {
+      provider: 'google',
+      email: currentUser.email,
+      method: 'oauth_callback',
+    })
   }
+
+  return navigateTo('/dashboard')
 }, { immediate: true })
 </script>
 
