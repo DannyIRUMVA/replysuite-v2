@@ -147,7 +147,7 @@ const ensureOnboardingRows = async () => {
       completed: stepCode === 'verify_account' ? isVerified.value : false,
       completed_at: stepCode === 'verify_account' && isVerified.value ? new Date().toISOString() : null,
     }))
-    const { error } = await supabase.from('user_onboarding').upsert(payload, { onConflict: 'user_id,step_code' })
+    const { error } = await supabase.from('user_onboarding').insert(payload)
     if (error) throw error
     await refresh()
   } catch (error) {
