@@ -25,7 +25,7 @@ definePageMeta({
 
 const route = useRoute()
 const chatbotId = route.query.id as string
-const { userId, limits, planSlug } = useAuth()
+const { userId, limits, planSlug, profile } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()
 
@@ -41,6 +41,10 @@ const totalTrainings = ref(0)
 
 const isPremium = computed(() => ['silver', 'gold', 'enterprise-ready'].includes(planSlug.value || ''))
 const activeJobStatuses = ['queued', 'processing', 'retry_wait']
+const isOnboardingTraining = computed(() => route.query.onboarding === '1')
+const onboardingIntegration = computed(() => route.query.integration === 'whatsapp' ? 'whatsapp' : 'website')
+const onboardingIntegrationPath = computed(() => onboardingIntegration.value === 'whatsapp' ? '/dashboard/integrations/whatsapp' : '/dashboard/integrations/website')
+const onboardingIntegrationLabel = computed(() => onboardingIntegration.value === 'whatsapp' ? 'WhatsApp' : 'Website')
 
 const renderMarkdown = (text: string) => {
   if (!text) return ''
@@ -108,7 +112,14 @@ onUnmounted(() => {
   if (pollInterval) clearInterval(pollInterval)
 })
 
-onMounted(fetchData)
+onMounted(async () => {
+  await fetchData()
+  if (isOnboardingTraining.value) {
+    showTrainingModal.value = true
+    const website = String(profile.value?.website || '').trim()
+    if (website && !urlForm.value.url) urlForm.value.url = website
+  }
+})
 
 // Actions
 const viewExtraction = (job: any) => {
@@ -299,6 +310,24 @@ const handleTestChat = async () => {
         Back to Agents
       </NuxtLink>
 
+    </div>
+
+    <div v-if="isOnboardingTraining" class="glass-card !rounded-2xl border-primary/15 bg-primary/[0.035] p-4 sm:p-5">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div class="flex items-start gap-3">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+            <LucideSparkles class="h-5 w-5" />
+          </div>
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">First training step</p>
+            <h2 class="mt-1 text-lg font-black tracking-tight text-foreground">Train your assistant before connecting {{ onboardingIntegrationLabel }}.</h2>
+            <p class="mt-1 max-w-2xl text-xs font-medium leading-relaxed text-foreground/55">Add your website, a PDF, or custom text. Once training finishes, continue to the integration setup you selected during onboarding.</p>
+          </div>
+        </div>
+        <NuxtLink :to="onboardingIntegrationPath" class="inline-flex shrink-0 items-center justify-center rounded-xl border border-foreground/10 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/60 transition hover:border-primary/30 hover:text-primary">
+          Setup {{ onboardingIntegrationLabel }}
+        </NuxtLink>
+      </div>
     </div>
 
     <div v-if="isLoading" class="space-y-6">

@@ -1,70 +1,91 @@
 <script setup lang="ts">
 import {
-  MessageSquare,
-  Bot,
   Activity,
+  ArrowUpRight,
+  Bot,
+  CheckCircle2,
   ChevronRight,
+  Gauge,
   Globe,
-  Brain,
+  Lock,
+  MessageSquare,
+  Zap,
 } from 'lucide-vue-next'
 import Skeleton from '~~/app/components/Skeleton.vue'
 
-definePageMeta({
-  middleware: 'auth',
-  layout: 'dashboard'
-})
+definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 
-useHead({
-  title: 'Dashboard'
-})
+useHead({ title: 'Dashboard' })
 
-const { isLoading, userId } = useAuth()
+const { isLoading, userId, limits, planSlug } = useAuth()
 const supabase = useSupabaseClient()
 const isMounted = ref(false)
 onMounted(() => { isMounted.value = true })
 
-const sparkData = [45, 70, 55, 90, 65, 80, 50, 95, 75, 60, 85, 40]
+const currentMonth = new Date().toISOString().slice(0, 7)
 
-const { data: realStats, pending: statsLoading } = useAsyncData('dashboard-metrics-v4', async () => {
-  if (!userId.value) return []
+const { data: overview, pending: overviewLoading } = useAsyncData('dashboard-overview-v6', async () => {
+  if (!userId.value) {
+    return { bots: [], botIds: [], sessionCount: 0, whatsappCount: 0, trainingCount: 0, websiteDomainCount: 0 }
+  }
 
-  const { data: bots } = await supabase.from('chatbots').select('id').eq('user_id', userId.value).is('deleted_at', null)
-  const botIds = (bots || []).map((b: any) => b.id)
+  const { data: bots } = await supabase
+    .from('chatbots')
+    .select('id, name, allowed_domains')
+    .eq('user_id', userId.value)
+    .is('deleted_at', null)
 
-  const [sessionsRes, agentsRes, whatsappRes] = await Promise.all([
-    botIds.length > 0
-      ? supabase.from('chat_sessions').select('*', { count: 'exact', head: true }).in('chatbot_id', botIds)
+  const botIds = (bots || []).map((bot: any) => bot.id)
+
+  const [sessionsRes, whatsappRes, trainingRes] = await Promise.all([
+    botIds.length
+      ? supabase.from('chat_sessions').select('id', { count: 'exact', head: true }).in('chatbot_id', botIds)
       : Promise.resolve({ count: 0 }),
-    supabase.from('chatbots').select('*', { count: 'exact', head: true }).eq('user_id', userId.value).is('deleted_at', null),
-    supabase.from('whatsapp_accounts').select('*', { count: 'exact', head: true }).eq('user_id', userId.value),
+    supabase.from('whatsapp_accounts').select('id', { count: 'exact', head: true }).eq('user_id', userId.value),
+    supabase.from('training_usage').select('training_count').eq('user_id', userId.value).eq('month_year', currentMonth),
   ])
 
-  const totalChannels = whatsappRes.count || 0
+  const domains = new Set<string>()
+  for (const bot of bots || []) {
+    const allowed = Array.isArray((bot as any).allowed_domains) ? (bot as any).allowed_domains : []
+    for (const domain of allowed) if (domain) domains.add(String(domain))
+  }
 
-  return [
-    { id: 'messages', name: 'Total Conversations', value: (sessionsRes.count || 0).toLocaleString(), change: 'Live', changeType: 'increase' },
-    { id: 'leads', name: 'Connected Channels', value: totalChannels.toString(), change: `${whatsappRes.count || 0} WA`, changeType: totalChannels > 0 ? 'increase' : 'neutral' },
-    { id: 'agents', name: 'AI Assistants', value: (agentsRes.count || 0).toString(), change: `${botIds.length} Active`, changeType: botIds.length > 0 ? 'increase' : 'neutral' },
-    { id: 'activity', name: 'System Status', value: 'Optimal', change: '100%', changeType: 'neutral' },
-  ]
+  return {
+    bots: bots || [],
+    botIds,
+    sessionCount: sessionsRes.count || 0,
+    whatsappCount: whatsappRes.count || 0,
+    trainingCount: (trainingRes.data || []).reduce((sum: number, row: any) => sum + Number(row.training_count || 0), 0),
+    websiteDomainCount: domains.size,
+  }
 }, { watch: [userId] })
 
-const { data: recentSessions, pending: sessionsLoading } = useAsyncData('dashboard-sessions', async () => {
+const { data: recentSessions, pending: sessionsLoading } = useAsyncData('dashboard-latest-conversations-v2', async () => {
   if (!userId.value) return []
-  const { data: bots } = await supabase.from('chatbots').select('id, name').eq('user_id', userId.value).is('deleted_at', null)
-  const botIds = (bots || []).map((b: any) => b.id)
-
-  if (botIds.length === 0) return []
+  const botIds = overview.value?.botIds || []
+  if (!botIds.length) return []
 
   const { data } = await supabase
     .from('chat_sessions')
-    .select('*, chatbots(name)')
+    .select('id, created_at, metadata, chatbots(name), chat_messages(content, role, created_at)')
     .in('chatbot_id', botIds)
     .order('created_at', { ascending: false })
-    .limit(10)
+    .limit(5)
 
-  return data || []
-}, { watch: [userId] })
+  return (data || []).map((session: any) => {
+    const messages = Array.isArray(session.chat_messages) ? session.chat_messages : []
+    const latestMessage = messages
+      .slice()
+      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())[0]
+
+    return {
+      ...session,
+      latestMessage,
+      messageCount: messages.length,
+    }
+  })
+}, { watch: [userId, overview] })
 
 const { data: activities, pending: activitiesLoading } = useAsyncData('dashboard-activity', async () => {
   if (!userId.value) return []
@@ -73,167 +94,213 @@ const { data: activities, pending: activitiesLoading } = useAsyncData('dashboard
     .select('*')
     .eq('user_id', userId.value)
     .order('created_at', { ascending: false })
-    .limit(10)
+    .limit(5)
 
   return data || []
 }, { watch: [userId] })
 
-const getIcon = (id: string) => {
-  switch (id) {
-    case 'messages': return MessageSquare
-    case 'leads': return Globe
-    case 'agents': return Bot
-    case 'activity': return Brain
-    default: return MessageSquare
-  }
-}
+const stats = computed(() => [
+  { id: 'messages', name: 'Conversations', value: (overview.value?.sessionCount || 0).toLocaleString(), change: 'Live', changeType: (overview.value?.sessionCount || 0) > 0 ? 'increase' : 'neutral' },
+  { id: 'agents', name: 'AI Assistants', value: String(overview.value?.bots.length || 0), change: `${limits.value.maxAgents || 0} limit`, changeType: (overview.value?.bots.length || 0) > 0 ? 'increase' : 'neutral' },
+  { id: 'training', name: 'Training Used', value: String(overview.value?.trainingCount || 0), change: `${limits.value.maxTrainings || 0}/mo`, changeType: 'neutral' },
+  { id: 'channels', name: 'Channels', value: String((overview.value?.websiteDomainCount || 0) + (overview.value?.whatsappCount || 0)), change: planSlug.value === 'starter' ? 'Web only' : 'Web + WA', changeType: planSlug.value === 'starter' ? 'neutral' : 'increase' },
+])
 
-const stats = computed(() => {
-  if (realStats.value && realStats.value.length > 0) return realStats.value
+const limitRows = computed(() => {
+  const agentsUsed = overview.value?.bots.length || 0
+  const trainingUsed = overview.value?.trainingCount || 0
+  const domainsUsed = overview.value?.websiteDomainCount || 0
+  const whatsappUsed = overview.value?.whatsappCount || 0
+  const paid = !!planSlug.value && planSlug.value !== 'starter'
+
   return [
-    { id: 'messages', name: 'Total Conversations', value: '0', change: '0%', changeType: 'neutral' },
-    { id: 'leads', name: 'Connected Channels', value: '0', change: '0%', changeType: 'neutral' },
-    { id: 'agents', name: 'AI Assistants', value: '0', change: '0', changeType: 'neutral' },
-    { id: 'activity', name: 'System Status', value: 'Idle', change: '0', changeType: 'neutral' },
+    { label: 'AI assistants', used: agentsUsed, limit: limits.value.maxAgents || 1, locked: false },
+    { label: 'Training sessions', used: trainingUsed, limit: limits.value.maxTrainings || 0, locked: false },
+    { label: 'Website domains', used: domainsUsed, limit: limits.value.maxWebsiteDomains || 1, locked: false },
+    { label: 'WhatsApp channel', used: whatsappUsed, limit: paid ? Math.max(1, whatsappUsed) : 0, locked: !paid },
   ]
 })
 
-const timeAgo = (date: Date) => {
-  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
-  let interval = seconds / 31536000
-  if (interval > 1) return Math.floor(interval) + ' years ago'
-  interval = seconds / 2592000
-  if (interval > 1) return Math.floor(interval) + ' months ago'
-  interval = seconds / 86400
-  if (interval > 1) return Math.floor(interval) + ' days ago'
-  interval = seconds / 3600
-  if (interval > 1) return Math.floor(interval) + ' hours ago'
-  interval = seconds / 60
-  if (interval > 1) return Math.floor(interval) + ' minutes ago'
-  return Math.floor(seconds) + ' seconds ago'
+const loading = computed(() => !isMounted.value || isLoading.value || overviewLoading.value || sessionsLoading.value || activitiesLoading.value)
+
+const getIcon = (id: string) => {
+  if (id === 'messages') return MessageSquare
+  if (id === 'agents') return Bot
+  if (id === 'training') return Zap
+  if (id === 'channels') return Globe
+  return Activity
 }
 
-const loading = computed(() => !isMounted.value || isLoading.value || statsLoading.value || sessionsLoading.value || activitiesLoading.value)
+const timeAgo = (dateValue?: string | Date | null) => {
+  if (!dateValue) return 'just now'
+  const date = new Date(dateValue)
+  const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000))
+  if (seconds < 60) return `${seconds || 1}s ago`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${days}d ago`
+  return date.toLocaleDateString()
+}
+
+const formatLimit = (limit: number) => limit <= 0 ? 'Locked' : limit >= 999999 ? 'Unlimited' : String(limit)
+const limitPercent = (used: number, limit: number) => {
+  if (limit <= 0) return 0
+  return Math.min(100, Math.round((used / limit) * 100))
+}
 </script>
 
 <template>
-  <div class="mt-4 md:mt-6 space-y-10">
-    <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div v-for="i in 4" :key="i" class="glass-card p-8 border-foreground/5 bg-foreground/[0.02]">
-        <div class="flex items-center justify-between mb-6">
-          <Skeleton width="48px" height="48px" rounded="12px" />
-          <Skeleton width="40px" height="14px" />
+  <div class="mt-4 space-y-6 pb-20">
+    <div v-if="loading" class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div v-for="i in 4" :key="i" class="glass-card border-foreground/5 bg-foreground/[0.02] p-5">
+        <div class="mb-5 flex items-center justify-between">
+          <Skeleton width="42px" height="42px" rounded="12px" />
+          <Skeleton width="44px" height="12px" />
         </div>
-        <Skeleton width="100px" height="12px" class="mb-3" />
-        <Skeleton width="140px" height="32px" />
+        <Skeleton width="90px" height="10px" class="mb-3" />
+        <Skeleton width="120px" height="28px" />
       </div>
     </div>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 transition-all duration-700">
-      <div v-for="stat in stats" :key="stat.name" class="glass-card p-8 border-foreground/5 bg-foreground/[0.02] group hover:border-primary/30 transition-all relative overflow-hidden">
-        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-all"></div>
-        <div class="flex items-center justify-between mb-4">
-          <div class="p-3 rounded-xl bg-foreground/5 text-foreground/40 group-hover:bg-primary/10 group-hover:text-primary transition-all">
-            <component :is="getIcon(stat.id)" class="w-6 h-6" />
+    <div v-else class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div v-for="stat in stats" :key="stat.name" class="glass-card group relative overflow-hidden border-foreground/5 bg-foreground/[0.02] p-5 transition-all hover:border-primary/30">
+        <div class="absolute -bottom-6 -right-6 h-20 w-20 rounded-full bg-primary/5 blur-2xl transition group-hover:bg-primary/10"></div>
+        <div class="relative mb-4 flex items-center justify-between">
+          <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-foreground/5 text-foreground/45 transition group-hover:bg-primary/10 group-hover:text-primary">
+            <component :is="getIcon(stat.id)" class="h-5 w-5" />
           </div>
-          <span :class="stat.changeType === 'increase' ? 'text-green-500' : 'text-foreground/50'" class="text-xs font-bold tracking-widest">{{ stat.change }}</span>
+          <span :class="stat.changeType === 'increase' ? 'text-green-500' : 'text-foreground/45'" class="text-[10px] font-black uppercase tracking-widest">{{ stat.change }}</span>
         </div>
-        <p class="text-foreground/50 text-xs mb-1 tracking-widest font-bold leading-none capitalize">{{ stat.name }}</p>
-        <p class="text-3xl font-bold mt-2">{{ stat.value }}</p>
+        <p class="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/45">{{ stat.name }}</p>
+        <p class="mt-2 text-3xl font-black tracking-tight text-foreground">{{ stat.value }}</p>
       </div>
     </div>
 
-    <div v-if="loading" class="grid lg:grid-cols-3 gap-10">
-      <div class="lg:col-span-2 glass-card p-10 min-h-[400px]">
-        <div class="flex flex-col items-center justify-center h-full space-y-8">
-          <Skeleton width="6rem" height="6rem" circle />
-          <div class="space-y-4 flex flex-col items-center w-full">
-            <Skeleton width="40%" height="2rem" />
-            <Skeleton width="60%" height="1rem" />
-            <Skeleton width="8rem" height="3rem" radius="1rem" />
-          </div>
+    <div v-if="loading" class="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
+      <div class="glass-card min-h-[360px] p-6">
+        <Skeleton width="12rem" height="1.4rem" class="mb-6" />
+        <div class="space-y-4">
+          <Skeleton v-for="row in 5" :key="row" height="4rem" radius="1rem" />
         </div>
       </div>
-      <div class="glass-card p-10 flex flex-col">
-        <Skeleton width="40%" height="1.5rem" class="mb-8" />
-        <div class="space-y-6">
-          <div v-for="i in 5" :key="i" class="flex items-center gap-4">
-            <Skeleton width="2.5rem" height="2.5rem" circle />
-            <div class="flex-1 space-y-2">
-              <Skeleton width="70%" height="0.75rem" />
-              <Skeleton width="40%" height="0.5rem" />
-            </div>
-          </div>
-        </div>
+      <div class="glass-card p-6">
+        <Skeleton width="9rem" height="1.2rem" class="mb-6" />
+        <Skeleton v-for="row in 4" :key="row" height="4.5rem" radius="1rem" class="mb-4" />
       </div>
     </div>
 
-    <div v-else class="grid lg:grid-cols-3 gap-10">
-      <div class="lg:col-span-2 glass-card p-10 min-h-[400px] border-foreground/5 flex flex-col items-center justify-center text-center relative overflow-hidden group">
-        <div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all duration-700"></div>
-
-        <div class="relative flex flex-col items-center">
-          <div class="w-24 h-24 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-8 shadow-2xl shadow-primary/5">
-            <MessageSquare class="w-10 h-10 text-primary" />
+    <div v-else class="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
+      <section class="glass-card border-foreground/5 bg-foreground/[0.02] p-5 sm:p-6">
+        <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Latest conversation</p>
+            <h2 class="mt-2 text-xl font-black tracking-tight text-foreground">Recent customer chats</h2>
           </div>
-
-          <h3 class="text-2xl font-black text-foreground uppercase mb-2">Customer Conversations</h3>
-          <p class="text-foreground/50 font-bold uppercase tracking-[0.2em] text-[10px] mb-8 max-w-[220px] leading-relaxed">
-            Review live chats, reply coverage, and recent customer activity
-          </p>
-
-          <div class="flex items-center gap-8 md:gap-12 mb-10">
-            <div class="flex flex-col">
-              <span class="text-3xl font-black text-foreground">{{ stats.find(s => s.id === 'messages')?.value || '0' }}</span>
-              <span class="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Total Conversations</span>
-            </div>
-            <div class="w-px h-10 bg-foreground/5"></div>
-            <div class="flex flex-col">
-              <span class="text-3xl font-black tracking-tighter text-primary">{{ recentSessions?.length || 0 }}</span>
-              <span class="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Recent Activity</span>
-            </div>
-          </div>
-
-          <NuxtLink to="/dashboard/conversations" class="group/btn relative px-10 py-4 rounded-xl bg-primary text-black font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-[0_0_50px_rgba(var(--primary),0.2)] flex items-center gap-3">
-            Open conversations
-            <ChevronRight class="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+          <NuxtLink to="/dashboard/conversations" class="inline-flex items-center gap-2 rounded-xl border border-foreground/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-foreground/55 transition hover:border-primary/30 hover:text-primary">
+            Open inbox
+            <ArrowUpRight class="h-3.5 w-3.5" />
           </NuxtLink>
         </div>
 
-        <div class="absolute bottom-0 left-0 right-0 h-24 flex items-end justify-around px-10 opacity-[0.15] pointer-events-none">
-          <div v-for="(val, idx) in sparkData" :key="idx" class="w-full mx-1 bg-primary rounded-t-sm transition-all duration-1000" :style="{ height: `${val}%` }"></div>
-        </div>
-      </div>
-
-      <div class="glass-card p-10 border-foreground/5 flex flex-col">
-        <h3 class="text-lg font-bold mb-8 tracking-tight uppercase text-center">Recent activity</h3>
-
-        <div v-if="activities && activities.length > 0" class="space-y-8 flex-1">
-          <div v-for="activity in activities" :key="activity.id" class="flex gap-4 relative">
-            <div class="flex flex-col items-center">
-              <div class="w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_rgba(212,175,55,0.5)]"></div>
-              <div class="w-px flex-1 bg-foreground/10 my-2"></div>
+        <div v-if="recentSessions && recentSessions.length" class="space-y-3">
+          <NuxtLink v-for="session in recentSessions" :key="session.id" to="/dashboard/conversations" class="group block rounded-2xl border border-foreground/8 bg-background/55 p-4 transition hover:border-primary/25 hover:bg-primary/[0.03]">
+            <div class="flex items-start justify-between gap-4">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_rgba(212,175,55,0.6)]"></span>
+                  <p class="truncate text-sm font-black text-foreground">{{ session.chatbots?.name || 'Assistant conversation' }}</p>
+                </div>
+                <p class="mt-2 line-clamp-2 text-sm leading-relaxed text-foreground/55">
+                  {{ session.latestMessage?.content || 'Conversation opened. No message preview yet.' }}
+                </p>
+              </div>
+              <div class="shrink-0 text-right">
+                <p class="text-[10px] font-black uppercase tracking-widest text-foreground/35">{{ timeAgo(session.latestMessage?.created_at || session.created_at) }}</p>
+                <p class="mt-2 rounded-full bg-foreground/5 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-foreground/40">{{ session.messageCount }} msgs</p>
+              </div>
             </div>
-            <div class="pb-2">
-              <p class="text-xs font-bold text-foreground leading-tight tracking-tight capitalize">{{ activity.type.replace('_', ' ') }}</p>
-              <p class="text-[9px] font-medium text-foreground/50 mt-1 uppercase tracking-widest">{{ timeAgo(new Date(activity.created_at)) }} • {{ activity.source || 'System' }}</p>
+          </NuxtLink>
+        </div>
+
+        <div v-else class="flex min-h-[300px] flex-col items-center justify-center rounded-3xl border border-dashed border-foreground/10 bg-background/40 p-8 text-center">
+          <MessageSquare class="mb-4 h-12 w-12 text-foreground/20" />
+          <h3 class="text-lg font-black text-foreground">No conversations yet</h3>
+          <p class="mt-2 max-w-md text-sm leading-relaxed text-foreground/50">Train your assistant and connect a website widget. New customer conversations will appear here first.</p>
+          <NuxtLink to="/dashboard/agents/skills" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-[10px] font-black uppercase tracking-widest text-black transition hover:brightness-95">
+            Train assistant
+            <ChevronRight class="h-4 w-4" />
+          </NuxtLink>
+        </div>
+      </section>
+
+      <aside class="space-y-6">
+        <section class="glass-card border-foreground/5 bg-foreground/[0.02] p-5 sm:p-6">
+          <div class="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Limits comparison</p>
+              <h2 class="mt-2 text-xl font-black tracking-tight text-foreground">Plan usage</h2>
+            </div>
+            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Gauge class="h-5 w-5" />
             </div>
           </div>
-        </div>
 
-        <div v-else-if="activitiesLoading" class="flex-1 flex flex-col items-center justify-center py-12">
-          <div class="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        </div>
-        <div v-else class="flex-1 flex flex-col items-center justify-center text-center py-12">
-          <Activity class="w-12 h-12 text-foreground/20 mb-4 opacity-20" />
-          <p class="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">No recent activity yet</p>
-          <p class="text-foreground/20 text-[9px] mt-2 tracking-tighter italic">Your training, setup, and conversation updates will appear here.</p>
-        </div>
+          <div class="space-y-4">
+            <div v-for="row in limitRows" :key="row.label" class="rounded-2xl border border-foreground/8 bg-background/55 p-4">
+              <div class="mb-3 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                  <Lock v-if="row.locked" class="h-3.5 w-3.5 text-foreground/35" />
+                  <CheckCircle2 v-else class="h-3.5 w-3.5 text-primary" />
+                  <p class="text-xs font-black uppercase tracking-widest text-foreground/60">{{ row.label }}</p>
+                </div>
+                <p class="text-xs font-black text-foreground">{{ row.used }} / {{ formatLimit(row.limit) }}</p>
+              </div>
+              <div class="h-1.5 overflow-hidden rounded-full bg-foreground/5">
+                <div class="h-full rounded-full transition-all" :class="row.locked ? 'bg-foreground/20' : 'bg-primary'" :style="{ width: `${limitPercent(row.used, row.limit)}%` }"></div>
+              </div>
+            </div>
+          </div>
 
-        <button class="mt-8 py-3 w-full border border-foreground/5 rounded-xl text-[10px] font-bold text-foreground/50 tracking-[0.2em] uppercase hover:border-primary/30 hover:text-primary transition-all">
-          View activity
-        </button>
-      </div>
+          <NuxtLink to="/dashboard/pricing" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-foreground/10 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/55 transition hover:border-primary/30 hover:text-primary">
+            Compare plans
+            <ChevronRight class="h-4 w-4" />
+          </NuxtLink>
+        </section>
+
+        <section class="glass-card border-foreground/5 bg-foreground/[0.02] p-5 sm:p-6">
+          <div class="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Activity</p>
+              <h2 class="mt-2 text-lg font-black tracking-tight text-foreground">Recent updates</h2>
+            </div>
+            <Activity class="h-5 w-5 text-foreground/35" />
+          </div>
+
+          <div v-if="activities && activities.length" class="space-y-4">
+            <div v-for="activity in activities" :key="activity.id" class="flex gap-3">
+              <div class="flex flex-col items-center pt-1">
+                <div class="h-2 w-2 rounded-full bg-primary"></div>
+                <div class="my-2 w-px flex-1 bg-foreground/10"></div>
+              </div>
+              <div class="pb-2">
+                <p class="text-xs font-black capitalize leading-tight text-foreground">{{ activity.type.replace('_', ' ') }}</p>
+                <p class="mt-1 text-[9px] font-bold uppercase tracking-widest text-foreground/40">{{ timeAgo(activity.created_at) }} • {{ activity.source || 'System' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div v-else-if="activitiesLoading" class="flex items-center justify-center py-10">
+            <div class="h-8 w-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary"></div>
+          </div>
+          <div v-else class="py-10 text-center">
+            <Activity class="mx-auto mb-3 h-10 w-10 text-foreground/15" />
+            <p class="text-[10px] font-black uppercase tracking-widest text-foreground/40">No activity yet</p>
+          </div>
+        </section>
+      </aside>
     </div>
   </div>
 </template>
