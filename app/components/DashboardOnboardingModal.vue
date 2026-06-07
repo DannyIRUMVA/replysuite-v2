@@ -34,6 +34,7 @@ const resendSuccess = ref(false)
 
 const isSavingCompany = ref(false)
 const companyError = ref('')
+const companySavedThisSession = ref(false)
 const isCreating = ref(false)
 const createError = ref('')
 const createdAgentId = ref<string | null>(null)
@@ -72,7 +73,6 @@ const onboardingByCode = computed(() => onboardingRows.value.reduce((acc, row: a
 const hasAllRequiredRows = computed(() => requiredSteps.every((stepCode) => !!onboardingByCode.value[stepCode]))
 const completedSteps = computed(() => new Set(onboardingRows.value.filter((row: any) => row.completed && row.step_code).map((row: any) => row.step_code as string)))
 
-const hasChatbot = computed(() => (onboardingState.value?.botCount || 0) > 0)
 const companyComplete = computed(() => Boolean(
   String(profile.value?.company_name || companyDraft.value.company_name || '').trim() &&
   String(profile.value?.contact_email || companyDraft.value.contact_email || '').trim()
@@ -97,7 +97,7 @@ const shouldShow = computed(() => {
   if (!userId.value || pending.value || ensuringRows.value) return false
   if (!hasAllRequiredRows.value) return false
 
-  const firstSetupNeeded = needsVerify.value || (!hasChatbot.value && (!companyComplete.value || needsCreateChatbot.value))
+  const firstSetupNeeded = needsVerify.value || needsCreateChatbot.value
   if (!onboardingChecked.value && !firstSetupNeeded) return false
   return !onboardingDismissed.value && (forceOnboarding.value || firstSetupNeeded)
 })
@@ -106,14 +106,14 @@ const currentStep = computed<SetupStep>(() => {
   if (createdAgentId.value && selectedIntegration.value) return 'done'
   if (createdAgentId.value) return 'integration'
   if (needsVerify.value) return 'verify'
-  if (!companyComplete.value && !hasChatbot.value) return 'company'
+  if (needsCreateChatbot.value && !companySavedThisSession.value) return 'company'
   return 'chatbot'
 })
 
 const stepItems = computed(() => [
   { title: 'Verify account', description: 'Confirm your email before setup.', active: currentStep.value === 'verify', complete: isVerified.value || completedSteps.value.has('verify_account') },
-  { title: 'Company info', description: 'Add business context for smarter replies.', active: currentStep.value === 'company', complete: companyComplete.value },
-  { title: 'Create chatbot', description: 'Name your assistant and set its basic prompt.', active: currentStep.value === 'chatbot', complete: hasChatbot.value || completedSteps.value.has('create_chatbot') || !!createdAgentId.value },
+  { title: 'Company info', description: 'Add business context for smarter replies.', active: currentStep.value === 'company', complete: companyComplete.value && (!needsCreateChatbot.value || companySavedThisSession.value) },
+  { title: 'Create chatbot', description: 'Name your assistant and set its basic prompt.', active: currentStep.value === 'chatbot', complete: completedSteps.value.has('create_chatbot') || !!createdAgentId.value },
   { title: 'Choose channel', description: canUseWhatsApp.value ? 'Website and WhatsApp are available.' : 'Free plan starts with website only.', active: currentStep.value === 'integration' || currentStep.value === 'done', complete: currentStep.value === 'done' },
 ])
 
@@ -193,15 +193,14 @@ watch([userId, pending], async ([currentUserId, isPending]) => {
   await ensureOnboardingRows()
 }, { immediate: true })
 
-watch([isVerified, hasChatbot, completedSteps], async ([verified, chatbotExists, steps]) => {
+watch([isVerified, completedSteps], async ([verified, steps]) => {
   if (!userId.value || pending.value) return
   if (verified && !steps.has('verify_account')) await syncStep('verify_account')
-  if (chatbotExists && !steps.has('create_chatbot')) await syncStep('create_chatbot')
 }, { immediate: true })
 
-watch([shouldShow, needsVerify, needsCreateChatbot, companyComplete], ([open, verifyNeeded, chatbotNeeded, companyReady]) => {
+watch([shouldShow, needsVerify, needsCreateChatbot], ([open, verifyNeeded, chatbotNeeded]) => {
   if (process.server) return
-  if (verifyNeeded || (!hasChatbot.value && (!companyReady || chatbotNeeded))) forceOnboarding.value = true
+  if (verifyNeeded || chatbotNeeded) forceOnboarding.value = true
   else if (!createdAgentId.value) forceOnboarding.value = false
 
   document.documentElement.style.overflow = open ? 'hidden' : ''
@@ -265,6 +264,7 @@ const saveCompanyInfo = async () => {
       country: companyDraft.value.country.trim() || null,
     }).eq('id', userId.value)
     if (error) throw error
+    companySavedThisSession.value = true
     await refreshAuth()
   } catch (error: any) {
     companyError.value = error?.message || 'Unable to save company information.'

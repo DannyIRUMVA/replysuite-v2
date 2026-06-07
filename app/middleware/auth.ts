@@ -74,6 +74,9 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       const hasChatbot = (botsRes.count || 0) > 0
 
       const verifyComplete = verifyStep ? !!verifyStep.completed : verified
+      // Database-controlled onboarding flag:
+      // user_onboarding.completed = true  -> do not show onboarding
+      // user_onboarding.completed = false -> show onboarding, even if the user already has chatbots
       const chatbotComplete = chatbotStep ? !!chatbotStep.completed : hasChatbot
 
       forceOnboarding.value = !(verifyComplete && chatbotComplete)
