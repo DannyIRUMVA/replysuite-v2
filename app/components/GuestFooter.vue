@@ -71,7 +71,7 @@ const socialLinks = [
             { name: 'Blog & Insights', to: '/blog' },
             { name: 'Success Stories', to: '/about#mission' },
             { name: 'Community Hub', to: '/community' },
-            { name: 'API Reference', to: '/docs' }
+            { name: 'Documentation', to: '/docs' }
           ]" :key="link.name">
             <NuxtLink :to="link.to"
               class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}
