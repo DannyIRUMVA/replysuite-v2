@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRight, BookOpen, Code2, Compass, FileText, Globe2, GraduationCap, MessageCircle, ShieldCheck, Sparkles, Zap } from 'lucide-vue-next'
+import { ArrowRight, Code2, Compass, Sparkles, Zap } from 'lucide-vue-next'
 
 useSeoMeta({
   title: 'Docs | ReplySuite',
@@ -35,12 +35,6 @@ const docSections = [
   },
 ]
 
-const quickLinks = [
-  { title: 'Train knowledge', desc: 'Use URLs, PDFs, and text to ground replies.', icon: BookOpen, to: '/docs/guidance#training' },
-  { title: 'Website widget', desc: 'Install the chatbot on approved domains.', icon: Globe2, to: '/docs/guidance#website-widget' },
-  { title: 'WhatsApp', desc: 'Connect WhatsApp Business and record chats.', icon: MessageCircle, to: '/docs/guidance#whatsapp' },
-  { title: 'API reference', desc: 'Understand public endpoints and payloads.', icon: Code2, to: '/docs/api' },
-]
 </script>
 
 <template>
@@ -85,24 +79,6 @@ const quickLinks = [
               {{ item }}
             </div>
           </div>
-        </NuxtLink>
-      </div>
-    </section>
-
-    <section class="mx-auto max-w-7xl border-t border-foreground/5 px-6 py-16 md:py-20">
-      <div class="mb-10 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <span class="badge-gradient mb-5">Quick access</span>
-          <h2 class="text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">Common tasks</h2>
-        </div>
-        <p class="max-w-xl text-sm font-medium leading-relaxed text-foreground/50">Jump directly to the setup and integration topic you need.</p>
-      </div>
-
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <NuxtLink v-for="item in quickLinks" :key="item.title" :to="item.to" class="rounded-[26px] border border-foreground/10 bg-foreground/[0.025] p-5 transition hover:border-primary/25 hover:bg-primary/[0.04]">
-          <component :is="item.icon" class="mb-5 h-6 w-6 text-primary" />
-          <h3 class="text-base font-black text-foreground">{{ item.title }}</h3>
-          <p class="mt-2 text-sm font-medium leading-relaxed text-foreground/50">{{ item.desc }}</p>
         </NuxtLink>
       </div>
     </section>

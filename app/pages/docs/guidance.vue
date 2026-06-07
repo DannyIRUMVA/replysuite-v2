@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRight, BarChart3, BookOpen, Bot, CheckCircle2, FileText, Globe2, MessageCircle, Settings2, ShieldCheck, UploadCloud } from 'lucide-vue-next'
+import { BarChart3, Bot, CheckCircle2, FileText, Globe2, MessageCircle, Settings2, ShieldCheck, UploadCloud } from 'lucide-vue-next'
 
 useSeoMeta({
   title: 'Guidance Docs | ReplySuite',
@@ -112,10 +112,6 @@ const guidanceSections = [
           <p class="mt-5 text-sm font-medium leading-relaxed text-foreground/55 md:text-base">
             Training lets ReplySuite answer from your real business information instead of generic model memory.
           </p>
-          <NuxtLink to="/dashboard/agents/skills" class="mt-7 inline-flex items-center gap-3 rounded-full bg-primary px-6 py-3 text-xs font-black uppercase tracking-widest text-black transition hover:brightness-95">
-            Open training
-            <ArrowRight class="h-4 w-4" />
-          </NuxtLink>
         </div>
         <div class="grid gap-4 sm:grid-cols-3">
           <article v-for="source in trainingSources" :key="source.title" class="guide-card rounded-[28px] p-6">
