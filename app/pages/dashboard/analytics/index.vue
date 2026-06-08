@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Bot,
   Globe2,
+  Instagram,
   MessageCircle,
   RefreshCw,
   TrendingUp
@@ -19,7 +20,7 @@ const supabase = useSupabaseClient()
 const notify = useNotify()
 
 const selectedBotId = ref('all')
-const selectedChannel = ref<'all' | 'whatsapp' | 'web'>('all')
+const selectedChannel = ref<'all' | 'whatsapp' | 'web' | 'instagram'>('all')
 const isRefreshing = ref(false)
 
 type ChatbotOption = { id: string; name: string }
@@ -35,7 +36,8 @@ type RawSession = {
 const channelOptions = [
   { label: 'All', value: 'all' as const },
   { label: 'WhatsApp', value: 'whatsapp' as const },
-  { label: 'Website', value: 'web' as const }
+  { label: 'Website', value: 'web' as const },
+  { label: 'Instagram', value: 'instagram' as const }
 ]
 
 const { data: chatbots, pending: loadingChatbots, refresh: refreshChatbots } = await useAsyncData('analytics-chatbots', async () => {
@@ -121,9 +123,11 @@ const refreshAnalytics = async () => {
   }
 }
 
-const getSessionChannel = (session: RawSession): 'whatsapp' | 'web' => {
-  const type = String(session?.metadata?.type || session?.metadata?.channel || 'web').toLowerCase()
-  return type === 'whatsapp' ? 'whatsapp' : 'web'
+const getSessionChannel = (session: RawSession): 'whatsapp' | 'web' | 'instagram' => {
+  const type = String(session?.metadata?.channel || session?.metadata?.type || 'web').toLowerCase()
+  if (type === 'whatsapp') return 'whatsapp'
+  if (type === 'instagram') return 'instagram'
+  return 'web'
 }
 
 const getChatbotName = (chatbotId: string | null) => {
@@ -170,6 +174,7 @@ const summary = computed(() => {
   const botReplies = list.reduce((sum, conversation) => sum + conversation.botMessages, 0)
   const userMessages = list.reduce((sum, conversation) => sum + conversation.userMessages, 0)
   const whatsapp = list.filter((conversation) => conversation.channel === 'whatsapp').length
+  const instagram = list.filter((conversation) => conversation.channel === 'instagram').length
   const web = list.filter((conversation) => conversation.channel === 'web').length
 
   return {
@@ -178,6 +183,7 @@ const summary = computed(() => {
     userMessages,
     botReplies,
     whatsapp,
+    instagram,
     web
   }
 })
@@ -185,7 +191,7 @@ const summary = computed(() => {
 const stats = computed(() => [
   { label: 'Conversations', value: summary.value.conversations, sub: `${summary.value.totalMessages.toLocaleString()} total messages`, icon: MessageCircle },
   { label: 'AI replies', value: summary.value.botReplies, sub: `${summary.value.userMessages.toLocaleString()} user messages`, icon: Bot },
-  { label: 'Channels', value: summary.value.web + summary.value.whatsapp, sub: `${summary.value.web} website · ${summary.value.whatsapp} WhatsApp`, icon: Globe2 }
+  { label: 'Channels', value: summary.value.web + summary.value.whatsapp + summary.value.instagram, sub: `${summary.value.web} website · ${summary.value.whatsapp} WhatsApp · ${summary.value.instagram} Instagram`, icon: Globe2 }
 ])
 
 const chatbotReports = computed(() => {
@@ -204,6 +210,7 @@ const chatbotReports = computed(() => {
         conversations: list.length,
         website: list.filter((conversation) => conversation.channel === 'web').length,
         whatsapp: list.filter((conversation) => conversation.channel === 'whatsapp').length,
+        instagram: list.filter((conversation) => conversation.channel === 'instagram').length,
         totalMessages,
         userMessages,
         botReplies,
@@ -231,7 +238,8 @@ const chartData = computed(() => {
       botReplies,
       totalMessages,
       website: list.filter((conversation) => conversation.channel === 'web').length,
-      whatsapp: list.filter((conversation) => conversation.channel === 'whatsapp').length
+      whatsapp: list.filter((conversation) => conversation.channel === 'whatsapp').length,
+      instagram: list.filter((conversation) => conversation.channel === 'instagram').length
     })
   }
 
@@ -276,15 +284,17 @@ const analysisCards = computed(() => {
 })
 
 const channelBreakdown = computed(() => {
-  const total = Math.max(summary.value.web + summary.value.whatsapp, 1)
+  const total = Math.max(summary.value.web + summary.value.whatsapp + summary.value.instagram, 1)
   return [
     { label: 'Website', value: summary.value.web, percent: Math.round((summary.value.web / total) * 100), color: 'bg-blue-500' },
-    { label: 'WhatsApp', value: summary.value.whatsapp, percent: Math.round((summary.value.whatsapp / total) * 100), color: 'bg-emerald-500' }
+    { label: 'WhatsApp', value: summary.value.whatsapp, percent: Math.round((summary.value.whatsapp / total) * 100), color: 'bg-emerald-500' },
+    { label: 'Instagram', value: summary.value.instagram, percent: Math.round((summary.value.instagram / total) * 100), color: 'bg-pink-500' }
   ]
 })
 
 const channelLabel = computed(() => {
   if (selectedChannel.value === 'whatsapp') return 'WhatsApp'
+  if (selectedChannel.value === 'instagram') return 'Instagram'
   if (selectedChannel.value === 'web') return 'Website'
   return 'All channels'
 })
@@ -473,6 +483,7 @@ const formatNumber = (value: number) => value.toLocaleString()
                 <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Conversations</th>
                 <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Website</th>
                 <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">WhatsApp</th>
+                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Instagram</th>
                 <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">User messages</th>
                 <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">AI replies</th>
                 <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Last activity</th>
@@ -489,6 +500,7 @@ const formatNumber = (value: number) => value.toLocaleString()
                 <td class="px-5 py-4 text-sm font-black tabular-nums text-foreground">{{ report.conversations }}</td>
                 <td class="px-5 py-4 text-sm font-bold tabular-nums text-foreground/60">{{ report.website }}</td>
                 <td class="px-5 py-4 text-sm font-bold tabular-nums text-foreground/60">{{ report.whatsapp }}</td>
+                <td class="px-5 py-4 text-sm font-bold tabular-nums text-foreground/60">{{ report.instagram }}</td>
                 <td class="px-5 py-4 text-sm font-bold tabular-nums text-foreground/60">{{ report.userMessages }}</td>
                 <td class="px-5 py-4 text-sm font-black tabular-nums text-primary">{{ report.botReplies }}</td>
                 <td class="px-5 py-4 text-sm font-medium text-foreground/55">{{ formatDateTime(report.lastActivity) }}</td>

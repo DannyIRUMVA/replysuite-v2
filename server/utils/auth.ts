@@ -22,9 +22,12 @@ export async function getAuthContext(event: H3Event, required = true): Promise<A
   // Fallback: If no user from cookie, but auth header exists, the client might be using Bearer token
   if (!user && headers.authorization) {
     try {
-      const client = await serverSupabaseClient(event)
-      const { data } = await client.auth.getUser(headers.authorization)
-      user = data.user as any
+      const token = headers.authorization.replace(/^Bearer\s+/i, '').trim()
+      if (token) {
+        const client = await serverSupabaseClient(event)
+        const { data } = await client.auth.getUser(token)
+        user = data.user as any
+      }
     } catch (e) {
       console.error('[getAuthContext] Auth header fallback failed', e)
     }

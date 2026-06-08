@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   const userId = user.id
   const query = getQuery(event)
   const filterBotId = typeof query.chatbotId === 'string' ? query.chatbotId : undefined
-  const channelFilter = query.channel === 'whatsapp' || query.channel === 'web' ? query.channel : 'all'
+  const channelFilter = query.channel === 'whatsapp' || query.channel === 'web' || query.channel === 'instagram' ? query.channel : 'all'
 
   const { data: botsData } = await supabase
     .from('chatbots')
@@ -41,13 +41,14 @@ export default defineEventHandler(async (event) => {
 
   const rawSessions = rawSessionsData || []
   const allScopedWhatsappSessions = rawSessions.filter((session: any) => getSessionChannel(session) === 'whatsapp').length
-  const allScopedWebSessions = rawSessions.length - allScopedWhatsappSessions
+  const allScopedInstagramSessions = rawSessions.filter((session: any) => getSessionChannel(session) === 'instagram').length
+  const allScopedWebSessions = rawSessions.length - allScopedWhatsappSessions - allScopedInstagramSessions
   const sessions = channelFilter === 'all'
     ? rawSessions
     : rawSessions.filter((session: any) => getSessionChannel(session) === channelFilter)
   const sessionIds = sessions.map((session: any) => session.id)
 
-  const [messagesRes, whatsappAccountsRes, dataSourcesRes, whatsappJobsRes] = await Promise.all([
+  const [messagesRes, whatsappAccountsRes, instagramAccountsRes, dataSourcesRes, whatsappJobsRes, instagramJobsRes] = await Promise.all([
     sessionIds.length > 0
       ? supabase
         .from('chat_messages')
@@ -63,6 +64,11 @@ export default defineEventHandler(async (event) => {
       .in('chatbot_id', activeBotIds),
 
     supabase
+      .from('instagram_accounts')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId),
+
+    supabase
       .from('data_sources')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
@@ -70,6 +76,11 @@ export default defineEventHandler(async (event) => {
 
     supabase
       .from('whatsapp_message_jobs')
+      .select('status, created_at')
+      .in('chatbot_id', activeBotIds),
+
+    supabase
+      .from('instagram_message_jobs')
       .select('status, created_at')
       .in('chatbot_id', activeBotIds),
   ])
@@ -82,7 +93,13 @@ export default defineEventHandler(async (event) => {
   const userMessages = messages.filter((message: any) => message.role === 'user').length
   const botMessages = messages.filter((message: any) => message.role === 'assistant').length
 
-  const allJobs = channelFilter === 'web' ? [] : (whatsappJobsRes.data || [])
+  const allJobs = channelFilter === 'web'
+    ? []
+    : channelFilter === 'whatsapp'
+      ? (whatsappJobsRes.data || [])
+      : channelFilter === 'instagram'
+        ? (instagramJobsRes.data || [])
+        : [...(whatsappJobsRes.data || []), ...(instagramJobsRes.data || [])]
   const totalJobs = allJobs.length
   const sentJobs = allJobs.filter((job: any) => ['sent', 'completed', 'delivered'].includes(job.status)).length
   const failedJobs = allJobs.filter((job: any) => job.status === 'failed').length
@@ -100,7 +117,8 @@ export default defineEventHandler(async (event) => {
     .slice(0, 5)
 
   const filteredWhatsappSessions = sessions.filter((session: any) => getSessionChannel(session) === 'whatsapp').length
-  const filteredWebSessions = totalSessions - filteredWhatsappSessions
+  const filteredInstagramSessions = sessions.filter((session: any) => getSessionChannel(session) === 'instagram').length
+  const filteredWebSessions = totalSessions - filteredWhatsappSessions - filteredInstagramSessions
 
   const conversations = sessions
     .map((session: any) => {
@@ -132,6 +150,7 @@ export default defineEventHandler(async (event) => {
       botMessages,
       totalAgents: activeBots.length,
       totalWhatsappAccounts: whatsappAccountsRes.count || 0,
+      totalInstagramAccounts: instagramAccountsRes.count || 0,
       totalDataSources: dataSourcesRes.count || 0,
       sentJobs,
       failedJobs,
@@ -141,8 +160,8 @@ export default defineEventHandler(async (event) => {
     topAgents,
     chatbots: allBots,
     channels: channelFilter === 'all'
-      ? { whatsapp: allScopedWhatsappSessions, web: allScopedWebSessions }
-      : { whatsapp: filteredWhatsappSessions, web: filteredWebSessions },
+      ? { whatsapp: allScopedWhatsappSessions, instagram: allScopedInstagramSessions, web: allScopedWebSessions }
+      : { whatsapp: filteredWhatsappSessions, instagram: filteredInstagramSessions, web: filteredWebSessions },
     conversations,
     filters: {
       chatbotId: hasValidBotFilter ? filterBotId : 'all',
@@ -151,10 +170,11 @@ export default defineEventHandler(async (event) => {
   }
 })
 
-function getSessionChannel(session: any): 'whatsapp' | 'web' {
-  return session?.metadata?.type === 'whatsapp' || session?.metadata?.channel === 'whatsapp'
-    ? 'whatsapp'
-    : 'web'
+function getSessionChannel(session: any): 'whatsapp' | 'web' | 'instagram' {
+  const channel = String(session?.metadata?.channel || session?.metadata?.type || 'web').toLowerCase()
+  if (channel === 'whatsapp') return 'whatsapp'
+  if (channel === 'instagram') return 'instagram'
+  return 'web'
 }
 
 function groupMessagesBySession(messages: any[]) {
@@ -194,6 +214,7 @@ function emptyResponse(bots: any[]) {
       botMessages: 0,
       totalAgents: bots.length,
       totalWhatsappAccounts: 0,
+      totalInstagramAccounts: 0,
       totalDataSources: 0,
       sentJobs: 0,
       failedJobs: 0,
@@ -202,7 +223,7 @@ function emptyResponse(bots: any[]) {
     timeline: buildTimeline([], 14),
     topAgents: bots.map((bot: any) => ({ name: bot.name, id: bot.id, count: 0 })),
     chatbots: bots,
-    channels: { whatsapp: 0, web: 0 },
+    channels: { whatsapp: 0, instagram: 0, web: 0 },
     conversations: [],
     filters: { chatbotId: 'all', channel: 'all' },
   }

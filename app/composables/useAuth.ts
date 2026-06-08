@@ -47,6 +47,11 @@ export const useAuth = () => {
     maxEmbeddingMb: plan.value?.max_embedding_mb || 0,
     maxReplies: plan.value?.max_replies_per_month || 0,
     maxWebsiteDomains: (plan.value as any)?.max_website_domains || 1,
+    hasInstagramAccess: Boolean((plan.value as any)?.instagram_access),
+    maxInstagramAccounts: (plan.value as any)?.max_instagram_accounts || 0,
+    hasAutoComment: Boolean((plan.value as any)?.has_auto_comment),
+    maxAutoDms: (plan.value as any)?.max_auto_dms_per_month ?? (plan.value as any)?.max_auto_dms ?? 0,
+    maxTriggers: (plan.value as any)?.max_triggers || 0,
     hasAdvancedTraining: plan.value?.advanced_training || false,
     hasApiAccess: plan.value?.api_access || false,
     removeBranding: plan.value?.remove_branding || false

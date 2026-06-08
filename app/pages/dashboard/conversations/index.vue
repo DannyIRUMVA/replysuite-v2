@@ -13,6 +13,7 @@ import {
   Sparkles,
   Globe,
   Phone,
+  Instagram,
   Filter,
   MessagesSquare
 } from 'lucide-vue-next'
@@ -37,7 +38,7 @@ const activeSessionId = useState<string>('active-session-id', () => '')
 const currentPage = ref(1)
 const pageSize = 8
 const searchQuery = ref('')
-const selectedChannel = ref<'all' | 'web' | 'whatsapp'>('all')
+const selectedChannel = ref<'all' | 'web' | 'whatsapp' | 'instagram'>('all')
 const isMounted = ref(false)
 const isExporting = ref(false)
 const isAnalyzing = ref(false)
@@ -51,7 +52,8 @@ onMounted(() => {
 const channelFilters = [
   { label: 'All', value: 'all', icon: Filter },
   { label: 'Web', value: 'web', icon: Globe },
-  { label: 'WhatsApp', value: 'whatsapp', icon: Phone }
+  { label: 'WhatsApp', value: 'whatsapp', icon: Phone },
+  { label: 'Instagram', value: 'instagram', icon: Instagram }
 ] as const
 
 const { data: chatbots } = await useAsyncData('user-chatbots-conv-v2', async () => {
@@ -122,7 +124,7 @@ const {
 
 const sessions = computed(() => rawSessions.value || [])
 
-const getSessionChannel = (session: any) => String(session?.metadata?.type || 'web').toLowerCase()
+const getSessionChannel = (session: any) => String(session?.metadata?.channel || session?.metadata?.type || 'web').toLowerCase()
 const getSessionContact = (session: any) => session?.metadata?.username || session?.metadata?.phone || 'Anonymous visitor'
 const getSessionPreview = (session: any) => {
   const lastMessage = session?.chat_messages?.[session.chat_messages.length - 1]
@@ -132,11 +134,13 @@ const getSessionMessageCount = (session: any) => session?.chat_messages?.length 
 const getSessionChannelLabel = (session: any) => {
   const channel = getSessionChannel(session)
   if (channel === 'whatsapp') return 'WhatsApp'
+  if (channel === 'instagram') return 'Instagram'
   return 'Web'
 }
 const getSessionChannelBadge = (session: any) => {
   const channel = getSessionChannel(session)
   if (channel === 'whatsapp') return 'bg-green-500/10 text-green-500 border-green-500/20'
+  if (channel === 'instagram') return 'bg-pink-500/10 text-pink-400 border-pink-500/20'
   return 'bg-primary/10 text-primary border-primary/20'
 }
 
@@ -196,13 +200,15 @@ const summaryStats = computed(() => {
   const targetSessions = filteredSessions.value
   const totalMessages = targetSessions.reduce((sum: number, session: any) => sum + getSessionMessageCount(session), 0)
   const whatsappCount = targetSessions.filter((session: any) => getSessionChannel(session) === 'whatsapp').length
+  const instagramCount = targetSessions.filter((session: any) => getSessionChannel(session) === 'instagram').length
   const webCount = targetSessions.filter((session: any) => getSessionChannel(session) === 'web').length
 
   return {
     conversations: targetSessions.length,
     messages: totalMessages,
     webCount,
-    whatsappCount
+    whatsappCount,
+    instagramCount
   }
 })
 
@@ -368,6 +374,7 @@ const analyzeSelectedAgent = async () => {
           <span class="rounded-full border border-foreground/10 bg-background/50 px-3 py-1.5">{{ summaryStats.messages }} messages</span>
           <span class="rounded-full border border-foreground/10 bg-background/50 px-3 py-1.5">{{ summaryStats.webCount }} web</span>
           <span class="rounded-full border border-foreground/10 bg-background/50 px-3 py-1.5">{{ summaryStats.whatsappCount }} WhatsApp</span>
+          <span class="rounded-full border border-foreground/10 bg-background/50 px-3 py-1.5">{{ summaryStats.instagramCount }} Instagram</span>
         </div>
         <div class="flex flex-wrap gap-2">
           <button @click="exportToCSV" :disabled="isExporting || !selectedChatbotId" class="inline-flex items-center gap-2 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-foreground/60 transition-all hover:bg-foreground/10 hover:text-foreground disabled:opacity-50">

@@ -13,11 +13,12 @@ import {
   Lock,
   X,
   MessageCircle,
-  HelpCircle
+  HelpCircle,
+  Instagram
 } from 'lucide-vue-next'
 
 const { openFeedback } = useFeedback()
-const { user, profile, membership, isVerified, isLoading, planSlug } = useAuth()
+const { user, profile, membership, isVerified, isLoading, planSlug, plan } = useAuth()
 const route = useRoute()
 const supabase = useSupabaseClient()
 
@@ -32,7 +33,8 @@ const iconMap: Record<string, any> = {
   Settings,
   Lock,
   MessageCircle,
-  HelpCircle
+  HelpCircle,
+  Instagram
 }
 
 
@@ -87,6 +89,7 @@ const sections = computed(() => [
     links: [
       { name: 'Website', href: '/dashboard/integrations/website', icon: 'Code2' },
       { name: 'WhatsApp', href: '/dashboard/integrations/whatsapp', icon: 'MessageCircle', locked: planSlug.value === 'starter' || !planSlug.value },
+      { name: 'Instagram', href: '/dashboard/integrations/instagram', icon: 'Instagram', locked: !(plan.value as any)?.instagram_access },
     ]
   },
   {
@@ -113,7 +116,7 @@ const sections = computed(() => [
 
 const openLockedFeatureModal = (link: any) => {
   lockedFeatureName.value = link.name || 'This feature'
-  lockedFeatureReason.value = link.name === 'WhatsApp' && (planSlug.value === 'starter' || !planSlug.value)
+  lockedFeatureReason.value = (link.name === 'WhatsApp' && (planSlug.value === 'starter' || !planSlug.value)) || link.name === 'Instagram'
     ? 'upgrade'
     : 'coming-soon'
   showLockedFeatureModal.value = true
