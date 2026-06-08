@@ -438,7 +438,17 @@ const analyzeSelectedAgent = async () => {
             </header>
             <div class="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_55%)] px-4 py-6 sm:px-6">
               <div v-if="activeSession.chat_messages?.length" class="mx-auto max-w-4xl space-y-5">
-                <div v-for="msg in activeSession.chat_messages" :key="msg.id" class="flex" :class="msg.role === 'assistant' ? 'justify-start' : 'justify-end'"><div class="max-w-[92%] sm:max-w-[76%]"><div class="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest" :class="msg.role === 'assistant' ? 'text-foreground/40' : 'justify-end text-primary'"><template v-if="msg.role === 'assistant'"><Bot class="h-3.5 w-3.5" />Assistant</template><template v-else>Visitor<User class="h-3.5 w-3.5" /></template></div><div class="rounded-2xl border px-4 py-3 text-sm leading-7 shadow-sm" :class="msg.role === 'assistant' ? 'border-foreground/10 bg-foreground/[0.03] text-foreground/80 rounded-tl-sm' : 'border-primary/20 bg-primary text-black rounded-tr-sm'">{{ msg.content }}</div><p class="mt-2 text-[10px] font-black uppercase tracking-widest text-foreground/35" :class="msg.role === 'assistant' ? '' : 'text-right'">{{ formatLongDate(msg.created_at) }}</p></div></div>
+                <div v-for="msg in activeSession.chat_messages" :key="msg.id" class="flex" :class="msg.role === 'assistant' ? 'justify-start' : 'justify-end'">
+                  <div class="max-w-[92%] sm:max-w-[76%]">
+                    <div class="mb-2 flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-widest" :class="msg.role === 'assistant' ? 'text-foreground/40' : 'justify-end text-primary'">
+                      <template v-if="msg.role === 'assistant'"><Bot class="h-3.5 w-3.5" />Assistant</template>
+                      <template v-else>Visitor<User class="h-3.5 w-3.5" /></template>
+                      <span class="rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-widest" :class="getSessionChannelBadge(activeSession)">{{ getSessionChannelLabel(activeSession) }}</span>
+                    </div>
+                    <div class="rounded-2xl border px-4 py-3 text-sm leading-7 shadow-sm" :class="msg.role === 'assistant' ? 'border-foreground/10 bg-foreground/[0.03] text-foreground/80 rounded-tl-sm' : 'border-primary/20 bg-primary text-black rounded-tr-sm'">{{ msg.content }}</div>
+                    <p class="mt-2 text-[10px] font-black uppercase tracking-widest text-foreground/35" :class="msg.role === 'assistant' ? '' : 'text-right'">{{ formatLongDate(msg.created_at) }}</p>
+                  </div>
+                </div>
               </div>
               <div v-else class="flex h-full min-h-[260px] flex-col items-center justify-center text-center text-foreground/50"><Activity class="mb-3 h-10 w-10 opacity-20" /><p class="text-[10px] font-black uppercase tracking-widest">No visible messages</p></div>
             </div>
