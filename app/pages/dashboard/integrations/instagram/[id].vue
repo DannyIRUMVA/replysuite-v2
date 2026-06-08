@@ -201,11 +201,17 @@ const jobStats = computed(() => {
           </div>
 
           <div v-if="post && trigger" class="space-y-5">
-            <div class="rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4">
-              <p class="text-[10px] font-black uppercase tracking-widest text-foreground/40">Connected post</p>
-              <p class="mt-1 font-mono text-xs font-bold text-foreground">{{ post.id }}</p>
-              <a v-if="post.permalink" :href="post.permalink" target="_blank" class="mt-2 inline-block text-xs font-bold text-primary hover:underline">Open on Instagram</a>
-              <p v-if="post.caption" class="mt-3 line-clamp-2 text-xs leading-5 text-foreground/55">{{ post.caption }}</p>
+            <div class="flex gap-4 rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4">
+              <div class="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.04]">
+                <img :src="`/api/instagram/${account.id}/posts/${post.id}/asset`" :alt="post.caption || 'Instagram post asset'" class="h-full w-full object-cover" loading="lazy" />
+                <span v-if="post.media_type" class="absolute bottom-1.5 left-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-widest text-white">{{ post.media_type }}</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[10px] font-black uppercase tracking-widest text-foreground/40">Connected post</p>
+                <p class="mt-1 truncate font-mono text-xs font-bold text-foreground">{{ post.id }}</p>
+                <a v-if="post.permalink" :href="post.permalink" target="_blank" class="mt-2 inline-block text-xs font-bold text-primary hover:underline">Open on Instagram</a>
+                <p v-if="post.caption" class="mt-3 line-clamp-3 text-xs leading-5 text-foreground/55">{{ post.caption }}</p>
+              </div>
             </div>
 
             <label class="block space-y-2">

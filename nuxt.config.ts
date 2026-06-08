@@ -138,6 +138,7 @@ export default defineNuxtConfig({
     instagramClientSecret: process.env.INSTAGRAM_SECRET,
     instagramRedirectUri: process.env.INSTAGRAM_REDIRECT_URI,
     instagramVerifyToken: process.env.INSTAGRAM_VERIFY_TOKEN,
+    instagramPollSecret: process.env.INSTAGRAM_POLL_SECRET,
     sendpulseId: process.env.SENDPULSE_ID,
     sendpulseSecret: process.env.SENDPULSE_SECRET,
     smtpFrom: process.env.SMTP_FROM,

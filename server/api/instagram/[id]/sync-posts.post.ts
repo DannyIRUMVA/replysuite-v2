@@ -3,7 +3,7 @@ import { getAuthenticatedUserId } from '~~/server/utils/auth'
 import { buildInstagramGraphUrl } from '~~/server/utils/integrations/instagram/config'
 import { isUuid } from '~~/server/utils/public-chatbot'
 
-const MEDIA_FIELDS = 'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp'
+const MEDIA_FIELDS = 'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,children{id,media_type,media_url,thumbnail_url,permalink}'
 
 const fetchInstagramMediaPage = async (url: string, accessToken: string) => {
   const target = new URL(url)
@@ -25,9 +25,9 @@ const fetchInstagramMediaPage = async (url: string, accessToken: string) => {
 
 const fetchInstagramMedia = async (instagramAccountId: string, accessToken: string, limit = 25) => {
   const candidates = [
-    buildInstagramGraphUrl(`${instagramAccountId}/media?fields=${encodeURIComponent(MEDIA_FIELDS)}&limit=${limit}`),
     `https://graph.instagram.com/v21.0/me/media?fields=${encodeURIComponent(MEDIA_FIELDS)}&limit=${limit}`,
     `https://graph.instagram.com/me/media?fields=${encodeURIComponent(MEDIA_FIELDS)}&limit=${limit}`,
+    buildInstagramGraphUrl(`${instagramAccountId}/media?fields=${encodeURIComponent(MEDIA_FIELDS)}&limit=${limit}`),
   ]
 
   let lastError: unknown = null
@@ -54,6 +54,7 @@ const fetchInstagramMedia = async (instagramAccountId: string, accessToken: stri
 
 export default defineEventHandler(async (event) => {
   const userId = await getAuthenticatedUserId(event)
+  if (!userId) throw createError({ statusCode: 401, statusMessage: 'Authentication required.' })
 
   const accountId = getRouterParam(event, 'id') || ''
   if (!isUuid(accountId)) throw createError({ statusCode: 400, statusMessage: 'Invalid Instagram account ID.' })
@@ -69,8 +70,10 @@ export default defineEventHandler(async (event) => {
   if (accountError) throw accountError
   if (!account) throw createError({ statusCode: 404, statusMessage: 'Instagram account not found.' })
   if (!account.access_token) throw createError({ statusCode: 400, statusMessage: 'Reconnect Instagram before syncing posts.' })
+  const accessToken = String(account.access_token)
+  const instagramAccountId = String(account.instagram_account_id || '')
 
-  const media = await fetchInstagramMedia(account.instagram_account_id, account.access_token, 50)
+  const media = await fetchInstagramMedia(instagramAccountId, accessToken, 50)
   const now = new Date().toISOString()
   const rows = media
     .filter((item) => item?.id)
@@ -79,9 +82,9 @@ export default defineEventHandler(async (event) => {
       instagram_account_id: account.id,
       caption: item.caption || null,
       media_type: item.media_type || null,
-      media_url: item.media_url || null,
+      media_url: item.media_url || item.children?.data?.[0]?.media_url || null,
       permalink: item.permalink || null,
-      thumbnail_url: item.thumbnail_url || null,
+      thumbnail_url: item.thumbnail_url || item.children?.data?.find((child: any) => child?.thumbnail_url)?.thumbnail_url || item.children?.data?.find((child: any) => child?.media_url)?.media_url || null,
       updated_at: now,
     }))
 

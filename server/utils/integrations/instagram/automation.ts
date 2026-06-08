@@ -56,7 +56,7 @@ const logJob = async (supabase: any, payload: {
   response?: unknown
   error?: unknown
 }) => {
-  await supabase.from('instagram_message_jobs').insert({
+  const { error } = await supabase.from('instagram_message_jobs').insert({
     instagram_account_id: payload.instagramAccountId,
     instagram_post_id: payload.instagramPostId,
     trigger_id: payload.triggerId,
@@ -71,6 +71,10 @@ const logJob = async (supabase: any, payload: {
       error: payload.error ? String((payload.error as any)?.message || payload.error) : null,
     },
   })
+
+  if (error) {
+    console.error('[Instagram Automation] Failed to log message job:', error.message || error)
+  }
 }
 
 const resolveInstagramAccount = async (supabase: any, payload: InstagramCommentEvent) => {
@@ -130,7 +134,7 @@ const recordInboundComment = async (supabase: any, account: any, postId: string,
 
   if (existing) return false
 
-  await supabase.from('instagram_comments').insert({
+  const { error } = await supabase.from('instagram_comments').insert({
     instagram_account_id: account.id,
     instagram_post_id: postId,
     comment_id: payload.commentId,
@@ -139,6 +143,11 @@ const recordInboundComment = async (supabase: any, account: any, postId: string,
     commenter_username: payload.commenterUsername || null,
     payload: payload.raw || null,
   })
+
+  if (error) {
+    console.error('[Instagram Automation] Failed to record inbound comment. Skipping sends for safety:', error.message || error)
+    return false
+  }
 
   return true
 }
@@ -286,7 +295,11 @@ export const processInstagramComment = async (supabase: any, payload: InstagramC
   }
 
   const post = await ensurePost(supabase, account.id, payload.mediaId)
-  await recordInboundComment(supabase, account, post.id, payload)
+  const isNewComment = await recordInboundComment(supabase, account, post.id, payload)
+  if (!isNewComment) {
+    console.warn(`[Instagram Automation] Comment ${payload.commentId} already recorded. Skipping sends to avoid duplicate Meta actions.`)
+    return
+  }
 
   const { data: triggers } = await supabase
     .from('instagram_comment_triggers')
@@ -312,6 +325,17 @@ export const processInstagramComment = async (supabase: any, payload: InstagramC
 
     if (!actions.length) continue
 
+    const pendingActions: InstagramAction[] = []
+    for (const action of actions) {
+      if (await actionAlreadyLogged(supabase, trigger.id, payload.commentId, action)) {
+        console.warn(`[Instagram Automation] Duplicate ${action} skipped for comment ${payload.commentId}.`)
+        continue
+      }
+      pendingActions.push(action)
+    }
+
+    if (!pendingActions.length) continue
+
     const session = await findOrCreateSession(supabase, trigger.chatbot_id, account, payload)
 
     await supabase.from('chat_messages').insert({
@@ -320,17 +344,14 @@ export const processInstagramComment = async (supabase: any, payload: InstagramC
       content: payload.commentText,
     })
 
-    for (const action of actions) {
-      if (await actionAlreadyLogged(supabase, trigger.id, payload.commentId, action)) {
-        console.warn(`[Instagram Automation] Duplicate ${action} skipped for comment ${payload.commentId}.`)
-        continue
-      }
-
+    for (const action of pendingActions) {
       let replyText = ''
       try {
-        replyText = action === 'comment_to_dm' && trigger.dm_template
-          ? String(trigger.dm_template).replace(/\{\{\s*comment\s*\}\}/gi, payload.commentText)
-          : await buildInstagramReply(supabase, trigger.chatbot_id, payload.commentText, action, session.id)
+        if (trigger.dm_template) {
+          replyText = String(trigger.dm_template).replace(/\{\{\s*comment\s*\}\}/gi, payload.commentText)
+        } else {
+          replyText = await buildInstagramReply(supabase, trigger.chatbot_id, payload.commentText, action, session.id)
+        }
 
         const response = await sendInstagramReply(account, payload.commentId, action, replyText)
 
@@ -346,7 +367,7 @@ export const processInstagramComment = async (supabase: any, payload: InstagramC
           triggerId: trigger.id,
           chatbotId: trigger.chatbot_id,
           commentId: payload.commentId,
-          recipientAsid: payload.commenterId,
+          recipientAsid: action === 'comment_to_dm' ? payload.commenterId : null,
           status: 'sent',
           action,
           replyText,
@@ -360,7 +381,7 @@ export const processInstagramComment = async (supabase: any, payload: InstagramC
           triggerId: trigger.id,
           chatbotId: trigger.chatbot_id,
           commentId: payload.commentId,
-          recipientAsid: payload.commenterId,
+          recipientAsid: action === 'comment_to_dm' ? payload.commenterId : null,
           status: 'failed',
           action,
           replyText,

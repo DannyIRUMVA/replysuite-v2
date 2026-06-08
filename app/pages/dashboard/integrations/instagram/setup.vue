@@ -342,7 +342,10 @@ const submit = async () => {
               class="flex items-center gap-3 rounded-2xl border p-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5"
               :class="selectedSyncedPostId === post.id ? 'border-primary/40 bg-primary/10' : 'border-foreground/10 bg-foreground/[0.02]'"
             >
-              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-foreground/10 bg-foreground/[0.04] text-[9px] font-black text-foreground/45">POST</div>
+              <div class="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-foreground/10 bg-foreground/[0.04]">
+                <img :src="`/api/instagram/${form.accountId}/posts/${post.id}/asset`" :alt="post.caption || 'Instagram post asset'" class="h-full w-full object-cover" loading="lazy" />
+                <span v-if="post.media_type" class="absolute bottom-1 left-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-widest text-white">{{ post.media_type }}</span>
+              </div>
               <span class="min-w-0 flex-1">
                 <span class="line-clamp-1 text-sm font-black leading-5 text-foreground">{{ post.caption || 'Instagram post' }}</span>
                 <span class="mt-0.5 block truncate text-[10px] font-bold text-foreground/40">{{ post.permalink || post.id }}</span>

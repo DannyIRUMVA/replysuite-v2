@@ -1,10 +1,8 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { getAuthenticatedUserId } from '~~/server/utils/auth'
 import { processInstagramComment } from '~~/server/utils/integrations/instagram/automation'
-import { buildInstagramLoginGraphUrl } from '~~/server/utils/integrations/instagram/config'
+import { fetchInstagramComments } from '~~/server/utils/integrations/instagram/polling'
 import { isUuid } from '~~/server/utils/public-chatbot'
-
-const COMMENT_FIELDS = 'id,text,username,timestamp,from,replies{id,text,username,timestamp,from}'
 
 const readPostId = async (event: any) => {
   const body = await readBody(event).catch(() => ({}))
@@ -12,33 +10,9 @@ const readPostId = async (event: any) => {
   return typeof value === 'string' ? value.trim() : ''
 }
 
-const fetchInstagramComments = async (postId: string, accessToken: string, limit = 50) => {
-  const comments: any[] = []
-  let nextUrl: string | undefined = buildInstagramLoginGraphUrl(`${postId}/comments?fields=${encodeURIComponent(COMMENT_FIELDS)}&limit=${limit}`)
-
-  while (nextUrl && comments.length < limit) {
-    const target = new URL(nextUrl)
-    if (!target.searchParams.has('access_token')) target.searchParams.set('access_token', accessToken)
-
-    const response = await fetch(target.toString())
-    const data = await response.json().catch(() => ({}))
-
-    if (!response.ok || data?.error) {
-      throw createError({
-        statusCode: response.status || 502,
-        statusMessage: data?.error?.message || 'Could not fetch Instagram comments for this post.',
-      })
-    }
-
-    comments.push(...(data?.data || []))
-    nextUrl = data?.paging?.next
-  }
-
-  return comments.slice(0, limit)
-}
-
 export default defineEventHandler(async (event) => {
   const userId = await getAuthenticatedUserId(event)
+  if (!userId) throw createError({ statusCode: 401, statusMessage: 'Authentication required.' })
   const accountId = getRouterParam(event, 'id') || ''
   const postId = await readPostId(event)
 
@@ -56,6 +30,8 @@ export default defineEventHandler(async (event) => {
   if (accountError) throw accountError
   if (!account) throw createError({ statusCode: 404, statusMessage: 'Instagram account not found.' })
   if (!account.access_token) throw createError({ statusCode: 400, statusMessage: 'Reconnect Instagram before checking comments.' })
+  const accessToken = String(account.access_token)
+  const instagramAccountId = String(account.instagram_account_id || '')
 
   const { data: post, error: postError } = await supabase
     .from('instagram_posts')
@@ -76,7 +52,7 @@ export default defineEventHandler(async (event) => {
   if (triggerError) throw triggerError
   if (!triggers?.length) throw createError({ statusCode: 400, statusMessage: 'Save an active rule for this post before checking comments.' })
 
-  const comments = await fetchInstagramComments(postId, account.access_token, 50)
+  const comments = await fetchInstagramComments(postId, accessToken, 50)
   const commentIds: string[] = []
   let processed = 0
 
@@ -87,7 +63,7 @@ export default defineEventHandler(async (event) => {
     commentIds.push(commentId)
 
     await processInstagramComment(supabase, {
-      igUserId: account.instagram_account_id,
+      igUserId: instagramAccountId,
       mediaId: postId,
       commentId,
       commentText: text,
