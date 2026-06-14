@@ -151,6 +151,7 @@ export default defineNuxtConfig({
     paypackSecretEncryptionKey: process.env.PAYPACK_SECRET_ENCRYPTION_KEY,
     whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN,
     whatsappWebhookUrl: process.env.WHATSAPP_WEBHOOK_URL,
+    whatsappAppSecret: process.env.WHATSAPP_APP_SECRET,
 
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL,

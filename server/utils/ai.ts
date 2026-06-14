@@ -55,8 +55,8 @@ export const getLowIntentDirectReply = (message: string, alreadyGreeted = false)
   }
 
   return alreadyGreeted
-    ? 'How can I help you with ReplySuite today?'
-    : 'Hi! How can I help you with ReplySuite today?'
+    ? 'How can I help you today?'
+    : 'Hi! How can I help you today?'
 }
 
 export const getEmbeddings = async (text: string) => {
