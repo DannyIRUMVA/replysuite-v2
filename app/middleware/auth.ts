@@ -40,6 +40,35 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     }
   }
 
+  // 2.2. Plan feature gates.
+  if (user.value && to.path.startsWith('/dashboard') && to.path !== '/dashboard/pricing' && auth.userId.value) {
+    const normalize = (value: unknown) => String(value || '').toLowerCase()
+    let slug = normalize(auth.planSlug.value)
+
+    if (!slug) {
+      const supabase = useSupabaseClient()
+      const { data } = await supabase
+        .from('user_memberships')
+        .select('plans(internal_slug)')
+        .eq('user_id', auth.userId.value)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle()
+      slug = normalize((data?.plans as any)?.internal_slug)
+    }
+
+    const isGoldOrEnterprise = ['gold', 'enterprise-ready', 'enterprise'].includes(slug)
+    const isEnterprise = ['enterprise-ready', 'enterprise'].includes(slug)
+
+    if (to.path.startsWith('/dashboard/integrations/instagram') && !isGoldOrEnterprise) {
+      return navigateTo('/dashboard/pricing')
+    }
+
+    if ((to.path.startsWith('/dashboard/appointments') || to.path.startsWith('/dashboard/orders')) && !isEnterprise) {
+      return navigateTo('/dashboard/pricing')
+    }
+  }
+
   // 2.5. Dashboard onboarding check
   if (user.value && to.path.startsWith('/dashboard') && auth.userId.value) {
     try {

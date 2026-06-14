@@ -16,10 +16,11 @@ import {
 definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 useHead({ title: 'Instagram Automations' })
 
-const { plan, isLoading: isPlanLoading } = useAuth()
+const { isLoading: isPlanLoading } = useAuth()
+const { canUseInstagramWorkflow } = usePlanAccess()
 const supabase = useSupabaseClient()
 const notify = useNotify()
-const isLocked = computed(() => !(plan.value as any)?.instagram_access)
+const isLocked = computed(() => !canUseInstagramWorkflow.value)
 const hasMounted = ref(false)
 const oauthLoading = ref(false)
 const showAccountsModal = ref(false)

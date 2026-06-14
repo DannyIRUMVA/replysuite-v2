@@ -284,32 +284,7 @@ const handleDelete = async (id: string) => {
 </script>
 
 <template>
-  <div class="space-y-12 pb-24 lg:pb-0">
-    <div class="flex justify-end">
-      <div class="flex flex-col items-start md:items-end gap-2">
-        <button 
-          @click="canCreateAgent ? (showCreateModal = true) : null"
-          :class="[
-            'flex items-center gap-3 px-6 py-3 font-bold rounded-2xl transition-all shadow-lg text-[11px] tracking-widest uppercase',
-            canCreateAgent 
-              ? 'bg-primary text-black hover:bg-primary-accent shadow-primary/10' 
-              : 'bg-foreground/5 text-foreground/50 cursor-not-allowed opacity-60'
-          ]"
-        >
-          <Plus class="w-5 h-5" />
-          {{ canCreateAgent ? 'Create New Assistant' : 'Assistant Limit Reached' }}
-        </button>
-
-        <NuxtLink
-          v-if="!canCreateAgent"
-          to="/dashboard/pricing"
-          class="text-[10px] font-bold tracking-widest uppercase text-primary hover:text-primary-accent transition-colors"
-        >
-          Need more assistants? Upgrade your plan
-        </NuxtLink>
-      </div>
-    </div>
-
+  <div class="space-y-6 pb-24 lg:pb-0">
     <!-- Stats Row (Loading or Data) -->
     <div v-if="isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div v-for="i in 4" :key="i" class="glass-card !p-5 bg-foreground/[0.01]">
@@ -346,7 +321,7 @@ const handleDelete = async (id: string) => {
         <table class="w-full min-w-[860px] text-left">
           <thead class="bg-foreground/[0.02]">
             <tr>
-              <th v-for="heading in ['Assistant', 'Status', 'Language', 'Interactions', 'Knowledge', 'Created', 'Actions']" :key="heading" class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">
+              <th v-for="heading in ['Assistant', 'Status', 'Language', 'Interactions', 'Training', 'Created', 'Actions']" :key="heading" class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">
                 {{ heading }}
               </th>
             </tr>
@@ -375,38 +350,44 @@ const handleDelete = async (id: string) => {
     </div>
 
     <div v-else-if="agents.length > 0" class="glass-card !p-0 overflow-hidden bg-foreground/[0.01]">
-      <div class="flex flex-col gap-3 border-b border-foreground/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex flex-col gap-3 border-b border-foreground/5 p-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h3 class="text-sm font-bold tracking-widest text-foreground uppercase">Assistants</h3>
-          <p class="mt-1 text-[12px] text-foreground/50">Manage configuration, knowledge, status, and assistant activity in one table.</p>
+          <p class="mt-1 text-[12px] text-foreground/50">Manage configuration, training, status, and assistant activity in one table.</p>
         </div>
-        <button
-          v-if="canCreateAgent"
-          @click="showCreateModal = true"
-          class="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/10 bg-primary/10 px-4 py-2 text-[11px] font-bold tracking-widest text-primary transition-all hover:bg-primary/20 uppercase"
-        >
-          <Plus class="h-3.5 w-3.5" />
-          New Assistant
-        </button>
-        <NuxtLink
-          v-else
-          to="/dashboard/pricing"
-          class="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/10 bg-primary/10 px-4 py-2 text-[11px] font-bold tracking-widest text-primary transition-all hover:bg-primary/20 uppercase"
-        >
-          <Sparkles class="h-3.5 w-3.5" />
-          Upgrade Plan
-        </NuxtLink>
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <NuxtLink
+            to="/dashboard/pricing"
+            class="dashboard-header-action-btn"
+          >
+            <Sparkles class="h-3.5 w-3.5" />
+            Upgrade Plan
+          </NuxtLink>
+          <button
+            @click="canCreateAgent ? (showCreateModal = true) : null"
+            :disabled="!canCreateAgent"
+            :class="[
+              'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95',
+              canCreateAgent
+                ? 'border border-primary/20 bg-primary text-black shadow-sm shadow-primary/10 hover:bg-primary-accent dark:shadow-lg dark:shadow-primary/20'
+                : 'cursor-not-allowed border border-foreground/10 bg-foreground/5 text-foreground/40'
+            ]"
+          >
+            <Plus class="h-3.5 w-3.5" />
+            {{ canCreateAgent ? 'Create Chatbot' : 'Limit Reached' }}
+          </button>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="w-full min-w-[1080px] text-left">
+        <table class="w-full min-w-[1020px] text-left">
           <thead class="bg-foreground/[0.02]">
             <tr>
               <th class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Assistant</th>
               <th class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Status</th>
               <th class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Language</th>
               <th class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Interactions</th>
-              <th class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Knowledge</th>
+              <th class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Training</th>
               <th class="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Created</th>
               <th class="px-5 py-3 text-right text-[10px] font-bold tracking-[0.18em] text-foreground/45 uppercase">Actions</th>
             </tr>
@@ -470,10 +451,10 @@ const handleDelete = async (id: string) => {
               <td class="px-5 py-4 align-middle">
                 <NuxtLink
                   :to="`/dashboard/agents/skills/training?id=${agent.id}`"
-                  class="inline-flex items-center gap-2 rounded-lg border border-primary/10 bg-primary/5 px-2.5 py-1.5 text-[11px] font-bold tracking-widest text-primary transition-all hover:bg-primary/10 uppercase"
+                  class="inline-flex items-center gap-2 rounded-lg border border-primary/15 bg-primary/10 px-3 py-2 text-[10px] font-black tracking-widest text-primary transition-all hover:border-primary/25 hover:bg-primary/15 uppercase"
                 >
                   <Database class="h-3.5 w-3.5" />
-                  {{ agent.data_source_count.toLocaleString() }} Sources
+                  Train
                 </NuxtLink>
               </td>
               <td class="px-5 py-4 align-middle">

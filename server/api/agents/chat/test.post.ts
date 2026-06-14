@@ -1,5 +1,6 @@
 import { serverSupabaseClient, serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
-import { searchKnowledge, getChatCompletion } from '~~/server/utils/ai'
+import { buildLowIntentTurnPrompt, getLowIntentDirectReply, isLowIntentChatMessage, searchKnowledge } from '~~/server/utils/ai'
+import { runAgentCycle } from '~~/server/utils/agent/engine'
 import { buildAssistantSkillsPrompt } from '~~/server/utils/agent/skills'
 import { buildChatbotLanguagePolicy } from '~~/server/utils/language-policy'
 import { isUuid } from '~~/server/utils/public-chatbot'
@@ -27,7 +28,7 @@ export default defineEventHandler(async (event) => {
   // 1. Verify ownership with the user-scoped client
   const { data: chatbot, error: chatbotError } = await supabase
     .from('chatbots')
-    .select('id, name, system_prompt, user_id, default_language, tools_config')
+    .select('id, name, system_prompt, user_id, default_language, enabled_tools, tools_config')
     .eq('id', chatbotId)
     .maybeSingle()
 
@@ -69,8 +70,27 @@ export default defineEventHandler(async (event) => {
       content: message
     })
 
-    // 4. Search Knowledge Base (RAG)
-    const contextResults = await searchKnowledge(supabaseAdmin, chatbotId, message, 6)
+    const directLowIntentReply = getLowIntentDirectReply(message, false)
+
+    if (directLowIntentReply) {
+      await supabaseAdmin.from('chat_messages').insert({
+        session_id: sessionId,
+        role: 'assistant',
+        content: directLowIntentReply,
+      })
+
+      return {
+        success: true,
+        response: directLowIntentReply,
+        sessionId,
+        hasContext: false,
+        contextCount: 0,
+      }
+    }
+
+    // 4. Search Knowledge Base (RAG), but skip low-intent greetings/acks so test chat stays calm.
+    const isLowIntentTurn = isLowIntentChatMessage(message)
+    const contextResults = isLowIntentTurn ? [] : await searchKnowledge(supabaseAdmin, chatbotId, message, 6)
     const contextText = contextResults.map((r: any, index: number) => {
       const sourceLabel = [r.title, r.url].filter(Boolean).join(' · ') || r.sourceType || 'Knowledge Source'
       return `[Source ${index + 1}: ${sourceLabel}]\n${r.content}`
@@ -94,6 +114,8 @@ export default defineEventHandler(async (event) => {
       [ASSIGNED ASSISTANT SKILLS]
       ${buildAssistantSkillsPrompt((chatbot as any)?.tools_config)}
 
+      ${isLowIntentTurn ? `[LOW-INTENT TURN RULE]\n${buildLowIntentTurnPrompt(false)}` : ''}
+
       [ADDITIONAL CONTEXT FROM KNOWLEDGE BASE]
       ${contextText || 'No specific background knowledge found for this query.'}
       
@@ -101,19 +123,35 @@ export default defineEventHandler(async (event) => {
       1. Be EXTREMELY CONCISE. Provide short, direct answers.
       2. Use ONLY PLAIN TEXT. Do NOT use Markdown (no headers #, no bold **, no horizontal lines ---, no tables, no lists).
       3. If the [ADDITIONAL CONTEXT] contradicts your base instructions, prioritize the [ADDITIONAL CONTEXT] for factual accuracy.
+      4. For greetings, thanks, acknowledgements, or short replies like "ok", answer with one short sentence only.
     `
 
-    // 6. Get AI Response
-    let response = await getChatCompletion([
-      { role: 'user', content: message }
-    ], { systemPrompt })
+    const { data: history } = await supabaseAdmin
+      .from('chat_messages')
+      .select('role, content')
+      .eq('session_id', sessionId)
+      .order('created_at', { ascending: true })
+      .limit(20)
 
-    // 7. Extract/Clean text (Remove Markdown characters #, *, -, _, |, >)
-    // This handles cases where the AI might still include them despite instructions.
+    const messagesHistory = (history?.length ? history : [{ role: 'user', content: message }]).map((msg: any) => ({
+      role: msg.role === 'assistant' ? 'assistant' : 'user',
+      content: msg.content,
+    }))
+
+    // 6. Get AI Response through the same tool-aware agent loop used by public chat.
+    let response = await runAgentCycle(messagesHistory, {
+      systemPrompt,
+      chatbotId: chatbot.id,
+      enabledTools: (chatbot as any).enabled_tools || [],
+      event,
+      context: { platform: 'test', sessionId },
+    })
+
+    // 7. Keep test chat compact and plain, but preserve IDs returned by tools.
     response = response
-      .replace(/[#*|_>~]/g, '') // Remove #, *, |, _, >, ~
-      .replace(/^-{2,}/gm, '')  // Remove lines like -- or ---
-      .replace(/(\r\n|\n|\r){3,}/g, '\n\n') // Remove excessive newlines
+      .replace(/[#*|_>~]/g, '')
+      .replace(/^-{2,}/gm, '')
+      .replace(/(\r\n|\n|\r){3,}/g, '\n\n')
       .trim()
 
     // 8. Save Assistant Reply

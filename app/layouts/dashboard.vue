@@ -33,7 +33,7 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen bg-background text-foreground flex overflow-hidden">
+  <div class="dashboard-shell min-h-screen bg-background text-foreground flex overflow-hidden">
     <!-- Sidebar -->
     <DashboardSidebar />
 
@@ -41,7 +41,7 @@ useHead({
     <div class="flex-1 flex flex-col h-screen overflow-hidden">
       <main class="flex-1 overflow-y-auto px-6 md:px-8 pt-0 relative pb-32 md:pb-8">
 
-        <div class="sticky top-0 z-40 -mx-6 px-6 md:-mx-8 md:px-8 pt-1.5 pb-1.5 mb-2 bg-background/80 backdrop-blur-xl border-b border-foreground/5">
+        <div class="dashboard-header-bar sticky top-0 z-40 -mx-6 px-6 md:-mx-8 md:px-8 pt-1.5 pb-1.5 mb-2 bg-background/80 backdrop-blur-xl border-b border-foreground/5">
           <DashboardHeader />
         </div>
 

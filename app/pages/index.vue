@@ -4,6 +4,7 @@ import {
   ArrowRight,
   Play,
   CheckCircle2,
+  CreditCard,
   Settings,
   Bot,
   BrainCircuit,
@@ -33,10 +34,10 @@ import { marked } from 'marked'
 import xss from 'xss'
 
 useSeoMeta({
-  title: 'AI Customer Support Chatbot for Websites & WhatsApp | ReplySuite',
-  ogTitle: 'AI Customer Support for Websites & WhatsApp | ReplySuite',
-  description: 'Train AI chatbots on your business content and automate customer support, FAQs, bookings, and lead generation on WhatsApp and websites.',
-  ogDescription: 'Train AI chatbots on your business content and automate customer support, FAQs, bookings, and lead generation on WhatsApp and websites.',
+  title: 'AI Command Center for Customer Conversations | ReplySuite',
+  ogTitle: 'ReplySuite | Train once. Reply everywhere. Channels supported.',
+  description: 'Train AI chatbots on your business content and reply across supported customer channels: website, WhatsApp, and Instagram workflows.',
+  ogDescription: 'Train once. Reply everywhere across website, WhatsApp, and Instagram workflows with ReplySuite.',
 })
 
 useHead({
@@ -62,9 +63,9 @@ const renderMarkdown = (text: string) => {
 }
 
 const outcomePoints = [
-  'Instant replies on your website and WhatsApp',
+  'Instant replies on your website, WhatsApp, and Instagram workflows',
   'Train on your website, PDFs, FAQs, and business content',
-  'Capture leads and answer support questions 24/7'
+  'Silver adds WhatsApp, Gold adds Instagram, Enterprise adds AI tools'
 ]
 
 const proofCards = [
@@ -281,14 +282,15 @@ const testimonialSamples = [
 ]
 
 const socialProofMetrics = [
-  { label: 'Website + WhatsApp setup', value: '2 channels' },
+  { label: 'Supported channel path', value: 'Web, WhatsApp, Instagram' },
   { label: 'Support coverage', value: '24/7' },
   { label: 'Business languages supported', value: '10+' }
 ]
 
 const socialProofRows = [
   { label: 'Website deployment', value: 'Embed chatbot on approved domains', detail: 'Included from Free Starter upward' },
-  { label: 'WhatsApp automation', value: 'Available from Gold', detail: 'Built for higher-volume customer conversations' },
+  { label: 'WhatsApp chatbot', value: 'Available from Silver', detail: 'Built for higher-volume customer conversations' },
+  { label: 'Instagram workflows', value: 'Available from Gold', detail: 'Automate comment replies and comment-to-DM flows' },
   { label: 'Training sources', value: 'Website, PDFs, FAQs, custom text', detail: 'Keeps answers closer to your business content' },
   { label: 'Monthly AI replies', value: '100 to 500,000', detail: 'Scale from Starter to Enterprise Ready' },
   { label: 'Training sessions', value: '10 to 1,000 / month', detail: 'Plan limits match launch, growth, and rollout needs' },
@@ -462,8 +464,8 @@ const plans = [
     id: 'silver',
     productId: 'dc070937-6444-40a6-8a02-fd8b25df7aae',
     price: '17.88',
-    desc: 'Best for growing businesses that want more domains and more conversations.',
-    features: ['3 website chatbots', '5 connected domains / chatbot', '4,000 AI replies / mo', '30 training sessions', 'Priority support'],
+    desc: 'Best for growing businesses that want website and WhatsApp chatbots.',
+    features: ['3 chatbots', 'Website + WhatsApp support', '5 connected domains / chatbot', '4,000 AI replies / mo', '30 training sessions'],
     popular: true
   },
   {
@@ -471,8 +473,8 @@ const plans = [
     id: 'gold',
     productId: 'd0493f6f-16bc-4d3c-97bb-7be920840f12',
     price: '26.88',
-    desc: 'Best for businesses ready for higher volume and WhatsApp automation.',
-    features: ['5 website chatbots', '10 connected domains / chatbot', '10,000 AI replies / mo', '100 training sessions', 'WhatsApp integration'],
+    desc: 'Best for businesses ready for Instagram workflows and higher-volume conversations.',
+    features: ['5 chatbots', 'Website + WhatsApp support', 'Instagram workflows', '10,000 AI replies / mo', '100 training sessions'],
     popular: false
   },
   {
@@ -480,8 +482,8 @@ const plans = [
     id: 'enterprise-ready',
     productId: '3e4e4e1a-e1da-4f3f-be5a-298e409c7c1e',
     price: '350.88',
-    desc: 'Best for larger rollouts that need scale, control, and starter templates.',
-    features: ['50 website chatbots', '100 connected domains / chatbot', '500,000 AI replies / mo', '1,000 training sessions', 'Custom-ready starter templates'],
+    desc: 'Best for larger rollouts that need every channel plus Enterprise AI business tools.',
+    features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Appointments, orders, Paypack checkout'],
     popular: false
   }
 ]
@@ -544,23 +546,22 @@ const handleSelect = async (plan: any) => {
 </script>
 
 <template>
-  <div class="relative overflow-hidden">
+  <div class="relative overflow-x-hidden">
     <section class="relative pt-14 pb-20 md:pt-24 md:pb-24 overflow-hidden">
       <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-start">
         <div>
           <div class="flex items-center gap-3 mb-8 opacity-80 group cursor-default">
             <div class="h-[1px] w-10 bg-primary/40 group-hover:w-14 transition-all duration-500"></div>
-            <span class="text-[11px] font-bold tracking-[0.3em] text-primary uppercase">AI customer support for websites +
-              WhatsApp</span>
+            <span class="text-[11px] font-bold tracking-[0.3em] text-primary uppercase">AI command center for customer conversations</span>
           </div>
 
           <h1 class="text-4xl md:text-6xl font-black mb-8 leading-[0.92] text-foreground max-w-3xl">
-            AI Customer Support for
-            <span class="text-gradient">Websites & WhatsApp</span>
+            Train once. Reply everywhere.
+            <span class="text-gradient">Channels supported.</span>
           </h1>
 
           <p class="text-lg md:text-xl text-foreground/60 mb-10 max-w-2xl leading-relaxed font-semibold">
-            Train an AI assistant on your business content and automate customer support, FAQs, bookings, and lead generation 24/7.
+            Train an AI assistant on your business content, then use it to answer questions, capture leads, and reply across supported channels as your plan grows.
           </p>
 
           <div class="grid sm:grid-cols-1 gap-2.5 mb-10 max-w-xl">
@@ -597,7 +598,10 @@ const handleSelect = async (plan: any) => {
               <Globe2 class="w-4 h-4 text-primary" /> Website widget
             </span>
             <span class="inline-flex items-center gap-2">
-              <MessageCircle class="w-4 h-4 text-primary" /> WhatsApp AI assistant
+              <MessageCircle class="w-4 h-4 text-primary" /> WhatsApp + Instagram workflows
+            </span>
+            <span class="inline-flex items-center gap-2">
+              <CreditCard class="w-4 h-4 text-primary" /> Enterprise AI tools add-on
             </span>
           </div>
         </div>
@@ -1008,7 +1012,7 @@ const handleSelect = async (plan: any) => {
           <span class="text-gradient">growth, and scale.</span>
         </h2>
         <p class="text-foreground/50 font-semibold leading-relaxed">
-          Review the practical details buyers care about: channels, AI reply volume, training capacity, WhatsApp availability, and multilingual coverage.
+          Review the practical details buyers care about: supported channels, AI reply volume, training capacity, Enterprise tools, and multilingual coverage.
         </p>
       </div>
 
@@ -1170,7 +1174,7 @@ const handleSelect = async (plan: any) => {
           <span class="text-gradient">Free Starter below.</span>
         </h2>
         <p class="text-foreground/50 mt-6 font-semibold leading-relaxed">
-          Choose from three paid subscriptions for growth and scale. If you are not ready to pay, the Free Starter subscription is still available below.
+          Choose from three paid subscriptions: Silver for WhatsApp, Gold for Instagram workflows, and Enterprise Ready for AI business tools. If you are not ready to pay, the Free Starter subscription is still available below.
         </p>
       </div>
 
@@ -1269,7 +1273,7 @@ const handleSelect = async (plan: any) => {
         </h2>
 
         <p class="text-foreground/55 max-w-2xl mx-auto mb-10 relative z-10 font-semibold leading-relaxed">
-          Start with your website, train the assistant on your content, and expand into WhatsApp when you want more support automation and faster replies.
+          Start with your website, expand to WhatsApp on Silver, add Instagram workflows on Gold, and unlock Enterprise AI tools for appointments, orders, and Paypack checkout when you are ready.
         </p>
 
         <div class="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
@@ -1352,5 +1356,14 @@ const handleSelect = async (plan: any) => {
 .animate-float-delayed {
   animation: float 6s ease-in-out infinite;
   animation-delay: 3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 </style>

@@ -3,16 +3,17 @@
 @tailwind utilities;
 
 :root {
-  --primary: 212 175 55; /* Golden primary */
-  --primary-accent: 255 215 0;
-  --background: 255 255 255; 
+  /* Light mode uses a warmer, softer command-center palette. Dark mode below is unchanged. */
+  --primary: 176 124 32;
+  --primary-accent: 218 174 81;
+  --background: 250 249 247;
   --background-card: 255 255 255;
-  --background-accent: 249 250 251;
+  --background-accent: 246 243 237;
   --surface: 255 255 255;
-  --surface-border: 0 0 0;
-  --text-base: 9 9 11;
-  --text-muted: 107 114 128;
-  --border-color: 229 231 235;
+  --surface-border: 42 37 31;
+  --text-base: 41 45 52;
+  --text-muted: 109 115 124;
+  --border-color: 228 222 212;
 }
 
 .dark {
@@ -35,6 +36,15 @@
 
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: "Space Grotesk", Inter, ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .font-utility {
+    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   }
 
   body.cookie-modal-open {
@@ -48,7 +58,7 @@
   }
 
   .glass-card {
-    @apply bg-background-card border border-foreground/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.03)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] backdrop-blur-xl rounded-[32px] transition-all duration-500;
+    @apply bg-background-card border border-foreground/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.03)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] backdrop-blur-xl rounded-3xl transition-all duration-300;
   }
 
   .text-gradient {
@@ -65,6 +75,37 @@
 
   .dashboard-secondary-btn {
     @apply inline-flex items-center justify-center rounded-2xl border border-foreground/10 bg-background-card px-8 py-5 text-center text-xs font-black uppercase tracking-widest text-foreground transition-all hover:border-primary/20 hover:bg-foreground/5 hover:text-primary;
+  }
+
+  .dashboard-header-action-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-4 py-2 text-[9px] font-black uppercase tracking-widest text-primary shadow-sm shadow-primary/5 transition-all hover:border-primary/30 hover:bg-primary/15 active:scale-95 dark:bg-primary dark:text-black dark:shadow-lg dark:shadow-primary/20 dark:hover:bg-primary-accent;
+  }
+
+  .dashboard-shell {
+    background: rgb(var(--background));
+  }
+
+  :root:not(.dark) .dashboard-shell {
+    background:
+      radial-gradient(circle at 8% 0%, rgb(var(--primary) / 0.055), transparent 26rem),
+      linear-gradient(135deg, #faf9f7 0%, #f6f3ed 50%, #fbfaf8 100%);
+  }
+
+  :root:not(.dark) .dashboard-sidebar {
+    background: rgb(var(--background-accent) / 0.94);
+    border-color: rgb(var(--border-color) / 0.8);
+    box-shadow: 16px 0 45px rgb(88 72 43 / 0.045);
+  }
+
+  :root:not(.dark) .dashboard-header-bar {
+    background: rgb(var(--background) / 0.86);
+    border-color: rgb(var(--border-color) / 0.72);
+    box-shadow: 0 10px 30px rgb(88 72 43 / 0.035);
+  }
+
+  :root:not(.dark) .glass-card {
+    border-color: rgb(var(--border-color) / 0.74);
+    box-shadow: 0 10px 30px rgb(88 72 43 / 0.055);
   }
 
   .public-page-shell {
@@ -166,5 +207,14 @@
 
   .public-page-shell :where([class*="gap-16"], [class*="gap-12"], [class*="gap-10"]) {
     gap: 1.5rem !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
   }
 }

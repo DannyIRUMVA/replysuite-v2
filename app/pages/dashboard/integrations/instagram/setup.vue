@@ -4,12 +4,13 @@ import { ArrowLeft, Bot, Instagram, Loader2, Sparkles } from 'lucide-vue-next'
 definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 useHead({ title: 'Connect Instagram Post' })
 
-const { plan, isLoading: isPlanLoading, setInteracting } = useAuth()
+const { isLoading: isPlanLoading, setInteracting } = useAuth()
+const { canUseInstagramWorkflow } = usePlanAccess()
 const supabase = useSupabaseClient()
 const notify = useNotify()
 const route = useRoute()
-const isLocked = computed(() => !(plan.value as any)?.instagram_access)
-const canPublicComment = computed(() => Boolean((plan.value as any)?.has_auto_comment))
+const isLocked = computed(() => !canUseInstagramWorkflow.value)
+const canPublicComment = canUseInstagramWorkflow
 
 const form = reactive({
   accountId: '',

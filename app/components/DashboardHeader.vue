@@ -33,7 +33,7 @@ const pageContext = computed(() => {
       </div>
       
       <!-- Upgrade Trigger (Mobile) -->
-      <NuxtLink to="/dashboard/pricing" class="p-2.5 rounded-xl bg-primary text-black shadow-lg shadow-primary/20 transition-all active:scale-95">
+      <NuxtLink to="/dashboard/pricing" class="dashboard-header-action-btn !p-2.5">
         <TrendingUp class="w-4 h-4" />
       </NuxtLink>
     </div>
@@ -47,8 +47,8 @@ const pageContext = computed(() => {
     
     <div class="flex items-center justify-between md:justify-end gap-3 border-t md:border-t-0 border-foreground/5 pt-2 md:pt-0">
       <div class="hidden sm:flex items-center gap-3">
-        <NuxtLink to="/dashboard/pricing" class="relative flex items-center gap-2 py-1.5 px-4 rounded-xl bg-primary text-black font-bold border border-primary/20 hover:scale-105 hover:shadow-xl hover:shadow-primary/30 transition-all group whitespace-nowrap shadow-lg shadow-primary/20">
-            <span class="text-[9px] uppercase tracking-widest font-black">Upgrade Plan</span>
+        <NuxtLink to="/dashboard/pricing" class="dashboard-header-action-btn whitespace-nowrap">
+            <span>Upgrade Plan</span>
             <TrendingUp class="w-3 h-3" />
         </NuxtLink>
         <ThemeSwitcher />

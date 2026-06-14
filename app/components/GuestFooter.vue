@@ -32,7 +32,7 @@ const socialLinks = [
           <span class="text-3xl font-bold tracking-tighter text-foreground">ReplySuite</span>
         </div>
         <p class="text-foreground/50 leading-relaxed font-medium">
-          AI chatbots for websites and WhatsApp. Train on your content and answer faster.
+          A calm AI command center for customer conversations. Train once, reply everywhere, book appointments, take orders, and get paid.
         </p>
       </div>
       <div class="flex gap-4">
@@ -51,8 +51,8 @@ const socialLinks = [
         <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Product</h4>
         <ul class="space-y-4">
           <li v-for="link in [
-            { name: 'Multi-Channel DM', to: '/features' },
-            { name: 'Integrations', to: '/integrations' },
+            { name: 'Product Overview', to: '/product' },
+            { name: 'Features', to: '/features' },
             { name: 'Pricing & Plans', to: '/pricing' },
             { name: 'Product Changelog', to: '/changelog' }
           ]" :key="link.name">

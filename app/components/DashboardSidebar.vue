@@ -18,7 +18,8 @@ import {
 } from 'lucide-vue-next'
 
 const { openFeedback } = useFeedback()
-const { user, profile, membership, isVerified, isLoading, planSlug, plan } = useAuth()
+const { user, membership, isLoading } = useAuth()
+const { canUseWhatsApp, canUseInstagramWorkflow } = usePlanAccess()
 const route = useRoute()
 const supabase = useSupabaseClient()
 
@@ -88,8 +89,8 @@ const sections = computed(() => [
     title: 'Channels',
     links: [
       { name: 'Website', href: '/dashboard/integrations/website', icon: 'Code2' },
-      { name: 'WhatsApp', href: '/dashboard/integrations/whatsapp', icon: 'MessageCircle', locked: planSlug.value === 'starter' || !planSlug.value },
-      { name: 'Instagram', href: '/dashboard/integrations/instagram', icon: 'Instagram', locked: !(plan.value as any)?.instagram_access },
+      { name: 'WhatsApp', href: '/dashboard/integrations/whatsapp', icon: 'MessageCircle', locked: !canUseWhatsApp.value },
+      { name: 'Instagram', href: '/dashboard/integrations/instagram', icon: 'Instagram', locked: !canUseInstagramWorkflow.value },
     ]
   },
   {
@@ -116,7 +117,7 @@ const sections = computed(() => [
 
 const openLockedFeatureModal = (link: any) => {
   lockedFeatureName.value = link.name || 'This feature'
-  lockedFeatureReason.value = (link.name === 'WhatsApp' && (planSlug.value === 'starter' || !planSlug.value)) || link.name === 'Instagram'
+  lockedFeatureReason.value = ['WhatsApp', 'Instagram'].includes(link.name)
     ? 'upgrade'
     : 'coming-soon'
   showLockedFeatureModal.value = true
@@ -132,7 +133,7 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <aside class="hidden md:flex md:w-[15.5rem] xl:w-[17.5rem] h-screen max-h-screen border-r border-foreground/5 bg-[#f8f8f8] dark:bg-[#050505] flex-col px-3 py-4 xl:px-4 xl:py-5 overflow-hidden shrink-0 relative">
+  <aside class="dashboard-sidebar hidden md:flex md:w-[15.5rem] xl:w-[17.5rem] h-screen max-h-screen border-r border-foreground/5 bg-background-accent dark:bg-[#050505] flex-col px-3 py-4 xl:px-4 xl:py-5 overflow-hidden shrink-0 relative">
     <!-- Brand -->
     <div class="flex items-center gap-2.5 mb-5 xl:mb-6 px-2 shrink-0">
       <div class="w-9 h-9 bg-gradient-to-tr from-primary to-primary-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
@@ -264,11 +265,13 @@ const handleLogout = async () => {
                 <Lock class="w-10 h-10 text-primary" />
             </div>
             <h3 class="text-2xl font-bold text-foreground mb-4">
-              {{ lockedFeatureReason === 'upgrade' ? 'Upgrade to unlock WhatsApp' : 'Coming Soon' }}
+              {{ lockedFeatureReason === 'upgrade' ? `Upgrade to unlock ${lockedFeatureName}` : 'Coming Soon' }}
             </h3>
             <p class="text-foreground/50 text-sm leading-relaxed mb-8">
               {{ lockedFeatureReason === 'upgrade'
-                ? 'WhatsApp is not available on the Starter plan. Upgrade your plan to unlock WhatsApp automation and connect your business number.'
+                ? (lockedFeatureName === 'Instagram'
+                  ? 'Instagram workflows are available on Gold and Enterprise plans. Upgrade to automate comment replies and comment-to-DM flows.'
+                  : 'WhatsApp chatbots are available on Silver, Gold, and Enterprise plans. Upgrade to connect your business number.')
                 : `We're currently perfecting ${lockedFeatureName} to ensure it meets our elite performance standards. Stay tuned!` }}
             </p>
             <div class="space-y-3">

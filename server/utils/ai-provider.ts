@@ -1,33 +1,37 @@
-const DEFAULT_GEMINI_CHAT_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-2.5-pro',
-  'gemini-2.0-flash',
-]
+export type ChatProvider = 'azure' | 'openai'
+export type EmbeddingProvider = 'azure' | 'openai'
 
-const DEFAULT_GEMINI_EMBEDDING_MODELS = [
-  'text-embedding-004',
-  'gemini-embedding-001',
-  'embedding-001',
-]
-
-const parseModelList = (raw: unknown, fallback: string[]) => {
-  if (typeof raw !== 'string') return fallback
-
-  const models = raw
-    .split(',')
-    .map((value) => value.trim())
-    .filter(Boolean)
-
-  return models.length ? models : fallback
+export type ChatCompletionsRequest = {
+  url: string
+  model: string
+  usesV1Api: boolean
+  provider: ChatProvider
+  headers: Record<string, string>
 }
 
-export const getGeminiChatModels = (config: any) => (
-  parseModelList(config?.geminiChatModels, DEFAULT_GEMINI_CHAT_MODELS)
-)
+export type AzureChatCompletionsRequest = ChatCompletionsRequest & {
+  deployment: string
+  provider: 'azure'
+}
 
-export const getGeminiEmbeddingModels = (config: any) => (
-  parseModelList(config?.geminiEmbeddingModels, DEFAULT_GEMINI_EMBEDDING_MODELS)
-)
+export type EmbeddingsRequest = {
+  url: string
+  model: string
+  dimensions: number
+  usesV1Api: boolean
+  provider: EmbeddingProvider
+  headers: Record<string, string>
+}
+
+export const getPreferredChatProvider = (config: any): ChatProvider => {
+  const provider = String(config?.aiChatProvider || '').trim().toLowerCase()
+  return provider === 'openai' ? 'openai' : 'azure'
+}
+
+export const getPreferredEmbeddingProvider = (config: any): EmbeddingProvider => {
+  const provider = String(config?.aiEmbeddingProvider || '').trim().toLowerCase()
+  return provider === 'openai' ? 'openai' : 'azure'
+}
 
 export const normalizeAzureOpenAiEndpoint = (endpoint?: string | null) => {
   const normalized = String(endpoint || '').trim().replace(/\/+$/, '')
@@ -38,14 +42,133 @@ export const normalizeAzureOpenAiEndpoint = (endpoint?: string | null) => {
     .replace(/\/openai$/i, '')
 }
 
-export const buildAzureChatCompletionsUrl = (config: any) => {
+const shouldUseAzureV1Api = (config: any) => {
+  const rawEndpoint = String(config?.azureOpenAiEndpoint || '').trim().replace(/\/+$/, '')
+  const apiVersion = String(config?.azureOpenAiApiVersion || '').trim().toLowerCase()
+  const apiStyle = String(config?.azureOpenAiApiStyle || '').trim().toLowerCase()
+
+  return apiStyle === 'v1'
+    || apiVersion === 'preview'
+    || apiVersion === 'v1'
+    || /\/openai\/v1$/i.test(rawEndpoint)
+}
+
+export const getEmbeddingDimensions = (config: any) => {
+  const parsed = Number(config?.azureOpenAiEmbeddingDimensions || config?.openAiEmbeddingDimensions || 1536)
+  return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 1536
+}
+
+export const buildAzureChatCompletionsRequest = (config: any): AzureChatCompletionsRequest => {
   const endpoint = normalizeAzureOpenAiEndpoint(config?.azureOpenAiEndpoint)
   const deployment = String(config?.azureOpenAiDeploymentName || '').trim()
-  const apiVersion = String(config?.azureOpenAiApiVersion || '2024-02-15-preview').trim()
+  const apiKey = String(config?.azureOpenAiKey || '').trim()
 
-  if (!endpoint || !deployment) {
-    throw new Error('Azure credentials missing')
+  if (!endpoint || !deployment || !apiKey) {
+    throw new Error('Azure OpenAI chat credentials missing')
   }
 
-  return `${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${encodeURIComponent(apiVersion)}`
+  if (shouldUseAzureV1Api(config)) {
+    return {
+      url: `${endpoint}/openai/v1/chat/completions`,
+      model: deployment,
+      deployment,
+      usesV1Api: true,
+      provider: 'azure',
+      headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
+    }
+  }
+
+  const apiVersion = String(config?.azureOpenAiApiVersion || '2024-10-21').trim()
+  return {
+    url: `${endpoint}/openai/deployments/${encodeURIComponent(deployment)}/chat/completions?api-version=${encodeURIComponent(apiVersion)}`,
+    model: deployment,
+    deployment,
+    usesV1Api: false,
+    provider: 'azure',
+    headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
+  }
 }
+
+export const buildOpenAiChatCompletionsRequest = (config: any): ChatCompletionsRequest => {
+  const apiKey = String(config?.openAiApiKey || '').trim()
+  const baseUrl = String(config?.openAiBaseUrl || 'https://api.openai.com').trim().replace(/\/+$/, '')
+  const model = String(config?.openAiChatModel || 'gpt-4.1-mini').trim()
+
+  if (!apiKey || !model) {
+    throw new Error('OpenAI chat credentials missing')
+  }
+
+  return {
+    url: `${baseUrl}/v1/chat/completions`,
+    model,
+    usesV1Api: true,
+    provider: 'openai',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+  }
+}
+
+export const buildChatCompletionsRequest = (config: any): ChatCompletionsRequest => (
+  getPreferredChatProvider(config) === 'openai'
+    ? buildOpenAiChatCompletionsRequest(config)
+    : buildAzureChatCompletionsRequest(config)
+)
+
+export const buildAzureEmbeddingsRequest = (config: any): EmbeddingsRequest => {
+  const endpoint = normalizeAzureOpenAiEndpoint(config?.azureOpenAiEndpoint)
+  const deployment = String(config?.azureOpenAiEmbeddingDeploymentName || 'text-embedding-3-large').trim()
+  const apiKey = String(config?.azureOpenAiKey || '').trim()
+  const dimensions = getEmbeddingDimensions(config)
+
+  if (!endpoint || !deployment || !apiKey) {
+    throw new Error('Azure OpenAI embedding credentials missing')
+  }
+
+  if (shouldUseAzureV1Api(config)) {
+    return {
+      url: `${endpoint}/openai/v1/embeddings`,
+      model: deployment,
+      dimensions,
+      usesV1Api: true,
+      provider: 'azure',
+      headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
+    }
+  }
+
+  const apiVersion = String(config?.azureOpenAiApiVersion || '2024-10-21').trim()
+  return {
+    url: `${endpoint}/openai/deployments/${encodeURIComponent(deployment)}/embeddings?api-version=${encodeURIComponent(apiVersion)}`,
+    model: deployment,
+    dimensions,
+    usesV1Api: false,
+    provider: 'azure',
+    headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
+  }
+}
+
+export const buildOpenAiEmbeddingsRequest = (config: any): EmbeddingsRequest => {
+  const apiKey = String(config?.openAiApiKey || '').trim()
+  const baseUrl = String(config?.openAiBaseUrl || 'https://api.openai.com').trim().replace(/\/+$/, '')
+  const model = String(config?.openAiEmbeddingModel || 'text-embedding-3-large').trim()
+  const dimensions = getEmbeddingDimensions(config)
+
+  if (!apiKey || !model) {
+    throw new Error('OpenAI embedding credentials missing')
+  }
+
+  return {
+    url: `${baseUrl}/v1/embeddings`,
+    model,
+    dimensions,
+    usesV1Api: true,
+    provider: 'openai',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+  }
+}
+
+export const buildEmbeddingsRequest = (config: any): EmbeddingsRequest => (
+  getPreferredEmbeddingProvider(config) === 'openai'
+    ? buildOpenAiEmbeddingsRequest(config)
+    : buildAzureEmbeddingsRequest(config)
+)
+
+export const buildAzureChatCompletionsUrl = (config: any) => buildAzureChatCompletionsRequest(config).url

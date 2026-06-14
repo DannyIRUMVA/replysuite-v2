@@ -94,8 +94,8 @@ const plans = [
     name: 'Silver',
     productId: 'dc070937-6444-40a6-8a02-fd8b25df7aae',
     price: '17.88',
-    desc: 'Best for growing businesses that need more domains and more replies.',
-    features: ['3 website chatbots', '5 connected domains / chatbot', '4,000 AI replies / mo', '30 training sessions', 'Priority support'],
+    desc: 'Best for growing businesses that need website and WhatsApp chatbots.',
+    features: ['3 chatbots', 'Website + WhatsApp support', '5 connected domains / chatbot', '4,000 AI replies / mo', '30 training sessions'],
     popular: true
   },
   {
@@ -103,8 +103,8 @@ const plans = [
     name: 'Gold',
     productId: 'd0493f6f-16bc-4d3c-97bb-7be920840f12',
     price: '26.88',
-    desc: 'Best for higher volume web and WhatsApp automation.',
-    features: ['5 website chatbots', '10 connected domains / chatbot', '10,000 AI replies / mo', '100 training sessions', 'Official WhatsApp API'],
+    desc: 'Best for higher-volume conversations across website, WhatsApp, and Instagram workflows.',
+    features: ['5 chatbots', 'Website + WhatsApp support', 'Instagram workflows', '10,000 AI replies / mo', '100 training sessions'],
     popular: false
   },
   {
@@ -112,8 +112,8 @@ const plans = [
     name: 'Enterprise Ready',
     productId: '3e4e4e1a-e1da-4f3f-be5a-298e409c7c1e',
     price: '350.88',
-    desc: 'Best for larger rollouts that need scale, control, and ready-start templates.',
-    features: ['50 website chatbots', '100 connected domains / chatbot', '500,000 AI replies / mo', '1,000 training sessions', 'Custom-ready starter templates'],
+    desc: 'Best for larger rollouts that need every channel plus Enterprise AI business tools.',
+    features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Appointments, orders, Paypack checkout'],
     popular: false
   }
 ]
@@ -146,7 +146,7 @@ const getCtaLabel = (plan: any) => {
             Choose the subscription that fits your business.
           </h1>
           <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">
-            Upgrade your ReplySuite limits when you need more assistants, more replies, more training, and WhatsApp automation.
+            Upgrade your ReplySuite limits when you need more assistants, more replies, more training, WhatsApp, Instagram workflows, or Enterprise AI business tools.
           </p>
         </div>
 
@@ -186,7 +186,7 @@ const getCtaLabel = (plan: any) => {
             </span>
             <h2 class="mt-3 text-xl font-extrabold tracking-tight text-foreground md:text-2xl">Choose your growth plan.</h2>
           </div>
-          <p class="max-w-md text-sm font-medium leading-relaxed text-foreground/50">Silver is the best upgrade path for most growing teams. Gold adds WhatsApp, Enterprise Ready adds scale.</p>
+          <p class="max-w-md text-sm font-medium leading-relaxed text-foreground/50">Silver adds WhatsApp. Gold adds Instagram workflows. Enterprise Ready adds AI business tools, checkout, and scale.</p>
         </div>
 
         <div class="grid gap-5 xl:grid-cols-3">

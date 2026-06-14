@@ -1,4 +1,5 @@
 import { getChatCompletion, searchKnowledge } from '../../ai'
+import { buildAssistantSkillsPrompt } from '../../agent/skills'
 import { buildChatbotLanguagePolicy } from '../../language-policy'
 import { buildInstagramLoginGraphUrl, postInstagramGraph } from './config'
 
@@ -220,6 +221,9 @@ ${modePrompt}
 
 [LANGUAGE POLICY]
 ${languagePolicy.prompt}
+
+[ASSIGNED CUSTOMER INTERACTION SKILLS]
+${buildAssistantSkillsPrompt((chatbot as any)?.tools_config)}
 
 [KNOWLEDGE BASE]
 ${contextText}

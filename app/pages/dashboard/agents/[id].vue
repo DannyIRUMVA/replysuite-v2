@@ -21,7 +21,6 @@ import {
   ShoppingBag,
   CreditCard,
   Calendar,
-  FileSpreadsheet,
   Database,
   Plus
 } from 'lucide-vue-next'
@@ -39,7 +38,9 @@ definePageMeta({
 const route = useRoute()
 const chatbotId = route.params.id as string
 const { userId, planSlug, limits } = useAuth()
+const { canUseBusinessTools } = usePlanAccess()
 const isPremium = computed(() => ['silver', 'gold', 'enterprise-ready'].includes(planSlug.value || ''))
+const canUseAiTools = canUseBusinessTools
 const supabase = useSupabaseClient()
 const router = useRouter()
 const notify = useNotify()
@@ -1260,7 +1261,7 @@ const catalogManagerRef = ref<any>(null)
             <!-- Tool Selection -->
             <ToolSelector 
               v-model="form.enabled_tools" 
-              :is-premium="isPremium" 
+              :is-premium="canUseAiTools" 
               @save="handleSave" 
             />
 
@@ -1276,7 +1277,8 @@ const catalogManagerRef = ref<any>(null)
             <!-- Paypack Configuration -->
             <PaypackConfig 
               v-if="form.enabled_tools.includes('payments')" 
-              v-model="form.tools_config" 
+              v-model="form.tools_config"
+              :chatbot-id="chatbotId"
             />
 
             <!-- Stats & Insights -->

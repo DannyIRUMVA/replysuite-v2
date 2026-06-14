@@ -1,5 +1,5 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
-import { searchKnowledge } from '~~/server/utils/ai'
+import { buildLowIntentTurnPrompt, getLowIntentDirectReply, isLowIntentChatMessage, searchKnowledge } from '~~/server/utils/ai'
 import { runAgentCycle } from '~~/server/utils/agent/engine'
 import { buildAssistantSkillsPrompt } from '~~/server/utils/agent/skills'
 import { buildChatbotLanguagePolicy } from '~~/server/utils/language-policy'
@@ -142,17 +142,47 @@ export default defineEventHandler(async (event) => {
       content: message,
     })
 
-    const contextResults = await searchKnowledge(supabase, chatbotId, message, 6)
+    const sessionState = conversationSettings.sessionMemoryEnabled
+      ? getConversationStateFromMetadata(sessionMetadata)
+      : {}
+    const directLowIntentReply = getLowIntentDirectReply(message, Boolean(sessionState.greeted))
+
+    if (directLowIntentReply) {
+      await supabase.from('chat_messages').insert({
+        session_id: sessionId,
+        role: 'assistant',
+        content: directLowIntentReply,
+      })
+
+      if (conversationSettings.sessionMemoryEnabled) {
+        const nextState = updateConversationState({
+          existingState: getConversationStateFromMetadata(sessionMetadata),
+          userMessage: message,
+          assistantReply: directLowIntentReply,
+          defaultLanguage: (chatbot as any)?.default_language || null,
+        })
+
+        await supabase
+          .from('chat_sessions')
+          .update({ metadata: mergeMetadataWithState(sessionMetadata, nextState) })
+          .eq('id', sessionId)
+      }
+
+      return {
+        success: true,
+        response: directLowIntentReply,
+        sessionId,
+      }
+    }
+
+    const isLowIntentTurn = isLowIntentChatMessage(message)
+    const contextResults = isLowIntentTurn ? [] : await searchKnowledge(supabase, chatbotId, message, 6)
     const contextText = contextResults.map((r: any, index: number) => {
       const sourceLabel = [r.title, r.url].filter(Boolean).join(' · ') || r.sourceType || 'Knowledge Source'
       return `[Source ${index + 1}: ${sourceLabel}]\n${r.content}`
     }).join('\n\n---\n\n')
 
     const baseInstructions = chatbot.system_prompt || `You are an AI assistant for ${chatbot.name}.`
-
-    const sessionState = conversationSettings.sessionMemoryEnabled
-      ? getConversationStateFromMetadata(sessionMetadata)
-      : {}
 
     const conversationBehavior = buildConversationSettingsPrompt(conversationSettings, 'web')
     const sessionStatePrompt = buildConversationStatePrompt(sessionState)
@@ -178,6 +208,8 @@ export default defineEventHandler(async (event) => {
       [SESSION STATE]
       ${sessionStatePrompt}
 
+      ${isLowIntentTurn ? `[LOW-INTENT TURN RULE]\n${buildLowIntentTurnPrompt(Boolean(sessionState.greeted))}` : ''}
+
       [ADDITIONAL CONTEXT FROM KNOWLEDGE BASE]
       ${contextText || 'No specific background knowledge found for this query.'}
 
@@ -188,6 +220,7 @@ export default defineEventHandler(async (event) => {
          - Use **bold text** sparingly to highlight key concepts.
       3. If the [ADDITIONAL CONTEXT] contradicts your base instructions, prioritize the [ADDITIONAL CONTEXT] for factual accuracy.
       4. Do not blindly recite lists of services or generic company descriptions unless explicitly asked.
+      5. For greetings, thanks, acknowledgements, or short replies like "ok", keep the answer to one short sentence and do not include examples or feature lists.
     `
 
     let messagesHistory: any[] = []
@@ -214,7 +247,7 @@ export default defineEventHandler(async (event) => {
       chatbotId: chatbot.id,
       enabledTools: chatbot.enabled_tools || [],
       event,
-      context: { platform: 'web' },
+      context: { platform: 'web', sessionId },
     })
 
     await supabase.from('chat_messages').insert({

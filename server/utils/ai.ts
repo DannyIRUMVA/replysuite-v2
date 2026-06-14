@@ -1,58 +1,95 @@
 /**
  * AI Utility for ReplySuite
- * Supports Gemini (Primary) and Azure (Secondary/Gold fallback)
- * Hardened for SSR Stability: No top-level Supabase imports.
+ * Uses GPT-compatible providers for chat and embeddings.
+ * Current production target: Azure OpenAI GPT-5.5 chat + text-embedding-3-large embeddings.
  */
 import {
-  buildAzureChatCompletionsUrl,
-  getGeminiChatModels,
-  getGeminiEmbeddingModels,
+  buildChatCompletionsRequest,
+  buildEmbeddingsRequest,
 } from './ai-provider'
+
+export const normalizeEmbedding = (values: number[]) => {
+  const magnitude = Math.sqrt(values.reduce((acc: number, val: number) => acc + val * val, 0)) || 1
+  return values.map((val: number) => val / magnitude)
+}
+
+export const isLowIntentChatMessage = (message: string) => {
+  const normalized = message
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (!normalized || normalized.length > 36) return false
+
+  return /^(hi|hello|hey|yo|sup|good morning|good afternoon|good evening|bonjour|salut|amakuru|amakuru yiminsi|ok|okay|okey|k|cool|great|nice|thanks|thank you|thx|yes|yeah|yep|sure)$/.test(normalized)
+}
+
+export const buildLowIntentTurnPrompt = (alreadyGreeted = false) => [
+  'The latest user message is only a greeting, acknowledgement, thanks, or very low-intent reply.',
+  'Do not use knowledge-base context for this turn.',
+  'Reply with one short sentence only.',
+  'Do not list features, pricing, plans, setup steps, examples, or services unless the user explicitly asks.',
+  alreadyGreeted
+    ? 'Because the conversation has already started, do not greet again; simply ask what they want help with next.'
+    : 'Give a brief friendly greeting and ask what they need help with.',
+].join('\n')
+
+export const getLowIntentDirectReply = (message: string, alreadyGreeted = false) => {
+  if (!isLowIntentChatMessage(message)) return null
+
+  const normalized = message
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (/^(thanks|thank you|thx)$/.test(normalized)) {
+    return 'You’re welcome — what else can I help with?'
+  }
+
+  if (/^(ok|okay|okey|k|cool|great|nice|yes|yeah|yep|sure)$/.test(normalized)) {
+    return 'Sure — what would you like help with next?'
+  }
+
+  return alreadyGreeted
+    ? 'How can I help you with ReplySuite today?'
+    : 'Hi! How can I help you with ReplySuite today?'
+}
 
 export const getEmbeddings = async (text: string) => {
   const config = useRuntimeConfig()
-  const apiKey = config.geminiApiKey
-  if (!apiKey) throw new Error('Missing GEMINI_API_KEY in runtimeConfig')
-
+  const embeddingRequest = buildEmbeddingsRequest(config)
   const input = text.replace(/\n/g, ' ').substring(0, 8000)
 
-  // 1. Try Gemini embeddings using configured or default model aliases
-  const models = getGeminiEmbeddingModels(config)
-  let lastError = ''
-
-  for (const model of models) {
-    try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: { parts: [{ text: input }] },
-          output_dimensionality: 1536
-        })
-      })
-
-      if (!response.ok) {
-        lastError = `HTTP ${response.status}: ${response.statusText}`
-        try {
-          const errData = await response.json()
-          if (errData.error?.message) lastError = errData.error.message
-        } catch(e) { /* ignore JSON parsing error on 404s */ }
-        continue
-      }
-
-      const data = await response.json()
-      if (!data.error && data.embedding) {
-        const values = data.embedding.values
-        const magnitude = Math.sqrt(values.reduce((acc: number, val: number) => acc + val * val, 0))
-        return values.map((val: number) => val / magnitude)
-      }
-      lastError = data.error?.message || 'Unknown embedding error'
-    } catch (err: any) {
-      lastError = err.message
-    }
+  const body: Record<string, any> = {
+    input,
+    dimensions: embeddingRequest.dimensions,
   }
 
-  throw new Error(`Embedding generation failed: ${lastError}. NOTE: Azure fallback is disabled for embeddings to prevent vector mismatches with the database.`)
+  if (embeddingRequest.usesV1Api) {
+    body.model = embeddingRequest.model
+  }
+
+  const response = await fetch(embeddingRequest.url, {
+    method: 'POST',
+    headers: embeddingRequest.headers,
+    body: JSON.stringify(body),
+  })
+
+  const data: any = await response.json().catch(() => ({}))
+  if (!response.ok || data?.error) {
+    throw new Error(data?.error?.message || `Embedding request failed with HTTP ${response.status}`)
+  }
+
+  const values = data?.data?.[0]?.embedding
+  if (!Array.isArray(values) || !values.length) {
+    throw new Error('Embedding response had no values.')
+  }
+
+  return normalizeEmbedding(values)
 }
 
 export type ChatMessage = {
@@ -62,76 +99,27 @@ export type ChatMessage = {
 
 export const getChatCompletion = async (messages: ChatMessage[], options: { systemPrompt?: string, useAzure?: boolean } = {}) => {
   const config = useRuntimeConfig()
-
-  // Helper for Gemini
-  async function getGemini(msgs: ChatMessage[], sys?: string) {
-    const apiKey = config.geminiApiKey
-    if (!apiKey) throw new Error('Gemini API Key missing')
-    
-    const contents = msgs.map(m => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }]
-    }))
-
-    const models = getGeminiChatModels(config)
-    let lastError = ''
-
-    for (const model of models) {
-      try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: sys ? { parts: [{ text: sys }] } : undefined,
-            contents
-          })
-        })
-
-        const data = await response.json()
-        if (!data.error) {
-          return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-        }
-        lastError = data.error.message
-        console.warn(`[AI Utils] Model ${model} failed:`, lastError)
-      } catch (err: any) {
-        lastError = err.message
-      }
-    }
-
-    throw new Error(`Gemini Error: ${lastError}`)
+  const chatRequest = buildChatCompletionsRequest(config)
+  const body: Record<string, any> = {
+    messages: options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }, ...messages] : messages,
   }
 
-  // Helper for Azure
-  async function getAzure(msgs: ChatMessage[], sys?: string) {
-    const apiKey = config.azureOpenAiKey
-    if (!apiKey) throw new Error('Azure credentials missing')
-
-    const azureUrl = buildAzureChatCompletionsUrl(config)
-    const body = {
-      messages: sys ? [{ role: 'system', content: sys }, ...msgs] : msgs
-    }
-
-    const response = await fetch(azureUrl, {
-      method: 'POST',
-      headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    })
-
-    const data = await response.json()
-    if (data.error) throw new Error(data.error.message)
-    return data.choices?.[0]?.message?.content || ''
+  if (chatRequest.usesV1Api) {
+    body.model = chatRequest.model
   }
 
-  if (options.useAzure) {
-    return await getAzure(messages, options.systemPrompt)
+  const response = await fetch(chatRequest.url, {
+    method: 'POST',
+    headers: chatRequest.headers,
+    body: JSON.stringify(body),
+  })
+
+  const data: any = await response.json().catch(() => ({}))
+  if (!response.ok || data?.error) {
+    throw new Error(data?.error?.message || `Chat completion request failed with HTTP ${response.status}`)
   }
 
-  try {
-    return await getGemini(messages, options.systemPrompt)
-  } catch (err: any) {
-    console.warn('[AI Fallback] Gemini failed, trying Azure:', err.message)
-    return await getAzure(messages, options.systemPrompt)
-  }
+  return data.choices?.[0]?.message?.content || ''
 }
 
 /**
@@ -144,7 +132,7 @@ export const searchKnowledge = async (supabase: any, chatbotId: string, query: s
   try {
     embedding = await getEmbeddings(query)
   } catch (error: any) {
-    console.warn('[Knowledge Search] Embeddings unavailable, continuing without KB context:', error?.message || error)
+    console.warn('[Knowledge Search] GPT embeddings unavailable, continuing without KB context:', error?.message || error)
     return []
   }
 

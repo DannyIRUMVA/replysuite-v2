@@ -2,10 +2,10 @@
 import { Check, ArrowRight, HelpCircle, Loader2 } from 'lucide-vue-next'
 
 useSeoMeta({
-  title: 'AI Customer Support Pricing for Websites & WhatsApp | ReplySuite',
-  description: 'Simple pricing for AI customer support on websites and WhatsApp. Start free, then upgrade as your reply volume grows.',
+  title: 'AI Customer Support Pricing for Website, WhatsApp & Instagram | ReplySuite',
+  description: 'Simple pricing for trained AI replies across website, WhatsApp, and Instagram workflows. Silver adds WhatsApp, Gold adds Instagram, and Enterprise unlocks AI business tools.',
   ogTitle: 'ReplySuite Pricing',
-  ogDescription: 'Start free. Train your AI customer support assistant on your business content, then upgrade when you need more replies, training, or WhatsApp.',
+  ogDescription: 'Start free. Silver adds WhatsApp, Gold adds Instagram workflows, and Enterprise unlocks appointments, orders, and Paypack checkout.',
   ogUrl: 'https://replysuite.app/pricing',
   twitterCard: 'summary_large_image',
   twitterTitle: 'ReplySuite Pricing',
@@ -24,14 +24,14 @@ useHead({
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web',
         url: 'https://replysuite.app',
-        description: 'AI chatbot software for websites and WhatsApp.',
+        description: 'AI chatbot software for website, WhatsApp, Instagram workflows, and Enterprise business tools.',
         offers: [
           {
             '@type': 'Offer',
             name: 'Free Plan',
             price: '0.00',
             priceCurrency: 'USD',
-            description: '1 chatbot, 100 AI replies per month, 10 training sessions, email support.',
+            description: '1 website chatbot, 100 AI replies per month, 10 training sessions, email support.',
             url: 'https://replysuite.app/pricing'
           },
           {
@@ -39,7 +39,7 @@ useHead({
             name: 'Silver Plan',
             price: '17.88',
             priceCurrency: 'USD',
-            description: '3 chatbots, 4,000 AI replies per month, 30 training sessions.',
+            description: '3 chatbots, website and WhatsApp support, 4,000 AI replies per month, 30 training sessions.',
             url: 'https://replysuite.app/pricing'
           },
           {
@@ -47,7 +47,7 @@ useHead({
             name: 'Gold Plan',
             price: '26.88',
             priceCurrency: 'USD',
-            description: '5 chatbots, 10,000 AI replies, 100 training sessions, WhatsApp integration.',
+            description: '5 chatbots, 10,000 AI replies, 100 training sessions, WhatsApp support, and Instagram workflows.',
             url: 'https://replysuite.app/pricing'
           },
           {
@@ -55,7 +55,7 @@ useHead({
             name: 'Enterprise Ready Plan',
             price: '350.88',
             priceCurrency: 'USD',
-            description: '50 chatbots, 500,000 AI replies, 1,000 training sessions, 100 connected domains, and custom-ready starter templates.',
+            description: '50 chatbots, 500,000 AI replies, 1,000 training sessions, Instagram workflows, AI business tools, and rollout support.',
             url: 'https://replysuite.app/pricing'
           }
         ]
@@ -144,32 +144,32 @@ const plans = [
     id: 'starter',
     name: 'Free Starter',
     price: '0.00',
-    desc: 'Best for launching one chatbot on one website domain.',
-    features: ['1 website chatbot', '1 connected domain / chatbot', '100 AI replies / mo', '10 training sessions', 'Email support'],
+    desc: 'Best for launching one trained assistant on one website domain.',
+    features: ['1 website chatbot', '1 connected domain / chatbot', '100 AI replies / mo', '10 training sessions', 'Email support'], 
     popular: false
   },
   {
     id: 'silver',
     name: 'Silver',
     price: '17.88',
-    desc: 'Best for growing businesses that need more domains and more replies.',
-    features: ['3 website chatbots', '5 connected domains / chatbot', '4,000 AI replies / mo', '30 training sessions', 'Priority support'],
+    desc: 'Best for growing businesses that need website and WhatsApp chatbots.',
+    features: ['3 chatbots', 'Website + WhatsApp support', '5 connected domains / chatbot', '4,000 AI replies / mo', '30 training sessions'], 
     popular: true
   },
   {
     id: 'gold',
     name: 'Gold',
     price: '26.88',
-    desc: 'Best for higher volume web and WhatsApp automation.',
-    features: ['5 website chatbots', '10 connected domains / chatbot', '10,000 AI replies / mo', '100 training sessions', 'Official WhatsApp API'],
+    desc: 'Best for higher-volume conversations across website, WhatsApp, and Instagram workflows.',
+    features: ['5 chatbots', 'Website + WhatsApp support', 'Instagram workflows', '10,000 AI replies / mo', '100 training sessions'], 
     popular: false
   },
   {
     id: 'enterprise-ready',
     name: 'Enterprise Ready',
     price: '350.88',
-    desc: 'Best for larger rollouts that need scale, control, and ready-start templates.',
-    features: ['50 website chatbots', '100 connected domains / chatbot', '500,000 AI replies / mo', '1,000 training sessions', 'Custom-ready starter templates'],
+    desc: 'Best for larger rollouts that need every channel plus Enterprise AI business tools.',
+    features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Appointments, orders, Paypack checkout'], 
     popular: false
   }
 ]
@@ -184,8 +184,14 @@ const planComparisonRows = [
   { label: 'AI replies / month', starter: '100', silver: '4,000', gold: '10,000', enterprise: '500,000' },
   { label: 'Training sessions / month', starter: '10', silver: '30', gold: '100', enterprise: '1,000' },
   { label: 'Trainable AI agent', starter: 'Included', silver: 'Included', gold: 'Included', enterprise: 'Included' },
+  { label: 'Website chatbot', starter: 'Included', silver: 'Included', gold: 'Included', enterprise: 'Included' },
+  { label: 'WhatsApp chatbot', starter: '—', silver: 'Included', gold: 'Included', enterprise: 'Included' },
+  { label: 'Instagram workflows', starter: '—', silver: '—', gold: 'Included', enterprise: 'Included' },
+  { label: 'AI business tools', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
+  { label: 'Appointments', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
+  { label: 'Catalog orders', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
+  { label: 'Paypack checkout add-on', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
   { label: 'Advanced bot training', starter: '—', silver: 'Included', gold: 'Included', enterprise: 'Included' },
-  { label: 'WhatsApp Official API', starter: '—', silver: '—', gold: 'Included', enterprise: 'Included' },
   { label: 'Custom-ready starter templates', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
   { label: 'Support', starter: 'Email', silver: 'Priority', gold: 'Priority', enterprise: 'Priority + rollout help' }
 ]
@@ -194,25 +200,26 @@ const faqs = [
   { q: 'Can I cancel any time?', a: 'Yes. You can cancel from your account settings.' },
   { q: 'Is there a free start?', a: 'Yes. You can start on Free Starter and upgrade later when your reply volume grows.' },
   { q: 'What happens if I hit my limit?', a: 'You can upgrade to a higher plan to continue with more AI replies, training sessions, or channels.' },
-  { q: 'Which plan includes WhatsApp?', a: 'WhatsApp automation is available from Gold upward, with Enterprise Ready for larger rollout needs.' },
+  { q: 'Which plan includes WhatsApp, Instagram, and Paypack checkout?', a: 'Silver includes website and WhatsApp chatbots. Gold adds Instagram workflows. Enterprise Ready unlocks AI business tools including appointments, catalog orders, and contextual Paypack checkout.' },
+  { q: 'Can the assistant create invoices?', a: 'No. ReplySuite focuses on appointments, orders, and Paypack checkout attached to those records. It does not expose invoice automation in the customer assistant toolset.' },
   { q: 'Do all plans include website chatbot support?', a: 'Yes. Every plan includes website chatbot deployment, with higher plans adding more chatbots and connected domains.' },
   { q: 'Can I train the assistant with documents?', a: 'Yes. ReplySuite supports training with business content such as website pages, PDFs, FAQs, and custom text.' },
-  { q: 'Which plan should I choose first?', a: 'Start with Free Starter if you are testing. Choose Silver for more website usage, Gold for WhatsApp, and Enterprise Ready for scale.' },
+  { q: 'Which plan should I choose first?', a: 'Start with Free Starter if you are testing. Choose Silver for website plus WhatsApp, Gold for Instagram workflows, and Enterprise Ready for AI business tools and scale.' },
   { q: 'Do I need a credit card for Free Starter?', a: 'No. Free Starter is designed as a low-friction way to launch and test your first chatbot.' }
 ]
 </script>
 
 <template>
-  <div class="relative min-h-screen">
+  <div class="relative min-h-screen overflow-x-hidden">
     <div class="max-w-7xl mx-auto px-6 py-20 md:py-24">
       <div class="text-center max-w-3xl mx-auto mb-16 border-b border-foreground/5 pb-12">
         <span class="badge-gradient mb-6">Pricing</span>
         <h1 class="text-4xl md:text-6xl font-extrabold mb-6 tracking-tight leading-[0.98] text-foreground">
-          Simple pricing for AI customer support.
+          Simple pricing for supported customer channels.
           <span class="text-gradient">Clear upgrade path.</span>
         </h1>
         <p class="text-lg text-foreground/50 font-medium leading-relaxed">
-          Start with one website chatbot, then upgrade when you need more domains, more training, more replies, or WhatsApp AI support.
+          Start with one trained website assistant. Silver adds WhatsApp, Gold adds Instagram workflows, and Enterprise unlocks AI business tools for appointments, orders, and Paypack checkout.
         </p>
       </div>
 
@@ -313,7 +320,7 @@ const faqs = [
             Compare <span class="text-gradient">plans in one table</span>
           </h2>
           <p class="mt-4 text-foreground/50 font-medium max-w-2xl mx-auto">
-            See price, usage limits, WhatsApp availability, training capacity, and support level side by side.
+            See price, usage limits, website, WhatsApp, Instagram, AI business tools, training capacity, and support level side by side.
           </p>
         </div>
 
@@ -407,11 +414,11 @@ const faqs = [
 
       <section class="mt-24 bg-foreground/[0.02] p-16 rounded-[48px] border border-foreground/10 text-center relative overflow-hidden group">
         <div class="absolute inset-0 bg-primary/5 blur-[120px] group-hover:bg-primary/10 transition-all duration-1000"></div>
-        <h2 class="text-4xl md:text-6xl font-extrabold mb-8 relative z-10 tracking-tight text-foreground">Need a custom setup?</h2>
-        <p class="text-foreground/50 mb-12 max-w-xl mx-auto font-medium text-lg relative z-10">Talk to us if you want help with onboarding, training, or a larger rollout.</p>
-        <NuxtLink to="mailto:support@replysuite.com" class="btn-gradient px-12 py-6 text-xl inline-flex items-center gap-4 group/btn relative z-10">
+        <h2 class="text-3xl md:text-5xl font-extrabold mb-6 relative z-10 tracking-tight text-foreground">Need a custom business-action rollout?</h2>
+        <p class="text-foreground/50 mb-9 max-w-xl mx-auto font-medium text-base md:text-lg relative z-10">Talk to us if you want help with onboarding, training, Instagram workflows, Enterprise AI business tools, Paypack setup, or a larger rollout.</p>
+        <NuxtLink to="mailto:support@replysuite.com" class="btn-gradient px-8 py-4 text-base inline-flex items-center gap-4 group/btn relative z-10">
           Contact Us
-          <ArrowRight class="w-6 h-6 group-hover/btn:translate-x-2 transition-transform" />
+          <ArrowRight class="w-5 h-5 group-hover/btn:translate-x-2 transition-transform" />
         </NuxtLink>
       </section>
     </div>
@@ -421,5 +428,14 @@ const faqs = [
 <style scoped>
 .glass-card {
   @apply rounded-[40px];
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 </style>
