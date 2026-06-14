@@ -26,12 +26,11 @@ export default defineEventHandler(async (event) => {
     const rawBody = await readRawBody(event)
     
     // Security verification (X-Hub-Signature-256 validation).
-    // WhatsApp can be connected to a different Meta app than Instagram, so prefer a
-    // dedicated WHATSAPP_APP_SECRET and only fall back to the Instagram secret for
-    // legacy single-app setups.
-    const metaSecret = config.whatsappAppSecret || config.instagramClientSecret
-    if (!config.whatsappAppSecret && config.instagramClientSecret) {
-      console.warn('[WhatsApp Webhook] WHATSAPP_APP_SECRET is not configured; falling back to INSTAGRAM_SECRET for signature validation.')
+    // Keep WhatsApp and Instagram webhook secrets separate. Do not validate
+    // WhatsApp payloads with the Instagram app secret.
+    const metaSecret = config.whatsappAppSecret
+    if (!metaSecret) {
+      console.warn('[WhatsApp Webhook] WHATSAPP_APP_SECRET is not configured; skipping WhatsApp signature validation.')
     }
     if (metaSecret) { 
       if (!signature) {
