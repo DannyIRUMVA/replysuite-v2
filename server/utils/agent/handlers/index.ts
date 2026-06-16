@@ -1,5 +1,6 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { decryptSecret } from '~~/server/utils/crypto/secrets'
+import { checkGoogleCalendarFreeBusy, createGoogleCalendarEvent, getGoogleCalendarBookingConnection } from '~~/server/utils/google-calendar'
 
 type ToolContext = {
   platform?: 'web' | 'whatsapp' | 'instagram' | 'dashboard' | 'test'
@@ -18,6 +19,23 @@ const toNumber = (value: any, fallback = 0) => {
 const normalizePhoneForPaypack = (phone: string) => String(phone || '').trim().replace('+250', '0').replace(/^250/, '0')
 const normalizeText = (value: any) => String(value || '').trim()
 const normalizeChannel = (context?: ToolContext) => context?.platform || 'web'
+const normalizeTime = (value: string) => {
+  const trimmed = normalizeText(value)
+  if (/^\d{2}:\d{2}$/.test(trimmed)) return trimmed
+  if (/^\d{1}:\d{2}$/.test(trimmed)) return `0${trimmed}`
+  return trimmed
+}
+const getIsoRangeForBooking = (date: string, time: string, durationMinutes = 30, timezone = 'Africa/Kigali') => {
+  const normalizedTime = normalizeTime(time)
+  const offset = timezone === 'Africa/Kigali' ? '+02:00' : ''
+  const start = new Date(`${date}T${normalizedTime}:00${offset}`)
+  const end = new Date(start.getTime() + durationMinutes * 60 * 1000)
+  return { start, end, normalizedTime, timezone }
+}
+const toGoogleLocalDateTime = (value: Date, timezone = 'Africa/Kigali') => {
+  const local = timezone === 'Africa/Kigali' ? new Date(value.getTime() + 2 * 60 * 60 * 1000) : value
+  return local.toISOString().slice(0, 19)
+}
 
 const getAdmin = (event: any) => serverSupabaseServiceRole(event) as any
 
@@ -323,8 +341,43 @@ export const checkAppointmentAvailabilityHandler = async (event: any, chatbotId:
     return result
   }
 
-  const start = time ? new Date(`${date}T${time}:00`) : new Date(`${date}T00:00:00`)
-  const end = time ? new Date(start.getTime() + 60 * 60 * 1000) : new Date(`${date}T23:59:59`)
+  const serviceId = args?.service_id || null
+  let durationMinutes = 60
+  if (serviceId) {
+    const { data: service } = await getAdmin(event)
+      .from('appointment_services')
+      .select('duration_minutes')
+      .eq('id', serviceId)
+      .eq('chatbot_id', chatbotId)
+      .maybeSingle()
+    if (service?.duration_minutes) durationMinutes = Number(service.duration_minutes)
+  }
+
+  const timezone = args?.timezone || 'Africa/Kigali'
+  const { start, end, normalizedTime } = time
+    ? getIsoRangeForBooking(date, time, durationMinutes, timezone)
+    : { start: new Date(`${date}T00:00:00${timezone === 'Africa/Kigali' ? '+02:00' : ''}`), end: new Date(`${date}T23:59:59${timezone === 'Africa/Kigali' ? '+02:00' : ''}`), normalizedTime: '' }
+
+  const google = await getGoogleCalendarBookingConnection(event, chatbotId)
+  if (!google.error && google.mapping?.calendar_id) {
+    try {
+      const freeBusy = await checkGoogleCalendarFreeBusy(google.accessToken, google.mapping.calendar_id, start.toISOString(), end.toISOString(), google.mapping.calendar_timezone || timezone)
+      const result = {
+        available: freeBusy.available,
+        date,
+        time: normalizedTime || null,
+        provider: 'google_calendar',
+        calendar_id: google.mapping.calendar_id,
+        message: freeBusy.available ? 'This time is available on Google Calendar.' : 'That time is already busy on Google Calendar.',
+      }
+      await logToolEvent(event, chatbotId, 'check_appointment_availability', args, result, context)
+      return result
+    } catch (err: any) {
+      const result = { error: err?.statusMessage || err?.message || 'Google Calendar availability check failed.' }
+      await logToolEvent(event, chatbotId, 'check_appointment_availability', args, result, context)
+      return result
+    }
+  }
 
   const { data: overlapping, error } = await getAdmin(event)
     .from('chatbot_appointments')
@@ -338,7 +391,7 @@ export const checkAppointmentAvailabilityHandler = async (event: any, chatbotId:
   const available = !error && (!overlapping || overlapping.length === 0)
   const result = error
     ? { error: error.message }
-    : { available, date, time: time || null, message: available ? 'This time appears available.' : 'That time already has an appointment.' }
+    : { available, date, time: normalizedTime || null, provider: 'replysuite', message: available ? 'This time appears available.' : 'That time already has an appointment.' }
   await logToolEvent(event, chatbotId, 'check_appointment_availability', args, result, context)
   return result
 }
@@ -360,21 +413,53 @@ export const requestAppointmentHandler = async (event: any, chatbotId: string, a
   const depositRequired = Boolean(appointmentConfig.payment_required || appointmentConfig.deposit_required || appointmentConfig.paymentRequired)
   const depositAmount = toNumber(appointmentConfig.deposit_amount || appointmentConfig.depositAmount, 0)
   const approvalMode = appointmentConfig.approval_mode || appointmentConfig.approvalMode || 'manual'
-  const start = new Date(`${date}T${time}:00`)
-
   const serviceId = args?.service_id || null
   let durationMinutes = 30
+  let serviceName = ''
   if (serviceId) {
     const { data: service } = await getAdmin(event)
       .from('appointment_services')
-      .select('duration_minutes, price, currency')
+      .select('name, duration_minutes, price, currency')
       .eq('id', serviceId)
       .eq('chatbot_id', chatbotId)
       .maybeSingle()
     if (service?.duration_minutes) durationMinutes = Number(service.duration_minutes)
+    if (service?.name) serviceName = service.name
   }
 
-  const end = new Date(start.getTime() + durationMinutes * 60 * 1000)
+  const timezone = args?.timezone || appointmentConfig.timezone || 'Africa/Kigali'
+  const { start, end, normalizedTime } = getIsoRangeForBooking(date, time, durationMinutes, timezone)
+
+  const google = await getGoogleCalendarBookingConnection(event, chatbotId)
+  let googleEvent: any = null
+  if (!google.error && google.mapping?.calendar_id) {
+    try {
+      const freeBusy = await checkGoogleCalendarFreeBusy(google.accessToken, google.mapping.calendar_id, start.toISOString(), end.toISOString(), google.mapping.calendar_timezone || timezone)
+      if (!freeBusy.available) {
+        const result = { error: 'That time is already busy on Google Calendar. Please choose another time.' }
+        await logToolEvent(event, chatbotId, 'request_appointment', args, result, context)
+        return result
+      }
+      googleEvent = await createGoogleCalendarEvent(google.accessToken, google.mapping.calendar_id, {
+        summary: `${serviceName || 'Booking'} — ${name}`,
+        description: [
+          `Created by ReplySuite chatbot ${chatbotId}`,
+          `Customer: ${name}`,
+          `Phone: ${phone}`,
+          args?.email || args?.customer_email ? `Email: ${args?.email || args?.customer_email}` : '',
+          args?.notes ? `Notes: ${args.notes}` : '',
+        ].filter(Boolean).join('\n'),
+        start: { dateTime: toGoogleLocalDateTime(start, google.mapping.calendar_timezone || timezone), timeZone: google.mapping.calendar_timezone || timezone },
+        end: { dateTime: toGoogleLocalDateTime(end, google.mapping.calendar_timezone || timezone), timeZone: google.mapping.calendar_timezone || timezone },
+        reminders: { useDefault: true },
+        extendedProperties: { private: { replysuite_chatbot_id: chatbotId } },
+      })
+    } catch (err: any) {
+      const result = { error: err?.statusMessage || err?.message || 'Google Calendar booking failed.' }
+      await logToolEvent(event, chatbotId, 'request_appointment', args, result, context)
+      return result
+    }
+  }
   const status = depositRequired && depositAmount > 0
     ? 'pending_payment'
     : approvalMode === 'auto'
@@ -396,7 +481,7 @@ export const requestAppointmentHandler = async (event: any, chatbotId: string, a
       appointment_start: start.toISOString(),
       appointment_end: end.toISOString(),
       appointment_time: start.toISOString(),
-      timezone: args?.timezone || appointmentConfig.timezone || 'Africa/Kigali',
+      timezone,
       status,
       payment_status: paymentStatus,
       deposit_required: depositRequired,
@@ -404,9 +489,15 @@ export const requestAppointmentHandler = async (event: any, chatbotId: string, a
       currency: appointmentConfig.currency || 'RWF',
       notes: args?.notes || null,
       source_channel: normalizeChannel(context),
-      metadata: { created_by: 'agent_tool' },
+      external_provider: googleEvent ? 'google_calendar' : null,
+      external_calendar_id: googleEvent ? google.mapping.calendar_id : null,
+      external_event_id: googleEvent?.id || null,
+      external_event_etag: googleEvent?.etag || null,
+      sync_status: googleEvent ? 'synced' : null,
+      last_synced_at: googleEvent ? new Date().toISOString() : null,
+      metadata: { created_by: 'agent_tool', google_event_html_link: googleEvent?.htmlLink || null },
     })
-    .select('id, status, payment_status, appointment_start, appointment_end, deposit_amount, currency')
+    .select('id, status, payment_status, appointment_start, appointment_end, deposit_amount, currency, external_event_id')
     .single()
 
   if (error) {
@@ -425,11 +516,15 @@ export const requestAppointmentHandler = async (event: any, chatbotId: string, a
     appointment_end: data.appointment_end,
     deposit_amount: Number(data.deposit_amount || 0),
     currency: data.currency || 'RWF',
+    external_provider: googleEvent ? 'google_calendar' : null,
+    external_event_id: data.external_event_id || null,
     message: depositRequired && depositAmount > 0
       ? 'Appointment request saved. A deposit is required before confirmation.'
-      : approvalMode === 'auto'
-        ? 'Appointment booked successfully.'
-        : 'Appointment request saved. The team will confirm it.',
+      : googleEvent
+        ? 'Booking saved and added to Google Calendar.'
+        : approvalMode === 'auto'
+          ? 'Appointment booked successfully.'
+          : 'Appointment request saved. The team will confirm it.',
   }
   await logToolEvent(event, chatbotId, 'request_appointment', args, result, context, { type: 'appointment', id: data.id })
   return result

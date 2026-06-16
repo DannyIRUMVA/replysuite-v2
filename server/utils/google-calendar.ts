@@ -1,5 +1,6 @@
 import { createError } from 'h3'
-import { encryptSecret } from './crypto/secrets'
+import { serverSupabaseServiceRole } from '#supabase/server'
+import { decryptSecret, encryptSecret } from './crypto/secrets'
 
 const textEncoder = new TextEncoder()
 
@@ -113,4 +114,87 @@ export const fetchGoogleCalendarList = async (accessToken: string) => {
 export const encryptGoogleTokenPayload = async (config: any, value?: string | null) => {
   if (!value) return null
   return encryptSecret(value, config.googleTokenEncryptionKey)
+}
+
+export const decryptGoogleTokenPayload = async (config: any, value?: string | null) => {
+  if (!value) return ''
+  return decryptSecret(value, config.googleTokenEncryptionKey)
+}
+
+export const getGoogleCalendarBookingConnection = async (event: any, chatbotId: string) => {
+  const supabase = serverSupabaseServiceRole(event) as any
+  const { data: mapping, error: mappingError } = await supabase
+    .from('chatbot_google_calendars')
+    .select('id, user_id, chatbot_id, google_connection_id, calendar_id, calendar_summary, calendar_timezone, sync_status, connection:google_connections(id, encrypted_access_token, encrypted_refresh_token, expires_at, status)')
+    .eq('chatbot_id', chatbotId)
+    .eq('sync_status', 'connected')
+    .maybeSingle()
+
+  if (mappingError) return { error: mappingError.message, mapping: null, accessToken: '' }
+  if (!mapping?.connection || mapping.connection.status !== 'connected') return { error: 'Google Calendar is not connected for this assistant.', mapping: null, accessToken: '' }
+
+  const config = useRuntimeConfig(event)
+  let accessToken = await decryptGoogleTokenPayload(config, mapping.connection.encrypted_access_token)
+  const refreshToken = await decryptGoogleTokenPayload(config, mapping.connection.encrypted_refresh_token)
+  const expiresAt = mapping.connection.expires_at ? new Date(mapping.connection.expires_at).getTime() : 0
+
+  if ((!accessToken || expiresAt < Date.now() + 60_000) && refreshToken) {
+    const refreshed = await refreshGoogleAccessToken(config, refreshToken)
+    accessToken = refreshed.access_token || accessToken
+    const encryptedAccessToken = accessToken ? await encryptGoogleTokenPayload(config, accessToken) : mapping.connection.encrypted_access_token
+    const nextExpiresAt = refreshed.expires_in ? new Date(Date.now() + Number(refreshed.expires_in) * 1000).toISOString() : mapping.connection.expires_at
+    await supabase
+      .from('google_connections')
+      .update({ encrypted_access_token: encryptedAccessToken, expires_at: nextExpiresAt, updated_at: new Date().toISOString() })
+      .eq('id', mapping.google_connection_id)
+  }
+
+  if (!accessToken) return { error: 'Google Calendar access token is unavailable. Reconnect Google Calendar.', mapping, accessToken: '' }
+  return { error: null, mapping, accessToken }
+}
+
+export const refreshGoogleAccessToken = async (config: any, refreshToken: string) => {
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: config.googleClientId,
+      client_secret: config.googleClientSecret,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token',
+    }),
+  })
+
+  const json = await response.json<any>().catch(() => ({}))
+  if (!response.ok) {
+    throw createError({ statusCode: 502, statusMessage: json?.error_description || json?.error || 'Google token refresh failed.' })
+  }
+  return json
+}
+
+export const checkGoogleCalendarFreeBusy = async (accessToken: string, calendarId: string, timeMin: string, timeMax: string, timeZone = 'Africa/Kigali') => {
+  const response = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ timeMin, timeMax, timeZone, items: [{ id: calendarId }] }),
+  })
+  const json = await response.json<any>().catch(() => ({}))
+  if (!response.ok) {
+    throw createError({ statusCode: 502, statusMessage: json?.error?.message || 'Google Calendar free/busy check failed.' })
+  }
+  const busy = json?.calendars?.[calendarId]?.busy || []
+  return { available: busy.length === 0, busy }
+}
+
+export const createGoogleCalendarEvent = async (accessToken: string, calendarId: string, eventPayload: any) => {
+  const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
+    body: JSON.stringify(eventPayload),
+  })
+  const json = await response.json<any>().catch(() => ({}))
+  if (!response.ok) {
+    throw createError({ statusCode: 502, statusMessage: json?.error?.message || 'Google Calendar event creation failed.' })
+  }
+  return json
 }
