@@ -5,6 +5,7 @@ definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 useHead({ title: 'Appointment Settings | ReplySuite' })
 
 const supabase = useSupabaseClient() as any
+const route = useRoute()
 const notify = useNotify()
 const { userId } = useAuth()
 const isLoading = ref(true)
@@ -12,6 +13,8 @@ const isSavingService = ref(false)
 const isSavingStaff = ref(false)
 const isSavingRule = ref(false)
 const googleCalendarConnected = ref(false)
+const googleCalendarStatus = ref<any>(null)
+const isCheckingGoogle = ref(false)
 const chatbots = ref<any[]>([])
 const services = ref<any[]>([])
 const staff = ref<any[]>([])
@@ -23,8 +26,27 @@ const ruleDraft = ref({ staff_id: '', weekday: 1, start_time: '09:00', end_time:
 
 const weekdayLabels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const selectedBot = computed(() => chatbots.value.find((bot) => bot.id === selectedChatbotId.value))
+const googleCalendarLabel = computed(() => googleCalendarStatus.value?.mapping?.calendar_summary || googleCalendarStatus.value?.connection?.google_email || 'Google Calendar')
+
+const fetchGoogleStatus = async () => {
+  if (!selectedChatbotId.value) return
+  isCheckingGoogle.value = true
+  try {
+    const status = await $fetch('/api/google/calendar/status', { query: { chatbotId: selectedChatbotId.value } })
+    googleCalendarStatus.value = status
+    googleCalendarConnected.value = Boolean((status as any)?.connected)
+  } catch (err) {
+    console.error('Failed to check Google Calendar status:', err)
+    googleCalendarStatus.value = null
+    googleCalendarConnected.value = false
+  } finally {
+    isCheckingGoogle.value = false
+  }
+}
+
 const connectGoogleCalendar = () => {
-  notify.info('Google Calendar OAuth connection is the next setup step. Appointments and bookings are ready to use this connection once connected.')
+  if (!selectedChatbotId.value) return notify.warn('Choose an assistant before connecting Google Calendar.')
+  window.location.href = `/api/google/oauth/start?chatbotId=${encodeURIComponent(selectedChatbotId.value)}`
 }
 
 const fetchData = async () => {
@@ -42,6 +64,7 @@ const fetchData = async () => {
 
 const fetchSetup = async () => {
   if (!selectedChatbotId.value) return
+  await fetchGoogleStatus()
   const [{ data: serviceRows }, { data: staffRows }, { data: ruleRows }] = await Promise.all([
     supabase.from('appointment_services').select('*').eq('chatbot_id', selectedChatbotId.value).order('sort_order', { ascending: true }),
     supabase.from('appointment_staff').select('*').eq('chatbot_id', selectedChatbotId.value).order('created_at', { ascending: true }),
@@ -53,7 +76,11 @@ const fetchSetup = async () => {
 }
 
 watch(selectedChatbotId, fetchSetup)
-onMounted(fetchData)
+onMounted(async () => {
+  if (route.query.google === 'connected') notify.success('Google Calendar connected.')
+  if (route.query.google === 'error') notify.error(`Google Calendar connection failed: ${route.query.reason || 'Unknown error'}`)
+  await fetchData()
+})
 
 const addService = async () => {
   if (!selectedChatbotId.value || !serviceDraft.value.name.trim()) return notify.warn('Choose an assistant and add a service name.')
@@ -119,6 +146,8 @@ const removeRow = async (table: string, id: string, message: string) => {
             <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Google Calendar required</p>
             <h2 class="mt-1 text-base font-black text-foreground">Bookings are managed from your connected Google Calendar.</h2>
             <p class="mt-1 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">The assistant will use Google Calendar free/busy checks before confirming slots, then create, reschedule, or cancel calendar events server-side. ReplySuite keeps the customer record and audit trail.</p>
+            <p v-if="googleCalendarConnected" class="mt-2 text-xs font-black uppercase tracking-widest text-primary">Connected: {{ googleCalendarLabel }}</p>
+            <p v-else-if="isCheckingGoogle" class="mt-2 text-xs font-black uppercase tracking-widest text-foreground/45">Checking Google connection…</p>
           </div>
         </div>
         <button type="button" class="inline-flex h-11 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 px-5 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15" @click="connectGoogleCalendar">
