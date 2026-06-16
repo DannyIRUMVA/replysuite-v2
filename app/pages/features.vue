@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ArrowRight, BarChart3, Bot, CalendarDays, CheckCircle2, CreditCard, FileText, Globe2, Languages, LayoutDashboard, Lock, MessageCircle, MessageSquare, ShieldCheck, ShoppingBag, Sparkles, Target } from 'lucide-vue-next'
+import { ArrowRight, BarChart3, Bot, CalendarDays, CheckCircle2, CreditCard, FileText, Globe2, Languages, LayoutDashboard, Lock, MessageCircle, MessageSquare, ShieldCheck, Sparkles, Target } from 'lucide-vue-next'
 
 useSeoMeta({
   title: 'Features | ReplySuite AI Chatbot Tools',
-  description: 'ReplySuite features for trained AI replies, website chat, WhatsApp and Instagram automation, appointments, orders, and Paypack checkout attached to real customer actions.',
+  description: 'ReplySuite features for trained AI replies, website chat, WhatsApp and Instagram automation, appointments, bookings, Google Calendar, and Paypack checkout attached to real customer actions.',
   ogTitle: 'ReplySuite Features',
-  ogDescription: 'Train once. Reply everywhere. Book appointments. Take orders. Get paid.',
+  ogDescription: 'Train once. Reply everywhere. Book appointments. Manage bookings. Get paid.',
   ogUrl: 'https://replysuite.app/features',
   twitterCard: 'summary_large_image',
   twitterTitle: 'ReplySuite Features',
@@ -35,10 +35,10 @@ const featureGroups = [
   },
   {
     label: 'Act',
-    title: 'Turn conversations into appointments and orders',
-    desc: 'Let the assistant collect structured details, create trackable records, and keep staff in control of approval, fulfillment, and follow-up.',
+    title: 'Turn conversations into appointments and bookings',
+    desc: 'Let the assistant collect structured details, create trackable booking records, and keep staff in control of approval, calendar availability, and follow-up.',
     icon: Sparkles,
-    items: ['Appointment service setup', 'Staff and availability rules', 'Catalog and order creation', 'Status timelines for review'],
+    items: ['Google Calendar connection', 'Appointment service setup', 'Staff and availability rules', 'Status timelines for review'],
   },
 ]
 
@@ -48,13 +48,13 @@ const features = [
   { title: 'WhatsApp ready', desc: 'Expand support to a high-value customer messaging channel.', icon: MessageCircle },
   { title: 'Instagram automation', desc: 'Support comment replies, comment-to-DM, and polling fallback workflows.', icon: MessageSquare },
   { title: 'Appointments', desc: 'Collect service, staff, time, contact, notes, and deposit intent.', icon: CalendarDays },
-  { title: 'Orders', desc: 'Use catalog items to create structured customer orders from chat.', icon: ShoppingBag },
-  { title: 'Paypack checkout', desc: 'Request payment only for existing orders or appointment deposits.', icon: CreditCard },
+  { title: 'Google Calendar bookings', desc: 'Use connected calendars for reservations, events, and appointment availability.', icon: CalendarDays },
+  { title: 'Paypack checkout', desc: 'Request payment only for existing appointment or booking deposits.', icon: CreditCard },
   { title: 'Conversation memory', desc: 'Keep context connected to the customer conversation and session.', icon: Target },
   { title: 'Usage analytics', desc: 'Monitor replies, activity, plan limits, and customer automation performance.', icon: BarChart3 },
   { title: 'Multilingual support', desc: 'Support English, Kinyarwanda, Swahili, Kirundi, Luganda, Arabic, and more.', icon: Languages },
   { title: 'Safer controls', desc: 'Control training, channel setup, domains, and tool access from the dashboard.', icon: Lock },
-  { title: 'Review dashboard', desc: 'Review appointments, orders, payments, and conversations before follow-up.', icon: LayoutDashboard },
+  { title: 'Review dashboard', desc: 'Review appointments, bookings, payments, and conversations before follow-up.', icon: LayoutDashboard },
 ]
 
 const paymentRules = [
@@ -75,7 +75,7 @@ const paymentRules = [
         Everything needed to reply, book, sell, and review from one calm dashboard.
       </h1>
       <p class="relative mx-auto mt-6 max-w-3xl text-base font-medium leading-relaxed text-foreground/58 md:text-lg">
-        ReplySuite combines trained AI replies with practical business tools. Your assistant can answer questions, request appointments, build orders, and trigger verified Paypack checkout.
+        ReplySuite combines trained AI replies with practical business tools. Your assistant can answer questions, request appointments, manage bookings, and trigger verified Paypack checkout.
       </p>
       <div class="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row">
         <NuxtLink to="/register" class="btn-gradient inline-flex h-12 items-center justify-center gap-3 px-6 text-sm">
@@ -113,7 +113,7 @@ const paymentRules = [
       <div class="mx-auto mb-10 max-w-3xl text-center">
         <span class="badge-gradient mb-4">Capability map</span>
         <h2 class="text-3xl font-black tracking-tight text-foreground md:text-5xl">A practical feature set for live businesses.</h2>
-        <p class="mt-4 text-sm font-medium leading-relaxed text-foreground/55 md:text-base">The product stays focused: conversations, training, connected channels, appointments, orders, and contextual payment checkout.</p>
+        <p class="mt-4 text-sm font-medium leading-relaxed text-foreground/55 md:text-base">The product stays focused: conversations, training, connected channels, appointments, bookings, Google Calendar, and contextual payment checkout.</p>
       </div>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <article v-for="feat in features" :key="feat.title" class="group rounded-[1.5rem] border border-foreground/10 bg-background-card/55 p-5 backdrop-blur-xl transition hover:border-primary/25 hover:bg-primary/[0.025]">
@@ -132,7 +132,7 @@ const paymentRules = [
           <span class="badge-gradient mb-4">Payments without risk drift</span>
           <h2 class="text-3xl font-black tracking-tight text-foreground md:text-5xl">Paypack is checkout, not an invoice bot.</h2>
           <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">
-            Payment requests attach to existing appointments or orders. The server verifies the target, amount, ownership, and duplicate state before a Paypack prompt is created.
+            Payment requests attach to existing appointment or booking deposits. The server verifies the target, amount, ownership, and duplicate state before a Paypack prompt is created.
           </p>
           <NuxtLink to="/pricing" class="mt-7 inline-flex h-12 items-center justify-center gap-3 rounded-full border border-foreground/10 px-6 text-sm font-black text-foreground/70 transition hover:border-primary/25 hover:text-foreground">
             View pricing
@@ -163,7 +163,7 @@ const paymentRules = [
       <div class="relative overflow-hidden rounded-[2rem] border border-foreground/10 bg-foreground/[0.025] p-8 backdrop-blur-xl md:p-12">
         <div class="absolute inset-x-0 -top-20 mx-auto h-56 w-56 rounded-full bg-primary/15 blur-[90px]" />
         <h2 class="relative z-10 text-3xl font-black tracking-tight text-foreground md:text-5xl">Build your first assistant, then add actions when ready.</h2>
-        <p class="relative z-10 mx-auto mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Start with trained replies on your website. Expand into appointments, orders, WhatsApp, Instagram, and Paypack checkout as your business needs grow.</p>
+        <p class="relative z-10 mx-auto mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Start with trained replies on your website. Expand into appointments, bookings, WhatsApp, Instagram, and Paypack checkout as your business needs grow.</p>
         <NuxtLink to="/register" class="btn-gradient relative z-10 mt-7 inline-flex h-12 items-center justify-center gap-3 px-7 text-sm">
           Start free
           <ArrowRight class="h-4 w-4" />

@@ -10,7 +10,7 @@ const ASSISTANT_SKILL_PROMPTS: Record<string, AssistantSkillPrompt> = {
   },
   support_triage: {
     name: 'Support triage',
-    prompt: 'Classify support requests by urgency, summarize the issue clearly, ask for missing account/order details only when needed, and keep the customer calm.',
+    prompt: 'Classify support requests by urgency, summarize the issue clearly, ask for missing account or booking details only when needed, and keep the customer calm.',
   },
   sales_advisor: {
     name: 'Sales advisor',
@@ -30,7 +30,7 @@ const ASSISTANT_SKILL_PROMPTS: Record<string, AssistantSkillPrompt> = {
   },
   website_conversion_guide: {
     name: 'Website conversion guide',
-    prompt: 'For website widget visitors, quickly identify what they need, answer from trained context, then guide them toward the next valuable action: contact, appointment, order, quote request, or staff handoff.',
+    prompt: 'For website widget visitors, quickly identify what they need, answer from trained context, then guide them toward the next valuable action: contact, appointment, booking, quote request, or staff handoff.',
   },
   whatsapp_service_closer: {
     name: 'WhatsApp service closer',
@@ -42,23 +42,19 @@ const ASSISTANT_SKILL_PROMPTS: Record<string, AssistantSkillPrompt> = {
   },
   instagram_comment_to_dm: {
     name: 'Instagram comment-to-DM nurturer',
-    prompt: 'When a comment triggers a DM flow, acknowledge the public comment context, continue privately, and ask one clear question that moves the customer toward help, booking, order, or staff review.',
+    prompt: 'When a comment triggers a DM flow, acknowledge the public comment context, continue privately, and ask one clear question that moves the customer toward help, booking, reservation, or staff review.',
   },
   keyword_trigger_router: {
     name: 'Keyword trigger router',
-    prompt: 'When a customer uses configured trigger keywords, treat the keyword as intent instead of repeating it back. Route the reply toward the matching offer, FAQ, appointment, order, or DM follow-up flow.',
+    prompt: 'When a customer uses configured trigger keywords, treat the keyword as intent instead of repeating it back. Route the reply toward the matching offer, FAQ, appointment, booking, reservation, or DM follow-up flow.',
   },
   appointment_intake: {
-    name: 'Appointment intake specialist',
-    prompt: 'For appointment requests, collect service, preferred date/time, name, phone, and relevant notes. Never promise availability unless the availability tool confirms it; otherwise say the team will review or confirm.',
-  },
-  order_intake: {
-    name: 'Order intake specialist',
-    prompt: 'For product or menu orders, help the customer choose catalog items, quantities, order type, contact details, and delivery/pickup notes. Do not invent catalog items or prices.',
+    name: 'Appointment and booking intake specialist',
+    prompt: 'For appointment, booking, reservation, or event requests, collect service or booking type, preferred date/time, name, phone, party size when relevant, and notes. Never promise availability unless the availability tool confirms it; otherwise say the team will review or confirm.',
   },
   checkout_guardrails: {
     name: 'Checkout guardrails',
-    prompt: 'Only discuss payment as checkout for an existing order or appointment deposit. Do not create invoices, invent amounts, or ask for card details. Explain that the business will send a secure payment prompt when eligible.',
+    prompt: 'Only discuss payment as checkout for an existing appointment or booking deposit. Do not create invoices, invent amounts, or ask for card details. Explain that the business will send a secure payment prompt when eligible.',
   },
   customer_memory_context: {
     name: 'Customer memory context',

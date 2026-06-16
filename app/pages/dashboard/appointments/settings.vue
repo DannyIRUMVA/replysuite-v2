@@ -11,6 +11,7 @@ const isLoading = ref(true)
 const isSavingService = ref(false)
 const isSavingStaff = ref(false)
 const isSavingRule = ref(false)
+const googleCalendarConnected = ref(false)
 const chatbots = ref<any[]>([])
 const services = ref<any[]>([])
 const staff = ref<any[]>([])
@@ -22,6 +23,9 @@ const ruleDraft = ref({ staff_id: '', weekday: 1, start_time: '09:00', end_time:
 
 const weekdayLabels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const selectedBot = computed(() => chatbots.value.find((bot) => bot.id === selectedChatbotId.value))
+const connectGoogleCalendar = () => {
+  notify.info('Google Calendar OAuth connection is the next setup step. Appointments and bookings are ready to use this connection once connected.')
+}
 
 const fetchData = async () => {
   if (!userId.value) return
@@ -104,8 +108,24 @@ const removeRow = async (table: string, id: string, message: string) => {
     <div>
       <p class="text-[10px] font-black uppercase tracking-[0.22em] text-primary">Scheduling setup</p>
       <h1 class="mt-2 text-2xl font-black tracking-tight text-foreground sm:text-3xl">Appointment settings</h1>
-      <p class="mt-2 max-w-2xl text-sm leading-relaxed text-foreground/58">Set services, staff, and availability before your assistant requests a booking. Works for clinics, salons, offices, schools, agencies, studios, and service desks.</p>
+      <p class="mt-2 max-w-2xl text-sm leading-relaxed text-foreground/58">Connect Google Calendar, then set services, staff, and availability before your assistant requests an appointment or booking. Works for lounges, clinics, salons, offices, schools, agencies, studios, and service desks.</p>
     </div>
+
+    <section class="rounded-2xl border border-primary/15 bg-primary/[0.04] p-5">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex items-start gap-4">
+          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-black"><Calendar class="h-5 w-5" /></div>
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Google Calendar required</p>
+            <h2 class="mt-1 text-base font-black text-foreground">Bookings are managed from your connected Google Calendar.</h2>
+            <p class="mt-1 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">The assistant will use Google Calendar free/busy checks before confirming slots, then create, reschedule, or cancel calendar events server-side. ReplySuite keeps the customer record and audit trail.</p>
+          </div>
+        </div>
+        <button type="button" class="inline-flex h-11 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 px-5 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15" @click="connectGoogleCalendar">
+          {{ googleCalendarConnected ? 'Google connected' : 'Connect Google Calendar' }}
+        </button>
+      </div>
+    </section>
 
     <section class="rounded-2xl border border-foreground/8 bg-background-card p-5">
       <label class="mb-2 block text-[10px] font-black uppercase tracking-widest text-foreground/45">Assistant</label>

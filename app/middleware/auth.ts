@@ -64,7 +64,11 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       return navigateTo('/dashboard/pricing')
     }
 
-    if ((to.path.startsWith('/dashboard/appointments') || to.path.startsWith('/dashboard/orders')) && !isEnterprise) {
+    if (to.path.startsWith('/dashboard/orders')) {
+      return navigateTo(isEnterprise ? '/dashboard/appointments' : '/dashboard/pricing')
+    }
+
+    if (to.path.startsWith('/dashboard/appointments') && !isEnterprise) {
       return navigateTo('/dashboard/pricing')
     }
   }

@@ -96,6 +96,10 @@ const getPaymentCredentials = async (event: any, chatbotId: string) => {
 }
 
 export const getMenuHandler = async (event: any, chatbotId: string, args: any, context?: ToolContext) => {
+  const disabledResult = { error: 'Orders are disabled. Use appointments and bookings instead.' }
+  await logToolEvent(event, chatbotId, 'get_menu', args, disabledResult, context)
+  return disabledResult
+
   const supabase = getAdmin(event)
   let query = supabase
     .from('chatbot_catalog')
@@ -157,6 +161,10 @@ const resolveCatalogItems = async (event: any, chatbotId: string, items: any[] =
 }
 
 export const createOrderHandler = async (event: any, chatbotId: string, args: any, context?: ToolContext) => {
+  const disabledResult = { error: 'Orders are disabled. Use appointments and bookings instead.' }
+  await logToolEvent(event, chatbotId, 'create_order', args, disabledResult, context)
+  return disabledResult
+
   const items = Array.isArray(args?.items) ? args.items : []
   if (!items.length) {
     const result = { error: 'Choose at least one catalog item before creating an order.' }
@@ -239,6 +247,10 @@ export const createOrderHandler = async (event: any, chatbotId: string, args: an
 export const placeOrderHandler = createOrderHandler
 
 export const confirmOrderHandler = async (event: any, chatbotId: string, args: any, context?: ToolContext) => {
+  const disabledResult = { error: 'Orders are disabled. Use appointments and bookings instead.' }
+  await logToolEvent(event, chatbotId, 'confirm_order', args, disabledResult, context)
+  return disabledResult
+
   const orderId = args?.order_id || args?.target_id
   if (!orderId) {
     const result = { error: 'order_id is required.' }
@@ -270,6 +282,10 @@ export const confirmOrderHandler = async (event: any, chatbotId: string, args: a
 }
 
 export const cancelOrderHandler = async (event: any, chatbotId: string, args: any, context?: ToolContext) => {
+  const disabledResult = { error: 'Orders are disabled. Use appointments and bookings instead.' }
+  await logToolEvent(event, chatbotId, 'cancel_order', args, disabledResult, context)
+  return disabledResult
+
   const orderId = args?.order_id || args?.target_id
   const supabase = getAdmin(event)
   const { data: order } = await supabase.from('chatbot_orders').select('id, status').eq('id', orderId).eq('chatbot_id', chatbotId).maybeSingle()
@@ -481,23 +497,11 @@ export const cancelAppointmentHandler = async (event: any, chatbotId: string, ar
 
 const loadPayableTarget = async (event: any, chatbotId: string, args: any) => {
   const supabase = getAdmin(event)
-  const targetType = args?.target_type || (args?.appointment_id ? 'appointment' : 'order')
-  const targetId = args?.target_id || args?.order_id || args?.appointment_id
+  const targetType = args?.target_type || 'appointment'
+  const targetId = args?.target_id || args?.appointment_id
 
-  if (!targetId || !['order', 'appointment'].includes(targetType)) {
-    return { error: 'A valid target_type and target_id are required for payment.' }
-  }
-
-  if (targetType === 'order') {
-    const { data: order } = await supabase
-      .from('chatbot_orders')
-      .select('id, total_amount, currency, payment_status, status')
-      .eq('id', targetId)
-      .eq('chatbot_id', chatbotId)
-      .maybeSingle()
-    if (!order) return { error: 'Order not found for this assistant.' }
-    if (order.payment_status === 'paid') return { error: 'This order is already paid.' }
-    return { targetType, targetId, amount: Number(order.total_amount || 0), currency: order.currency || 'RWF', record: order }
+  if (!targetId || targetType !== 'appointment') {
+    return { error: 'Payments are only available for appointment or booking deposits.' }
   }
 
   const { data: appointment } = await supabase
@@ -603,11 +607,7 @@ export const paypackHandler = async (event: any, chatbotId: string, args: any, c
     .select('id')
     .single()
 
-  if (target.targetType === 'order') {
-    await supabase.from('chatbot_orders').update({ payment_status: 'pending', status: 'pending_payment' }).eq('id', target.targetId)
-  } else {
-    await supabase.from('chatbot_appointments').update({ payment_status: 'pending', status: 'pending_payment' }).eq('id', target.targetId)
-  }
+  await supabase.from('chatbot_appointments').update({ payment_status: 'pending', status: 'pending_payment' }).eq('id', target.targetId)
   if (payment?.id) await supabase.from('payment_status_events').insert({ payment_id: payment.id, status_to: 'pending', raw_event: cashinData })
 
   const result = {
@@ -628,10 +628,10 @@ export const checkPaymentStatusHandler = async (event: any, chatbotId: string, a
   const supabase = getAdmin(event)
   let query = supabase.from('chatbot_payments').select('*').eq('chatbot_id', chatbotId)
   if (args?.payment_id) query = query.eq('id', args.payment_id)
-  else if (args?.target_id || args?.order_id || args?.appointment_id) {
+  else if (args?.target_id || args?.appointment_id) {
     query = query
-      .eq('target_type', args?.target_type || (args?.appointment_id ? 'appointment' : 'order'))
-      .eq('target_id', args?.target_id || args?.order_id || args?.appointment_id)
+      .eq('target_type', 'appointment')
+      .eq('target_id', args?.target_id || args?.appointment_id)
       .order('created_at', { ascending: false })
   } else {
     const result = { error: 'payment_id or target_id is required.' }

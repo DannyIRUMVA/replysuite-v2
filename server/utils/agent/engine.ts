@@ -11,7 +11,6 @@ export interface AgentOptions {
 }
 
 const FEATURE_TOOL_MAP: Record<string, string[]> = {
-  orders: ['get_menu', 'create_order', 'confirm_order', 'cancel_order'],
   appointments: ['list_appointment_services', 'check_appointment_availability', 'request_appointment', 'reschedule_appointment', 'cancel_appointment'],
   payments: ['request_payment', 'check_payment_status'],
 }
@@ -79,9 +78,9 @@ CRITICAL RULES FOR TOOLS:
 2. Continue from the active conversation. Do not restart, re-greet, or ask again for details the user already provided in recent messages.
 3. If the latest user message appears to answer a prior question, treat it as that answer and move forward.
 4. If a tool requires parameters (like phone number, quantity, date, etc.) that the user still has not provided, ask for only the missing detail before trying to call the tool.
-5. For orders, use real catalog items and create_order before payment.
-6. For appointments, collect service/date/time/name/phone before request_appointment.
-7. Payments only attach to existing orders or appointments. Never invent payment amounts.
+5. Orders are disabled. Do not create orders, take menu orders, or promise order management.
+6. For appointments/bookings, collect service/date/time/name/phone before request_appointment. Use availability tools before promising a slot.
+7. Payments only attach to existing appointment/booking deposits. Never invent payment amounts.
 8. Do not provide long explanations unless explicitly asked. Keep it snappy and natural.`
   }
 

@@ -98,7 +98,7 @@ const plans = [
     productId: '3e478611-c444-46e5-9827-7450a1c8d046',
     price: '350.00',
     desc: 'Self-serve Enterprise for larger rollouts that need every channel plus AI business tools.',
-    features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Appointments, orders, Paypack checkout'],
+    features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Appointments, bookings, Google Calendar, Paypack checkout'],
     popular: false
   }
 ]

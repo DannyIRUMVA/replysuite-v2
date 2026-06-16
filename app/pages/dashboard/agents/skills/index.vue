@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, ArrowRight, Bot, Calendar, Check, ChevronDown, CreditCard, Database, Globe2, Headphones, Instagram, Languages, Loader2, Lock, MessageCircle, MessageSquare, PackageCheck, RotateCcw, Save, ShieldCheck, ShoppingBag, Sparkles, Target, Users, Zap } from 'lucide-vue-next'
+import { ArrowLeft, ArrowRight, Bot, Calendar, Check, ChevronDown, CreditCard, Database, Globe2, Headphones, Instagram, Languages, Loader2, Lock, MessageCircle, MessageSquare, PackageCheck, RotateCcw, Save, ShieldCheck, Sparkles, Target, Users, Zap } from 'lucide-vue-next'
 
 definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 useHead({ title: 'Tools & Skills Directory' })
@@ -20,21 +20,19 @@ const assignedSkills = ref<string[]>([])
 const isPremium = canUseBusinessTools
 
 const toolCatalog = [
-  { id: 'appointments', name: 'Appointments', desc: 'Request bookings, preferred times, deposits, and customer details.', icon: Calendar, enterprise: true, setupHref: '/dashboard/appointments/settings' },
-  { id: 'orders', name: 'Orders', desc: 'Show catalog items and create structured customer orders.', icon: ShoppingBag, enterprise: true, setupHref: '/dashboard/orders/settings' },
-  { id: 'payments', name: 'Paypack checkout', desc: 'Checkout for existing orders or appointment deposits. No invoices.', icon: CreditCard, enterprise: true, setupHref: '' },
+  { id: 'appointments', name: 'Appointments & bookings', desc: 'Request appointments, reservations, events, preferred times, deposits, and customer details using Google Calendar.', icon: Calendar, enterprise: true, setupHref: '/dashboard/appointments/settings' },
+  { id: 'payments', name: 'Paypack checkout', desc: 'Checkout for existing appointment or booking deposits. No invoices.', icon: CreditCard, enterprise: true, setupHref: '' },
 ]
 
 const businessActionLinks = [
-  { id: 'appointments', name: 'Appointments', desc: 'Review booking requests and manage services, staff, and availability.', icon: Calendar, href: '/dashboard/appointments', settingsHref: '/dashboard/appointments/settings' },
-  { id: 'orders', name: 'Orders', desc: 'Review customer orders, fulfillment status, and catalog setup.', icon: ShoppingBag, href: '/dashboard/orders', settingsHref: '/dashboard/orders/settings' },
+  { id: 'appointments', name: 'Appointments & bookings', desc: 'Review booking requests, connect Google Calendar, and manage services, staff, and availability.', icon: Calendar, href: '/dashboard/appointments', settingsHref: '/dashboard/appointments/settings' },
 ]
 
 const skillGroups = [
   {
     title: 'Website conversations', desc: 'Turn widget visits into clear next steps.', icon: Globe2,
     skills: [
-      { id: 'website_conversion_guide', name: 'Website Conversion Guide', desc: 'Identify intent, answer from training, then guide to contact, book, order, or handoff.', icon: Target, channels: ['Website'] },
+      { id: 'website_conversion_guide', name: 'Website Conversion Guide', desc: 'Identify intent, answer from training, then guide to contact, book, reserve, or handoff.', icon: Target, channels: ['Website'] },
       { id: 'lead_qualification', name: 'Lead Qualification', desc: 'Ask one short question at a time about need, budget, timeline, and contact preference.', icon: Users, channels: ['Website', 'WhatsApp'] },
       { id: 'sales_advisor', name: 'Sales Advisor', desc: 'Recommend the right option without inventing prices, discounts, or policies.', icon: Sparkles, channels: ['Website', 'Instagram'] },
       { id: 'customer_memory_context', name: 'Customer Memory Context', desc: 'Use conversation history so customers do not repeat details.', icon: Database, channels: ['All'] },
@@ -44,9 +42,8 @@ const skillGroups = [
     title: 'WhatsApp service flow', desc: 'Keep mobile conversations short and action-oriented.', icon: MessageCircle,
     skills: [
       { id: 'whatsapp_service_closer', name: 'WhatsApp Service Closer', desc: 'Confirm details clearly and move toward one concrete next step.', icon: MessageCircle, channels: ['WhatsApp'] },
-      { id: 'appointment_intake', name: 'Appointment Intake', desc: 'Collect service, preferred time, name, phone, and notes without promising availability.', icon: Calendar, channels: ['Website', 'WhatsApp'] },
-      { id: 'order_intake', name: 'Order Intake', desc: 'Collect catalog item, quantity, delivery/pickup, contact, and notes.', icon: ShoppingBag, channels: ['Website', 'WhatsApp', 'DM'] },
-      { id: 'checkout_guardrails', name: 'Checkout Guardrails', desc: 'Only discuss Paypack checkout for existing orders or appointment deposits.', icon: CreditCard, channels: ['All'] },
+      { id: 'appointment_intake', name: 'Appointment & Booking Intake', desc: 'Collect service or reservation type, preferred time, name, phone, party size, and notes without promising availability.', icon: Calendar, channels: ['Website', 'WhatsApp'] },
+      { id: 'checkout_guardrails', name: 'Checkout Guardrails', desc: 'Only discuss Paypack checkout for existing appointment or booking deposits.', icon: CreditCard, channels: ['All'] },
     ],
   },
   {
@@ -54,7 +51,7 @@ const skillGroups = [
     skills: [
       { id: 'instagram_public_responder', name: 'Instagram Public Responder', desc: 'Reply to comments in one or two safe, friendly sentences.', icon: Instagram, channels: ['Comments'] },
       { id: 'instagram_comment_to_dm', name: 'Comment-to-DM Nurturer', desc: 'Acknowledge the comment context and continue privately with one clear question.', icon: MessageSquare, channels: ['DM'] },
-      { id: 'keyword_trigger_router', name: 'Keyword Trigger Router', desc: 'Treat configured keywords as intent and route to the right offer, FAQ, booking, order, or DM.', icon: Zap, channels: ['Instagram', 'WhatsApp'] },
+      { id: 'keyword_trigger_router', name: 'Keyword Trigger Router', desc: 'Treat configured keywords as intent and route to the right offer, FAQ, booking, reservation, or DM.', icon: Zap, channels: ['Instagram', 'WhatsApp'] },
       { id: 'concise_follow_up', name: 'Concise Follow-up', desc: 'End with one useful next step instead of many questions.', icon: ArrowRight, channels: ['All'] },
     ],
   },
@@ -72,7 +69,7 @@ const skillGroups = [
 
 const recommendedBundles = [
   { name: 'Website lead assistant', desc: 'Best first setup for website lead capture and clear handoff.', skills: ['website_conversion_guide', 'lead_qualification', 'sales_advisor', 'customer_memory_context', 'concise_follow_up'], tools: [] },
-  { name: 'Bookings and orders assistant', desc: 'For assistants that request appointments and create orders.', skills: ['whatsapp_service_closer', 'appointment_intake', 'order_intake', 'checkout_guardrails', 'support_triage'], tools: ['appointments', 'orders'] },
+  { name: 'Bookings assistant', desc: 'For assistants that request appointments, reservations, and Google Calendar bookings.', skills: ['whatsapp_service_closer', 'appointment_intake', 'checkout_guardrails', 'support_triage'], tools: ['appointments'] },
   { name: 'Instagram comment-to-DM assistant', desc: 'For keyword-triggered comments, public replies, and DM follow-up.', skills: ['instagram_public_responder', 'instagram_comment_to_dm', 'keyword_trigger_router', 'sales_advisor', 'concise_follow_up'], tools: [] },
   { name: 'Support and recovery assistant', desc: 'For triage, complaints, escalation, and multilingual customers.', skills: ['support_triage', 'complaint_recovery', 'escalation_guardrails', 'multilingual_service', 'customer_memory_context'], tools: [] },
 ]
@@ -94,7 +91,7 @@ const hasChanges = computed(() => {
 
 const syncSelection = () => {
   const assistant = selectedAssistant.value
-  assignedTools.value = Array.isArray(assistant?.enabled_tools) ? [...assistant.enabled_tools] : []
+  assignedTools.value = Array.isArray(assistant?.enabled_tools) ? assistant.enabled_tools.filter((tool: string) => tool !== 'orders') : []
   assignedSkills.value = Array.isArray(assistant?.tools_config?.assistant_skills) ? [...assistant.tools_config.assistant_skills] : []
 }
 
@@ -122,12 +119,13 @@ const toggleValue = (list: { value: string[] }, id: string) => {
 }
 
 const normalizePaymentDependency = () => {
-  if (!assignedTools.value.includes('orders') && !assignedTools.value.includes('appointments')) assignedTools.value = assignedTools.value.filter((value) => value !== 'payments')
+  assignedTools.value = assignedTools.value.filter((value) => value !== 'orders')
+  if (!assignedTools.value.includes('appointments')) assignedTools.value = assignedTools.value.filter((value) => value !== 'payments')
 }
 
 const toggleTool = (tool: any) => {
   if (tool.enterprise && !isPremium.value) return notify.warn('Upgrade to Enterprise to assign AI business tools.')
-  if (tool.id === 'payments' && !assignedTools.value.includes('orders') && !assignedTools.value.includes('appointments')) return notify.warn('Enable orders or appointments before adding Paypack checkout.')
+  if (tool.id === 'payments' && !assignedTools.value.includes('appointments')) return notify.warn('Enable appointments & bookings before adding Paypack checkout.')
   toggleValue(assignedTools, tool.id)
   normalizePaymentDependency()
 }
@@ -245,16 +243,16 @@ onMounted(fetchAssistants)
           <div class="mb-4 flex items-start justify-between gap-4">
             <div>
               <h2 class="text-lg font-black tracking-tight text-foreground">Business action workspaces</h2>
-              <p class="mt-1 text-sm font-medium text-foreground/50">Enterprise queues and setup pages for appointment, order, and checkout tools.</p>
+              <p class="mt-1 text-sm font-medium text-foreground/50">Enterprise queues and setup pages for appointment, booking, Google Calendar, and checkout tools.</p>
             </div>
             <Database class="h-5 w-5 text-primary" />
           </div>
           <div v-if="!isPremium" class="mb-4 rounded-2xl border border-primary/15 bg-primary/5 p-4">
             <p class="text-xs font-black uppercase tracking-widest text-primary">Enterprise tools</p>
-            <p class="mt-1 text-sm font-medium leading-relaxed text-foreground/55">Appointments, orders, and Paypack checkout are available on Enterprise. Silver includes website and WhatsApp chatbots; Gold adds Instagram workflows.</p>
+            <p class="mt-1 text-sm font-medium leading-relaxed text-foreground/55">Appointments, bookings, Google Calendar, and Paypack checkout are available on Enterprise. Silver includes website and WhatsApp chatbots; Gold adds Instagram workflows.</p>
             <NuxtLink to="/dashboard/pricing" class="mt-3 inline-flex rounded-xl border border-primary/20 bg-primary/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-primary">Upgrade to Enterprise</NuxtLink>
           </div>
-          <div class="grid gap-3 md:grid-cols-2">
+          <div class="grid gap-3 md:grid-cols-1">
             <article v-for="action in businessActionLinks" :key="action.id" class="rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4">
               <div class="flex items-start gap-4">
                 <div :class="['flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', assignedTools.includes(action.id) ? 'bg-primary text-black' : 'bg-foreground/5 text-foreground/50']"><component :is="action.icon" class="h-5 w-5" /></div>
@@ -276,7 +274,7 @@ onMounted(fetchAssistants)
             <div><h2 class="text-lg font-black tracking-tight text-foreground">Action tools</h2><p class="mt-1 text-sm font-medium text-foreground/50">Tools create records. Skills shape the conversation around them.</p></div>
             <Zap class="h-5 w-5 text-primary" />
           </div>
-          <div class="grid gap-3 md:grid-cols-3">
+          <div class="grid gap-3 md:grid-cols-2">
             <button v-for="tool in toolCatalog" :key="tool.id" type="button" @click="toggleTool(tool)" :class="['rounded-2xl border p-4 text-left transition', assignedTools.includes(tool.id) ? 'border-primary/40 bg-primary/10' : 'border-foreground/10 bg-foreground/[0.02] hover:bg-foreground/[0.04]', tool.enterprise && !isPremium ? 'opacity-60' : '']">
               <div class="flex items-start gap-3"><div :class="['flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', assignedTools.includes(tool.id) ? 'bg-primary text-black' : 'bg-foreground/5 text-foreground/50']"><component :is="tool.icon" class="h-5 w-5" /></div><div class="min-w-0 flex-1"><div class="flex items-center gap-2"><p class="text-sm font-black text-foreground">{{ tool.name }}</p><Lock v-if="tool.enterprise && !isPremium" class="h-3.5 w-3.5 text-amber-400" /><Check v-if="assignedTools.includes(tool.id)" class="ml-auto h-4 w-4 text-primary" /></div><p class="mt-1 text-xs font-medium leading-relaxed text-foreground/50">{{ tool.desc }}</p></div></div>
             </button>

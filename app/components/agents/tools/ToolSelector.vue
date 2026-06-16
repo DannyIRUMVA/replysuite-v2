@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ShoppingBag, Calendar, CreditCard, Lock, CheckCircle2 } from 'lucide-vue-next'
+import { Calendar, CreditCard, Lock, CheckCircle2 } from 'lucide-vue-next'
 
 const props = defineProps<{
   modelValue: string[]
@@ -9,15 +9,15 @@ const props = defineProps<{
 const emit = defineEmits(['update:modelValue', 'save'])
 
 const hasTool = (toolId: string) => props.modelValue.includes(toolId)
-const hasCoreTool = computed(() => hasTool('orders') || hasTool('appointments'))
+const hasCoreTool = computed(() => hasTool('appointments'))
 
 const updateTools = (next: string[]) => {
-  const unique = Array.from(new Set(next))
+  const unique = Array.from(new Set(next.filter((tool) => tool !== 'orders')))
   emit('update:modelValue', unique)
   emit('save')
 }
 
-const toggleTool = (toolId: 'orders' | 'appointments' | 'payments') => {
+const toggleTool = (toolId: 'appointments' | 'payments') => {
   if (!props.isPremium) return
   if (toolId === 'payments' && !hasCoreTool.value) return
 
@@ -26,7 +26,7 @@ const toggleTool = (toolId: 'orders' | 'appointments' | 'payments') => {
   if (idx > -1) next.splice(idx, 1)
   else next.push(toolId)
 
-  if (toolId !== 'payments' && next.includes('payments') && !next.includes('orders') && !next.includes('appointments')) {
+  if (toolId !== 'payments' && next.includes('payments') && !next.includes('appointments')) {
     next.splice(next.indexOf('payments'), 1)
   }
 
@@ -37,18 +37,10 @@ const cards = [
   {
     id: 'appointments' as const,
     icon: Calendar,
-    label: 'Appointments',
-    eyebrow: 'Scheduling',
-    description: 'Book consultations, office visits, services, reservations, and customer appointments.',
-    examples: ['Clinics', 'Salons', 'Agencies', 'Offices'],
-  },
-  {
-    id: 'orders' as const,
-    icon: ShoppingBag,
-    label: 'Orders',
-    eyebrow: 'Commerce',
-    description: 'Let customers browse a menu or catalog, create orders, and send them to your team.',
-    examples: ['Restaurants', 'Shops', 'Delivery', 'WhatsApp sellers'],
+    label: 'Appointments & bookings',
+    eyebrow: 'Google Calendar',
+    description: 'Let customers request appointments, reservations, events, and bookings backed by your connected Google Calendar.',
+    examples: ['Reservations', 'Events', 'Clinics', 'Salons'],
   },
 ]
 </script>
@@ -60,7 +52,7 @@ const cards = [
         <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Business tools</p>
         <h3 class="mt-1 text-lg font-black tracking-tight text-foreground">What can this assistant do?</h3>
         <p class="mt-1 max-w-2xl text-xs leading-relaxed text-foreground/55">
-          Enterprise AI tools let the assistant create appointments or orders, then request payment only when needed.
+          Enterprise AI tools let the assistant create appointments and bookings, then request appointment deposits when needed.
         </p>
       </div>
       <div class="rounded-full border border-foreground/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/45">
@@ -116,9 +108,9 @@ const cards = [
             <p class="text-[9px] font-black uppercase tracking-[0.18em] text-foreground/40">Optional add-on</p>
             <h4 class="text-sm font-black text-foreground">Paypack payments</h4>
             <p class="mt-1 max-w-2xl text-xs leading-relaxed text-foreground/55">
-              Payment is not a standalone tool. It attaches to an existing appointment deposit or order total after the assistant creates that record.
+              Payment is not a standalone tool. It attaches to an existing appointment or booking deposit after the assistant creates that record.
             </p>
-            <p v-if="!hasCoreTool" class="mt-2 text-[10px] font-bold text-foreground/40">Enable appointments or orders first.</p>
+            <p v-if="!hasCoreTool" class="mt-2 text-[10px] font-bold text-foreground/40">Enable appointments & bookings first.</p>
           </div>
         </div>
 

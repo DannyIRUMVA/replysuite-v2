@@ -31,11 +31,13 @@ export const getChatbotOwnerPlanSlug = async (event: any, chatbotId: string): Pr
 export const filterAgentToolsForPlan = (enabledTools: string[] | undefined, planSlug: string): string[] | undefined => {
   if (!enabledTools) return undefined
 
-  const enterpriseOnlyTools = new Set(['appointments', 'orders', 'payments'])
+  const deprecatedTools = new Set(['orders'])
+  const enterpriseOnlyTools = new Set(['appointments', 'payments'])
+  const cleanedTools = enabledTools.filter((tool) => !deprecatedTools.has(tool))
 
   if (isEnterprisePlanSlug(planSlug)) {
-    return enabledTools
+    return cleanedTools
   }
 
-  return enabledTools.filter((tool) => !enterpriseOnlyTools.has(tool))
+  return cleanedTools.filter((tool) => !enterpriseOnlyTools.has(tool))
 }

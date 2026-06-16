@@ -96,7 +96,7 @@ onMounted(loadConfig)
       </button>
 
       <p class="rounded-xl border border-orange-500/10 bg-orange-500/5 p-3 text-[10px] leading-relaxed text-orange-500/75">
-        Payment prompts are only created after the assistant has a real order or appointment ID. The server validates ownership and amount before contacting Paypack.
+        Payment prompts are only created after the assistant has a real appointment or booking deposit. The server validates ownership and amount before contacting Paypack.
       </p>
     </div>
   </section>

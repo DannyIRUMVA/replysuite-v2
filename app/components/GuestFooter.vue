@@ -32,7 +32,7 @@ const socialLinks = [
           <span class="text-3xl font-bold tracking-tighter text-foreground">ReplySuite</span>
         </div>
         <p class="text-foreground/50 leading-relaxed font-medium">
-          A calm AI command center for customer conversations. Train once, reply everywhere, book appointments, take orders, and get paid.
+          A calm AI command center for customer conversations. Train once, reply everywhere, book appointments, manage bookings, and get paid.
         </p>
       </div>
       <div class="flex gap-4">

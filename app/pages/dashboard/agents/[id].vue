@@ -18,7 +18,6 @@ import {
   Sparkles,
   Zap,
   ExternalLink,
-  ShoppingBag,
   CreditCard,
   Calendar,
   Database,
@@ -27,7 +26,6 @@ import {
 import CustomSelect from '~~/app/components/CustomSelect.vue'
 import { chatbotLanguageCodeOptions, chatbotLanguageOptions, getChatbotLanguageCode, getChatbotLanguageName, normalizeChatbotLanguageName } from '~~/app/utils/chatbotLanguages'
 import ToolSelector from '~/components/agents/tools/ToolSelector.vue'
-import CatalogManager from '~/components/agents/tools/CatalogManager.vue'
 import PaypackConfig from '~/components/agents/tools/PaypackConfig.vue'
 
 definePageMeta({
@@ -332,7 +330,7 @@ const fetchData = async () => {
         launcher_icon_color: data.launcher_icon_color || '',
         chat_icon: data.chat_icon || 'Bot',
         chat_icon_color: data.chat_icon_color || '',
-        enabled_tools: data.enabled_tools || [],
+        enabled_tools: Array.isArray(data.enabled_tools) ? data.enabled_tools.filter((tool: string) => tool !== 'orders') : [],
         tools_config: {
           ...(data.tools_config || {}),
           conversation_settings: {
@@ -343,7 +341,6 @@ const fetchData = async () => {
       }
       await fetchChatbotLanguages()
       if (activeTab.value === 'tools') {
-        // fetchCatalog was moved to CatalogManager component
       }
     }
   } catch (err) {
@@ -399,7 +396,7 @@ const handleSave = async () => {
         launcher_icon_color: form.value.launcher_icon_color,
         chat_icon: form.value.chat_icon,
         chat_icon_color: form.value.chat_icon_color,
-        enabled_tools: form.value.enabled_tools,
+        enabled_tools: form.value.enabled_tools.filter((tool: string) => tool !== 'orders'),
         tools_config: form.value.tools_config,
       })
       .eq('id', chatbotId)
@@ -456,8 +453,7 @@ const launcherStyles = [
 ]
 
 // Tools & Catalog Logic
-// Moved to components: ToolSelector, CatalogManager, PaypackConfig
-const catalogManagerRef = ref<any>(null)
+// Moved to components: ToolSelector, PaypackConfig
 
 </script>
 
@@ -1265,12 +1261,6 @@ const catalogManagerRef = ref<any>(null)
               @save="handleSave" 
             />
 
-            <!-- Catalog Management (Only if orders enabled) -->
-            <CatalogManager 
-              v-if="form.enabled_tools.includes('orders')" 
-              :chatbot-id="chatbotId"
-              ref="catalogManagerRef"
-            />
         </div>
 
         <div class="lg:col-span-4 space-y-6">
@@ -1285,13 +1275,6 @@ const catalogManagerRef = ref<any>(null)
             <section class="glass-card p-10">
                 <h3 class="text-[10px] font-bold text-foreground/50 tracking-widest uppercase mb-8">Intelligence Overlook</h3>
                 <div class="space-y-5">
-                    <div class="p-5 rounded-2xl bg-foreground/[0.01] border border-foreground/5 flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <ShoppingBag class="w-5 h-5 text-foreground/50" />
-                            <p class="text-[10px] font-bold text-foreground/50 uppercase tracking-widest">Active Inventory</p>
-                        </div>
-                        <p class="text-xl font-bold text-foreground">{{ catalogManagerRef?.catalogCount || 0 }}</p>
-                    </div>
                     <div class="p-5 rounded-2xl bg-foreground/[0.01] border border-foreground/5 flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <Zap class="w-5 h-5 text-foreground/50" />

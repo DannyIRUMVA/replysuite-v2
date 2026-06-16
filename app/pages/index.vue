@@ -483,7 +483,7 @@ const plans = [
     productId: '3e478611-c444-46e5-9827-7450a1c8d046',
     price: '350.00',
     desc: 'Self-serve Enterprise for larger rollouts that need every channel plus AI business tools.',
-    features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Appointments, orders, Paypack checkout'],
+    features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Appointments, bookings, Google Calendar, Paypack checkout'],
     popular: false
   }
 ]
@@ -1257,7 +1257,7 @@ const handleSelect = async (plan: any) => {
         </h2>
 
         <p class="text-foreground/55 max-w-2xl mx-auto mb-10 relative z-10 font-semibold leading-relaxed">
-          Start with your website, expand to WhatsApp on Silver, add Instagram workflows on Gold, and unlock Enterprise AI tools for appointments, orders, and Paypack checkout when you are ready.
+          Start with your website, expand to WhatsApp on Silver, add Instagram workflows on Gold, and unlock Enterprise AI tools for appointments, bookings, Google Calendar, and Paypack checkout when you are ready.
         </p>
 
         <div class="flex flex-col sm:flex-row justify-center gap-4 relative z-10">

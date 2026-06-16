@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ArrowRight, Bot, BrainCircuit, CalendarDays, CheckCircle2, CreditCard, FileText, Globe2, LayoutDashboard, MessageCircle, MessageSquareText, ShieldCheck, ShoppingBag, Sparkles, UsersRound } from 'lucide-vue-next'
+import { ArrowRight, Bot, BrainCircuit, CalendarDays, CheckCircle2, CreditCard, FileText, Globe2, LayoutDashboard, MessageCircle, MessageSquareText, ShieldCheck, Sparkles, UsersRound } from 'lucide-vue-next'
 
 useSeoMeta({
   title: 'Product | ReplySuite AI Command Center',
-  description: 'ReplySuite is a calm AI command center for customer conversations. Train once, reply everywhere, book appointments, take orders, and get paid with Paypack checkout.',
+  description: 'ReplySuite is a calm AI command center for customer conversations. Train once, reply everywhere, book appointments, manage bookings, and get paid with Paypack checkout.',
   ogTitle: 'ReplySuite Product | AI command center for customer conversations',
-  ogDescription: 'Train once. Reply everywhere. Book appointments. Take orders. Get paid.',
+  ogDescription: 'Train once. Reply everywhere. Book appointments. Manage bookings. Get paid.',
   ogUrl: 'https://replysuite.app/product',
   twitterCard: 'summary_large_image',
 })
@@ -19,13 +19,13 @@ definePageMeta({ layout: 'default' })
 const heroStats = [
   { label: 'Training', value: 'Website, PDFs, FAQs' },
   { label: 'Channels', value: 'Web, WhatsApp, Instagram' },
-  { label: 'Actions', value: 'Appointments + Orders' },
+  { label: 'Actions', value: 'Appointments + Bookings' },
 ]
 
 const conversationRail = [
   { label: 'Customer message', title: '“Do you have availability tomorrow?”', icon: MessageCircle, tone: 'text-sky-500 bg-sky-500/10 border-sky-500/15' },
   { label: 'AI reply', title: 'Answers from your trained business content.', icon: BrainCircuit, tone: 'text-primary bg-primary/10 border-primary/15' },
-  { label: 'Tool action', title: 'Books an appointment or creates an order.', icon: CalendarDays, tone: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/15' },
+  { label: 'Tool action', title: 'Books an appointment or reservation.', icon: CalendarDays, tone: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/15' },
   { label: 'Checkout', title: 'Paypack payment attaches to the real record.', icon: CreditCard, tone: 'text-orange-500 bg-orange-500/10 border-orange-500/15' },
 ]
 
@@ -33,16 +33,16 @@ const pillars = [
   { title: 'Train once', desc: 'Use your website, PDFs, FAQs, and custom text so replies stay grounded in your real business.', icon: FileText },
   { title: 'Reply everywhere', desc: 'Start on your website, then expand customer conversations to WhatsApp and Instagram automation.', icon: Globe2 },
   { title: 'Book appointments', desc: 'Let customers request services, staff, preferred times, and deposits without turning the assistant into an invoice bot.', icon: CalendarDays },
-  { title: 'Take orders', desc: 'Show catalog items, build customer orders, and keep staff in control before fulfillment.', icon: ShoppingBag },
-  { title: 'Get paid', desc: 'Use Paypack as checkout for existing appointments and orders. The server verifies amount and ownership.', icon: CreditCard },
+  { title: 'Manage bookings', desc: 'Use Google Calendar-backed bookings for reservations, events, and appointment slots while keeping staff in control.', icon: CalendarDays },
+  { title: 'Get paid', desc: 'Use Paypack as checkout for existing appointment and booking deposits. The server verifies amount and ownership.', icon: CreditCard },
   { title: 'Review calmly', desc: 'Track every action in the dashboard so your team can approve, follow up, and improve the assistant.', icon: LayoutDashboard },
 ]
 
 const workflow = [
   { step: '01', title: 'Train', desc: 'Add the content your assistant should trust.', icon: BrainCircuit },
   { step: '02', title: 'Connect', desc: 'Install the web widget and connect customer channels.', icon: Globe2 },
-  { step: '03', title: 'Automate', desc: 'Answer FAQs, collect leads, book times, and create orders.', icon: Sparkles },
-  { step: '04', title: 'Review', desc: 'Approve appointments, confirm orders, and inspect payment status.', icon: CheckCircle2 },
+  { step: '03', title: 'Automate', desc: 'Answer FAQs, collect leads, book times, and request bookings.', icon: Sparkles },
+  { step: '04', title: 'Review', desc: 'Approve appointments, manage bookings, and inspect payment status.', icon: CheckCircle2 },
   { step: '05', title: 'Improve', desc: 'Use conversations and training updates to keep replies accurate.', icon: ShieldCheck },
 ]
 
@@ -67,7 +67,7 @@ const businessFits = [
             A calm AI command center for customer conversations.
           </h1>
           <p class="mt-6 max-w-2xl text-base font-medium leading-relaxed text-foreground/58 md:text-lg">
-            Train once. Reply everywhere. Book appointments. Take orders. Get paid. ReplySuite turns everyday customer messages into clear, trackable business actions.
+            Train once. Reply everywhere. Book appointments. Manage bookings. Get paid. ReplySuite turns everyday customer messages into clear, trackable business actions.
           </p>
           <div class="mt-8 flex flex-col gap-3 sm:flex-row">
             <NuxtLink to="/register" class="btn-gradient inline-flex h-12 items-center justify-center gap-3 px-6 text-sm">
@@ -124,7 +124,7 @@ const businessFits = [
       <div class="mx-auto mb-10 max-w-3xl text-center">
         <span class="badge-gradient mb-4">Command center</span>
         <h2 class="text-3xl font-black tracking-tight text-foreground md:text-5xl">One product loop. Real business outcomes.</h2>
-        <p class="mt-4 text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Every feature supports the same flow: train, connect, automate, review, and improve. Payments are checkout for real appointments and orders — not a standalone invoice workflow.</p>
+        <p class="mt-4 text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Every feature supports the same flow: train, connect, automate, review, and improve. Payments are checkout for real appointments and booking deposits — not a standalone invoice workflow.</p>
       </div>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <article v-for="item in pillars" :key="item.title" class="rounded-[1.5rem] border border-foreground/10 bg-background-card/60 p-5 backdrop-blur-xl transition hover:border-primary/25 hover:bg-primary/[0.025]">
@@ -167,7 +167,7 @@ const businessFits = [
           <div>
             <span class="badge-gradient mb-4">Built for service and commerce teams</span>
             <h2 class="text-3xl font-black tracking-tight text-foreground md:text-5xl">Useful across offices, service businesses, restaurants, and sellers.</h2>
-            <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Appointments support service teams. Orders support catalogs and product conversations. Paypack checkout only appears when there is a real appointment or order to pay for.</p>
+            <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Appointments support service teams. Bookings support reservations, events, and appointment conversations. Paypack checkout only appears when there is a real appointment or booking deposit to pay for.</p>
           </div>
           <div class="grid gap-3 sm:grid-cols-2">
             <div v-for="item in businessFits" :key="item" class="flex items-center gap-3 rounded-2xl border border-foreground/10 bg-background/45 p-4 text-sm font-bold text-foreground/65">
@@ -184,7 +184,7 @@ const businessFits = [
         <div class="absolute inset-x-0 -top-20 mx-auto h-56 w-56 rounded-full bg-primary/15 blur-[90px]" />
         <MessageSquareText class="relative z-10 mx-auto mb-5 h-10 w-10 text-primary" />
         <h2 class="relative z-10 text-3xl font-black tracking-tight text-foreground md:text-5xl">Ready to turn messages into managed actions?</h2>
-        <p class="relative z-10 mx-auto mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Start with trained replies, then add appointments, orders, and Paypack checkout when your team is ready.</p>
+        <p class="relative z-10 mx-auto mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Start with trained replies, then add appointments, bookings, Google Calendar, and Paypack checkout when your team is ready.</p>
         <NuxtLink to="/register" class="btn-gradient relative z-10 mt-7 inline-flex h-12 items-center justify-center gap-3 px-7 text-sm">
           Start free
           <ArrowRight class="h-4 w-4" />

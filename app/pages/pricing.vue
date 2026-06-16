@@ -5,7 +5,7 @@ useSeoMeta({
   title: 'AI Customer Support Pricing for Website, WhatsApp & Instagram | ReplySuite',
   description: 'Simple pricing for trained AI replies across website, WhatsApp, and Instagram workflows. Silver adds WhatsApp, Gold adds Instagram, and Enterprise unlocks AI business tools.',
   ogTitle: 'ReplySuite Pricing',
-  ogDescription: 'Start free. Silver adds WhatsApp, Gold adds Instagram workflows, and Enterprise unlocks appointments, orders, and Paypack checkout.',
+  ogDescription: 'Start free. Silver adds WhatsApp, Gold adds Instagram workflows, and Enterprise unlocks appointments, bookings, Google Calendar, and Paypack checkout.',
   ogUrl: 'https://replysuite.app/pricing',
   twitterCard: 'summary_large_image',
   twitterTitle: 'ReplySuite Pricing',
@@ -151,7 +151,7 @@ const plans = [
     name: 'Enterprise Ready',
     price: '350.00',
     desc: 'Self-serve Enterprise for larger rollouts that need every channel plus AI business tools.',
-    features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Appointments, orders, Paypack checkout'], 
+    features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Appointments, bookings, Google Calendar, Paypack checkout'], 
     popular: false
   }
 ]
@@ -171,7 +171,7 @@ const planComparisonRows = [
   { label: 'Instagram workflows', starter: '—', silver: '—', gold: 'Included', enterprise: 'Included' },
   { label: 'AI business tools', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
   { label: 'Appointments', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
-  { label: 'Catalog orders', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
+  { label: 'Google Calendar bookings', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
   { label: 'Paypack checkout add-on', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
   { label: 'Advanced bot training', starter: '—', silver: 'Included', gold: 'Included', enterprise: 'Included' },
   { label: 'Custom-ready starter templates', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
@@ -182,8 +182,8 @@ const faqs = [
   { q: 'Can I cancel any time?', a: 'Yes. You can cancel from your account settings.' },
   { q: 'Is there a free start?', a: 'Yes. You can start on Free Starter and upgrade later when your reply volume grows.' },
   { q: 'What happens if I hit my limit?', a: 'You can upgrade to a higher plan to continue with more AI replies, training sessions, or channels.' },
-  { q: 'Which plan includes WhatsApp, Instagram, and Paypack checkout?', a: 'Silver includes website and WhatsApp chatbots. Gold adds Instagram workflows. Enterprise Ready unlocks AI business tools including appointments, catalog orders, and contextual Paypack checkout.' },
-  { q: 'Can the assistant create invoices?', a: 'No. ReplySuite focuses on appointments, orders, and Paypack checkout attached to those records. It does not expose invoice automation in the customer assistant toolset.' },
+  { q: 'Which plan includes WhatsApp, Instagram, and Paypack checkout?', a: 'Silver includes website and WhatsApp chatbots. Gold adds Instagram workflows. Enterprise Ready unlocks AI business tools including appointments, Google Calendar bookings, and contextual Paypack checkout.' },
+  { q: 'Can the assistant create invoices?', a: 'No. ReplySuite focuses on appointments, bookings, and Paypack checkout attached to those records. It does not expose invoice automation in the customer assistant toolset.' },
   { q: 'Do all plans include website chatbot support?', a: 'Yes. Every plan includes website chatbot deployment, with higher plans adding more chatbots and connected domains.' },
   { q: 'Can I train the assistant with documents?', a: 'Yes. ReplySuite supports training with business content such as website pages, PDFs, FAQs, and custom text.' },
   { q: 'Which plan should I choose first?', a: 'Start with Free Starter if you are testing. Choose Silver for website plus WhatsApp, Gold for Instagram workflows, and Enterprise Ready for AI business tools and scale.' },
@@ -201,7 +201,7 @@ const faqs = [
           <span class="text-gradient">Clear upgrade path.</span>
         </h1>
         <p class="text-lg text-foreground/50 font-medium leading-relaxed">
-          Start with one trained website assistant. Silver adds WhatsApp, Gold adds Instagram workflows, and Enterprise unlocks AI business tools for appointments, orders, and Paypack checkout.
+          Start with one trained website assistant. Silver adds WhatsApp, Gold adds Instagram workflows, and Enterprise unlocks AI business tools for appointments, bookings, Google Calendar, and Paypack checkout.
         </p>
       </div>
 
