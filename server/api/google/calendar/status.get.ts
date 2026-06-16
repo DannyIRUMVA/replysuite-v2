@@ -1,10 +1,9 @@
-import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
+import { serverSupabaseServiceRole } from '#supabase/server'
 import { createError, getQuery } from 'h3'
+import { getAuthenticatedUserId } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
-  const user = await serverSupabaseUser(event)
-  const userId = (user as any)?.id
-  if (!userId) throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+  const userId = await getAuthenticatedUserId(event)
 
   const query = getQuery(event)
   const chatbotId = typeof query.chatbotId === 'string' ? query.chatbotId : ''

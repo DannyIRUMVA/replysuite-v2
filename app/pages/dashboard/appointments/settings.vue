@@ -28,11 +28,20 @@ const weekdayLabels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', '
 const selectedBot = computed(() => chatbots.value.find((bot) => bot.id === selectedChatbotId.value))
 const googleCalendarLabel = computed(() => googleCalendarStatus.value?.mapping?.calendar_summary || googleCalendarStatus.value?.connection?.google_email || 'Google Calendar')
 
+const getAuthHeaders = async () => {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const accessToken = sessionData?.session?.access_token
+  return accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
+}
+
 const fetchGoogleStatus = async () => {
   if (!selectedChatbotId.value) return
   isCheckingGoogle.value = true
   try {
-    const status = await $fetch('/api/google/calendar/status', { query: { chatbotId: selectedChatbotId.value } })
+    const status = await $fetch('/api/google/calendar/status', {
+      query: { chatbotId: selectedChatbotId.value },
+      headers: await getAuthHeaders(),
+    })
     googleCalendarStatus.value = status
     googleCalendarConnected.value = Boolean((status as any)?.connected)
   } catch (err) {
@@ -47,12 +56,10 @@ const fetchGoogleStatus = async () => {
 const connectGoogleCalendar = async () => {
   if (!selectedChatbotId.value) return notify.warn('Choose an assistant before connecting Google Calendar.')
   try {
-    const { data: sessionData } = await supabase.auth.getSession()
-    const accessToken = sessionData?.session?.access_token
     const res = await $fetch<{ url: string }>('/api/google/oauth/start', {
       method: 'POST',
       query: { chatbotId: selectedChatbotId.value },
-      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      headers: await getAuthHeaders(),
     })
     window.location.href = res.url
   } catch (err: any) {
