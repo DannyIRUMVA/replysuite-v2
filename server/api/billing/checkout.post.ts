@@ -1,7 +1,7 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { Polar } from '@polar-sh/sdk'
 import { serverSupabaseUser, serverSupabaseServiceRole } from '#supabase/server'
-import { updatePolarSubscription, syncUserSubscriptions } from '~~/server/utils/polar'
+import { recoverPolarCustomerWithActiveSubscription, syncUserToPolar } from '~~/server/utils/polar'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -46,6 +46,28 @@ export default defineEventHandler(async (event) => {
       .not('polar_subscription_id', 'is', null)
       .maybeSingle()
 
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('polar_customer_id, full_name')
+      .eq('id', userId)
+      .maybeSingle()
+
+    let stablePolarCustomerId = membership?.polar_customer_id || profile?.polar_customer_id || null
+
+    // If local state is stale, recover an active customer for this email first.
+    // This prevents Polar from creating a fresh customer every time checkout runs.
+    if (userEmail) {
+      const recovered = await recoverPolarCustomerWithActiveSubscription(event, userId, userEmail, stablePolarCustomerId)
+      if (recovered?.customer?.id) stablePolarCustomerId = recovered.customer.id
+    }
+
+    // Ensure every authenticated checkout has a stable customerId. Passing only
+    // customerEmail lets Polar create duplicate customer records.
+    if (!stablePolarCustomerId && userEmail) {
+      const customer = await syncUserToPolar(event, userId, userEmail, profile?.full_name)
+      stablePolarCustomerId = customer?.id || null
+    }
+
     if (membership?.polar_subscription_id) {
       console.log(`[Polar Checkout] User ${userId} has active sub ${membership.polar_subscription_id}. Generating upgrade checkout for overlay...`)
       
@@ -53,7 +75,7 @@ export default defineEventHandler(async (event) => {
         const checkoutPayload: any = {
           products: [productId],
           successUrl: `${config.public.siteUrl}/dashboard/settings/billing?success=true`,
-          customerId: membership.polar_customer_id,
+          customerId: stablePolarCustomerId || membership.polar_customer_id,
           customerMetadata: { 
             supabase_user_id: userId,
             subscription_id: membership.polar_subscription_id,
@@ -78,8 +100,10 @@ export default defineEventHandler(async (event) => {
       },
     }
 
-    // Pre-fill email → Polar recognises the existing customer and skips account creation
-    if (userEmail) {
+    if (stablePolarCustomerId) {
+      checkoutPayload.customerId = stablePolarCustomerId
+    } else if (userEmail) {
+      // Fallback only. Normal authenticated checkouts should use customerId.
       checkoutPayload.customerEmail = userEmail
     }
 

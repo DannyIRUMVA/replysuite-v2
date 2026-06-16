@@ -1,5 +1,6 @@
 import { Polar } from '@polar-sh/sdk'
 import { serverSupabaseUser, serverSupabaseServiceRole } from '#supabase/server'
+import { syncUserToPolar } from '~~/server/utils/polar'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -111,31 +112,17 @@ export default defineEventHandler(async (event) => {
 
     // ── Step 2: Transition Logic ──
 
-    // Ensure we have a Polar Customer ID before proceeding
+    // Ensure we have a stable Polar Customer ID before proceeding.
+    // Never start checkout with only customerEmail, or Polar can create duplicates.
     if (!polarCustomerId) {
-        console.log(`[Polar Upgrade] No customer ID found. Forcing polar checkout with starter product.`)
-        // Fetch the starter product ID to force them to onboard via Polar
-        const { data: starterPlan } = await adminClient
-            .from('plans')
-            .select('polar_product_id')
-            .eq('internal_slug', 'starter')
-            .single()
-            
-        if (starterPlan?.polar_product_id) {
-            console.log(`[Polar Upgrade] Diverting to starter product: ${starterPlan.polar_product_id}`)
-            const checkoutPayload: any = {
-                products: [starterPlan.polar_product_id],
-                successUrl: `${siteUrl}/dashboard/settings/billing?success=true`,
-                customerEmail: userEmail,
-                customerMetadata: { 
-                    supabase_user_id: userId,
-                    source: 'upgrade_endpoint_forced_starter'
-                },
-            }
-            const checkout = await polar.checkouts.create(checkoutPayload)
-            return { url: checkout.url }
-        } else {
-            throw createError({ statusCode: 500, message: 'Free plan misconfigured. Cannot onboard.' })
+        if (!userEmail) {
+            throw createError({ statusCode: 400, message: 'Authenticated email is required for billing.' })
+        }
+        console.log(`[Polar Upgrade] No customer ID found. Creating/linking stable Polar customer.`)
+        const customer = await syncUserToPolar(event, userId, userEmail)
+        polarCustomerId = customer?.id
+        if (!polarCustomerId) {
+            throw createError({ statusCode: 500, message: 'Could not establish Polar customer.' })
         }
     }
 
