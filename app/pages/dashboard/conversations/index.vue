@@ -347,7 +347,7 @@ const analyzeSelectedAgent = async () => {
 </script>
 
 <template>
-  <div class="space-y-5 pb-24 lg:flex lg:h-[calc(109vh-153px)] lg:min-h-0 lg:flex-col lg:overflow-hidden lg:pb-4">
+  <div class="space-y-5 pb-24 lg:flex lg:min-h-[calc(100vh-153px)] lg:flex-col lg:pb-4">
     <section class="rounded-[22px] border border-foreground/10 bg-foreground/[0.03] p-5 backdrop-blur-xl md:p-6">
       <div class="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_auto] lg:items-end">
         <div>
@@ -409,7 +409,7 @@ const analyzeSelectedAgent = async () => {
       </div>
     </section>
 
-    <section class="grid overflow-hidden rounded-[22px] border border-foreground/10 bg-background shadow-[0_18px_50px_rgba(0,0,0,0.06)] lg:min-h-0 lg:flex-1 lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[380px_minmax(0,1fr)]">
+    <section class="grid overflow-hidden rounded-[22px] border border-foreground/10 bg-background shadow-[0_18px_50px_rgba(0,0,0,0.06)] lg:min-h-[640px] lg:flex-1 lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[380px_minmax(0,1fr)]">
       <aside class="flex min-h-[420px] flex-col border-b border-foreground/10 bg-foreground/[0.02] lg:min-h-0 lg:border-b-0 lg:border-r">
         <div class="flex items-center justify-between gap-3 border-b border-foreground/10 p-4">
           <div><p class="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Recent sessions</p><p class="mt-1 text-sm font-bold text-foreground">{{ selectedAgentLabel }}</p></div>
