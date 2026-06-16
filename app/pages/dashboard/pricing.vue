@@ -48,8 +48,6 @@ const handleSelect = async (plan: any) => {
         notify.success('Starter plan activated')
         return navigateTo('/dashboard/analytics')
       }
-    } else if (plan.id === 'enterprise-ready') {
-      return navigateTo('/contact')
     } else {
       if (!plan.productId) {
         notify.warn('Plan configuration missing. Please contact support.')
@@ -110,9 +108,9 @@ const plans = [
   {
     id: 'enterprise-ready',
     name: 'Enterprise Ready',
-    productId: '3e4e4e1a-e1da-4f3f-be5a-298e409c7c1e',
-    price: '350.88',
-    desc: 'Best for larger rollouts that need every channel plus Enterprise AI business tools.',
+    productId: '3e478611-c444-46e5-9827-7450a1c8d046',
+    price: '350.00',
+    desc: 'Self-serve Enterprise for larger rollouts that need every channel plus AI business tools.',
     features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Appointments, orders, Paypack checkout'],
     popular: false
   }
@@ -125,7 +123,7 @@ const currentPlanName = computed(() => plans.find((plan) => plan.id === planSlug
 const getCtaLabel = (plan: any) => {
   if (planSlug.value === plan.id) return 'Current Plan'
   if (plan.id === 'starter') return 'Activate Free'
-  if (plan.id === 'enterprise-ready') return 'Talk to Sales'
+  if (plan.id === 'enterprise-ready') return 'Start Enterprise'
   return 'Select Plan'
 }
 </script>

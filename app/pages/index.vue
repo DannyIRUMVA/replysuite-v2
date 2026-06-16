@@ -480,9 +480,9 @@ const plans = [
   {
     name: 'Enterprise Ready',
     id: 'enterprise-ready',
-    productId: '3e4e4e1a-e1da-4f3f-be5a-298e409c7c1e',
-    price: '350.88',
-    desc: 'Best for larger rollouts that need every channel plus Enterprise AI business tools.',
+    productId: '3e478611-c444-46e5-9827-7450a1c8d046',
+    price: '350.00',
+    desc: 'Self-serve Enterprise for larger rollouts that need every channel plus AI business tools.',
     features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Appointments, orders, Paypack checkout'],
     popular: false
   }
@@ -510,7 +510,7 @@ onMounted(() => {
 
 const handleSelect = async (plan: any) => {
   if (!isAuthenticated.value) {
-    return navigateTo(plan.id === 'enterprise-ready' ? '/contact' : `/register?plan=${plan.id}`)
+    return navigateTo(`/register?plan=${plan.id}`)
   }
 
   isProcessing.value = plan.id
@@ -1205,7 +1205,7 @@ const handleSelect = async (plan: any) => {
               Processing...
             </template>
             <template v-else>
-              {{ plan.id === 'enterprise-ready' ? 'Talk to Sales' : 'Select Plan' }}
+              {{ plan.id === 'enterprise-ready' ? 'Start Enterprise' : 'Select Plan' }}
             </template>
           </button>
 

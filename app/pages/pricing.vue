@@ -53,9 +53,9 @@ useHead({
           {
             '@type': 'Offer',
             name: 'Enterprise Ready Plan',
-            price: '350.88',
+            price: '350.00',
             priceCurrency: 'USD',
-            description: '50 chatbots, 500,000 AI replies, 1,000 training sessions, Instagram workflows, AI business tools, and rollout support.',
+            description: '50 chatbots, 500,000 AI replies, 1,000 training sessions, Instagram workflows, and AI business tools.',
             url: 'https://replysuite.app/pricing'
           }
         ]
@@ -99,7 +99,7 @@ onMounted(() => {
 
 const handleSelect = async (plan: any) => {
   if (!isAuthenticated.value) {
-    return navigateTo(plan.id === 'enterprise-ready' ? '/contact' : `/register?plan=${plan.id}`)
+    return navigateTo(`/register?plan=${plan.id}`)
   }
 
   isProcessing.value = plan.id
@@ -167,8 +167,8 @@ const plans = [
   {
     id: 'enterprise-ready',
     name: 'Enterprise Ready',
-    price: '350.88',
-    desc: 'Best for larger rollouts that need every channel plus Enterprise AI business tools.',
+    price: '350.00',
+    desc: 'Self-serve Enterprise for larger rollouts that need every channel plus AI business tools.',
     features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Appointments, orders, Paypack checkout'], 
     popular: false
   }
@@ -178,7 +178,7 @@ const paidPlans = computed(() => plans.filter((plan) => plan.id !== 'starter'))
 const freeStarterPlan = computed(() => plans.find((plan) => plan.id === 'starter'))
 
 const planComparisonRows = [
-  { label: 'Monthly price', starter: '$0.00', silver: '$17.88', gold: '$26.88', enterprise: '$350.88' },
+  { label: 'Monthly price', starter: '$0.00', silver: '$17.88', gold: '$26.88', enterprise: '$350.00' },
   { label: 'AI chatbots', starter: '1', silver: '3', gold: '5', enterprise: '50' },
   { label: 'Connected domains / chatbot', starter: '1', silver: '5', gold: '10', enterprise: '100' },
   { label: 'AI replies / month', starter: '100', silver: '4,000', gold: '10,000', enterprise: '500,000' },
@@ -193,7 +193,7 @@ const planComparisonRows = [
   { label: 'Paypack checkout add-on', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
   { label: 'Advanced bot training', starter: '—', silver: 'Included', gold: 'Included', enterprise: 'Included' },
   { label: 'Custom-ready starter templates', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
-  { label: 'Support', starter: 'Email', silver: 'Priority', gold: 'Priority', enterprise: 'Priority + rollout help' }
+  { label: 'Support', starter: 'Email', silver: 'Priority', gold: 'Priority', enterprise: 'Priority support' }
 ]
 
 const faqs = [
@@ -256,7 +256,7 @@ const faqs = [
                 Processing...
               </template>
               <template v-else>
-                {{ plan.id === 'enterprise-ready' ? 'Talk to Sales' : 'Select Plan' }}
+                {{ plan.id === 'enterprise-ready' ? 'Start Enterprise' : 'Select Plan' }}
               </template>
             </button>
 
