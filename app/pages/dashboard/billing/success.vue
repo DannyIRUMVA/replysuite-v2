@@ -1,7 +1,7 @@
 <script setup lang="ts">
-const router = useRouter()
-const { syncWithPolar } = useAuth() // Assuming useAuth has the sync logic from previous edits
+const { syncWithPolar } = useAuth()
 const isSyncing = ref(true)
+const syncMessage = ref('Synchronizing benefits...')
 
 definePageMeta({
   layout: 'dashboard'
@@ -11,12 +11,30 @@ useHead({
   title: 'Payment Successful'
 })
 
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 onMounted(async () => {
-  // Automatically trigger a deep sync when arriving on this page
   try {
-    await $fetch('/api/billing/sync')
+    // Polar can take a moment to expose the new subscription after redirect.
+    // Retry a few times, and refresh useAuth via syncWithPolar so the dashboard
+    // sidebar/header unlock immediately after checkout.
+    for (let attempt = 1; attempt <= 5; attempt += 1) {
+      const result = await syncWithPolar()
+      if (result?.hasActiveSubscription) {
+        syncMessage.value = 'All features active'
+        return
+      }
+
+      if (attempt < 5) {
+        syncMessage.value = `Finalizing subscription sync (${attempt}/5)...`
+        await wait(1500)
+      }
+    }
+
+    syncMessage.value = 'Checkout received. Use Sync plan status if your plan is still updating.'
   } catch (err) {
     console.error('Initial sync failed:', err)
+    syncMessage.value = 'Checkout received, but plan sync needs another try.'
   } finally {
     isSyncing.value = false
   }
@@ -54,7 +72,7 @@ onMounted(async () => {
         <div>
           <p class="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Benefit Sync</p>
           <p class="text-foreground font-bold tracking-tight">
-            {{ isSyncing ? 'Synchronizing benefits...' : 'All features active' }}
+            {{ syncMessage }}
           </p>
         </div>
       </div>

@@ -11,12 +11,16 @@ const route = useRoute()
 
 // 1. Subscription & Polar Identity Gating
 // If user has no Polar customer ID or no active plan, force them to pricing
-watch([polarCustomerId, planSlug, isLoading, isMounted], ([polarId, slug, loading, mounted]) => {
+watch([polarCustomerId, planSlug, isLoading, isMounted, () => route.fullPath], ([polarId, slug, loading, mounted]) => {
   if (mounted && !loading) {
     const isPricingPage = route.path === '/dashboard/pricing'
+    const isCheckoutSyncPage = route.path === '/dashboard/billing/success'
+      || (route.path === '/dashboard/settings/billing' && route.query.success === 'true')
     
-    // Strict block: No Polar Identity or No Active Plan
-    if ((!polarId || !slug) && !isPricingPage) {
+    // Strict block: No Polar Identity or No Active Plan.
+    // Let checkout return pages finish their server-side Polar sync first;
+    // otherwise the dashboard can redirect mid-sync and leave users feeling stuck.
+    if ((!polarId || !slug) && !isPricingPage && !isCheckoutSyncPage) {
       console.warn('[Dashboard Gate] Missing Polar ID or Plan. Redirecting...')
       navigateTo('/dashboard/pricing')
     }

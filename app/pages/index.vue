@@ -446,7 +446,7 @@ const sendDemoMessage = async () => {
   }
 }
 
-const { isAuthenticated, refreshAuth, syncWithPolar } = useAuth()
+const { isAuthenticated, refreshAuth } = useAuth()
 const notify = useNotify()
 const isProcessing = ref<string | null>(null)
 
@@ -493,19 +493,6 @@ const freeStarterPlan = computed(() => plans.find((plan) => plan.id === 'starter
 
 onMounted(() => {
   fetchChatbot()
-
-  if (window.PolarEmbedCheckout) {
-    window.PolarEmbedCheckout.init()
-  }
-
-  window.addEventListener('polar:checkout:confirmed', async (event) => {
-    console.log('[Index] Checkout confirmed:', event)
-    notify.success('Payment successful! Redirecting to your dashboard...')
-    await syncWithPolar()
-    setTimeout(() => {
-      navigateTo('/dashboard/analytics')
-    }, 1500)
-  })
 })
 
 const handleSelect = async (plan: any) => {
@@ -529,11 +516,8 @@ const handleSelect = async (plan: any) => {
       })
 
       if (res.url) {
-        if (window.PolarEmbedCheckout) {
-          window.PolarEmbedCheckout.open(res.url)
-        } else {
-          window.location.href = res.url
-        }
+        // Use full-page Polar checkout so the dashboard returns cleanly after payment.
+        window.location.href = res.url
       }
     }
   } catch (err: any) {

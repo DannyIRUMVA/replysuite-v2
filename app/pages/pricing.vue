@@ -68,7 +68,7 @@ definePageMeta({
   layout: 'default'
 })
 
-const { isAuthenticated, refreshAuth, syncWithPolar } = useAuth()
+const { isAuthenticated, refreshAuth } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()
 const isProcessing = ref<string | null>(null)
@@ -81,21 +81,6 @@ const { data: dbPlans } = await useAsyncData('plans', async () => {
 const getPlanId = (slug: string) => {
   return dbPlans.value?.find(p => p.internal_slug === slug)?.polar_product_id
 }
-
-onMounted(() => {
-  if (window.PolarEmbedCheckout) {
-    window.PolarEmbedCheckout.init()
-  }
-
-  window.addEventListener('polar:checkout:confirmed', async (event) => {
-    console.log('[Public Pricing] Checkout confirmed:', event)
-    notify.success('Payment successful! Redirecting to your dashboard...')
-    await syncWithPolar()
-    setTimeout(() => {
-      navigateTo('/dashboard/analytics')
-    }, 1500)
-  })
-})
 
 const handleSelect = async (plan: any) => {
   if (!isAuthenticated.value) {
@@ -124,11 +109,8 @@ const handleSelect = async (plan: any) => {
       })
 
       if (res.url) {
-        if (window.PolarEmbedCheckout) {
-          window.PolarEmbedCheckout.open(res.url)
-        } else {
-          window.location.href = res.url
-        }
+        // Use full-page Polar checkout so the dashboard returns cleanly after payment.
+        window.location.href = res.url
       }
     }
   } catch (err: any) {

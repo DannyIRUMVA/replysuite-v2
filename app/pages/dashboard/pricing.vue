@@ -21,16 +21,6 @@ const isLoading = computed(() => !isMounted.value || isAuthLoading.value)
 onMounted(async () => {
   isMounted.value = true
 
-  if (window.PolarEmbedCheckout) {
-    window.PolarEmbedCheckout.init()
-  }
-
-  window.addEventListener('polar:checkout:confirmed', async (event) => {
-    console.log('[Dashboard Pricing] Checkout confirmed:', event)
-    notify.success('Payment successful! Your plan is being updated.')
-    await syncWithPolar()
-  })
-
   if (!polarCustomerId.value) {
     console.log('[Dashboard Pricing] Missing Polar identity. Syncing...')
     await syncWithPolar()
@@ -60,11 +50,8 @@ const handleSelect = async (plan: any) => {
       })
 
       if (res.url) {
-        if (window.PolarEmbedCheckout) {
-          window.PolarEmbedCheckout.open(res.url)
-        } else {
-          window.location.href = res.url
-        }
+        // Full-page checkout avoids stale embedded iframe overlays after Polar redirects.
+        window.location.href = res.url
       } else if (res.updated) {
         notify.success('Plan updated successfully! Your new limits are active.')
         await syncWithPolar()

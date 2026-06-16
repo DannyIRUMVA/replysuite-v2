@@ -17,7 +17,9 @@ useHead({
   title: 'Billing'
 })
 
-const { membership, planSlug, isLoading: isAuthLoading, syncWithPolar, polarCustomerId } = useAuth()
+const route = useRoute()
+const router = useRouter()
+const { membership, planSlug, isLoading: isAuthLoading, syncWithPolar } = useAuth()
 
 const isMounted = ref(false)
 const isLoading = computed(() => !isMounted.value || isAuthLoading.value)
@@ -54,11 +56,30 @@ watch(totalTransactionPages, (pages) => {
   }
 })
 
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const reconcileBilling = async (withRetry = false) => {
+  const maxAttempts = withRetry ? 5 : 1
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const result = await syncWithPolar()
+    if (!withRetry || result?.hasActiveSubscription) return result
+    if (attempt < maxAttempts) await wait(1500)
+  }
+  return null
+}
+
 onMounted(async () => {
   isMounted.value = true
 
-  if (polarCustomerId.value) {
-    await syncWithPolar()
+  // After Polar redirects back here, always reconcile first. The local profile
+  // may not have polar_customer_id/plan yet, and syncWithPolar can create/link it.
+  if (route.query.success === 'true') {
+    await reconcileBilling(true)
+    const nextQuery = { ...route.query }
+    delete nextQuery.success
+    await router.replace({ path: route.path, query: nextQuery })
+  } else {
+    await reconcileBilling(false)
   }
 
   await refreshPolarTransactions()
