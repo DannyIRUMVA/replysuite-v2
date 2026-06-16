@@ -81,7 +81,8 @@ CRITICAL RULES FOR TOOLS:
 5. Orders are disabled. Do not create orders, take menu orders, or promise order management.
 6. For appointments/bookings, collect service/date/time/name/phone before request_appointment. Use availability tools before promising a slot.
 7. Payments only attach to existing appointment/booking deposits. Never invent payment amounts.
-8. Do not provide long explanations unless explicitly asked. Keep it snappy and natural.`
+8. Do not provide long explanations unless explicitly asked. Keep it snappy and natural.
+9. Never show internal IDs to customers, including appointment IDs, booking IDs, calendar IDs, event IDs, payment IDs, tool IDs, UUIDs, or database references. Use a plain confirmation message instead.`
   }
 
   const gptMessages = [

@@ -367,7 +367,6 @@ export const checkAppointmentAvailabilityHandler = async (event: any, chatbotId:
         date,
         time: normalizedTime || null,
         provider: 'google_calendar',
-        calendar_id: google.mapping.calendar_id,
         message: freeBusy.available ? 'This time is available on Google Calendar.' : 'That time is already busy on Google Calendar.',
       }
       await logToolEvent(event, chatbotId, 'check_appointment_availability', args, result, context)
@@ -509,15 +508,13 @@ export const requestAppointmentHandler = async (event: any, chatbotId: string, a
   await supabase.from('appointment_status_events').insert({ appointment_id: data.id, status_to: status, note: 'Requested by chatbot.' })
 
   const result = {
-    appointment_id: data.id,
     status: data.status,
     payment_status: data.payment_status,
     appointment_start: data.appointment_start,
     appointment_end: data.appointment_end,
     deposit_amount: Number(data.deposit_amount || 0),
     currency: data.currency || 'RWF',
-    external_provider: googleEvent ? 'google_calendar' : null,
-    external_event_id: data.external_event_id || null,
+    calendar_synced: Boolean(googleEvent),
     message: depositRequired && depositAmount > 0
       ? 'Appointment request saved. A deposit is required before confirmation.'
       : googleEvent
@@ -569,7 +566,7 @@ export const rescheduleAppointmentHandler = async (event: any, chatbotId: string
     .eq('chatbot_id', chatbotId)
 
   if (!error) await supabase.from('appointment_status_events').insert({ appointment_id: appointmentId, status_from: current.status, status_to: 'rescheduled', note: args?.reason || 'Rescheduled by customer.' })
-  const result = error ? { error: error.message } : { appointment_id: appointmentId, status: 'rescheduled', appointment_start: start.toISOString() }
+  const result = error ? { error: error.message } : { status: 'rescheduled', appointment_start: start.toISOString(), message: 'Appointment rescheduled successfully.' }
   await logToolEvent(event, chatbotId, 'reschedule_appointment', args, result, context, { type: 'appointment', id: appointmentId })
   return result
 }
@@ -585,7 +582,7 @@ export const cancelAppointmentHandler = async (event: any, chatbotId: string, ar
   }
   const { error } = await supabase.from('chatbot_appointments').update({ status: 'cancelled' }).eq('id', appointmentId).eq('chatbot_id', chatbotId)
   if (!error) await supabase.from('appointment_status_events').insert({ appointment_id: appointmentId, status_from: current.status, status_to: 'cancelled', note: args?.reason || 'Cancelled by customer.' })
-  const result = error ? { error: error.message } : { appointment_id: appointmentId, status: 'cancelled' }
+  const result = error ? { error: error.message } : { status: 'cancelled', message: 'Appointment cancelled successfully.' }
   await logToolEvent(event, chatbotId, 'cancel_appointment', args, result, context, { type: 'appointment', id: appointmentId })
   return result
 }
