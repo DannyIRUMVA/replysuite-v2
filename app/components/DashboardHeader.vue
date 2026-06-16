@@ -9,7 +9,8 @@ const pageContext = computed(() => {
   if (path === '/dashboard') return { title: 'Dashboard', subtitle: 'Track your assistants, replies, and recent activity.' }
   if (path.startsWith('/dashboard/settings')) return { title: 'Settings', subtitle: 'Manage your account, billing, and workspace preferences.' }
   if (path.includes('/dashboard/agents/skills/training')) return { title: 'Train Your AI', subtitle: 'Add website pages, documents, and business text to improve reply quality.' }
-  if (path === '/dashboard/agents/skills') return { title: 'Tools & Skills', subtitle: 'Assign action tools and behavior skills to each assistant.' }
+  if (path === '/dashboard/agents/skills') return { title: 'Assistant Skills', subtitle: 'Assign behavior skills for website, WhatsApp, Instagram, support, and booking conversations.' }
+  if (path === '/dashboard/agents/tools') return { title: 'Assistant Tools', subtitle: 'Enable Google Calendar appointments, bookings, rescheduling, cancellation, and deposits.' }
   if (path.includes('/dashboard/agents')) return { title: 'Assistants', subtitle: 'Create, configure, and manage your AI assistants.' }
   if (path.includes('/dashboard/analytics')) return { title: 'Analytics', subtitle: 'Review conversations, usage, and performance trends.' }
   if (path.includes('/dashboard/integrations/whatsapp')) return { title: 'WhatsApp', subtitle: 'Connect your business number and manage WhatsApp AI support.' }

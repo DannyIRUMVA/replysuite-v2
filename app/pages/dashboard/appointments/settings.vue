@@ -132,7 +132,7 @@ const removeRow = async (table: string, id: string, message: string) => {
       <select v-model="selectedChatbotId" class="h-11 w-full rounded-xl border border-foreground/10 bg-background px-3 text-sm outline-none focus:border-primary/40">
         <option v-for="bot in chatbots" :key="bot.id" :value="bot.id">{{ bot.name }}{{ (bot.enabled_tools || []).includes('appointments') ? '' : ' — appointments not enabled' }}</option>
       </select>
-      <p v-if="selectedBot && !(selectedBot.enabled_tools || []).includes('appointments')" class="mt-3 rounded-xl border border-orange-500/15 bg-orange-500/5 p-3 text-xs text-orange-500/75">This assistant can store scheduling setup, but customers cannot book until Appointments is enabled in the assistant Tools tab.</p>
+      <p v-if="selectedBot && !(selectedBot.enabled_tools || []).includes('appointments')" class="mt-3 rounded-xl border border-orange-500/15 bg-orange-500/5 p-3 text-xs text-orange-500/75">This assistant can store scheduling setup, but customers cannot book until Appointments & bookings is enabled on the assistant Tools page.</p>
     </section>
 
     <div v-if="isLoading" class="h-48 animate-pulse rounded-2xl bg-foreground/5" />

@@ -1299,13 +1299,22 @@ const launcherStyles = [
                 <p class="text-xs text-foreground/50 max-w-md mx-auto leading-relaxed uppercase tracking-widest font-bold">
                     Skills help your assistant handle specialized tasks and stay aligned with your business use case.
                 </p>
-                <NuxtLink
-                  :to="`/dashboard/agents/skills?id=${chatbotId}`"
-                  class="mt-10 inline-flex items-center justify-center gap-3 rounded-2xl bg-primary px-6 py-4 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:opacity-90"
-                >
-                    <Sparkles class="w-4 h-4" />
-                    Open Tools & Skills Directory
-                </NuxtLink>
+                <div class="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
+                  <NuxtLink
+                    :to="`/dashboard/agents/skills?id=${chatbotId}`"
+                    class="inline-flex items-center justify-center gap-3 rounded-2xl bg-primary px-6 py-4 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:opacity-90"
+                  >
+                      <Sparkles class="w-4 h-4" />
+                      Open Skills Directory
+                  </NuxtLink>
+                  <NuxtLink
+                    :to="`/dashboard/agents/tools?id=${chatbotId}`"
+                    class="inline-flex items-center justify-center gap-3 rounded-2xl border border-foreground/10 bg-foreground/5 px-6 py-4 text-[10px] font-black uppercase tracking-widest text-foreground/65 transition-all hover:bg-foreground/10 hover:text-foreground"
+                  >
+                      <Calendar class="w-4 h-4 text-primary" />
+                      Open Tools
+                  </NuxtLink>
+                </div>
             </section>
         </div>
 

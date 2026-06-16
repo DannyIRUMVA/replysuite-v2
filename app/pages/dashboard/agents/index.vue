@@ -16,7 +16,8 @@ import {
   Sparkles,
   Database,
   Search,
-  Globe
+  Globe,
+  CalendarDays
 } from 'lucide-vue-next'
 import Skeleton from '~~/app/components/Skeleton.vue'
 import { chatbotLanguageOptions, getChatbotLanguageCode, normalizeChatbotLanguageName } from '~~/app/utils/chatbotLanguages'
@@ -487,7 +488,15 @@ const handleDelete = async (id: string) => {
                       class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[11px] font-bold tracking-widest text-primary transition-all hover:bg-primary/10 uppercase"
                     >
                       <Sparkles class="h-3.5 w-3.5" />
-                      Tools & Skills
+                      Skills
+                    </NuxtLink>
+                    <NuxtLink
+                      :to="`/dashboard/agents/tools?id=${agent.id}`"
+                      @click="openActionMenuId = null"
+                      class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[11px] font-bold tracking-widest text-foreground/70 transition-all hover:bg-foreground/5 hover:text-foreground uppercase"
+                    >
+                      <CalendarDays class="h-3.5 w-3.5" />
+                      Tools
                     </NuxtLink>
                     <NuxtLink
                       :to="`/dashboard/agents/${agent.id}`"

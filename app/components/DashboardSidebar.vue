@@ -14,7 +14,8 @@ import {
   X,
   MessageCircle,
   HelpCircle,
-  Instagram
+  Instagram,
+  CalendarDays
 } from 'lucide-vue-next'
 
 const { openFeedback } = useFeedback()
@@ -35,7 +36,8 @@ const iconMap: Record<string, any> = {
   Lock,
   MessageCircle,
   HelpCircle,
-  Instagram
+  Instagram,
+  CalendarDays
 }
 
 
@@ -97,7 +99,8 @@ const sections = computed(() => [
     title: 'AI Agents',
     links: [
       { name: 'My Assistant', href: '/dashboard/agents', icon: 'MessageSquare' },
-      { name: 'Tools & Skills', href: '/dashboard/agents/skills', icon: 'Database' },
+      { name: 'Skills', href: '/dashboard/agents/skills', icon: 'Database' },
+      { name: 'Tools', href: '/dashboard/agents/tools', icon: 'CalendarDays' },
       { name: 'Conversations', href: '/dashboard/conversations', icon: 'MessageCircle' },
     ]
   },
