@@ -1,6 +1,8 @@
 import { createError } from 'h3'
 import { encryptSecret } from './crypto/secrets'
 
+const textEncoder = new TextEncoder()
+
 export const GOOGLE_CALENDAR_SCOPES = [
   'openid',
   'email',
