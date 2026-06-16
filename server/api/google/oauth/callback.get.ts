@@ -35,10 +35,22 @@ export default defineEventHandler(async (event) => {
   const accessToken = tokens.access_token as string
   if (!accessToken) throw createError({ statusCode: 502, statusMessage: 'Google did not return an access token.' })
 
-  const [googleUser, calendars] = await Promise.all([
-    fetchGoogleUserInfo(accessToken),
-    fetchGoogleCalendarList(accessToken),
-  ])
+  let googleUser: any = null
+  let calendars: any[] = []
+  try {
+    ;[googleUser, calendars] = await Promise.all([
+      fetchGoogleUserInfo(accessToken),
+      fetchGoogleCalendarList(accessToken),
+    ])
+  } catch (err: any) {
+    const reason = err?.statusMessage || err?.message || 'Google Calendar connection failed.'
+    const redirect = new URL('/dashboard/appointments/settings', siteUrl.startsWith('http') ? siteUrl : 'http://localhost:3000')
+    redirect.searchParams.set('google', 'error')
+    redirect.searchParams.set('reason', reason)
+    const stateChatbotId = typeof state?.chatbotId === 'string' ? state.chatbotId : ''
+    if (stateChatbotId) redirect.searchParams.set('chatbotId', stateChatbotId)
+    return sendRedirect(event, redirect.pathname + redirect.search, 302)
+  }
 
   const primaryCalendar = calendars.find((calendar: any) => calendar.primary) || calendars[0] || null
   const expiresAt = tokens.expires_in ? new Date(Date.now() + Number(tokens.expires_in) * 1000).toISOString() : null
