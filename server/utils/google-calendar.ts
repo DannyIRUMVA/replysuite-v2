@@ -10,6 +10,17 @@ export const GOOGLE_CALENDAR_SCOPES = [
   'https://www.googleapis.com/auth/calendar.readonly',
 ]
 
+export const isMissingGoogleCalendarSchemaError = (error: any) => {
+  const message = String(error?.message || error?.statusMessage || '')
+  const code = String(error?.code || '')
+  return code === 'PGRST205'
+    || message.includes("Could not find the table 'public.google_connections'")
+    || message.includes("Could not find the table 'public.chatbot_google_calendars'")
+    || message.includes('schema cache')
+    || message.includes('relation "public.google_connections" does not exist')
+    || message.includes('relation "public.chatbot_google_calendars" does not exist')
+}
+
 export const assertGoogleCalendarConfig = (config: any) => {
   if (!config.googleClientId || !config.googleClientSecret || !config.googleRedirectUri) {
     throw createError({

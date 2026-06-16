@@ -1,6 +1,7 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { createError, getQuery } from 'h3'
 import { getAuthenticatedUserId } from '~~/server/utils/auth'
+import { isMissingGoogleCalendarSchemaError } from '~~/server/utils/google-calendar'
 
 export default defineEventHandler(async (event) => {
   const userId = await getAuthenticatedUserId(event)
@@ -16,8 +17,14 @@ export default defineEventHandler(async (event) => {
     .maybeSingle()
 
   if (connectionError) {
-    if (String(connectionError.message || '').includes('does not exist')) {
-      return { connected: false, configured: false, mapping: null }
+    if (isMissingGoogleCalendarSchemaError(connectionError)) {
+      return {
+        connected: false,
+        configured: false,
+        schemaReady: false,
+        mapping: null,
+        message: 'Google Calendar tables are not installed yet. Apply the Google Calendar migration before connecting a booking calendar.',
+      }
     }
     throw createError({ statusCode: 500, statusMessage: connectionError.message })
   }
@@ -30,13 +37,26 @@ export default defineEventHandler(async (event) => {
       .eq('user_id', userId)
       .eq('chatbot_id', chatbotId)
       .maybeSingle()
-    if (error) throw createError({ statusCode: 500, statusMessage: error.message })
+    if (error) {
+      if (isMissingGoogleCalendarSchemaError(error)) {
+        return {
+          connected: Boolean(connection?.id && connection.status === 'connected'),
+          configured: Boolean(connection?.id),
+          schemaReady: false,
+          connection,
+          mapping: null,
+          message: 'Google Calendar chatbot mapping table is not installed yet.',
+        }
+      }
+      throw createError({ statusCode: 500, statusMessage: error.message })
+    }
     mapping = data || null
   }
 
   return {
     connected: Boolean(connection?.id && connection.status === 'connected'),
     configured: Boolean(connection?.id),
+    schemaReady: true,
     connection,
     mapping,
   }

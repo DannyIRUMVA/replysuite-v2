@@ -1,6 +1,6 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { createError, deleteCookie, getCookie, getQuery, sendRedirect } from 'h3'
-import { assertGoogleCalendarConfig, decodeGoogleOAuthState, encryptGoogleTokenPayload, exchangeGoogleCodeForTokens, fetchGoogleCalendarList, fetchGoogleUserInfo } from '~~/server/utils/google-calendar'
+import { assertGoogleCalendarConfig, decodeGoogleOAuthState, encryptGoogleTokenPayload, exchangeGoogleCodeForTokens, fetchGoogleCalendarList, fetchGoogleUserInfo, isMissingGoogleCalendarSchemaError } from '~~/server/utils/google-calendar'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -35,13 +35,9 @@ export default defineEventHandler(async (event) => {
   const accessToken = tokens.access_token as string
   if (!accessToken) throw createError({ statusCode: 502, statusMessage: 'Google did not return an access token.' })
 
-  let googleUser: any = null
   let calendars: any[] = []
   try {
-    ;[googleUser, calendars] = await Promise.all([
-      fetchGoogleUserInfo(accessToken),
-      fetchGoogleCalendarList(accessToken),
-    ])
+    calendars = await fetchGoogleCalendarList(accessToken)
   } catch (err: any) {
     const reason = err?.statusMessage || err?.message || 'Google Calendar connection failed.'
     const redirect = new URL('/dashboard/appointments/settings', siteUrl.startsWith('http') ? siteUrl : 'http://localhost:3000')
@@ -52,15 +48,32 @@ export default defineEventHandler(async (event) => {
     return sendRedirect(event, redirect.pathname + redirect.search, 302)
   }
 
+  const googleUser = await fetchGoogleUserInfo(accessToken).catch(() => null)
   const primaryCalendar = calendars.find((calendar: any) => calendar.primary) || calendars[0] || null
   const expiresAt = tokens.expires_in ? new Date(Date.now() + Number(tokens.expires_in) * 1000).toISOString() : null
   const admin = serverSupabaseServiceRole(event) as any
 
-  const { data: existing } = await admin
+  const redirectToSettings = (google: 'connected' | 'error', reason?: string) => {
+    const redirect = new URL('/dashboard/appointments/settings', siteUrl.startsWith('http') ? siteUrl : 'http://localhost:3000')
+    redirect.searchParams.set('google', google)
+    if (reason) redirect.searchParams.set('reason', reason)
+    const stateChatbotId = typeof state?.chatbotId === 'string' ? state.chatbotId : ''
+    if (stateChatbotId) redirect.searchParams.set('chatbotId', stateChatbotId)
+    return sendRedirect(event, redirect.pathname + redirect.search, 302)
+  }
+
+  const { data: existing, error: existingError } = await admin
     .from('google_connections')
     .select('id, encrypted_refresh_token')
     .eq('user_id', userId)
     .maybeSingle()
+
+  if (existingError) {
+    if (isMissingGoogleCalendarSchemaError(existingError)) {
+      return redirectToSettings('error', 'Google Calendar database tables are not installed yet. Apply the Google Calendar migration, then connect again.')
+    }
+    throw createError({ statusCode: 500, statusMessage: existingError.message })
+  }
 
   const encryptedAccessToken = await encryptGoogleTokenPayload(config, tokens.access_token)
   const encryptedRefreshToken = tokens.refresh_token
@@ -69,8 +82,8 @@ export default defineEventHandler(async (event) => {
 
   const connectionPayload = {
     user_id: userId,
-    google_account_id: googleUser?.id || null,
-    google_email: googleUser?.email || null,
+    google_account_id: googleUser?.id || primaryCalendar?.id || null,
+    google_email: googleUser?.email || (String(primaryCalendar?.id || '').includes('@') ? primaryCalendar.id : null),
     encrypted_access_token: encryptedAccessToken,
     encrypted_refresh_token: encryptedRefreshToken,
     scopes: typeof tokens.scope === 'string' ? tokens.scope.split(' ') : [],
@@ -83,7 +96,12 @@ export default defineEventHandler(async (event) => {
     ? await admin.from('google_connections').update(connectionPayload).eq('id', existing.id).select('id').single()
     : await admin.from('google_connections').insert(connectionPayload).select('id').single()
 
-  if (connectionError) throw createError({ statusCode: 500, statusMessage: connectionError.message })
+  if (connectionError) {
+    if (isMissingGoogleCalendarSchemaError(connectionError)) {
+      return redirectToSettings('error', 'Google Calendar database tables are not installed yet. Apply the Google Calendar migration, then connect again.')
+    }
+    throw createError({ statusCode: 500, statusMessage: connectionError.message })
+  }
 
   const chatbotId = typeof state?.chatbotId === 'string' ? state.chatbotId : ''
   if (chatbotId && primaryCalendar) {
@@ -105,14 +123,18 @@ export default defineEventHandler(async (event) => {
         sync_status: 'connected',
         updated_at: new Date().toISOString(),
       }
-      await admin
+      const { error: mappingError } = await admin
         .from('chatbot_google_calendars')
         .upsert(mappingPayload, { onConflict: 'chatbot_id' })
+
+      if (mappingError) {
+        if (isMissingGoogleCalendarSchemaError(mappingError)) {
+          return redirectToSettings('error', 'Google Calendar chatbot mapping table is not installed yet. Apply the Google Calendar migration, then connect again.')
+        }
+        throw createError({ statusCode: 500, statusMessage: mappingError.message })
+      }
     }
   }
 
-  const redirect = new URL('/dashboard/appointments/settings', siteUrl.startsWith('http') ? siteUrl : 'http://localhost:3000')
-  redirect.searchParams.set('google', 'connected')
-  if (chatbotId) redirect.searchParams.set('chatbotId', chatbotId)
-  return sendRedirect(event, redirect.pathname + redirect.search, 302)
+  return redirectToSettings('connected')
 })

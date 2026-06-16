@@ -44,6 +44,9 @@ const fetchGoogleStatus = async () => {
     })
     googleCalendarStatus.value = status
     googleCalendarConnected.value = Boolean((status as any)?.connected)
+    if ((status as any)?.schemaReady === false && (status as any)?.message) {
+      console.info((status as any).message)
+    }
   } catch (err) {
     console.error('Failed to check Google Calendar status:', err)
     googleCalendarStatus.value = null
@@ -73,7 +76,10 @@ const fetchData = async () => {
   try {
     const { data: bots } = await supabase.from('chatbots').select('id,name,enabled_tools').eq('user_id', userId.value).is('deleted_at', null).order('created_at', { ascending: false })
     chatbots.value = bots || []
-    selectedChatbotId.value ||= chatbots.value.find((bot) => (bot.enabled_tools || []).includes('appointments'))?.id || chatbots.value[0]?.id || ''
+    const routeChatbotId = typeof route.query.chatbotId === 'string' ? route.query.chatbotId : ''
+    selectedChatbotId.value = chatbots.value.some((bot) => bot.id === routeChatbotId)
+      ? routeChatbotId
+      : selectedChatbotId.value || chatbots.value.find((bot) => (bot.enabled_tools || []).includes('appointments'))?.id || chatbots.value[0]?.id || ''
     await fetchSetup()
   } finally {
     isLoading.value = false
@@ -166,6 +172,7 @@ const removeRow = async (table: string, id: string, message: string) => {
             <p class="mt-1 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">The assistant will use Google Calendar free/busy checks before confirming slots, then create, reschedule, or cancel calendar events server-side. ReplySuite keeps the customer record and audit trail.</p>
             <p v-if="googleCalendarConnected" class="mt-2 text-xs font-black uppercase tracking-widest text-primary">Connected: {{ googleCalendarLabel }}</p>
             <p v-else-if="isCheckingGoogle" class="mt-2 text-xs font-black uppercase tracking-widest text-foreground/45">Checking Google connection…</p>
+            <p v-else-if="googleCalendarStatus?.schemaReady === false" class="mt-2 max-w-2xl text-xs font-bold leading-relaxed text-orange-500/80">Google Calendar database tables are not installed yet. Apply the Google Calendar migration before saving connected booking calendars.</p>
           </div>
         </div>
         <button type="button" class="inline-flex h-11 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 px-5 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15" @click="connectGoogleCalendar">
