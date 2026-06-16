@@ -21,8 +21,8 @@ const isLoading = computed(() => !isMounted.value || isAuthLoading.value)
 onMounted(async () => {
   isMounted.value = true
 
-  if (!polarCustomerId.value) {
-    console.log('[Dashboard Pricing] Missing Polar identity. Syncing...')
+  if (!polarCustomerId.value || !planSlug.value) {
+    console.log('[Dashboard Pricing] Missing Polar identity or active plan. Syncing...')
     await syncWithPolar()
   }
 })

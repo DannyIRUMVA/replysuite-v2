@@ -95,6 +95,18 @@ export async function syncUserToPolar(event: H3Event, userId: string, email: str
  * Fetches the raw subscription data from Polar for a specific user.
  * This is the ultimate source of truth.
  */
+const getMostRecentValidSubscription = (items: any[] = []) => {
+  const validSubs = items.filter((s: any) =>
+    ['active', 'trialing', 'past_due'].includes(s.status)
+  )
+
+  if (validSubs.length === 0) return null
+
+  return [...validSubs].sort((a: any, b: any) =>
+    new Date(b.startedAt || 0).getTime() - new Date(a.startedAt || 0).getTime()
+  )[0]
+}
+
 export async function getPolarSubscriptionStatus(polarCustomerId: string) {
   const config = useRuntimeConfig()
   const polarAccessToken = config.polarAccessToken
@@ -116,28 +128,84 @@ export async function getPolarSubscriptionStatus(polarCustomerId: string) {
 
     const items = subscriptions.result?.items || []
     console.log(`[Polar API] Found ${items.length} total subscriptions for customer.`)
-    
-    if (items.length === 0) return null
 
-    // Filter for "good enough" states: active, trialing, past_due
-    const validSubs = items.filter((s: any) => 
-      ['active', 'trialing', 'past_due'].includes(s.status)
-    )
+    const subscription = getMostRecentValidSubscription(items)
+    console.log(`[Polar API] Found ${subscription ? 1 : 0} selected valid (active/trialing/past_due) subscription.`)
 
-    console.log(`[Polar API] Found ${validSubs.length} valid (active/trialing/past_due) subscriptions.`)
-
-    if (validSubs.length === 0) return null
-
-    // Sort by startedAt descending to get the most recent one
-    const sorted = [...validSubs].sort((a: any, b: any) => 
-      new Date(b.startedAt || 0).getTime() - new Date(a.startedAt || 0).getTime()
-    )
-    
-    return sorted[0]
+    return subscription
   } catch (err) {
     console.error('[Polar API] Error fetching subscription status:', err)
     return null
   }
+}
+
+/**
+ * Finds a second Polar customer for the same email that has an active subscription.
+ * This recovers cases where checkout created a fresh Polar customer while the
+ * local profile still points at an older customer whose subscriptions are canceled.
+ */
+export async function recoverPolarCustomerWithActiveSubscription(event: H3Event, userId: string, email: string, currentPolarId?: string | null) {
+  const config = useRuntimeConfig()
+  const polarAccessToken = config.polarAccessToken
+  const polarServer = config.polarServer
+
+  if (!polarAccessToken || !email) return null
+
+  const polar = new Polar({
+    accessToken: polarAccessToken,
+    server: (polarServer?.toLowerCase() as any) || 'sandbox'
+  })
+
+  try {
+    console.log(`[Polar Sync] Looking for active subscriptions across Polar customers for ${email}...`)
+    const customers = await polar.customers.list({ email })
+    const candidates = customers.result?.items || []
+
+    const orderedCandidates = [...candidates].sort((a: any, b: any) => {
+      const aStrongMatch = a.externalId === userId || a.metadata?.supabase_user_id === userId
+      const bStrongMatch = b.externalId === userId || b.metadata?.supabase_user_id === userId
+      if (aStrongMatch !== bStrongMatch) return aStrongMatch ? -1 : 1
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    })
+
+    for (const customer of orderedCandidates) {
+      if (!customer?.id || customer.id === currentPolarId) continue
+
+      const subscriptions = await polar.subscriptions.list({ customerId: customer.id })
+      const subscription = getMostRecentValidSubscription(subscriptions.result?.items || [])
+      if (!subscription) continue
+
+      try {
+        if (customer.externalId !== userId) {
+          await polar.customers.update({
+            id: customer.id,
+            customerUpdate: {
+              externalId: userId,
+              metadata: {
+                ...customer.metadata,
+                supabase_user_id: userId
+              }
+            }
+          })
+        }
+      } catch (linkErr: any) {
+        console.warn('[Polar Sync] Active customer found, but externalId link failed:', linkErr?.message)
+      }
+
+      const serviceClient = serverSupabaseServiceRole(event)
+      await Promise.all([
+        serviceClient.from('profiles').update({ polar_customer_id: customer.id }).eq('id', userId),
+        serviceClient.from('user_memberships').update({ polar_customer_id: customer.id }).eq('user_id', userId)
+      ])
+
+      console.log(`[Polar Sync] Recovered active Polar customer ${customer.id} for user ${userId}.`)
+      return { customer, subscription }
+    }
+  } catch (err: any) {
+    console.error('[Polar Sync] Failed to recover active Polar customer:', err?.message || err)
+  }
+
+  return null
 }
 
 /**

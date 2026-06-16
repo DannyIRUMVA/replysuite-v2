@@ -1,5 +1,5 @@
 import { serverSupabaseClient, serverSupabaseUser } from '#supabase/server'
-import { syncUserToPolar, syncUserSubscriptions } from '~~/server/utils/polar'
+import { recoverPolarCustomerWithActiveSubscription, syncUserToPolar, syncUserSubscriptions } from '~~/server/utils/polar'
 
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
@@ -34,7 +34,18 @@ export default defineEventHandler(async (event) => {
   }
 
   // 3. Use core utility to reconcile
-  const result = await syncUserSubscriptions(event, userId, polarId)
+  let result = await syncUserSubscriptions(event, userId, polarId)
+
+  // If the stored customer has no active subscription, Polar checkout may have
+  // created a newer customer for the same email. Recover that customer and run
+  // reconciliation again so the dashboard shows the active plan immediately.
+  if (!result.hasActive && user.email) {
+    const recovered = await recoverPolarCustomerWithActiveSubscription(event, userId, user.email, polarId)
+    if (recovered?.customer?.id) {
+      polarId = recovered.customer.id
+      result = await syncUserSubscriptions(event, userId, polarId)
+    }
+  }
 
   return {
     success: true,
