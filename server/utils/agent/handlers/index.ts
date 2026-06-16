@@ -358,6 +358,21 @@ export const checkAppointmentAvailabilityHandler = async (event: any, chatbotId:
     ? getIsoRangeForBooking(date, time, durationMinutes, timezone)
     : { start: new Date(`${date}T00:00:00${timezone === 'Africa/Kigali' ? '+02:00' : ''}`), end: new Date(`${date}T23:59:59${timezone === 'Africa/Kigali' ? '+02:00' : ''}`), normalizedTime: '' }
 
+  const { data: localOverlap, error: localOverlapError } = await getAdmin(event)
+    .from('chatbot_appointments')
+    .select('id')
+    .eq('chatbot_id', chatbotId)
+    .in('status', ['pending', 'pending_payment', 'paid_pending_approval', 'approved', 'rescheduled'])
+    .lt('appointment_start', end.toISOString())
+    .gt('appointment_end', start.toISOString())
+    .limit(1)
+
+  if (!localOverlapError && localOverlap?.length) {
+    const result = { available: false, date, time: normalizedTime || null, provider: 'replysuite', message: 'That time already has an appointment.' }
+    await logToolEvent(event, chatbotId, 'check_appointment_availability', args, result, context)
+    return result
+  }
+
   const google = await getGoogleCalendarBookingConnection(event, chatbotId)
   if (!google.error && google.mapping?.calendar_id) {
     try {
@@ -383,8 +398,8 @@ export const checkAppointmentAvailabilityHandler = async (event: any, chatbotId:
     .select('id')
     .eq('chatbot_id', chatbotId)
     .in('status', ['pending', 'pending_payment', 'paid_pending_approval', 'approved', 'rescheduled'])
-    .gte('appointment_start', start.toISOString())
-    .lte('appointment_start', end.toISOString())
+    .lt('appointment_start', end.toISOString())
+    .gt('appointment_end', start.toISOString())
     .limit(1)
 
   const available = !error && (!overlapping || overlapping.length === 0)
@@ -428,6 +443,27 @@ export const requestAppointmentHandler = async (event: any, chatbotId: string, a
 
   const timezone = args?.timezone || appointmentConfig.timezone || 'Africa/Kigali'
   const { start, end, normalizedTime } = getIsoRangeForBooking(date, time, durationMinutes, timezone)
+
+  const { data: localOverlap, error: localOverlapError } = await getAdmin(event)
+    .from('chatbot_appointments')
+    .select('id')
+    .eq('chatbot_id', chatbotId)
+    .in('status', ['pending', 'pending_payment', 'paid_pending_approval', 'approved', 'rescheduled'])
+    .lt('appointment_start', end.toISOString())
+    .gt('appointment_end', start.toISOString())
+    .limit(1)
+
+  if (localOverlapError) {
+    const result = { error: localOverlapError.message }
+    await logToolEvent(event, chatbotId, 'request_appointment', args, result, context)
+    return result
+  }
+
+  if (localOverlap?.length) {
+    const result = { error: 'That time already has an appointment. Please choose another time.' }
+    await logToolEvent(event, chatbotId, 'request_appointment', args, result, context)
+    return result
+  }
 
   const google = await getGoogleCalendarBookingConnection(event, chatbotId)
   let googleEvent: any = null
