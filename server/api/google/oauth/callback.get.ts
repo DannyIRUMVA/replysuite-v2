@@ -1,4 +1,4 @@
-import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
+import { serverSupabaseServiceRole } from '#supabase/server'
 import { createError, deleteCookie, getCookie, getQuery, sendRedirect } from 'h3'
 import { assertGoogleCalendarConfig, decodeGoogleOAuthState, encryptGoogleTokenPayload, exchangeGoogleCodeForTokens, fetchGoogleCalendarList, fetchGoogleUserInfo } from '~~/server/utils/google-calendar'
 
@@ -17,15 +17,17 @@ export default defineEventHandler(async (event) => {
 
   assertGoogleCalendarConfig(config)
 
-  const user = await serverSupabaseUser(event)
-  const userId = (user as any)?.id
-  if (!userId) throw createError({ statusCode: 401, statusMessage: 'Sign in before completing Google Calendar connection.' })
+  const state = await decodeGoogleOAuthState(stateValue, config.googleTokenEncryptionKey as string)
+  const userId = typeof state?.userId === 'string' ? state.userId : ''
+  if (!userId) throw createError({ statusCode: 400, statusMessage: 'Missing Google OAuth user context.' })
+  if (!state?.ts || Date.now() - Number(state.ts) > 10 * 60 * 1000) {
+    throw createError({ statusCode: 400, statusMessage: 'Google OAuth connection expired. Please try again.' })
+  }
 
-  const state = decodeGoogleOAuthState(stateValue)
   const expectedNonce = getCookie(event, 'replysuite_google_oauth_nonce')
   deleteCookie(event, 'replysuite_google_oauth_nonce', { path: '/' })
 
-  if (!expectedNonce || state?.nonce !== expectedNonce || state?.userId !== userId) {
+  if (!expectedNonce || state?.nonce !== expectedNonce) {
     throw createError({ statusCode: 400, statusMessage: 'Google OAuth state mismatch. Please try connecting again.' })
   }
 

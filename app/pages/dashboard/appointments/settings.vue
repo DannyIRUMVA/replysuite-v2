@@ -44,9 +44,20 @@ const fetchGoogleStatus = async () => {
   }
 }
 
-const connectGoogleCalendar = () => {
+const connectGoogleCalendar = async () => {
   if (!selectedChatbotId.value) return notify.warn('Choose an assistant before connecting Google Calendar.')
-  window.location.href = `/api/google/oauth/start?chatbotId=${encodeURIComponent(selectedChatbotId.value)}`
+  try {
+    const { data: sessionData } = await supabase.auth.getSession()
+    const accessToken = sessionData?.session?.access_token
+    const res = await $fetch<{ url: string }>('/api/google/oauth/start', {
+      method: 'POST',
+      query: { chatbotId: selectedChatbotId.value },
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+    })
+    window.location.href = res.url
+  } catch (err: any) {
+    notify.error(err?.data?.statusMessage || err?.message || 'Could not start Google Calendar connection.')
+  }
 }
 
 const fetchData = async () => {

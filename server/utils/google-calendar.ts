@@ -26,16 +26,35 @@ export const assertGoogleCalendarConfig = (config: any) => {
 }
 
 const toBase64Url = (value: string) => btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
+const bytesToBase64Url = (bytes: Uint8Array) => toBase64Url(String.fromCharCode(...bytes))
 const fromBase64Url = (value: string) => {
   const padded = value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - value.length % 4) % 4)
   return atob(padded)
 }
 
-export const encodeGoogleOAuthState = (payload: Record<string, any>) => toBase64Url(JSON.stringify(payload))
+const getGoogleStateSigningKey = async (secret: string) => {
+  if (!secret || secret.length < 24) throw createError({ statusCode: 500, statusMessage: 'Google token encryption key is missing or too short.' })
+  return crypto.subtle.importKey('raw', textEncoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify'])
+}
 
-export const decodeGoogleOAuthState = (state: string) => {
+export const encodeGoogleOAuthState = async (payload: Record<string, any>, secret: string) => {
+  const encodedPayload = toBase64Url(JSON.stringify(payload))
+  const key = await getGoogleStateSigningKey(secret)
+  const signature = await crypto.subtle.sign('HMAC', key, textEncoder.encode(encodedPayload))
+  return `${encodedPayload}.${bytesToBase64Url(new Uint8Array(signature))}`
+}
+
+export const decodeGoogleOAuthState = async (state: string, secret: string) => {
   try {
-    return JSON.parse(fromBase64Url(state))
+    const [encodedPayload, encodedSignature] = state.split('.')
+    if (!encodedPayload || !encodedSignature) throw new Error('Malformed state')
+
+    const key = await getGoogleStateSigningKey(secret)
+    const signature = new Uint8Array(fromBase64Url(encodedSignature).split('').map((char) => char.charCodeAt(0)))
+    const verified = await crypto.subtle.verify('HMAC', key, signature, textEncoder.encode(encodedPayload))
+    if (!verified) throw new Error('Invalid signature')
+
+    return JSON.parse(fromBase64Url(encodedPayload))
   } catch {
     throw createError({ statusCode: 400, statusMessage: 'Invalid Google OAuth state.' })
   }

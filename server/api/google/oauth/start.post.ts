@@ -1,13 +1,10 @@
 import { randomUUID } from 'node:crypto'
-import { serverSupabaseUser } from '#supabase/server'
-import { createError, getQuery, sendRedirect, setCookie } from 'h3'
+import { getQuery, setCookie } from 'h3'
+import { getAuthenticatedUserId } from '~~/server/utils/auth'
 import { GOOGLE_CALENDAR_SCOPES, assertGoogleCalendarConfig, encodeGoogleOAuthState } from '~~/server/utils/google-calendar'
 
 export default defineEventHandler(async (event) => {
-  const user = await serverSupabaseUser(event)
-  const userId = (user as any)?.id
-  if (!userId) throw createError({ statusCode: 401, statusMessage: 'Sign in before connecting Google Calendar.' })
-
+  const userId = await getAuthenticatedUserId(event)
   const config = useRuntimeConfig(event)
   assertGoogleCalendarConfig(config)
 
@@ -34,5 +31,5 @@ export default defineEventHandler(async (event) => {
   url.searchParams.set('include_granted_scopes', 'true')
   url.searchParams.set('state', state)
 
-  return sendRedirect(event, url.toString(), 302)
+  return { url: url.toString() }
 })
