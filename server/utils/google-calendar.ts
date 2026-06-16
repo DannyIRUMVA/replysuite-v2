@@ -4,9 +4,7 @@ import { encryptSecret } from './crypto/secrets'
 const textEncoder = new TextEncoder()
 
 export const GOOGLE_CALENDAR_SCOPES = [
-  'openid',
-  'email',
-  'profile',
+  // Booking-only scopes. Supabase Google login is separate and is not part of this flow.
   'https://www.googleapis.com/auth/calendar.events',
   'https://www.googleapis.com/auth/calendar.freebusy',
   'https://www.googleapis.com/auth/calendar.readonly',
