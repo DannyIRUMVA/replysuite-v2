@@ -274,6 +274,7 @@ const showChatTest = ref(false)
 const showTrainingModal = ref(false)
 const testInput = ref('')
 const testMessages = ref<{ role: 'user' | 'assistant', content: string }[]>([])
+const testSessionId = ref('')
 const isTestLoading = ref(false)
 
 const handleTestChat = async () => {
@@ -287,8 +288,9 @@ const handleTestChat = async () => {
   try {
     const res = await $fetch('/api/agents/chat/test', {
       method: 'POST',
-      body: { chatbotId, message: userMsg }
+      body: { chatbotId, message: userMsg, sessionId: testSessionId.value || undefined }
     })
+    if ((res as any)?.sessionId) testSessionId.value = (res as any).sessionId
     if (res.success) {
       testMessages.value.push({ role: 'assistant', content: res.response })
       await fetchData() // Refresh usage stats

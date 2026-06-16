@@ -11,6 +11,7 @@ import {
   normalizeConversationSettings,
   updateConversationState,
 } from '~~/server/utils/conversation-intelligence'
+import { safeLoadContactMemory, safeUpsertContactMemory } from '~~/server/utils/contact-memory'
 import {
   getRequestOriginContext,
   isAllowedDomainHost,
@@ -36,6 +37,9 @@ export default defineEventHandler(async (event) => {
   const providedSessionId = body?.sessionId
   const embedToken = typeof body?.embedToken === 'string' ? body.embedToken : ''
   const embedHost = normalizeHost(typeof body?.embedHost === 'string' ? body.embedHost : '')
+  const visitorId = typeof body?.visitorId === 'string' && /^[a-zA-Z0-9_-]{12,80}$/.test(body.visitorId)
+    ? body.visitorId
+    : ''
 
   if (!isUuid(chatbotId) || !message) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid or missing chatbotId/message' })
@@ -102,14 +106,34 @@ export default defineEventHandler(async (event) => {
     if (sessionError || !existingSession || existingSession.chatbot_id !== chatbotId) {
       throw createError({ statusCode: 400, statusMessage: 'Invalid session for chatbot' })
     }
-  } else {
+  } else if (visitorId) {
+    const { data: existingVisitorSessions } = await supabase
+      .from('chat_sessions')
+      .select('id, metadata, created_at')
+      .eq('chatbot_id', chatbotId)
+      .contains('metadata', { web_visitor_id: visitorId })
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    const existingVisitorSession = (existingVisitorSessions || []).find((session: any) => !session?.metadata?.closed_at)
+    if (existingVisitorSession?.id) {
+      sessionId = existingVisitorSession.id
+    }
+  }
+
+  if (!sessionId) {
     const { data: newSession, error: sessionInsertError } = await supabase
       .from('chat_sessions')
       .insert({
         chatbot_id: chatbotId,
         metadata: {
+          type: isWidgetRequest ? 'widget' : 'public-chat',
+          channel: 'web',
           source: isWidgetRequest ? 'widget' : 'public-chat',
           host: isWidgetRequest ? embedHost : normalizeHost(requestContext.requestHost),
+          web_visitor_id: visitorId || null,
+          opened_at: new Date().toISOString(),
+          closed_at: null,
         },
       })
       .select('id')
@@ -124,6 +148,7 @@ export default defineEventHandler(async (event) => {
 
   const conversationSettings = normalizeConversationSettings((chatbot as any)?.tools_config?.conversation_settings)
   let sessionMetadata: any = null
+  let contactMemory: any = null
 
   if (sessionId) {
     const { data: currentSession } = await supabase
@@ -133,6 +158,11 @@ export default defineEventHandler(async (event) => {
       .maybeSingle()
 
     sessionMetadata = currentSession?.metadata || null
+  }
+
+  const contactMemoryKey = visitorId || sessionMetadata?.web_visitor_id || null
+  if (conversationSettings.contactMemoryEnabled && contactMemoryKey) {
+    contactMemory = await safeLoadContactMemory(supabase, chatbotId, 'web', contactMemoryKey)
   }
 
   try {
@@ -162,10 +192,29 @@ export default defineEventHandler(async (event) => {
           defaultLanguage: (chatbot as any)?.default_language || null,
         })
 
+        const nextMetadata = mergeMetadataWithState(sessionMetadata, nextState)
         await supabase
           .from('chat_sessions')
-          .update({ metadata: mergeMetadataWithState(sessionMetadata, nextState) })
+          .update({ metadata: { ...nextMetadata, last_seen_at: new Date().toISOString() } })
           .eq('id', sessionId)
+
+        if (conversationSettings.contactMemoryEnabled && contactMemoryKey) {
+          await safeUpsertContactMemory(supabase, {
+            chatbot_id: chatbotId,
+            channel: 'web',
+            contact_key: contactMemoryKey,
+            display_name: nextState.collected?.name || contactMemory?.display_name || null,
+            preferred_language: nextState.preferredLanguage || null,
+            memory: {
+              lastIntent: nextState.currentIntent || null,
+              phone: nextState.collected?.phone || null,
+              name: nextState.collected?.name || null,
+              email: nextState.collected?.email || null,
+              preferredLanguage: nextState.preferredLanguage || null,
+              notes: nextState.openQuestion || null,
+            },
+          })
+        }
       }
 
       return {
@@ -185,7 +234,7 @@ export default defineEventHandler(async (event) => {
     const baseInstructions = chatbot.system_prompt || `You are an AI assistant for ${chatbot.name}.`
 
     const conversationBehavior = buildConversationSettingsPrompt(conversationSettings, 'web')
-    const sessionStatePrompt = buildConversationStatePrompt(sessionState)
+    const sessionStatePrompt = buildConversationStatePrompt(sessionState, contactMemory)
     const languagePolicy = await buildChatbotLanguagePolicy({
       supabase,
       chatbot,
@@ -264,10 +313,29 @@ export default defineEventHandler(async (event) => {
         defaultLanguage: languagePolicy.activeLanguage.name || (chatbot as any)?.default_language || null,
       })
 
+      const nextMetadata = mergeMetadataWithState(sessionMetadata, nextState)
       await supabase
         .from('chat_sessions')
-        .update({ metadata: mergeMetadataWithState(sessionMetadata, nextState) })
+        .update({ metadata: { ...nextMetadata, last_seen_at: new Date().toISOString() } })
         .eq('id', sessionId)
+
+      if (conversationSettings.contactMemoryEnabled && contactMemoryKey) {
+        await safeUpsertContactMemory(supabase, {
+          chatbot_id: chatbotId,
+          channel: 'web',
+          contact_key: contactMemoryKey,
+          display_name: nextState.collected?.name || contactMemory?.display_name || null,
+          preferred_language: nextState.preferredLanguage || null,
+          memory: {
+            lastIntent: nextState.currentIntent || null,
+            phone: nextState.collected?.phone || null,
+            name: nextState.collected?.name || null,
+            email: nextState.collected?.email || null,
+            preferredLanguage: nextState.preferredLanguage || null,
+            notes: nextState.openQuestion || null,
+          },
+        })
+      }
     }
 
     return {

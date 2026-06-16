@@ -54,6 +54,18 @@ export const getConversationStateFromMetadata = (metadata: any): ConversationSta
 
 const PHONE_REGEX = /(?:\+?\d[\d\s().-]{6,}\d)/
 const EMAIL_REGEX = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i
+const NAME_PATTERNS = [
+  /(?:my name is|i am|i'm|call me)\s+([A-Z][A-Z' -]{1,60}?)(?:[.,\n]|\s+and\b|\s+my\b|$)/i,
+  /(?:name:)\s*([A-Z][A-Z' -]{1,60}?)(?:[.,\n]|$)/i,
+]
+
+const inferCustomerName = (text: string) => {
+  for (const pattern of NAME_PATTERNS) {
+    const match = text.match(pattern)?.[1]
+    if (match) return match.trim().replace(/\s{2,}/g, ' ')
+  }
+  return null
+}
 
 const inferIntent = (text: string) => {
   const value = text.toLowerCase()
@@ -97,6 +109,11 @@ export const updateConversationState = ({
 
   if (customerName && !nextState.collected?.name) {
     nextState.collected!.name = customerName
+  }
+
+  const inferredName = inferCustomerName(userMessage)
+  if (inferredName && !nextState.collected?.name) {
+    nextState.collected!.name = inferredName
   }
 
   if (customerPhone && !nextState.collected?.phone) {

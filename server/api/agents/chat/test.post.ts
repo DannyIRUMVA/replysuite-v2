@@ -51,7 +51,7 @@ export default defineEventHandler(async (event) => {
   } else {
     const { data: newSession, error: sessionInsertError } = await supabaseAdmin
       .from('chat_sessions')
-      .insert({ chatbot_id: chatbotId, metadata: { type: 'test' } })
+      .insert({ chatbot_id: chatbotId, metadata: { type: 'test', channel: 'test', source: 'dashboard-test', opened_at: new Date().toISOString() } })
       .select('id')
       .single()
 

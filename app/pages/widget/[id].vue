@@ -85,7 +85,33 @@ const input = ref('')
 const isLoading = ref(false)
 const container = ref<HTMLElement | null>(null)
 const widgetSessionId = ref('')
+const widgetVisitorId = ref('')
 const widgetStorageKey = computed(() => `replysuite-widget:${chatbotId}`)
+const widgetVisitorStorageKey = computed(() => `replysuite-widget-visitor:${chatbotId}`)
+
+const createVisitorId = () => {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `web_${crypto.randomUUID()}`
+  return `web_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 12)}`
+}
+
+const ensureWidgetVisitorId = () => {
+  if (!process.client) return ''
+  try {
+    const existing = localStorage.getItem(widgetVisitorStorageKey.value)
+    if (existing && /^[a-zA-Z0-9_-]{12,80}$/.test(existing)) {
+      widgetVisitorId.value = existing
+      return existing
+    }
+    const next = createVisitorId()
+    localStorage.setItem(widgetVisitorStorageKey.value, next)
+    widgetVisitorId.value = next
+    return next
+  } catch {
+    const fallback = widgetVisitorId.value || createVisitorId()
+    widgetVisitorId.value = fallback
+    return fallback
+  }
+}
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -99,6 +125,7 @@ const persistWidgetState = () => {
   try {
     localStorage.setItem(widgetStorageKey.value, JSON.stringify({
       sessionId: widgetSessionId.value,
+      visitorId: widgetVisitorId.value || ensureWidgetVisitorId(),
       messages: messages.value,
     }))
   } catch {
@@ -118,6 +145,13 @@ const hydrateWidgetState = () => {
       widgetSessionId.value = parsed.sessionId
     }
 
+    if (parsed?.visitorId && typeof parsed.visitorId === 'string') {
+      widgetVisitorId.value = parsed.visitorId
+      localStorage.setItem(widgetVisitorStorageKey.value, parsed.visitorId)
+    }
+
+    ensureWidgetVisitorId()
+
     if (Array.isArray(parsed?.messages) && parsed.messages.length > 0) {
       messages.value = parsed.messages
       return true
@@ -129,7 +163,24 @@ const hydrateWidgetState = () => {
   return false
 }
 
-const resetWidgetState = () => {
+const closeCurrentServerSession = async () => {
+  if (!widgetSessionId.value) return
+  try {
+    await $fetch('/api/public/chat/session/close', {
+      method: 'POST',
+      body: {
+        chatbotId,
+        sessionId: widgetSessionId.value,
+        visitorId: widgetVisitorId.value || ensureWidgetVisitorId(),
+      },
+    })
+  } catch {
+    // Closing is best-effort; never block the visitor UI.
+  }
+}
+
+const resetWidgetState = async () => {
+  await closeCurrentServerSession()
   widgetSessionId.value = ''
   messages.value = [{ role: 'assistant', content: design.value.welcomeMessage }]
 
@@ -171,6 +222,7 @@ const sendMessage = async () => {
         chatbotId,
         message: userMsg,
         sessionId: widgetSessionId.value || undefined,
+        visitorId: widgetVisitorId.value || ensureWidgetVisitorId(),
         embedToken: widgetEmbedToken.value,
         embedHost: widgetEmbedHost.value,
       },
@@ -192,6 +244,7 @@ const sendMessage = async () => {
 
 // Load chatbot config (name + design)
 onMounted(async () => {
+  ensureWidgetVisitorId()
   try {
     const res = await $fetch<{
       success: boolean
