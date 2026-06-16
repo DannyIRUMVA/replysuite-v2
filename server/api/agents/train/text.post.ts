@@ -1,6 +1,6 @@
 import { serverSupabaseClient, serverSupabaseUser, serverSupabaseServiceRole } from '#supabase/server'
 import { checkTrainingLimit, getUserSubscriptionLimits } from '~~/server/utils/subscription'
-import { dispatchTrainingJob } from '~~/server/utils/training-dispatch'
+import { processTextTrainingInline } from '~~/server/utils/training/direct-text'
 
 export default defineEventHandler(async (event) => {
   const supabase = await serverSupabaseClient(event)
@@ -78,9 +78,9 @@ export default defineEventHandler(async (event) => {
       chatbot_id: chatbotId,
       user_id: userId,
       data_source_id: source.id,
-      status: 'queued',
-      progress: 5,
-      progress_label: 'Queued for text chunking',
+      status: 'processing',
+      progress: 10,
+      progress_label: 'Preparing custom text',
       job_type: 'text',
       meta: {
         type: 'text',
@@ -97,16 +97,23 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Could not queue text training.' })
   }
 
-  const dispatch = await dispatchTrainingJob(event, job.id)
+  const result = await processTextTrainingInline(event, supabaseAdmin, {
+    jobId: job.id,
+    sourceId: source.id,
+    chatbotId,
+    userId,
+    content,
+    title,
+  })
 
   return {
     success: true,
-    queued: true,
-    dispatched: dispatch.dispatched,
+    queued: false,
+    dispatched: false,
+    processedInline: true,
     jobId: job.id,
     sourceId: source.id,
-    message: dispatch.dispatched
-      ? 'Text training queued. Processing will continue in the background.'
-      : 'Text training queued. The worker endpoint is not configured yet, so the job remains queued.',
+    chunkCount: result.chunkCount,
+    message: 'Text training complete.',
   }
 })
