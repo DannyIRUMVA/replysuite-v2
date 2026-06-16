@@ -12,24 +12,36 @@ const notify = useNotify()
 
 const isLoading = ref(true)
 const isSaving = ref(false)
+const isCheckingGoogle = ref(false)
 const assistants = ref<any[]>([])
 const selectedAssistantId = ref('')
 const appointmentsEnabled = ref(false)
 const depositsEnabled = ref(false)
 const bookingMode = ref<'appointments' | 'bookings' | 'mixed'>('mixed')
 const confirmationMode = ref<'instant' | 'manual'>('manual')
+const googleCalendarStatus = ref<any>(null)
 
 const isPremium = canUseBusinessTools
 
 const selectedAssistant = computed(() => assistants.value.find((assistant) => assistant.id === selectedAssistantId.value) || null)
 const selectedConfig = computed(() => selectedAssistant.value?.tools_config || {})
 const selectedSchedulingConfig = computed(() => selectedConfig.value?.scheduling || {})
+const googleMapping = computed(() => googleCalendarStatus.value?.mapping || null)
+const googleCalendarConnected = computed(() => Boolean(
+  googleCalendarStatus.value?.connected
+  && googleMapping.value?.chatbot_id === selectedAssistantId.value
+  && googleMapping.value?.sync_status === 'connected'
+))
+const googleCalendarLabel = computed(() => googleMapping.value?.calendar_summary || googleCalendarStatus.value?.connection?.google_email || 'Connected calendar')
+const calendarSetupLink = computed(() => selectedAssistantId.value ? `/dashboard/appointments/settings?chatbotId=${selectedAssistantId.value}` : '/dashboard/appointments/settings')
 
 const activeCapabilities = computed(() => [
   { label: 'Request appointment', enabled: appointmentsEnabled.value, icon: CalendarCheck2 },
-  { label: 'Check Google Calendar availability', enabled: appointmentsEnabled.value, icon: Clock3 },
-  { label: 'Reschedule booking', enabled: appointmentsEnabled.value, icon: RefreshCcw },
-  { label: 'Cancel booking', enabled: appointmentsEnabled.value, icon: XCircle },
+  ...(googleCalendarConnected.value ? [
+    { label: 'Check Google Calendar availability', enabled: appointmentsEnabled.value, icon: Clock3 },
+    { label: 'Reschedule booking', enabled: appointmentsEnabled.value, icon: RefreshCcw },
+    { label: 'Cancel booking', enabled: appointmentsEnabled.value, icon: XCircle },
+  ] : []),
   { label: 'Optional deposit checkout', enabled: appointmentsEnabled.value && depositsEnabled.value, icon: CreditCard },
 ])
 
@@ -67,6 +79,31 @@ const hasChanges = computed(() => {
     || (selectedSchedulingConfig.value?.confirmation_mode || 'manual') !== confirmationMode.value
 })
 
+const getAuthHeaders = async () => {
+  const { data: sessionData } = await (supabase as any).auth.getSession()
+  const accessToken = sessionData?.session?.access_token
+  return accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
+}
+
+const fetchGoogleStatus = async () => {
+  if (!selectedAssistantId.value) {
+    googleCalendarStatus.value = null
+    return
+  }
+  isCheckingGoogle.value = true
+  try {
+    googleCalendarStatus.value = await $fetch('/api/google/calendar/status', {
+      query: { chatbotId: selectedAssistantId.value },
+      headers: await getAuthHeaders(),
+    })
+  } catch (err) {
+    console.error('Failed to load Google Calendar mapping:', err)
+    googleCalendarStatus.value = null
+  } finally {
+    isCheckingGoogle.value = false
+  }
+}
+
 const syncSelection = () => {
   const assistant = selectedAssistant.value
   const enabledTools = Array.isArray(assistant?.enabled_tools) ? assistant.enabled_tools : []
@@ -74,6 +111,7 @@ const syncSelection = () => {
   depositsEnabled.value = enabledTools.includes('payments')
   bookingMode.value = (assistant?.tools_config?.scheduling?.mode || 'mixed') as any
   confirmationMode.value = (assistant?.tools_config?.scheduling?.confirmation_mode || 'manual') as any
+  void fetchGoogleStatus()
 }
 
 const fetchAssistants = async () => {
@@ -83,7 +121,7 @@ const fetchAssistants = async () => {
     const { data, error } = await supabase.from('chatbots').select('id, name, default_language, enabled_tools, tools_config, created_at').eq('user_id', userId.value).is('deleted_at', null).order('created_at', { ascending: false })
     if (error) throw error
     assistants.value = data || []
-    const requestedAssistantId = typeof route.query.id === 'string' ? route.query.id : ''
+    const requestedAssistantId = typeof route.query.id === 'string' ? route.query.id : typeof route.query.chatbotId === 'string' ? route.query.chatbotId : ''
     if (requestedAssistantId && assistants.value.some((assistant) => assistant.id === requestedAssistantId)) selectedAssistantId.value = requestedAssistantId
     else if (!selectedAssistantId.value && assistants.value.length > 0) selectedAssistantId.value = assistants.value[0].id
     syncSelection()
@@ -158,7 +196,7 @@ onMounted(fetchAssistants)
             Open skills
             <ArrowRight class="h-4 w-4" />
           </NuxtLink>
-          <NuxtLink to="/dashboard/appointments/settings" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/10 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15">
+          <NuxtLink :to="calendarSetupLink" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/10 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15">
             Calendar setup
             <Settings2 class="h-4 w-4" />
           </NuxtLink>
@@ -195,6 +233,11 @@ onMounted(fetchAssistants)
             <div class="rounded-xl bg-foreground/5 p-3"><p class="text-lg font-black text-foreground">{{ appointmentsEnabled ? 'On' : 'Off' }}</p><p class="text-[9px] font-black uppercase tracking-widest text-foreground/40">Bookings</p></div>
             <div class="rounded-xl bg-foreground/5 p-3"><p class="text-lg font-black text-foreground">{{ depositsEnabled ? 'On' : 'Off' }}</p><p class="text-[9px] font-black uppercase tracking-widest text-foreground/40">Deposits</p></div>
           </div>
+          <div v-if="googleCalendarConnected" class="mt-3 rounded-xl border border-primary/15 bg-primary/10 p-3">
+            <p class="text-[9px] font-black uppercase tracking-widest text-primary">Google Calendar connected</p>
+            <p class="mt-1 truncate text-xs font-bold text-foreground">{{ googleCalendarLabel }}</p>
+            <p class="mt-1 truncate text-[10px] font-medium text-foreground/45">Chatbot ID: {{ selectedAssistant.id }}</p>
+          </div>
         </div>
 
         <button @click="saveTools" :disabled="!hasChanges || isSaving" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-[10px] font-black uppercase tracking-widest text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
@@ -220,7 +263,9 @@ onMounted(fetchAssistants)
                   <h2 class="text-lg font-black tracking-tight text-foreground">Appointments & bookings</h2>
                   <span :class="['rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-widest', appointmentsEnabled ? 'bg-primary/10 text-primary' : 'bg-foreground/5 text-foreground/40']">{{ appointmentsEnabled ? 'Enabled' : 'Disabled' }}</span>
                 </div>
-                <p class="mt-2 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">One Google Calendar-backed tool for clinics, service businesses, guest houses, hotels, restaurants, lounges, and venues. The assistant can collect booking details, check availability, request appointments, reschedule, and cancel.</p>
+                <p class="mt-2 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">One booking tool for clinics, service businesses, guest houses, hotels, restaurants, lounges, and venues. The assistant can collect booking details, request appointments, and use Google Calendar actions after this chatbot has a connected calendar.</p>
+                <p v-if="googleCalendarConnected" class="mt-2 text-xs font-black uppercase tracking-widest text-primary">Using {{ googleCalendarLabel }} for this chatbot.</p>
+                <p v-else-if="isCheckingGoogle" class="mt-2 text-xs font-black uppercase tracking-widest text-foreground/40">Checking calendar mapping…</p>
               </div>
             </div>
             <button type="button" class="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-primary px-5 text-[10px] font-black uppercase tracking-widest text-black transition hover:opacity-90 disabled:opacity-50" :disabled="!isPremium" @click="enableAppointments">
@@ -240,7 +285,7 @@ onMounted(fetchAssistants)
         <section class="rounded-2xl border border-foreground/10 bg-background-card p-5">
           <div class="mb-4">
             <h2 class="text-lg font-black tracking-tight text-foreground">Choose the booking flow</h2>
-            <p class="mt-1 text-sm font-medium text-foreground/50">This changes how the assistant frames questions. Both flows use Google Calendar availability and event creation.</p>
+            <p class="mt-1 text-sm font-medium text-foreground/50">This changes how the assistant frames questions. Calendar availability and event creation only turn on after the selected chatbot has a connected Google Calendar.</p>
           </div>
           <div class="grid gap-3 lg:grid-cols-3">
             <button v-for="mode in modeCards" :key="mode.id" type="button" :class="['rounded-2xl border p-4 text-left transition', bookingMode === mode.id ? 'border-primary/40 bg-primary/10 shadow-sm shadow-primary/5' : 'border-foreground/10 bg-foreground/[0.02] hover:bg-foreground/[0.04]']" @click="bookingMode = mode.id as any">
@@ -292,15 +337,29 @@ onMounted(fetchAssistants)
           </div>
         </section>
 
-        <section class="rounded-2xl border border-primary/15 bg-primary/[0.04] p-5">
+        <section v-if="googleCalendarConnected" class="rounded-2xl border border-primary/15 bg-primary/[0.04] p-5">
           <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Required setup</p>
-              <h2 class="mt-1 text-base font-black text-foreground">Connect Google Calendar before live confirmations.</h2>
-              <p class="mt-1 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">The assistant should use Google Calendar free/busy checks for availability and create, reschedule, or cancel events server-side. ReplySuite keeps the customer workflow and audit trail.</p>
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Connected Google Calendar</p>
+              <h2 class="mt-1 text-base font-black text-foreground">{{ googleCalendarLabel }}</h2>
+              <p class="mt-1 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">This calendar is mapped to chatbot ID <span class="font-black text-foreground/75">{{ selectedAssistantId }}</span>. ReplySuite will use it for availability checks and event sync when booking actions run.</p>
             </div>
-            <NuxtLink to="/dashboard/appointments/settings" class="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-5 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15">
-              Open calendar setup
+            <NuxtLink :to="calendarSetupLink" class="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-5 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15">
+              Manage calendar
+              <ArrowRight class="h-4 w-4" />
+            </NuxtLink>
+          </div>
+        </section>
+
+        <section v-else class="rounded-2xl border border-orange-500/15 bg-orange-500/[0.04] p-5">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-orange-500">Calendar not connected</p>
+              <h2 class="mt-1 text-base font-black text-foreground">Connect Google Calendar for this chatbot before live confirmations.</h2>
+              <p class="mt-1 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">The tools page will only show a connected Google Calendar after the selected chatbot has a saved calendar mapping. Current chatbot ID: <span class="font-black text-foreground/75">{{ selectedAssistantId }}</span>.</p>
+            </div>
+            <NuxtLink :to="calendarSetupLink" class="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/10 px-5 text-[10px] font-black uppercase tracking-widest text-orange-500 transition hover:bg-orange-500/15">
+              Connect calendar
               <ArrowRight class="h-4 w-4" />
             </NuxtLink>
           </div>
