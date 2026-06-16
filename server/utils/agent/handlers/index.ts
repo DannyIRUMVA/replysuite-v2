@@ -33,8 +33,26 @@ const getIsoRangeForBooking = (date: string, time: string, durationMinutes = 30,
   return { start, end, normalizedTime, timezone }
 }
 const toGoogleLocalDateTime = (value: Date, timezone = 'Africa/Kigali') => {
-  const local = timezone === 'Africa/Kigali' ? new Date(value.getTime() + 2 * 60 * 60 * 1000) : value
-  return local.toISOString().slice(0, 19)
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone || 'Africa/Kigali',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).formatToParts(value).reduce<Record<string, string>>((acc, part) => {
+      if (part.type !== 'literal') acc[part.type] = part.value
+      return acc
+    }, {})
+
+    const hour = parts.hour === '24' ? '00' : parts.hour
+    return `${parts.year}-${parts.month}-${parts.day}T${hour}:${parts.minute}:${parts.second}`
+  } catch {
+    return value.toISOString().slice(0, 19)
+  }
 }
 
 const getAdmin = (event: any) => serverSupabaseServiceRole(event) as any
@@ -475,17 +493,18 @@ export const requestAppointmentHandler = async (event: any, chatbotId: string, a
         await logToolEvent(event, chatbotId, 'request_appointment', args, result, context)
         return result
       }
+      const eventTimezone = timezone || google.mapping.calendar_timezone || 'Africa/Kigali'
       googleEvent = await createGoogleCalendarEvent(google.accessToken, google.mapping.calendar_id, {
-        summary: `${serviceName || 'Booking'} — ${name}`,
+        summary: `${serviceName || 'Reservation'} — ${name}`,
         description: [
-          `Created by ReplySuite chatbot ${chatbotId}`,
+          'Created by ReplySuite.',
           `Customer: ${name}`,
           `Phone: ${phone}`,
           args?.email || args?.customer_email ? `Email: ${args?.email || args?.customer_email}` : '',
           args?.notes ? `Notes: ${args.notes}` : '',
         ].filter(Boolean).join('\n'),
-        start: { dateTime: toGoogleLocalDateTime(start, google.mapping.calendar_timezone || timezone), timeZone: google.mapping.calendar_timezone || timezone },
-        end: { dateTime: toGoogleLocalDateTime(end, google.mapping.calendar_timezone || timezone), timeZone: google.mapping.calendar_timezone || timezone },
+        start: { dateTime: toGoogleLocalDateTime(start, eventTimezone), timeZone: eventTimezone },
+        end: { dateTime: toGoogleLocalDateTime(end, eventTimezone), timeZone: eventTimezone },
         reminders: { useDefault: true },
         extendedProperties: { private: { replysuite_chatbot_id: chatbotId } },
       })
