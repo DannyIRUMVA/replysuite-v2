@@ -1,3 +1,7 @@
+# ReplySuite
+
+ReplySuite is a calm AI command center for customer conversations across website chat, WhatsApp, Instagram comments and DMs, appointments, bookings, Google Calendar-backed reservations, and contextual Paypack booking deposits.
+
 ## Pricing (as of 2026)
 
 - **Free** — $0/month: 1 chatbot, 100 conversations/month, trainable AI agent, email support

@@ -575,7 +575,7 @@ const handleSelect = async (plan: any) => {
           </div>
 
           <div
-            class="mt-10 flex flex-wrap items-center gap-4 text-[11px] font-black uppercase tracking-widest text-foreground/45">
+            class="mt-10 flex flex-wrap items-center gap-4 text-[11px] font-black uppercase tracking-widest text-foreground/60">
             <span class="inline-flex items-center gap-2">
               <ShieldCheck class="w-4 h-4 text-primary" /> Train on your own content
             </span>
@@ -627,8 +627,9 @@ const handleSelect = async (plan: any) => {
                   </div>
 
                   <button type="button"
-                    class="w-9 h-9 rounded-xl bg-foreground/[0.03] border border-foreground/8 flex items-center justify-center text-foreground/50 hover:bg-foreground/[0.05] transition-colors">
-                    <X class="w-4 h-4" />
+                    aria-label="Close demo chat preview"
+                    class="w-9 h-9 rounded-xl bg-foreground/[0.03] border border-foreground/8 flex items-center justify-center text-foreground/70 hover:bg-foreground/[0.05] transition-colors">
+                    <X class="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -703,7 +704,7 @@ const handleSelect = async (plan: any) => {
                         </div>
                         <div>
                           <p class="text-[11px] font-black text-foreground">Hi there 👋</p>
-                          <p class="text-[10px] text-foreground/50 font-semibold">Ask about setup, pricing, training, or
+                          <p class="text-[10px] text-foreground/65 font-semibold">Ask about setup, pricing, training, or
                             WhatsApp.</p>
                         </div>
                       </div>
@@ -733,7 +734,7 @@ const handleSelect = async (plan: any) => {
                           :style="chatbot?.chat_icon_color ? { color: chatbot.chat_icon_color } : {}" />
                       </div>
                       <span class="text-[10px] font-bold tracking-wide"
-                        :class="msg.role === 'user' ? 'text-foreground/35' : 'text-foreground/50'">
+                        :class="msg.role === 'user' ? 'text-foreground/60' : 'text-foreground/65'">
                         {{ msg.role === 'user' ? 'Visitor' : 'ReplySuite assistant' }}
                       </span>
                     </div>
@@ -764,7 +765,7 @@ const handleSelect = async (plan: any) => {
                           <component :is="demoChatIcon" class="w-3.5 h-3.5"
                             :style="chatbot?.chat_icon_color ? { color: chatbot.chat_icon_color } : {}" />
                         </div>
-                        <span class="text-[10px] font-bold tracking-wide text-foreground/50">ReplySuite assistant</span>
+                        <span class="text-[10px] font-bold tracking-wide text-foreground/65">ReplySuite assistant</span>
                       </div>
                       <div
                         class="border border-foreground/6 dark:border-white/5 px-4 py-3 rounded-2xl rounded-bl-md shadow-sm dark:shadow-none bg-background dark:bg-zinc-900">
@@ -781,19 +782,21 @@ const handleSelect = async (plan: any) => {
 
               <div
                 class="p-4 pt-3 mt-auto border-t border-foreground/6 dark:border-white/5 bg-background-card dark:bg-zinc-900">
-                <div class="flex items-center gap-2 mb-3 text-foreground/40">
+                <div class="flex items-center gap-2 mb-3 text-foreground/60">
                   <button type="button"
+                    aria-label="Attach a file in the demo chat"
                     class="w-9 h-9 rounded-xl border border-foreground/8 dark:border-white/5 bg-foreground/[0.02] dark:bg-white/[0.02] flex items-center justify-center hover:bg-foreground/[0.04] dark:hover:bg-white/[0.05] transition-colors">
-                    <Paperclip class="w-4 h-4" />
+                    <Paperclip class="w-4 h-4" aria-hidden="true" />
                   </button>
                   <button type="button"
+                    aria-label="Open emoji picker in the demo chat"
                     class="w-9 h-9 rounded-xl border border-foreground/8 dark:border-white/5 bg-foreground/[0.02] dark:bg-white/[0.02] flex items-center justify-center hover:bg-foreground/[0.04] dark:hover:bg-white/[0.05] transition-colors">
-                    <SmilePlus class="w-4 h-4" />
+                    <SmilePlus class="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
                 <form @submit.prevent="sendDemoMessage" class="relative flex items-center group/form">
                   <input v-model="chatInput" :disabled="isChatbotLoading" :placeholder="isChatbotLoading ? 'Loading chatbot…' : 'Send us a message...'"
-                    class="w-full bg-background dark:bg-zinc-900 rounded-2xl pl-4 pr-14 py-4 border border-foreground/8 dark:border-white/5 text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/20 focus:bg-background-card dark:focus:bg-zinc-900 transition-all font-semibold shadow-[0_4px_18px_rgba(15,23,42,0.04)] dark:shadow-none disabled:opacity-70 disabled:cursor-not-allowed" />
+                    class="w-full bg-background dark:bg-zinc-900 rounded-2xl pl-4 pr-14 py-4 border border-foreground/8 dark:border-white/5 text-sm text-foreground placeholder:text-foreground/55 focus:outline-none focus:border-primary/20 focus:bg-background-card dark:focus:bg-zinc-900 transition-all font-semibold shadow-[0_4px_18px_rgba(15,23,42,0.04)] dark:shadow-none disabled:opacity-70 disabled:cursor-not-allowed" />
                   <button type="submit" :disabled="isChatbotLoading || !chatInput.trim() || isChatLoading"
                     class="absolute right-2 w-10 h-10 text-foreground rounded-xl flex items-center justify-center shadow-lg shadow-primary/10 hover:scale-105 active:scale-95 transition-all disabled:opacity-20 disabled:cursor-not-allowed border border-primary/8"
                     :style="{ background: demoAssistantBubble }">
@@ -801,7 +804,7 @@ const handleSelect = async (plan: any) => {
                   </button>
                 </form>
 
-                <div class="mt-3 flex items-center justify-between gap-3 text-[10px] font-semibold text-foreground/40">
+                <div class="mt-3 flex items-center justify-between gap-3 text-[10px] font-semibold text-foreground/60">
                   <span>Usually replies in a few seconds</span>
                   <span class="text-primary/60">ReplySuite</span>
                 </div>
@@ -820,7 +823,7 @@ const handleSelect = async (plan: any) => {
         <h2 class="text-4xl md:text-5xl font-extrabold text-foreground mb-5">
           Businesses lose customers when replies take too long.
         </h2>
-        <p class="text-foreground/50 font-semibold leading-relaxed">
+        <p class="text-foreground/65 font-semibold leading-relaxed">
           Slow responses create missed leads, frustrated customers, and more repetitive work for your team.
         </p>
       </div>
@@ -847,7 +850,7 @@ const handleSelect = async (plan: any) => {
             <span class="text-gradient">using AI trained on your business.</span>
           </h2>
         </div>
-        <p class="text-foreground/50 max-w-xl font-semibold leading-relaxed">
+        <p class="text-foreground/65 max-w-xl font-semibold leading-relaxed">
           Use one assistant across your website and WhatsApp to automate customer support, multilingual replies, FAQs, and lead capture.
         </p>
       </div>
@@ -872,12 +875,12 @@ const handleSelect = async (plan: any) => {
           Built for businesses that need faster replies
           <span class="text-gradient">every day.</span>
         </h2>
-        <p class="text-foreground/50 font-semibold leading-relaxed">
+        <p class="text-foreground/65 font-semibold leading-relaxed">
           Start with the industry that looks most like yours, then train your assistant on the exact information your customers need.
         </p>
       </div>
 
-      <div class="flex items-center justify-center gap-2 mb-8 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">
+      <div class="flex items-center justify-center gap-2 mb-8 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60">
         <span>Click a card to focus</span>
         <div class="h-px w-8 bg-foreground/10"></div>
         <span>Slide to explore more</span>
@@ -901,12 +904,12 @@ const handleSelect = async (plan: any) => {
                 <component :is="item.icon" class="w-6 h-6 text-primary/85 dark:text-primary" />
               </div>
               <span class="rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em]"
-                :class="activeUseCase === index ? 'bg-primary/8 text-primary/80 border border-primary/15 dark:bg-primary/15 dark:text-primary dark:border-primary/20' : 'bg-foreground/5 text-foreground/45 border border-foreground/10'">
+                :class="activeUseCase === index ? 'bg-primary/8 text-primary/80 border border-primary/15 dark:bg-primary/15 dark:text-primary dark:border-primary/20' : 'bg-foreground/5 text-foreground/60 border border-foreground/10'">
                 {{ index + 1 }}/{{ useCases.length }}
               </span>
             </div>
             <h3 class="text-xl font-black mb-3 text-foreground tracking-tight">{{ item.title }}</h3>
-            <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/40 mb-2">Customer pain</p>
+            <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/60 mb-2">Customer pain</p>
             <p class="text-[13px] text-foreground/55 leading-6 font-semibold mb-4">{{ item.pain }}</p>
             <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-primary mb-2">How ReplySuite helps</p>
             <p class="text-[13px] text-foreground/70 leading-6 font-semibold">{{ item.solution }}</p>
@@ -923,14 +926,14 @@ const handleSelect = async (plan: any) => {
           From slow manual replies to
           <span class="text-gradient">instant trained support.</span>
         </h2>
-        <p class="text-foreground/50 font-semibold leading-relaxed max-w-3xl mx-auto">
+        <p class="text-foreground/65 font-semibold leading-relaxed max-w-3xl mx-auto">
           See how ReplySuite replaces generic answers, delayed follow-up, and repetitive support tasks with a chatbot trained on your real business content.
         </p>
       </div>
 
       <div class="glass-card border border-foreground/10 bg-foreground/[0.02] overflow-hidden">
         <div class="grid grid-cols-1 md:grid-cols-[0.52fr_1fr_1fr] border-b border-foreground/10 bg-foreground/[0.03]">
-          <div class="hidden md:block p-5 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45">Area</div>
+          <div class="hidden md:block p-5 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">Area</div>
           <div class="p-5 border-t md:border-t-0 md:border-l border-foreground/10">
             <div class="inline-flex items-center gap-3 rounded-full border border-rose-500/20 bg-rose-500/10 px-4 py-2">
               <X class="w-4 h-4 text-rose-300" />
@@ -947,7 +950,7 @@ const handleSelect = async (plan: any) => {
 
         <div v-for="row in beforeAfterRows" :key="row.area" class="grid grid-cols-1 md:grid-cols-[0.52fr_1fr_1fr] border-b border-foreground/10 last:border-b-0">
           <div class="p-5 bg-foreground/[0.025]">
-            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 md:hidden mb-2">Area</p>
+            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60 md:hidden mb-2">Area</p>
             <h3 class="text-base font-black text-foreground tracking-tight">{{ row.area }}</h3>
           </div>
           <div class="p-5 md:border-l border-foreground/10 bg-rose-500/[0.035]">
@@ -970,7 +973,7 @@ const handleSelect = async (plan: any) => {
             Built to save time and
             <span class="text-gradient">win more conversations.</span>
           </h2>
-          <p class="text-foreground/50 font-semibold leading-relaxed max-w-2xl">
+          <p class="text-foreground/65 font-semibold leading-relaxed max-w-2xl">
             ReplySuite gives you the tools to train, test, and deploy one AI customer support assistant across your website and WhatsApp.
             The value is simple: faster replies, fewer missed leads, and better customer coverage.
           </p>
@@ -999,7 +1002,7 @@ const handleSelect = async (plan: any) => {
           Clear limits for launch,
           <span class="text-gradient">growth, and scale.</span>
         </h2>
-        <p class="text-foreground/50 font-semibold leading-relaxed">
+        <p class="text-foreground/65 font-semibold leading-relaxed">
           Review the practical details buyers care about: supported channels, AI reply volume, training capacity, Enterprise tools, and multilingual coverage.
         </p>
       </div>
@@ -1007,34 +1010,34 @@ const handleSelect = async (plan: any) => {
       <div class="grid md:grid-cols-3 gap-4 mb-8">
         <div v-for="metric in socialProofMetrics" :key="metric.label" class="glass-card p-6 border-foreground/10 bg-foreground/[0.02] text-center">
           <p class="text-3xl font-black text-foreground tracking-tight">{{ metric.value }}</p>
-          <p class="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45">{{ metric.label }}</p>
+          <p class="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">{{ metric.label }}</p>
         </div>
       </div>
 
       <div class="glass-card border border-foreground/10 bg-foreground/[0.02] overflow-hidden mb-8">
         <div class="grid grid-cols-[0.8fr_1fr_1.2fr] max-md:hidden bg-foreground/[0.03] border-b border-foreground/10">
-          <div class="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45">Data point</div>
-          <div class="p-4 border-l border-foreground/10 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45">Current value</div>
-          <div class="p-4 border-l border-foreground/10 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45">What it means</div>
+          <div class="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">Data point</div>
+          <div class="p-4 border-l border-foreground/10 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">Current value</div>
+          <div class="p-4 border-l border-foreground/10 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">What it means</div>
         </div>
         <div v-for="row in socialProofRows" :key="row.label" class="grid md:grid-cols-[0.8fr_1fr_1.2fr] border-b border-foreground/10 last:border-b-0">
           <div class="p-5 bg-foreground/[0.025]">
-            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40 md:hidden mb-2">Data point</p>
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60 md:hidden mb-2">Data point</p>
             <h3 class="text-sm font-black text-foreground tracking-tight">{{ row.label }}</h3>
           </div>
           <div class="p-5 md:border-l border-foreground/10">
-            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40 md:hidden mb-2">Current value</p>
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60 md:hidden mb-2">Current value</p>
             <p class="text-sm font-black text-primary tracking-tight">{{ row.value }}</p>
           </div>
           <div class="p-5 md:border-l border-foreground/10">
-            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40 md:hidden mb-2">What it means</p>
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60 md:hidden mb-2">What it means</p>
             <p class="text-sm text-foreground/60 leading-relaxed font-semibold">{{ row.detail }}</p>
           </div>
         </div>
       </div>
 
       <div class="flex flex-wrap items-center justify-center gap-3">
-        <span v-for="logo in logoPills" :key="logo" class="rounded-full border border-foreground/10 bg-foreground/[0.02] px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-foreground/45">
+        <span v-for="logo in logoPills" :key="logo" class="rounded-full border border-foreground/10 bg-foreground/[0.02] px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-foreground/60">
           {{ logo }}
         </span>
       </div>
@@ -1055,15 +1058,15 @@ const handleSelect = async (plan: any) => {
 
           <div class="mt-8 grid sm:grid-cols-3 lg:grid-cols-1 gap-3">
             <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
-              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Customer goal</p>
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60">Customer goal</p>
               <p class="mt-1 text-sm font-bold text-foreground">Faster first replies</p>
             </div>
             <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
-              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Best for</p>
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60">Best for</p>
               <p class="mt-1 text-sm font-bold text-foreground">Support + sales teams</p>
             </div>
             <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
-              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Common win</p>
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60">Common win</p>
               <p class="mt-1 text-sm font-bold text-foreground">Less repeated work</p>
             </div>
           </div>
@@ -1073,10 +1076,10 @@ const handleSelect = async (plan: any) => {
           <article v-for="(item, index) in testimonialSamples" :key="item.name" class="glass-card border border-foreground/10 bg-foreground/[0.02] p-6 md:p-7 relative overflow-hidden" :class="index === 0 ? 'md:col-span-2' : ''">
             <div class="absolute -right-14 -top-14 h-40 w-40 rounded-full bg-primary/10 blur-[70px]"></div>
             <div class="relative flex items-center justify-between gap-4 mb-6">
-              <div class="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/10 px-3 py-1.5" aria-label="Five star rating">
-                <Star v-for="n in 5" :key="n" class="h-3.5 w-3.5 fill-primary text-primary" />
+              <div class="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/10 px-3 py-1.5" role="img" aria-label="Five star rating">
+                <Star v-for="n in 5" :key="n" class="h-3.5 w-3.5 fill-primary text-primary" aria-hidden="true" />
               </div>
-              <span class="rounded-full border border-foreground/10 bg-background/55 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-foreground/45 backdrop-blur-xl">
+              <span class="rounded-full border border-foreground/10 bg-background/55 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-foreground/60 backdrop-blur-xl">
                 {{ item.channel }}
               </span>
             </div>
@@ -1092,7 +1095,7 @@ const handleSelect = async (plan: any) => {
               </div>
               <div>
                 <h3 class="text-sm font-black text-foreground tracking-tight">{{ item.name }}</h3>
-                <p class="text-xs text-foreground/50 font-semibold">{{ item.role }} · {{ item.company }}</p>
+                <p class="text-xs text-foreground/65 font-semibold">{{ item.role }} · {{ item.company }}</p>
               </div>
             </div>
           </article>
@@ -1118,15 +1121,15 @@ const handleSelect = async (plan: any) => {
             </p>
             <div class="mt-8 grid sm:grid-cols-3 lg:grid-cols-1 gap-3">
               <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
-                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Setup</p>
+                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60">Setup</p>
                 <p class="mt-1 text-sm font-bold text-foreground">Website first</p>
               </div>
               <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
-                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Channels</p>
+                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60">Channels</p>
                 <p class="mt-1 text-sm font-bold text-foreground">Web + WhatsApp</p>
               </div>
               <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
-                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Languages</p>
+                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60">Languages</p>
                 <p class="mt-1 text-sm font-bold text-foreground">10+ supported</p>
               </div>
             </div>
@@ -1161,7 +1164,7 @@ const handleSelect = async (plan: any) => {
           Paid plans first, with
           <span class="text-gradient">Free Starter below.</span>
         </h2>
-        <p class="text-foreground/50 mt-6 font-semibold leading-relaxed">
+        <p class="text-foreground/65 mt-6 font-semibold leading-relaxed">
           Choose from three paid subscriptions: Silver for WhatsApp, Gold for Instagram workflows, and Enterprise Ready for AI business tools. If you are not ready to pay, the Free Starter subscription is still available below.
         </p>
       </div>
@@ -1177,12 +1180,12 @@ const handleSelect = async (plan: any) => {
 
           <div class="mb-8">
             <h3 class="text-2xl font-black mb-2 text-foreground tracking-tight">{{ plan.name }}</h3>
-            <p class="text-sm text-foreground/50 font-semibold">{{ plan.desc }}</p>
+            <p class="text-sm text-foreground/65 font-semibold">{{ plan.desc }}</p>
           </div>
 
           <div class="mb-8 flex items-baseline gap-2">
             <span class="text-5xl font-extrabold text-foreground">${{ plan.price }}</span>
-            <span class="text-foreground/50 font-bold tracking-widest text-[10px] uppercase">/mo</span>
+            <span class="text-foreground/65 font-bold tracking-widest text-[10px] uppercase">/mo</span>
           </div>
 
           <button @click="handleSelect(plan)" :disabled="isProcessing === plan.id"
@@ -1232,7 +1235,7 @@ const handleSelect = async (plan: any) => {
           <div class="lg:text-right">
             <div class="mb-4 flex lg:justify-end items-baseline gap-2">
               <span class="text-4xl font-extrabold text-foreground">${{ freeStarterPlan.price }}</span>
-              <span class="text-foreground/50 font-bold tracking-widest text-[10px] uppercase">/mo</span>
+              <span class="text-foreground/65 font-bold tracking-widest text-[10px] uppercase">/mo</span>
             </div>
             <button @click="handleSelect(freeStarterPlan)" :disabled="isProcessing === freeStarterPlan.id"
               class="w-full lg:w-auto px-8 py-4 rounded-full font-bold text-center transition-all tracking-widest text-xs flex items-center justify-center gap-2 bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10 hover:border-foreground/20">
@@ -1282,7 +1285,7 @@ const handleSelect = async (plan: any) => {
           </button>
         </div>
 
-        <p class="text-foreground/50 mt-10 text-xs relative z-10 tracking-[0.2em] font-bold uppercase">
+        <p class="text-foreground/65 mt-10 text-xs relative z-10 tracking-[0.2em] font-bold uppercase">
           No credit card required • Start with one assistant • Upgrade when you need more
         </p>
       </div>
@@ -1296,7 +1299,7 @@ const handleSelect = async (plan: any) => {
         <div class="flex items-center justify-between px-5 py-4 border-b border-foreground/10 bg-foreground/[0.02]">
           <div>
             <p class="text-sm font-black text-foreground tracking-tight">ReplySuite demo video</p>
-            <p class="text-[11px] font-semibold text-foreground/50 uppercase tracking-widest">Watch without leaving the
+            <p class="text-[11px] font-semibold text-foreground/65 uppercase tracking-widest">Watch without leaving the
               site
             </p>
           </div>

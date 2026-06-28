@@ -31,14 +31,14 @@ const socialLinks = [
           <Zap class="text-primary w-8 h-8 fill-current" />
           <span class="text-3xl font-bold tracking-tighter text-foreground">ReplySuite</span>
         </div>
-        <p class="text-foreground/50 leading-relaxed font-medium">
+        <p class="text-foreground/65 leading-relaxed font-medium">
           A calm AI command center for customer conversations. Train once, reply everywhere, book appointments, manage bookings, and get paid.
         </p>
       </div>
       <div class="flex gap-4">
         <a v-for="item in socialLinks" :key="item.label" :href="item.href" target="_blank" rel="noopener noreferrer"
           :aria-label="item.label"
-          class="p-4 rounded-2xl border border-foreground/10 bg-background/35 text-foreground/50 shadow-sm backdrop-blur-xl hover:text-primary hover:border-primary/20 hover:bg-primary/10 transition-all hover:-translate-y-1">
+          class="p-4 rounded-2xl border border-foreground/10 bg-background/35 text-foreground/65 shadow-sm backdrop-blur-xl hover:text-primary hover:border-primary/20 hover:bg-primary/10 transition-all hover:-translate-y-1">
           <component :is="item.icon" class="w-5 h-5" />
         </a>
       </div>
@@ -48,7 +48,7 @@ const socialLinks = [
       <div class="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-14 mb-14">
       <!-- Column 1: Product -->
       <div>
-        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Product</h4>
+        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Product</h2>
         <ul class="space-y-4">
           <li v-for="link in [
             { name: 'Product Overview', to: '/product' },
@@ -57,7 +57,7 @@ const socialLinks = [
             { name: 'Product Changelog', to: '/changelog' }
           ]" :key="link.name">
             <NuxtLink :to="link.to"
-              class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}
+              class="text-sm text-foreground/65 hover:text-foreground transition-colors font-medium">{{ link.name }}
             </NuxtLink>
           </li>
         </ul>
@@ -65,7 +65,7 @@ const socialLinks = [
 
       <!-- Column 2: Resources -->
       <div>
-        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Resources</h4>
+        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Resources</h2>
         <ul class="space-y-4">
           <li v-for="link in [
             { name: 'Blog & Insights', to: '/blog' },
@@ -74,7 +74,7 @@ const socialLinks = [
             { name: 'Documentation', to: '/docs' }
           ]" :key="link.name">
             <NuxtLink :to="link.to"
-              class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}
+              class="text-sm text-foreground/65 hover:text-foreground transition-colors font-medium">{{ link.name }}
             </NuxtLink>
           </li>
         </ul>
@@ -82,7 +82,7 @@ const socialLinks = [
 
       <!-- Column 3: Company -->
       <div>
-        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Company</h4>
+        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Company</h2>
         <ul class="space-y-4">
           <li v-for="link in [
             { name: 'Company', to: '/company' },
@@ -91,12 +91,12 @@ const socialLinks = [
             { name: 'Institutional Email', to: 'mailto:support@replysuite.app' }
           ]" :key="link.name">
             <NuxtLink :to="link.to"
-              class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}
+              class="text-sm text-foreground/65 hover:text-foreground transition-colors font-medium">{{ link.name }}
             </NuxtLink>
           </li>
           <li>
             <button @click="openFeedback('Guest Footer')"
-              class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">Share
+              class="text-sm text-foreground/65 hover:text-foreground transition-colors font-medium">Share
               Feedback</button>
           </li>
         </ul>
@@ -104,7 +104,7 @@ const socialLinks = [
 
       <!-- Column 4: Trust & Legal -->
       <div>
-        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Trust & Legal</h4>
+        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Trust & Legal</h2>
         <ul class="space-y-4">
           <li v-for="link in [
             { name: 'AI Ethics', to: '/ethics' },
@@ -113,7 +113,7 @@ const socialLinks = [
             { name: 'Cookie Policy', to: '/cookie' }
           ]" :key="link.name">
             <NuxtLink :to="link.to"
-              class="text-sm text-foreground/50 hover:text-foreground transition-colors font-medium">{{ link.name }}
+              class="text-sm text-foreground/65 hover:text-foreground transition-colors font-medium">{{ link.name }}
             </NuxtLink>
           </li>
         </ul>
@@ -123,12 +123,12 @@ const socialLinks = [
     <!-- Bottom Bar -->
       <div class="pt-8 border-t border-foreground/10 flex flex-col md:flex-row items-center justify-between gap-8">
       <div class="flex flex-col gap-3">
-        <div class="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">
+        <div class="text-[10px] text-foreground/60 font-bold uppercase tracking-widest">
           © 2026 ReplySuite Ltd. All rights reserved.
         </div>
         <button
           @click="openSettings"
-          class="text-left text-[10px] text-foreground/40 hover:text-primary transition-colors font-bold uppercase tracking-widest"
+          class="text-left text-[10px] text-foreground/60 hover:text-primary transition-colors font-bold uppercase tracking-widest"
         >
           Cookie settings
         </button>
@@ -141,10 +141,10 @@ const socialLinks = [
           All Systems Operational
         </div>
         <div
-          class="hidden md:flex items-center gap-6 text-[10px] text-foreground/40 font-bold uppercase tracking-widest">
+          class="hidden md:flex items-center gap-6 text-[10px] text-foreground/60 font-bold uppercase tracking-widest">
           <div class="flex items-center gap-2 group cursor-pointer hover:text-foreground transition-colors">
             <Globe2 class="w-3 h-3 group-hover:text-primary" />
-            <select class="bg-transparent border-none focus:ring-0 cursor-pointer appearance-none">
+            <select aria-label="Select footer language" class="bg-transparent border-none focus:ring-0 cursor-pointer appearance-none">
               <option value="en">English (US)</option>
               <option value="pt">Português (BR)</option>
               <option value="es">Español (ES)</option>

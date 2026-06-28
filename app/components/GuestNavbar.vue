@@ -52,7 +52,7 @@ watch(() => route.fullPath, () => {
       <div
         class="hidden lg:flex items-center gap-1 p-1 bg-foreground/[0.02] backdrop-blur-md rounded-full border border-foreground/10">
         <NuxtLink v-for="link in navLinks" :key="link.name" :to="link.href"
-          class="px-4 xl:px-5 py-2 rounded-full text-sm font-semibold text-foreground/40 hover:text-foreground hover:bg-foreground/5 transition-all flex items-center gap-2"
+          class="px-4 xl:px-5 py-2 rounded-full text-sm font-semibold text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-all flex items-center gap-2"
           active-class="text-primary bg-primary/5">
           <component :is="link.icon" class="w-4 h-4" />
           {{ link.name }}
@@ -69,7 +69,7 @@ watch(() => route.fullPath, () => {
         <ClientOnly>
           <template v-if="!user">
             <NuxtLink to="/login"
-              class="hidden md:flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold text-foreground/40 hover:text-foreground transition-all">
+              class="hidden md:flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold text-foreground/60 hover:text-foreground transition-all">
               <LogIn class="w-4 h-4" />
               Sign In
             </NuxtLink>
@@ -90,10 +90,15 @@ watch(() => route.fullPath, () => {
         </ClientOnly>
 
         <!-- Mobile Toggle -->
-        <button @click="isMenuOpen = !isMenuOpen"
-          class="lg:hidden inline-flex items-center justify-center p-2.5 rounded-xl border border-foreground/10 bg-background/70 text-foreground/60 hover:text-foreground hover:bg-foreground/[0.04] transition-colors">
-          <Menu v-if="!isMenuOpen" class="w-6 h-6" />
-          <X v-else class="w-6 h-6" />
+        <button
+          type="button"
+          :aria-label="isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'"
+          :aria-expanded="isMenuOpen"
+          aria-controls="mobile-navigation"
+          @click="isMenuOpen = !isMenuOpen"
+          class="lg:hidden inline-flex items-center justify-center p-2.5 rounded-xl border border-foreground/10 bg-background/70 text-foreground/70 hover:text-foreground hover:bg-foreground/[0.04] transition-colors">
+          <Menu v-if="!isMenuOpen" class="w-6 h-6" aria-hidden="true" />
+          <X v-else class="w-6 h-6" aria-hidden="true" />
         </button>
       </div>
 
@@ -102,15 +107,16 @@ watch(() => route.fullPath, () => {
         enter-to-class="opacity-100 translate-y-0" leave-active-class="transition duration-150 ease-in"
         leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-[-10px]">
         <div v-if="isMenuOpen"
+          id="mobile-navigation"
           class="absolute top-full left-3 right-3 sm:left-6 sm:right-6 mt-3 p-4 sm:p-6 bg-background-card/95 backdrop-blur-2xl border border-foreground/10 rounded-[28px] shadow-2xl lg:hidden max-h-[calc(100vh-5.5rem)] overflow-y-auto">
           <div class="flex flex-col gap-2">
             <NuxtLink v-for="link in navLinks" :key="link.name" :to="link.href" @click="isMenuOpen = false"
-              class="flex items-center gap-4 px-4 py-3 rounded-2xl text-base sm:text-lg font-semibold text-foreground/50 hover:text-primary hover:bg-foreground/5 transition-all">
+              class="flex items-center gap-4 px-4 py-3 rounded-2xl text-base sm:text-lg font-semibold text-foreground/65 hover:text-primary hover:bg-foreground/5 transition-all">
               <component :is="link.icon" class="w-6 h-6" />
               {{ link.name }}
             </NuxtLink>
             <NuxtLink v-if="user" to="/dashboard" @click="isMenuOpen = false"
-              class="flex items-center gap-4 px-4 py-3 rounded-2xl text-base sm:text-lg font-semibold text-foreground/50 hover:text-primary hover:bg-foreground/5 transition-all">
+              class="flex items-center gap-4 px-4 py-3 rounded-2xl text-base sm:text-lg font-semibold text-foreground/65 hover:text-primary hover:bg-foreground/5 transition-all">
               <Layout class="w-6 h-6" />
               Dashboard
             </NuxtLink>

@@ -4,6 +4,9 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   app: {
     head: {
+      htmlAttrs: {
+        lang: 'en'
+      },
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
       title: 'ReplySuite | AI Chatbots for Brand Growth',
@@ -22,7 +25,10 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-        { rel: 'canonical', href: 'https://replysuite.app/' }
+        { rel: 'canonical', href: 'https://replysuite.app/' },
+        { rel: 'preconnect', href: 'https://www.googletagmanager.com' },
+        { rel: 'preconnect', href: 'https://stats.g.doubleclick.net' },
+        { rel: 'preconnect', href: 'https://www.clarity.ms' }
       ],
       script: [
         {
