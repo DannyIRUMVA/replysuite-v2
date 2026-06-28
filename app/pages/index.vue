@@ -28,16 +28,17 @@ import {
   Paperclip,
   SmilePlus,
   Quote,
-  Star
+  Star,
+  CalendarCheck
 } from 'lucide-vue-next'
 import { marked } from 'marked'
 import xss from 'xss'
 
 useSeoMeta({
   title: 'AI Command Center for Customer Conversations | ReplySuite',
-  ogTitle: 'ReplySuite | Train once. Reply everywhere. Channels supported.',
-  description: 'Train AI chatbots on your business content and reply across supported customer channels: website, WhatsApp, and Instagram workflows.',
-  ogDescription: 'Train once. Reply everywhere across website, WhatsApp, and Instagram workflows with ReplySuite.',
+  ogTitle: 'ReplySuite | AI command center for customer conversations',
+  description: 'Train one AI assistant and reply across supported customer channels: website chat, WhatsApp, Instagram comments, Instagram DMs, and booking workflows.',
+  ogDescription: 'Train once, then reply across website chat, WhatsApp, Instagram comments, Instagram DMs, and booking workflows with ReplySuite.',
 })
 
 useHead({
@@ -63,9 +64,9 @@ const renderMarkdown = (text: string) => {
 }
 
 const outcomePoints = [
-  'Instant replies on your website, WhatsApp, and Instagram workflows',
-  'Train on your website, PDFs, FAQs, and business content',
-  'Silver adds WhatsApp, Gold adds Instagram, Enterprise adds AI tools'
+  'One trained assistant for support, lead capture, and booking intake',
+  'Ground answers in your website, PDFs, FAQs, and business notes',
+  'Start with website chat, then unlock WhatsApp, Instagram, and booking tools as you grow'
 ]
 
 const proofCards = [
@@ -540,12 +541,12 @@ const handleSelect = async (plan: any) => {
           </div>
 
           <h1 class="text-4xl md:text-6xl font-black mb-8 leading-[0.92] text-foreground max-w-3xl">
-            Train once. Reply everywhere.
-            <span class="text-gradient">Channels supported.</span>
+            Train once.
+            <span class="text-gradient"> Reply across every supported channel.</span>
           </h1>
 
           <p class="text-lg md:text-xl text-foreground/60 mb-10 max-w-2xl leading-relaxed font-semibold">
-            Train an AI assistant on your business content, then use it to answer questions, capture leads, and reply across supported channels as your plan grows.
+            Train one AI assistant on your website, FAQs, files, and business notes, then use it for website chat, WhatsApp, Instagram comments and DMs, plus appointment booking workflows as your plan grows.
           </p>
 
           <div class="grid sm:grid-cols-1 gap-2.5 mb-10 max-w-xl">
@@ -582,10 +583,13 @@ const handleSelect = async (plan: any) => {
               <Globe2 class="w-4 h-4 text-primary" /> Website widget
             </span>
             <span class="inline-flex items-center gap-2">
-              <MessageCircle class="w-4 h-4 text-primary" /> WhatsApp + Instagram workflows
+              <MessageCircle class="w-4 h-4 text-primary" /> WhatsApp
             </span>
             <span class="inline-flex items-center gap-2">
-              <CreditCard class="w-4 h-4 text-primary" /> Enterprise AI tools add-on
+              <MessageSquareMore class="w-4 h-4 text-primary" /> Instagram comments + DMs
+            </span>
+            <span class="inline-flex items-center gap-2">
+              <CalendarCheck class="w-4 h-4 text-primary" /> Bookings + Google Calendar
             </span>
           </div>
         </div>

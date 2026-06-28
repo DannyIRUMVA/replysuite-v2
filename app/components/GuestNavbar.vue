@@ -132,8 +132,8 @@ watch(() => route.fullPath, () => {
             </NuxtLink>
 
             <!-- Theme Switcher Mobile -->
-            <div class="mt-3 rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-2">
-              <ThemeSwitcher class="!w-full !justify-between !p-2" />
+            <div class="mt-3 flex justify-end">
+              <ThemeSwitcher />
             </div>
           </div>
         </div>
