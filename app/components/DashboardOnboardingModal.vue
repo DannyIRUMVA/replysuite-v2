@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { chatbotLanguageNames, getChatbotLanguageCode, normalizeChatbotLanguageName } from '~~/app/utils/chatbotLanguages'
 import {
+  ArrowLeft,
   ArrowRight,
   Bot,
   Building2,
   CheckCircle2,
   Globe,
   Loader2,
-  LogOut,
-  Mail,
   MessageCircle,
+  Save,
   ShieldCheck,
   Sparkles,
   X,
@@ -21,6 +21,7 @@ const { user, userId, profile, planSlug, isVerified, refreshAuth } = useAuth()
 const forceOnboarding = useState<boolean>('dashboard-force-onboarding', () => false)
 const onboardingChecked = useState<boolean>('dashboard-force-onboarding-checked', () => false)
 const onboardingDismissed = useState<boolean>('dashboard-onboarding-dismissed', () => false)
+const onboardingNavigationLocked = useState<boolean>('dashboard-onboarding-navigation-locked', () => false)
 
 const requiredSteps = ['verify_account', 'create_chatbot'] as const
 type StepCode = typeof requiredSteps[number]
@@ -39,6 +40,8 @@ const isCreating = ref(false)
 const createError = ref('')
 const createdAgentId = ref<string | null>(null)
 const selectedIntegration = ref<'website' | 'whatsapp' | null>(null)
+const manualStep = ref<SetupStep | null>(null)
+const draftStatus = ref('')
 const ensuringRows = ref(false)
 const syncingSteps = reactive<Record<StepCode, boolean>>({ verify_account: false, create_chatbot: false })
 
@@ -110,11 +113,38 @@ const currentStep = computed<SetupStep>(() => {
   return 'chatbot'
 })
 
+const draftStorageKey = computed(() => userId.value ? `replysuite:onboarding-draft:${userId.value}` : 'replysuite:onboarding-draft')
+const setupIncomplete = computed(() => needsVerify.value || needsCreateChatbot.value || !!createdAgentId.value)
+const stepOrder: SetupStep[] = ['verify', 'company', 'chatbot', 'integration', 'done']
+
+const isStepAccessible = (step: SetupStep) => {
+  if (step === 'verify') return needsVerify.value || isVerified.value || completedSteps.value.has('verify_account')
+  if (step === 'company') return !needsVerify.value
+  if (step === 'chatbot') return !needsVerify.value && (companyComplete.value || companySavedThisSession.value)
+  if (step === 'integration' || step === 'done') return !!createdAgentId.value
+  return false
+}
+
+const activeStep = computed<SetupStep>(() => {
+  if (manualStep.value && isStepAccessible(manualStep.value)) return manualStep.value
+  return currentStep.value
+})
+
+const activeStepIndex = computed(() => Math.max(0, stepOrder.indexOf(activeStep.value)))
+const canGoBack = computed(() => stepOrder.slice(0, activeStepIndex.value).some((step) => isStepAccessible(step)))
+const canGoNext = computed(() => {
+  if (activeStep.value === 'verify') return !needsVerify.value || verificationCode.value.trim().length >= 6
+  if (activeStep.value === 'company') return !!companyDraft.value.company_name.trim() && !!companyDraft.value.contact_email.trim() && !isSavingCompany.value
+  if (activeStep.value === 'chatbot') return !!agentDraft.value.name.trim() && !isCreating.value
+  if (activeStep.value === 'integration') return !!selectedIntegration.value
+  return true
+})
+
 const stepItems = computed(() => [
-  { title: 'Verify account', description: 'Confirm your email before setup.', active: currentStep.value === 'verify', complete: isVerified.value || completedSteps.value.has('verify_account') },
-  { title: 'Company info', description: 'Add business context for smarter replies.', active: currentStep.value === 'company', complete: companyComplete.value && (!needsCreateChatbot.value || companySavedThisSession.value) },
-  { title: 'Create chatbot', description: 'Name your assistant and set its basic prompt.', active: currentStep.value === 'chatbot', complete: completedSteps.value.has('create_chatbot') || !!createdAgentId.value },
-  { title: 'Choose channel', description: canUseWhatsApp.value ? 'Website and WhatsApp are available.' : 'Free plan starts with website only.', active: currentStep.value === 'integration' || currentStep.value === 'done', complete: currentStep.value === 'done' },
+  { title: 'Verify account', description: 'Confirm your email before setup.', active: activeStep.value === 'verify', complete: isVerified.value || completedSteps.value.has('verify_account') },
+  { title: 'Company info', description: 'Add business context for smarter replies.', active: activeStep.value === 'company', complete: companyComplete.value && (!needsCreateChatbot.value || companySavedThisSession.value) },
+  { title: 'Create chatbot', description: 'Name your assistant and set its basic prompt.', active: activeStep.value === 'chatbot', complete: completedSteps.value.has('create_chatbot') || !!createdAgentId.value },
+  { title: 'Choose channel', description: canUseWhatsApp.value ? 'Website and WhatsApp are available.' : 'Free plan starts with website only.', active: activeStep.value === 'integration' || activeStep.value === 'done', complete: activeStep.value === 'done' },
 ])
 
 watch(profile, (value: any) => {
@@ -198,14 +228,33 @@ watch([isVerified, completedSteps], async ([verified, steps]) => {
   if (verified && !steps.has('verify_account')) await syncStep('verify_account')
 }, { immediate: true })
 
-watch([shouldShow, needsVerify, needsCreateChatbot], ([open, verifyNeeded, chatbotNeeded]) => {
+watch([shouldShow, needsVerify, needsCreateChatbot, setupIncomplete, onboardingDismissed], ([open, verifyNeeded, chatbotNeeded, incomplete, dismissed]) => {
   if (process.server) return
   if (verifyNeeded || chatbotNeeded) forceOnboarding.value = true
   else if (!createdAgentId.value) forceOnboarding.value = false
 
+  onboardingNavigationLocked.value = Boolean(!open && dismissed && incomplete && isOnboardingRoute.value)
   document.documentElement.style.overflow = open ? 'hidden' : ''
   document.body.style.overflow = open ? 'hidden' : ''
 }, { immediate: true })
+
+watch(activeStep, () => {
+  draftStatus.value = ''
+})
+
+onMounted(() => {
+  if (process.server) return
+  try {
+    const rawDraft = localStorage.getItem(draftStorageKey.value)
+    if (!rawDraft) return
+    const draft = JSON.parse(rawDraft)
+    if (draft?.companyDraft) companyDraft.value = { ...companyDraft.value, ...draft.companyDraft }
+    if (draft?.agentDraft) agentDraft.value = { ...agentDraft.value, ...draft.agentDraft }
+    if (draft?.selectedIntegration === 'website' || draft?.selectedIntegration === 'whatsapp') selectedIntegration.value = draft.selectedIntegration
+  } catch (error) {
+    console.warn('[Onboarding] Failed to restore local draft:', error)
+  }
+})
 
 onBeforeUnmount(() => {
   if (process.server) return
@@ -339,6 +388,49 @@ const createChatbot = async () => {
 const chooseIntegration = (integration: 'website' | 'whatsapp') => {
   if (integration === 'whatsapp' && !canUseWhatsApp.value) return
   selectedIntegration.value = integration
+  manualStep.value = 'done'
+}
+
+const saveDraft = () => {
+  if (process.server) return
+  localStorage.setItem(draftStorageKey.value, JSON.stringify({
+    companyDraft: companyDraft.value,
+    agentDraft: agentDraft.value,
+    selectedIntegration: selectedIntegration.value,
+    savedAt: new Date().toISOString(),
+  }))
+  draftStatus.value = 'Draft saved'
+  window.setTimeout(() => {
+    if (draftStatus.value === 'Draft saved') draftStatus.value = ''
+  }, 2500)
+}
+
+const goBack = () => {
+  const previous = stepOrder.slice(0, activeStepIndex.value).reverse().find((step) => isStepAccessible(step))
+  if (previous) manualStep.value = previous
+}
+
+const goNext = async () => {
+  if (!canGoNext.value) return
+  if (activeStep.value === 'verify') {
+    if (needsVerify.value) await verifyAccount()
+    else manualStep.value = 'company'
+    return
+  }
+  if (activeStep.value === 'company') {
+    await saveCompanyInfo()
+    if (!companyError.value) manualStep.value = 'chatbot'
+    return
+  }
+  if (activeStep.value === 'chatbot') {
+    await createChatbot()
+    return
+  }
+  if (activeStep.value === 'integration') {
+    if (selectedIntegration.value) manualStep.value = 'done'
+    return
+  }
+  openTraining()
 }
 
 const openTraining = () => {
@@ -348,6 +440,7 @@ const openTraining = () => {
   createdAgentId.value = null
   onboardingDismissed.value = true
   forceOnboarding.value = false
+  onboardingNavigationLocked.value = false
   navigateTo(`/dashboard/agents/skills/training?id=${id}&onboarding=1&integration=${integration}`)
 }
 
@@ -356,16 +449,14 @@ const openIntegration = () => {
   createdAgentId.value = null
   onboardingDismissed.value = true
   forceOnboarding.value = false
+  onboardingNavigationLocked.value = false
   navigateTo(target?.to || '/dashboard/integrations/website')
 }
 
-const closeModal = () => { onboardingDismissed.value = true }
-const signOut = async () => {
-  onboardingDismissed.value = false
-  forceOnboarding.value = false
-  onboardingChecked.value = false
-  await supabase.auth.signOut()
-  navigateTo('/login')
+const closeModal = () => {
+  saveDraft()
+  onboardingDismissed.value = true
+  onboardingNavigationLocked.value = setupIncomplete.value
 }
 </script>
 
@@ -388,10 +479,10 @@ const signOut = async () => {
               <div class="mb-6 flex items-start justify-between gap-3">
                 <div class="flex min-w-0 items-center gap-3">
                   <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
-                    <ShieldCheck v-if="currentStep === 'verify'" class="h-5 w-5" />
-                    <Building2 v-else-if="currentStep === 'company'" class="h-5 w-5" />
-                    <Bot v-else-if="currentStep === 'chatbot'" class="h-5 w-5" />
-                    <Globe v-else-if="currentStep === 'integration'" class="h-5 w-5" />
+                    <ShieldCheck v-if="activeStep === 'verify'" class="h-5 w-5" />
+                    <Building2 v-else-if="activeStep === 'company'" class="h-5 w-5" />
+                    <Bot v-else-if="activeStep === 'chatbot'" class="h-5 w-5" />
+                    <Globe v-else-if="activeStep === 'integration'" class="h-5 w-5" />
                     <Sparkles v-else class="h-5 w-5" />
                   </div>
                   <div class="min-w-0">
@@ -401,12 +492,8 @@ const signOut = async () => {
                 </div>
 
                 <div class="flex items-center gap-2">
-                  <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-foreground/10 text-foreground/45 transition hover:border-foreground/20 hover:text-foreground" aria-label="Close onboarding modal" @click="closeModal">
+                  <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-foreground/10 text-foreground/45 transition hover:border-foreground/20 hover:text-foreground" aria-label="Save draft and close onboarding" @click="closeModal">
                     <X class="h-4 w-4" />
-                  </button>
-                  <button type="button" class="hidden items-center gap-2 rounded-2xl border border-foreground/10 px-3 py-2 text-[10px] font-bold text-foreground/55 transition hover:border-foreground/20 hover:text-foreground sm:inline-flex" @click="signOut">
-                    <LogOut class="h-3.5 w-3.5" />
-                    Sign out
                   </button>
                 </div>
               </div>
@@ -434,8 +521,8 @@ const signOut = async () => {
               </div>
             </aside>
 
-            <main class="w-full overflow-y-auto p-5 sm:p-6 md:max-h-[92vh] md:flex-1">
-              <section v-if="currentStep === 'verify'" class="mx-auto max-w-2xl">
+            <main class="flex w-full flex-col overflow-y-auto p-5 sm:p-6 md:max-h-[92vh] md:flex-1">
+              <section v-if="activeStep === 'verify'" class="mx-auto max-w-2xl">
                 <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Step 1</p>
                 <h3 class="mt-2 text-2xl font-black tracking-tight text-foreground">Verify your email</h3>
                 <p class="mt-2 text-sm leading-relaxed text-foreground/60">Enter the 6-digit code sent to <span class="font-bold text-foreground">{{ user?.email }}</span>.</p>
@@ -456,7 +543,7 @@ const signOut = async () => {
                 </div>
               </section>
 
-              <section v-else-if="currentStep === 'company'" class="mx-auto max-w-3xl">
+              <section v-else-if="activeStep === 'company'" class="mx-auto max-w-3xl">
                 <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Step 2</p>
                 <h3 class="mt-2 text-2xl font-black tracking-tight text-foreground">Tell us about your company</h3>
                 <p class="mt-2 text-sm leading-relaxed text-foreground/60">This information helps prefill your chatbot behavior and integration setup.</p>
@@ -491,7 +578,7 @@ const signOut = async () => {
                 </div>
               </section>
 
-              <section v-else-if="currentStep === 'chatbot'" class="mx-auto max-w-3xl">
+              <section v-else-if="activeStep === 'chatbot'" class="mx-auto max-w-3xl">
                 <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Step 3</p>
                 <h3 class="mt-2 text-2xl font-black tracking-tight text-foreground">Create your chatbot</h3>
                 <p class="mt-2 text-sm leading-relaxed text-foreground/60">Add a name and basic prompt. You will train it right after setup.</p>
@@ -522,7 +609,7 @@ const signOut = async () => {
                 </div>
               </section>
 
-              <section v-else-if="currentStep === 'integration'" class="mx-auto max-w-3xl">
+              <section v-else-if="activeStep === 'integration'" class="mx-auto max-w-3xl">
                 <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Step 4</p>
                 <h3 class="mt-2 text-2xl font-black tracking-tight text-foreground">Which integration do you need first?</h3>
                 <p class="mt-2 text-sm leading-relaxed text-foreground/60">We will start with training, then send you to the channel setup you choose.</p>
@@ -561,6 +648,28 @@ const signOut = async () => {
                   </button>
                 </div>
               </section>
+
+              <div class="mt-6 flex flex-col gap-3 border-t border-foreground/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex min-h-5 items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/45">
+                  <Save class="h-3.5 w-3.5" />
+                  <span>{{ draftStatus || 'Draft stays on this device' }}</span>
+                </div>
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <button type="button" class="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-foreground/10 px-4 text-xs font-black text-foreground/60 transition hover:border-foreground/20 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-35" :disabled="!canGoBack" @click="goBack">
+                    <ArrowLeft class="h-4 w-4" />
+                    Back
+                  </button>
+                  <button type="button" class="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-foreground/10 px-4 text-xs font-black text-foreground/60 transition hover:border-foreground/20 hover:text-foreground" @click="saveDraft">
+                    <Save class="h-4 w-4" />
+                    Save draft
+                  </button>
+                  <button type="button" class="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-xs font-black text-black transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-45" :disabled="!canGoNext || verifying || isSavingCompany || isCreating" @click="goNext">
+                    <Loader2 v-if="verifying || isSavingCompany || isCreating" class="h-4 w-4 animate-spin" />
+                    <span>{{ activeStep === 'done' ? 'Start training' : 'Next' }}</span>
+                    <ArrowRight v-if="!(verifying || isSavingCompany || isCreating)" class="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             </main>
           </div>
         </div>

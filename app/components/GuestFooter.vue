@@ -48,7 +48,7 @@ const socialLinks = [
       <div class="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-14 mb-14">
       <!-- Column 1: Product -->
       <div>
-        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Product</h2>
+        <h2 class="text-[5px] font-bold uppercase tracking-[0.16em] text-primary mb-4">Product</h2>
         <ul class="space-y-4">
           <li v-for="link in [
             { name: 'Product Overview', to: '/product' },
@@ -65,7 +65,7 @@ const socialLinks = [
 
       <!-- Column 2: Resources -->
       <div>
-        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Resources</h2>
+        <h2 class="text-[5px] font-bold uppercase tracking-[0.16em] text-primary mb-4">Resources</h2>
         <ul class="space-y-4">
           <li v-for="link in [
             { name: 'Blog & Insights', to: '/blog' },
@@ -82,7 +82,7 @@ const socialLinks = [
 
       <!-- Column 3: Company -->
       <div>
-        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Company</h2>
+        <h2 class="text-[5px] font-bold uppercase tracking-[0.16em] text-primary mb-4">Company</h2>
         <ul class="space-y-4">
           <li v-for="link in [
             { name: 'Company', to: '/company' },
@@ -104,7 +104,7 @@ const socialLinks = [
 
       <!-- Column 4: Trust & Legal -->
       <div>
-        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6">Trust & Legal</h2>
+        <h2 class="text-[5px] font-bold uppercase tracking-[0.16em] text-primary mb-4">Trust & Legal</h2>
         <ul class="space-y-4">
           <li v-for="link in [
             { name: 'AI Ethics', to: '/ethics' },
