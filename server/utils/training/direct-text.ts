@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { buildEmbeddingsRequest } from '~~/server/utils/ai-provider'
+import { buildEmbeddingsRequests, type EmbeddingsRequest } from '~~/server/utils/ai-provider'
 import { normalizeEmbedding } from '~~/server/utils/ai'
 
 const MAX_EMBED_INPUT = 8_000
@@ -48,11 +48,21 @@ const chunkText = (text: string) => {
     .filter((chunk) => chunk.length > 40)
 }
 
-const getEmbeddingsBatch = async (event: H3Event, texts: string[]) => {
-  const config = useRuntimeConfig(event)
-  const embeddingRequest = buildEmbeddingsRequest(config)
+const buildEmbeddingBody = (embeddingRequest: EmbeddingsRequest, texts: string[]) => {
+  const inputs = texts.map((text) => text.replace(/\n/g, ' ').slice(0, MAX_EMBED_INPUT))
+
+  if (embeddingRequest.apiFormat === 'gemini') {
+    return {
+      requests: inputs.map((input) => ({
+        model: embeddingRequest.model,
+        content: { parts: [{ text: input }] },
+        outputDimensionality: embeddingRequest.dimensions,
+      })),
+    }
+  }
+
   const body: Record<string, any> = {
-    input: texts.map((text) => text.replace(/\n/g, ' ').slice(0, MAX_EMBED_INPUT)),
+    input: inputs,
     dimensions: embeddingRequest.dimensions,
   }
 
@@ -60,10 +70,24 @@ const getEmbeddingsBatch = async (event: H3Event, texts: string[]) => {
     body.model = embeddingRequest.model
   }
 
+  return body
+}
+
+const extractEmbeddingValues = (embeddingRequest: EmbeddingsRequest, data: any) => {
+  if (embeddingRequest.apiFormat === 'gemini') {
+    return (Array.isArray(data?.embeddings) ? data.embeddings : []).map((item: any) => item?.values)
+  }
+
+  return (Array.isArray(data?.data) ? data.data : [])
+    .sort((a: any, b: any) => Number(a.index || 0) - Number(b.index || 0))
+    .map((item: any) => item?.embedding)
+}
+
+const requestEmbeddingsBatch = async (embeddingRequest: EmbeddingsRequest, texts: string[]) => {
   const response = await fetch(embeddingRequest.url, {
     method: 'POST',
     headers: embeddingRequest.headers,
-    body: JSON.stringify(body),
+    body: JSON.stringify(buildEmbeddingBody(embeddingRequest, texts)),
   })
 
   const data: any = await response.json().catch(() => ({}))
@@ -71,19 +95,34 @@ const getEmbeddingsBatch = async (event: H3Event, texts: string[]) => {
     throw new Error(data?.error?.message || `Embedding request failed with HTTP ${response.status}`)
   }
 
-  const embeddings = data?.data
+  const embeddings = extractEmbeddingValues(embeddingRequest, data)
   if (!Array.isArray(embeddings) || embeddings.length !== texts.length) {
-    throw new Error('Embedding response did not match requested chunk count.')
+    throw new Error(`${embeddingRequest.provider} embedding response did not match requested chunk count.`)
   }
 
-  return embeddings
-    .sort((a: any, b: any) => Number(a.index || 0) - Number(b.index || 0))
-    .map((item: any) => {
-      if (!Array.isArray(item.embedding) || !item.embedding.length) {
-        throw new Error('Embedding response included an empty vector.')
-      }
-      return normalizeEmbedding(item.embedding)
-    })
+  return embeddings.map((values: any) => {
+    if (!Array.isArray(values) || !values.length) {
+      throw new Error(`${embeddingRequest.provider} embedding response included an empty vector.`)
+    }
+    return normalizeEmbedding(values)
+  })
+}
+
+const getEmbeddingsBatch = async (event: H3Event, texts: string[]) => {
+  const config = useRuntimeConfig(event)
+  const embeddingRequests = buildEmbeddingsRequests(config)
+  const errors: string[] = []
+
+  for (const embeddingRequest of embeddingRequests) {
+    try {
+      return await requestEmbeddingsBatch(embeddingRequest, texts)
+    } catch (error: any) {
+      errors.push(`${embeddingRequest.provider}: ${error?.message || error}`)
+      console.warn(`[Direct Text Training] ${embeddingRequest.provider} embeddings failed, trying next provider if configured:`, error?.message || error)
+    }
+  }
+
+  throw new Error(`All embedding providers failed: ${errors.join(' | ')}`)
 }
 
 const updateJob = async (supabase: SupabaseAdmin, jobId: string, patch: Record<string, unknown>) => {

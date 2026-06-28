@@ -4,8 +4,10 @@
  * Current production target: Azure OpenAI GPT-5.5 chat + text-embedding-3-large embeddings.
  */
 import {
-  buildChatCompletionsRequest,
-  buildEmbeddingsRequest,
+  buildChatCompletionsRequests,
+  buildEmbeddingsRequests,
+  type ChatCompletionsRequest,
+  type EmbeddingsRequest,
 } from './ai-provider'
 
 export const normalizeEmbedding = (values: number[]) => {
@@ -59,13 +61,21 @@ export const getLowIntentDirectReply = (message: string, alreadyGreeted = false)
     : 'Hi! How can I help you today?'
 }
 
-export const getEmbeddings = async (text: string) => {
-  const config = useRuntimeConfig()
-  const embeddingRequest = buildEmbeddingsRequest(config)
-  const input = text.replace(/\n/g, ' ').substring(0, 8000)
+const buildEmbeddingBody = (embeddingRequest: EmbeddingsRequest, texts: string[]) => {
+  const inputs = texts.map((value) => value.replace(/\n/g, ' ').substring(0, 8000))
+
+  if (embeddingRequest.apiFormat === 'gemini') {
+    return {
+      requests: inputs.map((input) => ({
+        model: embeddingRequest.model,
+        content: { parts: [{ text: input }] },
+        outputDimensionality: embeddingRequest.dimensions,
+      })),
+    }
+  }
 
   const body: Record<string, any> = {
-    input,
+    input: texts.length === 1 ? inputs[0] : inputs,
     dimensions: embeddingRequest.dimensions,
   }
 
@@ -73,10 +83,27 @@ export const getEmbeddings = async (text: string) => {
     body.model = embeddingRequest.model
   }
 
+  return body
+}
+
+const extractEmbeddingValues = (embeddingRequest: EmbeddingsRequest, data: any) => {
+  if (embeddingRequest.apiFormat === 'gemini') {
+    const embeddings = Array.isArray(data?.embeddings) ? data.embeddings : []
+    return embeddings.map((item: any) => item?.values).filter(Array.isArray)
+  }
+
+  const embeddings = Array.isArray(data?.data) ? data.data : []
+  return embeddings
+    .sort((a: any, b: any) => Number(a.index || 0) - Number(b.index || 0))
+    .map((item: any) => item?.embedding)
+    .filter(Array.isArray)
+}
+
+const requestEmbeddings = async (embeddingRequest: EmbeddingsRequest, texts: string[]) => {
   const response = await fetch(embeddingRequest.url, {
     method: 'POST',
     headers: embeddingRequest.headers,
-    body: JSON.stringify(body),
+    body: JSON.stringify(buildEmbeddingBody(embeddingRequest, texts)),
   })
 
   const data: any = await response.json().catch(() => ({}))
@@ -84,12 +111,30 @@ export const getEmbeddings = async (text: string) => {
     throw new Error(data?.error?.message || `Embedding request failed with HTTP ${response.status}`)
   }
 
-  const values = data?.data?.[0]?.embedding
-  if (!Array.isArray(values) || !values.length) {
-    throw new Error('Embedding response had no values.')
+  const values = extractEmbeddingValues(embeddingRequest, data)
+  if (values.length !== texts.length || values.some((item: any) => !Array.isArray(item) || !item.length)) {
+    throw new Error(`${embeddingRequest.provider} embedding response did not match requested input count.`)
   }
 
-  return normalizeEmbedding(values)
+  return values.map((item: number[]) => normalizeEmbedding(item))
+}
+
+export const getEmbeddings = async (text: string) => {
+  const config = useRuntimeConfig()
+  const embeddingRequests = buildEmbeddingsRequests(config)
+  const errors: string[] = []
+
+  for (const embeddingRequest of embeddingRequests) {
+    try {
+      const [embedding] = await requestEmbeddings(embeddingRequest, [text])
+      return embedding
+    } catch (error: any) {
+      errors.push(`${embeddingRequest.provider}: ${error?.message || error}`)
+      console.warn(`[Embedding Fallback] ${embeddingRequest.provider} failed, trying next provider if configured:`, error?.message || error)
+    }
+  }
+
+  throw new Error(`All embedding providers failed: ${errors.join(' | ')}`)
 }
 
 export type ChatMessage = {
@@ -97,29 +142,52 @@ export type ChatMessage = {
   content: string
 }
 
-export const getChatCompletion = async (messages: ChatMessage[], options: { systemPrompt?: string, useAzure?: boolean } = {}) => {
-  const config = useRuntimeConfig()
-  const chatRequest = buildChatCompletionsRequest(config)
+const buildChatBody = (chatRequest: ChatCompletionsRequest, messages: ChatMessage[], systemPrompt?: string) => {
   const body: Record<string, any> = {
-    messages: options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }, ...messages] : messages,
+    messages: systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages,
   }
 
   if (chatRequest.usesV1Api) {
     body.model = chatRequest.model
   }
 
-  const response = await fetch(chatRequest.url, {
-    method: 'POST',
-    headers: chatRequest.headers,
-    body: JSON.stringify(body),
-  })
-
-  const data: any = await response.json().catch(() => ({}))
-  if (!response.ok || data?.error) {
-    throw new Error(data?.error?.message || `Chat completion request failed with HTTP ${response.status}`)
+  if (chatRequest.maxCompletionTokens) {
+    body.max_completion_tokens = chatRequest.maxCompletionTokens
   }
 
-  return data.choices?.[0]?.message?.content || ''
+  if (chatRequest.reasoningEffort) {
+    body.reasoning_effort = chatRequest.reasoningEffort
+  }
+
+  return body
+}
+
+export const getChatCompletion = async (messages: ChatMessage[], options: { systemPrompt?: string, useAzure?: boolean } = {}) => {
+  const config = useRuntimeConfig()
+  const chatRequests = buildChatCompletionsRequests(config)
+  const errors: string[] = []
+
+  for (const chatRequest of chatRequests) {
+    try {
+      const response = await fetch(chatRequest.url, {
+        method: 'POST',
+        headers: chatRequest.headers,
+        body: JSON.stringify(buildChatBody(chatRequest, messages, options.systemPrompt)),
+      })
+
+      const data: any = await response.json().catch(() => ({}))
+      if (!response.ok || data?.error) {
+        throw new Error(data?.error?.message || `Chat completion request failed with HTTP ${response.status}`)
+      }
+
+      return data.choices?.[0]?.message?.content || ''
+    } catch (error: any) {
+      errors.push(`${chatRequest.provider}: ${error?.message || error}`)
+      console.warn(`[Chat Fallback] ${chatRequest.provider} failed, trying next provider if configured:`, error?.message || error)
+    }
+  }
+
+  throw new Error(`All chat providers failed: ${errors.join(' | ')}`)
 }
 
 /**

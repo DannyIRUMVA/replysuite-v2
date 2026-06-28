@@ -6,16 +6,24 @@ interface Env {
   SUPABASE_SERVICE_ROLE_KEY: string
   TRAINING_WORKER_SECRET: string
   AI_EMBEDDING_PROVIDER?: string
+  AI_EMBEDDING_FALLBACK_PROVIDERS?: string
   AZURE_OPENAI_KEY?: string
   AZURE_OPENAI_ENDPOINT?: string
   AZURE_OPENAI_API_VERSION?: string
   AZURE_OPENAI_API_STYLE?: string
+  AZURE_OPENAI_EMBEDDING_KEY?: string
+  AZURE_OPENAI_EMBEDDING_ENDPOINT?: string
   AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME?: string
   AZURE_OPENAI_EMBEDDING_DIMENSIONS?: string
   OPENAI_API_KEY?: string
   OPENAI_BASE_URL?: string
   OPENAI_EMBEDDING_MODEL?: string
   OPENAI_EMBEDDING_DIMENSIONS?: string
+  GEMINI_API_KEY?: string
+  GEMINI_EMBEDDING_API_KEY?: string
+  GEMINI_BASE_URL?: string
+  GEMINI_EMBEDDING_MODEL?: string
+  GEMINI_EMBEDDING_DIMENSIONS?: string
   TRAINING_RUNTIME_PROFILE?: string
   TRAINING_MAX_RUN_MS?: string
   TRAINING_EMBEDDING_BATCH_SIZE?: string
@@ -1125,20 +1133,33 @@ function chunkText(text: string) {
 function normalizeAzureEndpoint(endpoint?: string | null) {
   const normalized = cleanEnvValue(endpoint).replace(/\/+$/, '')
   return normalized
+    .replace(/\/openai\/v\d+\/(chat\/completions|embeddings)$/i, '')
+    .replace(/\/openai\/deployments\/[^/]+\/(chat\/completions|embeddings)$/i, '')
     .replace(/\/openai\/v\d+$/i, '')
     .replace(/\/openai$/i, '')
 }
 
 function shouldUseAzureV1Embeddings(env: Env) {
-  const endpoint = cleanEnvValue(env.AZURE_OPENAI_ENDPOINT).replace(/\/+$/, '')
+  const endpoint = cleanEnvValue(env.AZURE_OPENAI_EMBEDDING_ENDPOINT || env.AZURE_OPENAI_ENDPOINT).replace(/\/+$/, '')
   const apiVersion = cleanEnvValue(env.AZURE_OPENAI_API_VERSION).toLowerCase()
   const apiStyle = cleanEnvValue(env.AZURE_OPENAI_API_STYLE).toLowerCase()
   return apiStyle === 'v1' || apiVersion === 'preview' || apiVersion === 'v1' || /\/openai\/v1$/i.test(endpoint)
 }
 
+function getEmbeddingProviderOrder(env: Env) {
+  const primary = cleanEnvValue(env.AI_EMBEDDING_PROVIDER || 'azure').toLowerCase()
+  const raw = cleanEnvValue(env.AI_EMBEDDING_FALLBACK_PROVIDERS)
+  const configured = raw ? raw.split(',').map((item) => item.trim().toLowerCase()) : [primary, 'openai', 'gemini']
+  return Array.from(new Set(configured.filter((item) => ['azure', 'openai', 'gemini'].includes(item))))
+}
+
 function getEmbeddingDimensions(env: Env) {
   const provider = cleanEnvValue(env.AI_EMBEDDING_PROVIDER || 'azure').toLowerCase()
-  const raw = provider === 'openai' ? env.OPENAI_EMBEDDING_DIMENSIONS : env.AZURE_OPENAI_EMBEDDING_DIMENSIONS
+  const raw = provider === 'openai'
+    ? env.OPENAI_EMBEDDING_DIMENSIONS
+    : provider === 'gemini'
+      ? env.GEMINI_EMBEDDING_DIMENSIONS
+      : env.AZURE_OPENAI_EMBEDDING_DIMENSIONS
   const parsed = Number(cleanEnvValue(raw) || 1536)
   return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 1536
 }
@@ -1148,8 +1169,7 @@ function normalizeEmbedding(values: number[]) {
   return values.map((val: number) => val / magnitude)
 }
 
-function buildEmbeddingRequest(env: Env) {
-  const provider = cleanEnvValue(env.AI_EMBEDDING_PROVIDER || 'azure').toLowerCase()
+function buildEmbeddingRequest(env: Env, provider: string) {
   const dimensions = getEmbeddingDimensions(env)
 
   if (provider === 'openai') {
@@ -1159,6 +1179,8 @@ function buildEmbeddingRequest(env: Env) {
     if (!apiKey || !model) throw new Error('OpenAI embedding credentials missing')
 
     return {
+      provider,
+      apiFormat: 'openai',
       url: `${baseUrl}/v1/embeddings`,
       model,
       dimensions,
@@ -1167,13 +1189,32 @@ function buildEmbeddingRequest(env: Env) {
     }
   }
 
-  const apiKey = cleanEnvValue(env.AZURE_OPENAI_KEY)
-  const endpoint = normalizeAzureEndpoint(env.AZURE_OPENAI_ENDPOINT)
+  if (provider === 'gemini') {
+    const apiKey = cleanEnvValue(env.GEMINI_EMBEDDING_API_KEY || env.GEMINI_API_KEY)
+    const baseUrl = cleanEnvValue(env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta').replace(/\/+$/, '')
+    const model = cleanEnvValue(env.GEMINI_EMBEDDING_MODEL || 'gemini-embedding-001').replace(/^models\//, '')
+    if (!apiKey || !model) throw new Error('Gemini embedding credentials missing')
+
+    return {
+      provider,
+      apiFormat: 'gemini',
+      url: `${baseUrl}/models/${encodeURIComponent(model)}:batchEmbedContents?key=${encodeURIComponent(apiKey)}`,
+      model: `models/${model}`,
+      dimensions,
+      usesV1Api: true,
+      headers: { 'Content-Type': 'application/json' },
+    }
+  }
+
+  const apiKey = cleanEnvValue(env.AZURE_OPENAI_EMBEDDING_KEY || env.AZURE_OPENAI_KEY)
+  const endpoint = normalizeAzureEndpoint(env.AZURE_OPENAI_EMBEDDING_ENDPOINT || env.AZURE_OPENAI_ENDPOINT)
   const model = cleanEnvValue(env.AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME || 'text-embedding-3-large')
   if (!apiKey || !endpoint || !model) throw new Error('Azure OpenAI embedding credentials missing')
 
   if (shouldUseAzureV1Embeddings(env)) {
     return {
+      provider: 'azure',
+      apiFormat: 'openai',
       url: `${endpoint}/openai/v1/embeddings`,
       model,
       dimensions,
@@ -1184,6 +1225,8 @@ function buildEmbeddingRequest(env: Env) {
 
   const apiVersion = cleanEnvValue(env.AZURE_OPENAI_API_VERSION || '2024-10-21')
   return {
+    provider: 'azure',
+    apiFormat: 'openai',
     url: `${endpoint}/openai/deployments/${encodeURIComponent(model)}/embeddings?api-version=${encodeURIComponent(apiVersion)}`,
     model,
     dimensions,
@@ -1192,51 +1235,89 @@ function buildEmbeddingRequest(env: Env) {
   }
 }
 
-async function getEmbeddingsBatch(env: Env, texts: string[]) {
-  const inputs = texts.map((text) => text.replace(/\n/g, ' ').slice(0, MAX_EMBED_INPUT))
-  const embeddingRequest = buildEmbeddingRequest(env)
-
-  try {
-    const body: Record<string, any> = {
-      input: inputs,
-      dimensions: embeddingRequest.dimensions,
+function buildEmbeddingBody(embeddingRequest: any, inputs: string[]) {
+  if (embeddingRequest.apiFormat === 'gemini') {
+    return {
+      requests: inputs.map((input) => ({
+        model: embeddingRequest.model,
+        content: { parts: [{ text: input }] },
+        outputDimensionality: embeddingRequest.dimensions,
+      })),
     }
-
-    if (embeddingRequest.usesV1Api) {
-      body.model = embeddingRequest.model
-    }
-
-    const response = await fetchWithTimeout(embeddingRequest.url, {
-      method: 'POST',
-      headers: embeddingRequest.headers,
-      body: JSON.stringify(body),
-    }, EMBEDDING_TIMEOUT_MS)
-
-    const data: any = await response.json().catch(() => ({}))
-    if (!response.ok || data?.error) {
-      const message = data?.error?.message || `HTTP ${response.status}`
-      if (response.status === 429 || response.status >= 500 || isTransientEmbeddingError(message)) {
-        throw new RetryLaterError(`Embedding provider temporarily unavailable: ${message}`)
-      }
-      throw new Error(message)
-    }
-
-    const embeddings = Array.isArray(data?.data) ? data.data : []
-    if (embeddings.length !== inputs.length) {
-      throw new Error('Batch embedding response length mismatch.')
-    }
-
-    return embeddings
-      .sort((a: any, b: any) => Number(a?.index || 0) - Number(b?.index || 0))
-      .map((item: any) => {
-        const values = Array.isArray(item?.embedding) ? item.embedding : []
-        if (!values.length) throw new Error('Embedding response had no values.')
-        return normalizeEmbedding(values)
-      })
-  } catch (error: any) {
-    if (error instanceof RetryLaterError) throw error
-    const message = error?.message || describeError(error) || 'Embedding request failed'
-    if (isTransientEmbeddingError(message)) throw new RetryLaterError(`Embedding generation paused: ${message}`)
-    throw new Error(`Embedding generation failed: ${message}`)
   }
+
+  const body: Record<string, any> = {
+    input: inputs,
+    dimensions: embeddingRequest.dimensions,
+  }
+
+  if (embeddingRequest.usesV1Api) {
+    body.model = embeddingRequest.model
+  }
+
+  return body
+}
+
+function extractEmbeddingValues(embeddingRequest: any, data: any) {
+  if (embeddingRequest.apiFormat === 'gemini') {
+    return (Array.isArray(data?.embeddings) ? data.embeddings : []).map((item: any) => item?.values)
+  }
+
+  return (Array.isArray(data?.data) ? data.data : [])
+    .sort((a: any, b: any) => Number(a?.index || 0) - Number(b?.index || 0))
+    .map((item: any) => item?.embedding)
+}
+
+async function requestEmbeddingsBatch(env: Env, provider: string, texts: string[]) {
+  const inputs = texts.map((text) => text.replace(/\n/g, ' ').slice(0, MAX_EMBED_INPUT))
+  const embeddingRequest = buildEmbeddingRequest(env, provider)
+
+  const response = await fetchWithTimeout(embeddingRequest.url, {
+    method: 'POST',
+    headers: embeddingRequest.headers,
+    body: JSON.stringify(buildEmbeddingBody(embeddingRequest, inputs)),
+  }, EMBEDDING_TIMEOUT_MS)
+
+  const data: any = await response.json().catch(() => ({}))
+  if (!response.ok || data?.error) {
+    const message = data?.error?.message || `HTTP ${response.status}`
+    if (response.status === 429 || response.status >= 500 || isTransientEmbeddingError(message)) {
+      throw new RetryLaterError(`Embedding provider temporarily unavailable: ${message}`)
+    }
+    throw new Error(message)
+  }
+
+  const embeddings = extractEmbeddingValues(embeddingRequest, data)
+  if (embeddings.length !== inputs.length) {
+    throw new Error('Batch embedding response length mismatch.')
+  }
+
+  return embeddings.map((values: any) => {
+    if (!Array.isArray(values) || !values.length) throw new Error('Embedding response had no values.')
+    return normalizeEmbedding(values)
+  })
+}
+
+async function getEmbeddingsBatch(env: Env, texts: string[]) {
+  const errors: string[] = []
+
+  for (const provider of getEmbeddingProviderOrder(env)) {
+    try {
+      return await requestEmbeddingsBatch(env, provider, texts)
+    } catch (error: any) {
+      if (error instanceof RetryLaterError) {
+        errors.push(`${provider}: ${error.message}`)
+        console.warn(`[Training Worker] ${provider} embeddings temporarily unavailable, trying fallback if configured:`, error.message)
+        continue
+      }
+
+      const message = error?.message || describeError(error) || 'Embedding request failed'
+      errors.push(`${provider}: ${message}`)
+      console.warn(`[Training Worker] ${provider} embeddings failed, trying fallback if configured:`, message)
+    }
+  }
+
+  const combined = errors.join(' | ')
+  if (isTransientEmbeddingError(combined)) throw new RetryLaterError(`Embedding generation paused: ${combined}`)
+  throw new Error(`Embedding generation failed: ${combined}`)
 }

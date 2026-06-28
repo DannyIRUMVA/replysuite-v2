@@ -1,5 +1,5 @@
 import { TOOLS, TOOL_HANDLERS } from './registry'
-import { buildChatCompletionsRequest } from '../ai-provider'
+import { buildChatCompletionsRequests, type ChatCompletionsRequest } from '../ai-provider'
 import { filterAgentToolsForPlan, getChatbotOwnerPlanSlug } from '../plan-access'
 
 export interface AgentOptions {
@@ -33,7 +33,12 @@ export const runAgentCycle = async (messages: any[], options: AgentOptions) => {
     return await runGptAgent(messages, options, activeTools, config)
   } catch (error: any) {
     console.error('[Agent Error] GPT agent cycle failed:', error?.message || error)
-    return 'I apologize, but I encountered an error while processing your request with our AI engine.'
+
+    if (expandedEnabledTools.includes('request_appointment')) {
+      return 'I can still help with a booking. Please send your name, phone number, preferred date and time, and any notes such as number of guests. The team will confirm it shortly.'
+    }
+
+    return 'I’m having trouble replying right now. Please send your request with your name and contact details, and the team will follow up shortly.'
   }
 }
 
@@ -53,8 +58,55 @@ function convertSchemaToLowercase(schema: any): any {
   return schema
 }
 
+const withChatRequestOptions = (chatRequest: ChatCompletionsRequest, requestBody: any) => {
+  const body = { ...requestBody }
+
+  if (chatRequest.usesV1Api) {
+    body.model = chatRequest.model
+  }
+
+  if (chatRequest.maxCompletionTokens) {
+    body.max_completion_tokens = chatRequest.maxCompletionTokens
+  }
+
+  // Azure GPT-5.5 chat-completions currently rejects reasoning_effort when
+  // function tools are present. Keep reasoning for non-tool turns, but omit it
+  // for agent/tool loops so bookings and other tools can still execute.
+  if (chatRequest.reasoningEffort && !body.tools) {
+    body.reasoning_effort = chatRequest.reasoningEffort
+  }
+
+  return body
+}
+
+const runAgentRequestWithFallback = async (chatRequests: ChatCompletionsRequest[], requestBody: any) => {
+  const errors: string[] = []
+
+  for (const chatRequest of chatRequests) {
+    try {
+      const response = await fetch(chatRequest.url, {
+        method: 'POST',
+        headers: chatRequest.headers,
+        body: JSON.stringify(withChatRequestOptions(chatRequest, requestBody))
+      })
+
+      const data: any = await response.json().catch(() => ({}))
+      if (!response.ok || data?.error) {
+        throw new Error(data?.error?.message || `GPT request failed with HTTP ${response.status}`)
+      }
+
+      return { data, provider: chatRequest.provider }
+    } catch (error: any) {
+      errors.push(`${chatRequest.provider}: ${error?.message || error}`)
+      console.warn(`[Agent Fallback] ${chatRequest.provider} failed, trying next provider if configured:`, error?.message || error)
+    }
+  }
+
+  throw new Error(`All agent chat providers failed: ${errors.join(' | ')}`)
+}
+
 async function runGptAgent(messages: any[], options: AgentOptions, activeTools: any[], config: any) {
-  const chatRequest = buildChatCompletionsRequest(config)
+  const chatRequests = buildChatCompletionsRequests(config)
 
   const allFunctionDeclarations = activeTools.flatMap((toolGroup: any) => toolGroup.function_declarations || [])
   const gptTools = allFunctionDeclarations.map((fd: any) => ({
@@ -105,20 +157,7 @@ CRITICAL RULES FOR TOOLS:
       tool_choice: gptTools.length > 0 ? 'auto' : undefined,
     }
 
-    if (chatRequest.usesV1Api) {
-      requestBody.model = chatRequest.model
-    }
-
-    const response = await fetch(chatRequest.url, {
-      method: 'POST',
-      headers: chatRequest.headers,
-      body: JSON.stringify(requestBody)
-    })
-
-    const data: any = await response.json().catch(() => ({}))
-    if (!response.ok || data?.error) {
-      throw new Error(data?.error?.message || `GPT request failed with HTTP ${response.status}`)
-    }
+    const { data } = await runAgentRequestWithFallback(chatRequests, requestBody)
 
     const choice = data.choices?.[0]
     const message = choice?.message
