@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ArrowRight, Check, Clipboard, Eraser, Loader2, MessageCircle, RefreshCw, Sparkles, Wand2 } from 'lucide-vue-next'
-import { getFreeTool, getRelatedFreeTools, type FreeToolLength, type FreeToolTone } from '~~/shared/free-tools'
+import { ArrowRight, Check, Clipboard, Eraser, Loader2, RefreshCw, Sparkles, Wand2 } from 'lucide-vue-next'
+import { getFreeTool, type FreeToolLength, type FreeToolTone } from '~~/shared/free-tools'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug || ''))
@@ -11,7 +11,7 @@ if (!tool.value) {
 }
 
 const currentTool = computed(() => tool.value!)
-const relatedTools = computed(() => getRelatedFreeTools(currentTool.value))
+const sampleExample = computed(() => currentTool.value.examples[0])
 
 useSeoMeta({
   title: () => currentTool.value.seoTitle,
@@ -40,18 +40,6 @@ useHead(() => ({
         description: currentTool.value.seoDescription,
         url: `https://replysuite.app/tools/${currentTool.value.slug}`,
         publisher: { '@type': 'Organization', name: 'ReplySuite', url: 'https://replysuite.app' },
-      }),
-    },
-    {
-      type: 'application/ld+json',
-      children: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: currentTool.value.faqs.map((faq) => ({
-          '@type': 'Question',
-          name: faq.question,
-          acceptedAnswer: { '@type': 'Answer', text: faq.answer },
-        })),
       }),
     },
     {
@@ -100,6 +88,18 @@ const fillExample = (value: string) => {
   errorMessage.value = ''
 }
 
+const fillSampleValues = () => {
+  businessName.value = businessName.value || 'ReplySuite Demo'
+  businessType.value = currentTool.value.businessTypes[0]
+  tone.value = 'professional'
+  length.value = 'medium'
+  input.value = sampleExample.value?.input || currentTool.value.inputPlaceholder
+  extraContext.value = 'Keep it helpful, concise, and easy for the customer to act on.'
+  reply.value = ''
+  errorMessage.value = ''
+  copied.value = false
+}
+
 const clearForm = () => {
   input.value = ''
   extraContext.value = ''
@@ -146,7 +146,7 @@ const copyReply = async () => {
 </script>
 
 <template>
-  <main class="min-h-screen overflow-hidden pb-24 pt-12">
+  <main class="min-h-screen overflow-hidden pb-16 pt-10">
     <section class="relative px-4 py-12 sm:px-6 lg:py-20">
       <div class="absolute right-0 top-0 -z-10 h-[420px] w-[min(760px,90vw)] rounded-full bg-primary/10 blur-[140px]"></div>
       <div class="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
@@ -161,22 +161,18 @@ const copyReply = async () => {
             {{ currentTool.title }}
           </h1>
           <p class="mt-5 text-base font-medium leading-relaxed text-foreground/65 sm:text-lg">
-            {{ currentTool.description }} Paste the message, choose a tone, and generate a ready-to-send response powered by GPT-OSS.
+            {{ currentTool.description }} Fill the fields or start with sample values, then copy the finished response.
           </p>
 
-          <div class="mt-8 grid gap-3 sm:grid-cols-3">
-            <div class="rounded-3xl border border-foreground/10 bg-background-card/70 p-4">
-              <p class="text-2xl font-black text-foreground">Free</p>
-              <p class="mt-1 text-xs font-semibold text-foreground/55">No account needed</p>
-            </div>
-            <div class="rounded-3xl border border-foreground/10 bg-background-card/70 p-4">
-              <p class="text-2xl font-black text-foreground">GPT-OSS</p>
-              <p class="mt-1 text-xs font-semibold text-foreground/55">OpenRouter model</p>
-            </div>
-            <div class="rounded-3xl border border-foreground/10 bg-background-card/70 p-4">
-              <p class="text-2xl font-black text-foreground">Copy</p>
-              <p class="mt-1 text-xs font-semibold text-foreground/55">Ready to send</p>
-            </div>
+          <div class="mt-8 rounded-[30px] border border-primary/20 bg-primary/10 p-5">
+            <p class="text-sm font-black uppercase tracking-[0.16em] text-primary">Need this every day?</p>
+            <p class="mt-3 text-sm leading-relaxed text-foreground/70">
+              Train ReplySuite once and let your assistant reply across website chat, WhatsApp, Instagram, and booking conversations.
+            </p>
+            <NuxtLink :to="`/register?ref=${currentTool.slug}`" class="btn-gradient mt-5 inline-flex items-center gap-2 px-6 py-3 text-sm font-black">
+              Train your assistant
+              <ArrowRight class="h-4 w-4" />
+            </NuxtLink>
           </div>
         </div>
 
@@ -207,8 +203,11 @@ const copyReply = async () => {
           </div>
 
           <div class="mt-4 flex flex-wrap gap-2">
+            <button type="button" class="rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-black text-primary transition hover:border-primary/50" @click="fillSampleValues">
+              Fill sample values
+            </button>
             <button v-for="example in currentTool.examples" :key="example.label" type="button" class="rounded-full border border-foreground/10 px-4 py-2 text-xs font-bold text-foreground/65 transition hover:border-primary/30 hover:text-primary" @click="fillExample(example.input)">
-              Use example: {{ example.label }}
+              Use {{ example.label }}
             </button>
           </div>
 
@@ -231,13 +230,10 @@ const copyReply = async () => {
             </div>
           </div>
 
-          <details class="mt-5 rounded-[24px] border border-foreground/10 bg-foreground/[0.02] p-4">
-            <summary class="cursor-pointer text-xs font-black uppercase tracking-[0.14em] text-foreground/60">Optional business context</summary>
-            <label class="mt-4 block">
-              <span class="text-xs font-bold text-foreground/60">Add a policy, location, booking status, or next step</span>
-              <input v-model="extraContext" type="text" placeholder="Example: Ask the customer to DM us their order number." class="mt-2 w-full rounded-2xl border border-foreground/10 bg-background px-4 py-3 text-sm font-semibold text-foreground outline-none transition placeholder:text-foreground/45 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
-            </label>
-          </details>
+          <label class="mt-5 block">
+            <span class="text-xs font-black uppercase tracking-[0.14em] text-foreground/55">Helpful context</span>
+            <input v-model="extraContext" type="text" placeholder="Example: Ask them to reply with a booking time." class="mt-2 w-full rounded-2xl border border-foreground/10 bg-background px-4 py-3 text-sm font-semibold text-foreground outline-none transition placeholder:text-foreground/45 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
+          </label>
 
           <div class="mt-6 grid gap-3 sm:grid-cols-[1fr_auto]">
             <button type="submit" class="btn-gradient inline-flex w-full items-center justify-center gap-3 px-8 py-4 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60" :disabled="!canGenerate">
@@ -272,64 +268,15 @@ const copyReply = async () => {
       </div>
     </section>
 
-    <section class="mx-auto mt-16 grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_0.8fr]">
-      <div class="rounded-[36px] border border-foreground/10 bg-foreground/[0.02] p-6 sm:p-8">
-        <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Examples</p>
-        <h2 class="mt-3 text-3xl font-black tracking-tight text-foreground">{{ currentTool.title }} examples</h2>
-        <div class="mt-6 space-y-4">
-          <article v-for="example in currentTool.examples" :key="example.label" class="rounded-[28px] border border-foreground/10 bg-background-card/70 p-5">
-            <div role="heading" aria-level="3" class="text-base font-black text-foreground">{{ example.label }}</div>
-            <p class="mt-3 text-sm font-bold text-foreground/55">Input</p>
-            <p class="mt-1 text-sm leading-relaxed text-foreground/70">{{ example.input }}</p>
-            <p class="mt-4 text-sm font-bold text-foreground/55">Example reply</p>
-            <p class="mt-1 text-sm leading-relaxed text-foreground/70">{{ example.output }}</p>
-          </article>
-        </div>
-      </div>
-
-      <aside class="rounded-[36px] border border-primary/20 bg-primary/10 p-6 sm:p-8">
-        <MessageCircle class="h-9 w-9 text-primary" />
-        <h2 class="mt-5 text-3xl font-black tracking-tight text-foreground">One reply is useful. Automated replies are better.</h2>
-        <p class="mt-4 text-sm leading-relaxed text-foreground/65">
-          This free tool writes a single generic response. ReplySuite can learn your real business context and reply across website chat, WhatsApp, Instagram comments, Instagram DMs, and booking conversations.
+    <section class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="rounded-[30px] border border-foreground/10 bg-foreground/[0.02] p-5 text-center sm:p-6">
+        <p class="text-sm font-semibold leading-relaxed text-foreground/65">
+          Want replies that already know your policies, booking rules, tone, and channels?
         </p>
-        <NuxtLink :to="`/register?ref=${currentTool.slug}`" class="btn-gradient mt-6 inline-flex items-center gap-2 px-7 py-3 text-sm font-black">
+        <NuxtLink :to="`/register?ref=${currentTool.slug}`" class="mt-4 inline-flex items-center justify-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-6 py-3 text-sm font-black text-primary transition hover:border-primary/50 hover:bg-primary/15">
           Train your ReplySuite assistant
           <ArrowRight class="h-4 w-4" />
         </NuxtLink>
-      </aside>
-    </section>
-
-    <section class="mx-auto mt-16 max-w-7xl px-4 sm:px-6">
-      <div class="grid gap-8 lg:grid-cols-[1fr_0.75fr]">
-        <div>
-          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">FAQ</p>
-          <h2 class="mt-3 text-3xl font-black tracking-tight text-foreground">Questions about this reply generator</h2>
-          <div class="mt-6 divide-y divide-foreground/10 rounded-[32px] border border-foreground/10 bg-background-card/70">
-            <details v-for="faq in currentTool.faqs" :key="faq.question" class="group p-5 open:bg-foreground/[0.02] first:rounded-t-[32px] last:rounded-b-[32px]">
-              <summary class="cursor-pointer text-base font-black text-foreground marker:text-primary">{{ faq.question }}</summary>
-              <p class="mt-3 text-sm leading-relaxed text-foreground/65">{{ faq.answer }}</p>
-            </details>
-          </div>
-        </div>
-
-        <div>
-          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Related tools</p>
-          <h2 class="mt-3 text-3xl font-black tracking-tight text-foreground">More free reply tools</h2>
-          <div class="mt-6 space-y-4">
-            <NuxtLink v-for="related in relatedTools" :key="related.slug" :to="`/tools/${related.slug}`" class="group block rounded-[28px] border border-foreground/10 bg-background-card/70 p-5 transition hover:-translate-y-1 hover:border-primary/30">
-              <p class="text-base font-black text-foreground">{{ related.shortTitle }}</p>
-              <p class="mt-2 text-sm leading-relaxed text-foreground/60">{{ related.description }}</p>
-              <span class="mt-4 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-primary">
-                Open tool <ArrowRight class="h-3.5 w-3.5 transition group-hover:translate-x-1" />
-              </span>
-            </NuxtLink>
-          </div>
-          <NuxtLink to="/tools" class="mt-5 inline-flex items-center gap-2 text-sm font-black text-primary">
-            View all free tools
-            <ArrowRight class="h-4 w-4" />
-          </NuxtLink>
-        </div>
       </div>
     </section>
   </main>
