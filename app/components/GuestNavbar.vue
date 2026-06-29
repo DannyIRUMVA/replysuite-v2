@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Zap, Menu, X, ChevronRight, Layout, Sparkles, CreditCard, Info, LogIn, Building2 } from 'lucide-vue-next'
+import { Zap, Menu, X, ChevronRight, ChevronDown, Layout, Sparkles, CreditCard, Info, LogIn, Building2 } from 'lucide-vue-next'
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 
 const isMenuOpen = ref(false)
@@ -7,9 +7,13 @@ const isScrolled = ref(false)
 const user = useSupabaseUser()
 const route = useRoute()
 
+const productLinks = [
+  { name: 'Product overview', href: '/product', icon: Layout, description: 'See how ReplySuite works across customer conversations.' },
+  { name: 'Features', href: '/features', icon: Sparkles, description: 'Website chat, WhatsApp, Instagram, bookings, and training.' },
+  { name: 'Free tools', href: '/tools', icon: Zap, description: 'AI reply generators for reviews, support, WhatsApp, and bookings.' }
+]
+
 const navLinks = [
-  { name: 'Product', href: '/product', icon: Layout },
-  { name: 'Features', href: '/features', icon: Sparkles },
   { name: 'Pricing', href: '/pricing', icon: CreditCard },
   { name: 'Company', href: '/company', icon: Building2 },
   { name: 'Contact', href: '/contact', icon: Info }
@@ -51,6 +55,29 @@ watch(() => route.fullPath, () => {
       <!-- Desktop Menu -->
       <div
         class="hidden lg:flex items-center gap-1 p-1 bg-foreground/[0.02] backdrop-blur-md rounded-full border border-foreground/10">
+        <div class="group relative">
+          <NuxtLink to="/product"
+            class="px-4 xl:px-5 py-2 rounded-full text-sm font-semibold text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-all flex items-center gap-2"
+            active-class="text-primary bg-primary/5">
+            <Layout class="w-4 h-4" />
+            Product
+            <ChevronDown class="w-3.5 h-3.5 transition-transform group-hover:rotate-180" aria-hidden="true" />
+          </NuxtLink>
+          <div class="pointer-events-none absolute left-1/2 top-full z-[120] w-[340px] -translate-x-1/2 pt-3 opacity-0 transition duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+            <div class="rounded-[28px] border border-foreground/10 bg-background-card/95 p-3 shadow-2xl shadow-foreground/10 backdrop-blur-2xl">
+              <NuxtLink v-for="link in productLinks" :key="link.name" :to="link.href"
+                class="flex gap-3 rounded-2xl p-3 text-left transition hover:bg-foreground/[0.04]">
+                <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <component :is="link.icon" class="h-4 w-4" />
+                </div>
+                <div>
+                  <p class="text-sm font-black text-foreground">{{ link.name }}</p>
+                  <p class="mt-1 text-xs leading-relaxed text-foreground/60">{{ link.description }}</p>
+                </div>
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
         <NuxtLink v-for="link in navLinks" :key="link.name" :to="link.href"
           class="px-4 xl:px-5 py-2 rounded-full text-sm font-semibold text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-all flex items-center gap-2"
           active-class="text-primary bg-primary/5">
@@ -110,6 +137,17 @@ watch(() => route.fullPath, () => {
           id="mobile-navigation"
           class="absolute top-full left-3 right-3 sm:left-6 sm:right-6 mt-3 p-4 sm:p-6 bg-background-card/95 backdrop-blur-2xl border border-foreground/10 rounded-[28px] shadow-2xl lg:hidden max-h-[calc(100vh-5.5rem)] overflow-y-auto">
           <div class="flex flex-col gap-2">
+            <div class="rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-2">
+              <div class="flex items-center gap-3 px-3 py-2 text-xs font-black uppercase tracking-[0.16em] text-primary">
+                <Layout class="w-4 h-4" />
+                Product
+              </div>
+              <NuxtLink v-for="link in productLinks" :key="link.name" :to="link.href" @click="isMenuOpen = false"
+                class="flex items-center gap-4 rounded-2xl px-3 py-3 text-base font-semibold text-foreground/65 hover:text-primary hover:bg-foreground/5 transition-all">
+                <component :is="link.icon" class="w-5 h-5" />
+                {{ link.name }}
+              </NuxtLink>
+            </div>
             <NuxtLink v-for="link in navLinks" :key="link.name" :to="link.href" @click="isMenuOpen = false"
               class="flex items-center gap-4 px-4 py-3 rounded-2xl text-base sm:text-lg font-semibold text-foreground/65 hover:text-primary hover:bg-foreground/5 transition-all">
               <component :is="link.icon" class="w-6 h-6" />

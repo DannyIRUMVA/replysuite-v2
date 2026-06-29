@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { Zap, Instagram, Globe2, Linkedin } from 'lucide-vue-next'
+import { freeTools } from '~~/shared/free-tools'
 
 const { openFeedback } = useFeedback()
+const footerTools = freeTools.slice(0, 6)
 const { openSettings } = useCookieConsent()
 
 const socialLinks = [
@@ -44,8 +46,8 @@ const socialLinks = [
       </div>
     </div>
 
-    <!-- 4 Column Links Grid -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-14 mb-14">
+    <!-- Footer Links Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-10 md:gap-10 mb-14">
       <!-- Column 1: Product -->
       <div>
         <h2 class="text-[5px] font-bold uppercase tracking-[0.16em] text-primary mb-4">Product</h2>
@@ -53,6 +55,7 @@ const socialLinks = [
           <li v-for="link in [
             { name: 'Product Overview', to: '/product' },
             { name: 'Features', to: '/features' },
+            { name: 'Free Tools', to: '/tools' },
             { name: 'Pricing & Plans', to: '/pricing' },
             { name: 'Product Changelog', to: '/changelog' }
           ]" :key="link.name">
@@ -63,7 +66,22 @@ const socialLinks = [
         </ul>
       </div>
 
-      <!-- Column 2: Resources -->
+      <!-- Column 2: Tools -->
+      <div>
+        <h2 class="text-[5px] font-bold uppercase tracking-[0.16em] text-primary mb-4">Tools</h2>
+        <ul class="space-y-4">
+          <li>
+            <NuxtLink to="/tools"
+              class="text-sm text-foreground/65 hover:text-foreground transition-colors font-medium">All Free Tools</NuxtLink>
+          </li>
+          <li v-for="tool in footerTools" :key="tool.slug">
+            <NuxtLink :to="`/tools/${tool.slug}`"
+              class="text-sm text-foreground/65 hover:text-foreground transition-colors font-medium">{{ tool.shortTitle }}</NuxtLink>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Column 3: Resources -->
       <div>
         <h2 class="text-[5px] font-bold uppercase tracking-[0.16em] text-primary mb-4">Resources</h2>
         <ul class="space-y-4">
@@ -80,7 +98,7 @@ const socialLinks = [
         </ul>
       </div>
 
-      <!-- Column 3: Company -->
+      <!-- Column 4: Company -->
       <div>
         <h2 class="text-[5px] font-bold uppercase tracking-[0.16em] text-primary mb-4">Company</h2>
         <ul class="space-y-4">
@@ -102,7 +120,7 @@ const socialLinks = [
         </ul>
       </div>
 
-      <!-- Column 4: Trust & Legal -->
+      <!-- Column 5: Trust & Legal -->
       <div>
         <h2 class="text-[5px] font-bold uppercase tracking-[0.16em] text-primary mb-4">Trust & Legal</h2>
         <ul class="space-y-4">

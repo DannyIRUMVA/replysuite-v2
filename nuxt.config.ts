@@ -194,6 +194,7 @@ export default defineNuxtConfig({
     openRouterApiKey: process.env.OPENROUTER_API_KEY,
     openRouterBaseUrl: process.env.OPENROUTER_BASE_URL,
     openRouterChatModel: process.env.OPENROUTER_CHAT_MODEL,
+    freeToolsOpenRouterModel: process.env.FREE_TOOLS_OPENROUTER_MODEL,
     geminiApiKey: process.env.GEMINI_API_KEY,
     geminiOpenAiBaseUrl: process.env.GEMINI_OPENAI_BASE_URL,
     geminiChatModel: process.env.GEMINI_CHAT_MODEL,
