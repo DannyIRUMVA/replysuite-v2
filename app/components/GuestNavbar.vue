@@ -63,16 +63,16 @@ watch(() => route.fullPath, () => {
             Product
             <ChevronDown class="w-3.5 h-3.5 transition-transform group-hover:rotate-180" aria-hidden="true" />
           </NuxtLink>
-          <div class="pointer-events-none absolute left-1/2 top-full z-[120] w-[340px] -translate-x-1/2 pt-3 opacity-0 transition duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
-            <div class="rounded-[28px] border border-foreground/10 bg-background-card/95 p-3 shadow-2xl shadow-foreground/10 backdrop-blur-2xl">
+          <div class="pointer-events-none absolute left-1/2 top-full z-[120] w-[280px] -translate-x-1/2 pt-2 opacity-0 transition duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+            <div class="rounded-2xl border border-foreground/10 bg-background-card p-2 shadow-2xl shadow-black/25">
               <NuxtLink v-for="link in productLinks" :key="link.name" :to="link.href"
-                class="flex gap-3 rounded-2xl p-3 text-left transition hover:bg-foreground/[0.04]">
-                <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <component :is="link.icon" class="h-4 w-4" />
+                class="flex gap-2.5 rounded-xl p-2 text-left transition hover:bg-foreground/[0.04]">
+                <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <component :is="link.icon" class="h-3.5 w-3.5" />
                 </div>
                 <div>
-                  <p class="text-sm font-black text-foreground">{{ link.name }}</p>
-                  <p class="mt-1 text-xs leading-relaxed text-foreground/60">{{ link.description }}</p>
+                  <p class="text-xs font-black text-foreground">{{ link.name }}</p>
+                  <p class="mt-0.5 text-[11px] leading-snug text-foreground/60">{{ link.description }}</p>
                 </div>
               </NuxtLink>
             </div>
@@ -135,48 +135,48 @@ watch(() => route.fullPath, () => {
         leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-[-10px]">
         <div v-if="isMenuOpen"
           id="mobile-navigation"
-          class="absolute top-full left-3 right-3 sm:left-6 sm:right-6 mt-3 p-4 sm:p-6 bg-background-card/95 backdrop-blur-2xl border border-foreground/10 rounded-[28px] shadow-2xl lg:hidden max-h-[calc(100vh-5.5rem)] overflow-y-auto">
+          class="absolute top-full left-3 right-3 sm:left-6 sm:right-6 mt-2 p-3 sm:p-4 bg-background-card border border-foreground/10 rounded-2xl shadow-2xl shadow-black/25 lg:hidden max-h-[calc(100vh-5.5rem)] overflow-y-auto">
           <div class="flex flex-col gap-2">
-            <div class="rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-2">
-              <div class="flex items-center gap-3 px-3 py-2 text-xs font-black uppercase tracking-[0.16em] text-primary">
-                <Layout class="w-4 h-4" />
+            <div class="rounded-xl border border-foreground/10 bg-background p-1.5">
+              <div class="flex items-center gap-2 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
+                <Layout class="w-3.5 h-3.5" />
                 Product
               </div>
               <NuxtLink v-for="link in productLinks" :key="link.name" :to="link.href" @click="isMenuOpen = false"
-                class="flex items-center gap-4 rounded-2xl px-3 py-3 text-base font-semibold text-foreground/65 hover:text-primary hover:bg-foreground/5 transition-all">
-                <component :is="link.icon" class="w-5 h-5" />
+                class="flex items-center gap-3 rounded-xl px-2.5 py-2.5 text-sm font-semibold text-foreground/65 hover:text-primary hover:bg-foreground/5 transition-all">
+                <component :is="link.icon" class="w-4 h-4" />
                 {{ link.name }}
               </NuxtLink>
             </div>
             <NuxtLink v-for="link in navLinks" :key="link.name" :to="link.href" @click="isMenuOpen = false"
-              class="flex items-center gap-4 px-4 py-3 rounded-2xl text-base sm:text-lg font-semibold text-foreground/65 hover:text-primary hover:bg-foreground/5 transition-all">
-              <component :is="link.icon" class="w-6 h-6" />
+              class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-foreground/65 hover:text-primary hover:bg-foreground/5 transition-all">
+              <component :is="link.icon" class="w-4 h-4" />
               {{ link.name }}
             </NuxtLink>
             <NuxtLink v-if="user" to="/dashboard" @click="isMenuOpen = false"
-              class="flex items-center gap-4 px-4 py-3 rounded-2xl text-base sm:text-lg font-semibold text-foreground/65 hover:text-primary hover:bg-foreground/5 transition-all">
-              <Layout class="w-6 h-6" />
+              class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-foreground/65 hover:text-primary hover:bg-foreground/5 transition-all">
+              <Layout class="w-4 h-4" />
               Dashboard
             </NuxtLink>
-            <hr class="border-foreground/5 my-2" />
-            <div v-if="!user" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+            <hr class="border-foreground/5 my-1" />
+            <div v-if="!user" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
               <NuxtLink to="/login" @click="isMenuOpen = false"
-                class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border border-foreground/10 text-sm font-bold text-foreground/70 hover:text-foreground hover:bg-foreground/[0.03] transition-all">
-                <LogIn class="w-4 h-4" />
+                class="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-foreground/10 text-xs font-bold text-foreground/70 hover:text-foreground hover:bg-foreground/[0.03] transition-all">
+                <LogIn class="w-3.5 h-3.5" />
                 Sign In
               </NuxtLink>
               <NuxtLink to="/register" @click="isMenuOpen = false"
-                class="btn-gradient w-full text-center py-3 text-sm font-bold tracking-widest uppercase">
+                class="btn-gradient w-full text-center py-2.5 text-xs font-bold tracking-widest uppercase">
                 start free
               </NuxtLink>
             </div>
             <NuxtLink v-else :to="user ? '/dashboard' : '/login'" @click="isMenuOpen = false"
-              class="btn-gradient w-full text-center py-4 text-sm font-bold tracking-widest uppercase mt-2">
+              class="btn-gradient w-full text-center py-3 text-xs font-bold tracking-widest uppercase mt-1">
               go to dashboard
             </NuxtLink>
 
             <!-- Theme Switcher Mobile -->
-            <div class="mt-3 flex justify-end">
+            <div class="mt-2 flex justify-end">
               <ThemeSwitcher />
             </div>
           </div>
