@@ -291,7 +291,8 @@ const socialProofMetrics = [
 const socialProofRows = [
   { label: 'Website deployment', value: 'Embed chatbot on approved domains', detail: 'Included from Free Starter upward' },
   { label: 'WhatsApp chatbot', value: 'Available from Silver', detail: 'Built for higher-volume customer conversations' },
-  { label: 'Instagram workflows', value: 'Available from Gold', detail: 'Automate comment replies and comment-to-DM flows' },
+  { label: 'Instagram comment replies', value: 'Available from Gold', detail: 'Reply publicly to matching Instagram comments' },
+  { label: 'Instagram comment-to-DM', value: 'Available from Gold', detail: 'Move matching comments into private DM follow-up' },
   { label: 'Training sources', value: 'Website, PDFs, FAQs, custom text', detail: 'Keeps answers closer to your business content' },
   { label: 'Monthly AI replies', value: '100 to 500,000', detail: 'Scale from Starter to Enterprise Ready' },
   { label: 'Training sessions', value: '10 to 1,000 / month', detail: 'Plan limits match launch, growth, and rollout needs' },
@@ -474,8 +475,8 @@ const plans = [
     id: 'gold',
     productId: 'd0493f6f-16bc-4d3c-97bb-7be920840f12',
     price: '26.88',
-    desc: 'Best for businesses ready for Instagram workflows and higher-volume conversations.',
-    features: ['5 chatbots', 'Website + WhatsApp support', 'Instagram workflows', '10,000 AI replies / mo', '100 training sessions'],
+    desc: 'Best for businesses ready for Instagram comment automation and higher-volume conversations.',
+    features: ['5 chatbots', 'Website + WhatsApp support', 'Instagram comment replies', 'Instagram comment-to-DM', '10,000 AI replies / mo', '100 training sessions'],
     popular: false
   },
   {
@@ -586,7 +587,10 @@ const handleSelect = async (plan: any) => {
               <MessageCircle class="w-4 h-4 text-primary" /> WhatsApp
             </span>
             <span class="inline-flex items-center gap-2">
-              <MessageSquareMore class="w-4 h-4 text-primary" /> Instagram comments + DMs
+              <MessageSquareMore class="w-4 h-4 text-primary" /> Instagram comment replies
+            </span>
+            <span class="inline-flex items-center gap-2">
+              <Send class="w-4 h-4 text-primary" /> Instagram comment-to-DM
             </span>
             <span class="inline-flex items-center gap-2">
               <CalendarCheck class="w-4 h-4 text-primary" /> Bookings + Google Calendar
@@ -1165,7 +1169,7 @@ const handleSelect = async (plan: any) => {
           <span class="text-gradient">Free Starter below.</span>
         </h2>
         <p class="text-foreground/65 mt-6 font-semibold leading-relaxed">
-          Choose from three paid subscriptions: Silver for WhatsApp, Gold for Instagram workflows, and Enterprise Ready for AI business tools. If you are not ready to pay, the Free Starter subscription is still available below.
+          Choose from three paid subscriptions: Silver for WhatsApp, Gold for Instagram comment replies and comment-to-DM, and Enterprise Ready for AI business tools. If you are not ready to pay, the Free Starter subscription is still available below.
         </p>
       </div>
 
@@ -1264,7 +1268,7 @@ const handleSelect = async (plan: any) => {
         </h2>
 
         <p class="text-foreground/55 max-w-2xl mx-auto mb-10 relative z-10 font-semibold leading-relaxed">
-          Start with your website, expand to WhatsApp on Silver, add Instagram workflows on Gold, and unlock Enterprise AI tools for appointments, bookings, Google Calendar, and Paypack checkout when you are ready.
+          Start with your website, expand to WhatsApp on Silver, add Instagram comment replies and comment-to-DM on Gold, and unlock Enterprise AI tools for appointments, bookings, Google Calendar, and Paypack checkout when you are ready.
         </p>
 
         <div class="flex flex-col sm:flex-row justify-center gap-4 relative z-10">

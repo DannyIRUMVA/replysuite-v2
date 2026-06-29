@@ -3,9 +3,9 @@ import { Check, ArrowRight, HelpCircle, Loader2 } from 'lucide-vue-next'
 
 useSeoMeta({
   title: 'AI Customer Support Pricing for Website, WhatsApp & Instagram | ReplySuite',
-  description: 'Simple pricing for trained AI replies across website, WhatsApp, and Instagram workflows. Silver adds WhatsApp, Gold adds Instagram, and Enterprise unlocks AI business tools.',
+  description: 'Simple pricing for trained AI replies across website, WhatsApp, Instagram comment replies, Instagram comment-to-DM, and Enterprise business tools.',
   ogTitle: 'ReplySuite Pricing',
-  ogDescription: 'Start free. Silver adds WhatsApp, Gold adds Instagram workflows, and Enterprise unlocks appointments, bookings, Google Calendar, and Paypack checkout.',
+  ogDescription: 'Start free. Silver adds WhatsApp, Gold adds Instagram comment replies and comment-to-DM, and Enterprise unlocks appointments, bookings, Google Calendar, and Paypack checkout.',
   ogUrl: 'https://replysuite.app/pricing',
   twitterCard: 'summary_large_image',
   twitterTitle: 'ReplySuite Pricing',
@@ -24,7 +24,7 @@ useHead({
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web',
         url: 'https://replysuite.app',
-        description: 'AI chatbot software for website, WhatsApp, Instagram workflows, and Enterprise business tools.',
+        description: 'AI chatbot software for website, WhatsApp, Instagram comment replies, Instagram comment-to-DM, and Enterprise business tools.',
         offers: [
           {
             '@type': 'Offer',
@@ -47,7 +47,7 @@ useHead({
             name: 'Gold Plan',
             price: '26.88',
             priceCurrency: 'USD',
-            description: '5 chatbots, 10,000 AI replies, 100 training sessions, WhatsApp support, and Instagram workflows.',
+            description: '5 chatbots, 10,000 AI replies, 100 training sessions, WhatsApp support, Instagram comment replies, and Instagram comment-to-DM.',
             url: 'https://replysuite.app/pricing'
           },
           {
@@ -55,7 +55,7 @@ useHead({
             name: 'Enterprise Ready Plan',
             price: '350.00',
             priceCurrency: 'USD',
-            description: '50 chatbots, 500,000 AI replies, 1,000 training sessions, Instagram workflows, and AI business tools.',
+            description: '50 chatbots, 500,000 AI replies, 1,000 training sessions, Instagram comment replies, comment-to-DM, and AI business tools.',
             url: 'https://replysuite.app/pricing'
           }
         ]
@@ -142,8 +142,8 @@ const plans = [
     id: 'gold',
     name: 'Gold',
     price: '26.88',
-    desc: 'Best for higher-volume conversations across website, WhatsApp, and Instagram workflows.',
-    features: ['5 chatbots', 'Website + WhatsApp support', 'Instagram workflows', '10,000 AI replies / mo', '100 training sessions'], 
+    desc: 'Best for higher-volume conversations across website, WhatsApp, and Instagram comment automation.',
+    features: ['5 chatbots', 'Website + WhatsApp support', 'Instagram comment replies', 'Instagram comment-to-DM', '10,000 AI replies / mo', '100 training sessions'], 
     popular: false
   },
   {
@@ -168,7 +168,8 @@ const planComparisonRows = [
   { label: 'Trainable AI agent', starter: 'Included', silver: 'Included', gold: 'Included', enterprise: 'Included' },
   { label: 'Website chatbot', starter: 'Included', silver: 'Included', gold: 'Included', enterprise: 'Included' },
   { label: 'WhatsApp chatbot', starter: '—', silver: 'Included', gold: 'Included', enterprise: 'Included' },
-  { label: 'Instagram workflows', starter: '—', silver: '—', gold: 'Included', enterprise: 'Included' },
+  { label: 'Instagram comment replies', starter: '—', silver: '—', gold: 'Included', enterprise: 'Included' },
+  { label: 'Instagram comment-to-DM', starter: '—', silver: '—', gold: 'Included', enterprise: 'Included' },
   { label: 'AI business tools', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
   { label: 'Appointments', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
   { label: 'Google Calendar bookings', starter: '—', silver: '—', gold: '—', enterprise: 'Included' },
@@ -182,11 +183,11 @@ const faqs = [
   { q: 'Can I cancel any time?', a: 'Yes. You can cancel from your account settings.' },
   { q: 'Is there a free start?', a: 'Yes. You can start on Free Starter and upgrade later when your reply volume grows.' },
   { q: 'What happens if I hit my limit?', a: 'You can upgrade to a higher plan to continue with more AI replies, training sessions, or channels.' },
-  { q: 'Which plan includes WhatsApp, Instagram, and Paypack checkout?', a: 'Silver includes website and WhatsApp chatbots. Gold adds Instagram workflows. Enterprise Ready unlocks AI business tools including appointments, Google Calendar bookings, and contextual Paypack checkout.' },
+  { q: 'Which plan includes WhatsApp, Instagram, and Paypack checkout?', a: 'Silver includes website and WhatsApp chatbots. Gold adds Instagram comment replies and comment-to-DM. Enterprise Ready unlocks AI business tools including appointments, Google Calendar bookings, and contextual Paypack checkout.' },
   { q: 'Can the assistant create invoices?', a: 'No. ReplySuite focuses on appointments, bookings, and Paypack checkout attached to those records. It does not expose invoice automation in the customer assistant toolset.' },
   { q: 'Do all plans include website chatbot support?', a: 'Yes. Every plan includes website chatbot deployment, with higher plans adding more chatbots and connected domains.' },
   { q: 'Can I train the assistant with documents?', a: 'Yes. ReplySuite supports training with business content such as website pages, PDFs, FAQs, and custom text.' },
-  { q: 'Which plan should I choose first?', a: 'Start with Free Starter if you are testing. Choose Silver for website plus WhatsApp, Gold for Instagram workflows, and Enterprise Ready for AI business tools and scale.' },
+  { q: 'Which plan should I choose first?', a: 'Start with Free Starter if you are testing. Choose Silver for website plus WhatsApp, Gold for Instagram comment replies and comment-to-DM, and Enterprise Ready for AI business tools and scale.' },
   { q: 'Do I need a credit card for Free Starter?', a: 'No. Free Starter is designed as a low-friction way to launch and test your first chatbot.' }
 ]
 </script>
@@ -201,7 +202,7 @@ const faqs = [
           <span class="text-gradient">Clear upgrade path.</span>
         </h1>
         <p class="text-lg text-foreground/50 font-medium leading-relaxed">
-          Start with one trained website assistant. Silver adds WhatsApp, Gold adds Instagram workflows, and Enterprise unlocks AI business tools for appointments, bookings, Google Calendar, and Paypack checkout.
+          Start with one trained website assistant. Silver adds WhatsApp, Gold adds Instagram comment replies and comment-to-DM, and Enterprise unlocks AI business tools for appointments, bookings, Google Calendar, and Paypack checkout.
         </p>
       </div>
 
@@ -397,7 +398,7 @@ const faqs = [
       <section class="mt-24 bg-foreground/[0.02] p-16 rounded-[48px] border border-foreground/10 text-center relative overflow-hidden group">
         <div class="absolute inset-0 bg-primary/5 blur-[120px] group-hover:bg-primary/10 transition-all duration-1000"></div>
         <h2 class="text-3xl md:text-5xl font-extrabold mb-6 relative z-10 tracking-tight text-foreground">Need a custom business-action rollout?</h2>
-        <p class="text-foreground/50 mb-9 max-w-xl mx-auto font-medium text-base md:text-lg relative z-10">Talk to us if you want help with onboarding, training, Instagram workflows, Enterprise AI business tools, Paypack setup, or a larger rollout.</p>
+        <p class="text-foreground/50 mb-9 max-w-xl mx-auto font-medium text-base md:text-lg relative z-10">Talk to us if you want help with onboarding, training, Instagram comment replies, comment-to-DM, Enterprise AI business tools, Paypack setup, or a larger rollout.</p>
         <NuxtLink to="mailto:support@replysuite.com" class="btn-gradient px-8 py-4 text-base inline-flex items-center gap-4 group/btn relative z-10">
           Contact Us
           <ArrowRight class="w-5 h-5 group-hover/btn:translate-x-2 transition-transform" />

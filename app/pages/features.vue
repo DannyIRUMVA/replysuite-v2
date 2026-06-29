@@ -3,7 +3,7 @@ import { ArrowRight, BarChart3, Bot, CalendarDays, CheckCircle2, CreditCard, Fil
 
 useSeoMeta({
   title: 'Features | ReplySuite AI Chatbot Tools',
-  description: 'ReplySuite features for trained AI replies, website chat, WhatsApp and Instagram automation, appointments, bookings, Google Calendar, and Paypack checkout attached to real customer actions.',
+  description: 'ReplySuite features for trained AI replies, website chat, WhatsApp, Instagram comment replies, Instagram comment-to-DM, appointments, bookings, Google Calendar, and Paypack checkout attached to real customer actions.',
   ogTitle: 'ReplySuite Features',
   ogDescription: 'Train once. Reply everywhere. Book appointments. Manage bookings. Get paid.',
   ogUrl: 'https://replysuite.app/features',
@@ -29,9 +29,9 @@ const featureGroups = [
   {
     label: 'Reply',
     title: 'Answer customer questions across channels',
-    desc: 'Start with the website widget, then expand into WhatsApp and Instagram automation while keeping the same trained assistant context.',
+    desc: 'Start with the website widget, then expand into WhatsApp, Instagram comment replies, and Instagram comment-to-DM while keeping the same trained assistant context.',
     icon: MessageCircle,
-    items: ['Website chatbot widget', 'WhatsApp automation', 'Instagram comment and DM workflows', 'Lead capture and staff handoff'],
+    items: ['Website chatbot widget', 'WhatsApp automation', 'Instagram comment replies', 'Instagram comment-to-DM', 'Lead capture and staff handoff'],
   },
   {
     label: 'Act',
@@ -46,7 +46,8 @@ const features = [
   { title: 'Trained AI assistant', desc: 'Replies use your real business content instead of generic guesses.', icon: Bot },
   { title: 'Website widget', desc: 'Deploy the assistant on approved domains with a simple embed flow.', icon: Globe2 },
   { title: 'WhatsApp ready', desc: 'Expand support to a high-value customer messaging channel.', icon: MessageCircle },
-  { title: 'Instagram automation', desc: 'Support comment replies, comment-to-DM, and polling fallback workflows.', icon: MessageSquare },
+  { title: 'Instagram comment replies', desc: 'Reply publicly to matching Instagram comments with short, safe responses.', icon: MessageSquare },
+  { title: 'Instagram comment-to-DM', desc: 'Follow up privately when a comment needs a more helpful DM conversation.', icon: MessageCircle },
   { title: 'Appointments', desc: 'Collect service, staff, time, contact, notes, and deposit intent.', icon: CalendarDays },
   { title: 'Google Calendar bookings', desc: 'Use connected calendars for reservations, events, and appointment availability.', icon: CalendarDays },
   { title: 'Paypack checkout', desc: 'Request payment only for existing appointment or booking deposits.', icon: CreditCard },
