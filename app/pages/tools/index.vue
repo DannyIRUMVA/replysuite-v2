@@ -5,12 +5,38 @@ import { freeToolCategories, freeTools } from '~~/shared/free-tools'
 useSeoMeta({
   title: 'Free AI Reply Generators',
   description: 'Use ReplySuite free tools to generate customer replies, Google review responses, WhatsApp Business messages, complaint responses, and booking confirmations.',
+  keywords: 'free AI reply generator, Google review reply generator, customer complaint response generator, WhatsApp business reply generator, booking confirmation message generator',
+  robots: 'index, follow, max-image-preview:large',
   ogTitle: 'Free AI Reply Generators | ReplySuite',
   ogDescription: 'Generate professional customer replies for reviews, complaints, WhatsApp, and bookings — then automate them with ReplySuite.',
+  ogUrl: 'https://replysuite.app/tools',
+  twitterTitle: 'Free AI Reply Generators | ReplySuite',
+  twitterDescription: 'Generate customer replies, review responses, WhatsApp Business messages, and booking confirmations.',
 })
 
 useHead({
   link: [{ rel: 'canonical', href: 'https://replysuite.app/tools' }],
+  script: [
+    {
+      type: 'application/ld+json',
+      children: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'Free AI Reply Generators',
+        description: 'Free ReplySuite tools for generating customer replies and business responses.',
+        url: 'https://replysuite.app/tools',
+        mainEntity: {
+          '@type': 'ItemList',
+          itemListElement: freeTools.map((tool, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            name: tool.title,
+            url: `https://replysuite.app/tools/${tool.slug}`,
+          })),
+        },
+      }),
+    },
+  ],
 })
 
 const categoryIcons: Record<string, any> = {
@@ -35,7 +61,7 @@ const groupedTools = computed(() => freeToolCategories.map((category) => ({
         <span class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-primary">
           <Sparkles class="h-4 w-4" /> Free ReplySuite tools
         </span>
-        <h1 class="mt-8 text-4xl font-black tracking-tight text-foreground sm:text-6xl lg:text-7xl">
+        <h1 class="mt-8 text-4xl font-black tracking-tight text-foreground sm:text-5xl lg:text-6xl">
           Free AI reply generators for customer conversations.
         </h1>
         <p class="mx-auto mt-6 max-w-3xl text-base font-medium leading-relaxed text-foreground/65 sm:text-lg">
@@ -57,7 +83,7 @@ const groupedTools = computed(() => freeToolCategories.map((category) => ({
       <div class="grid gap-6 lg:grid-cols-3">
         <article v-for="tool in freeTools.slice(0, 3)" :key="tool.slug" class="rounded-[32px] border border-foreground/10 bg-background-card/70 p-6 shadow-2xl shadow-foreground/5 backdrop-blur-xl">
           <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">{{ tool.category }}</p>
-          <h2 class="mt-4 text-2xl font-black tracking-tight text-foreground">{{ tool.title }}</h2>
+          <div role="heading" aria-level="2" class="mt-4 text-2xl font-black tracking-tight text-foreground">{{ tool.title }}</div>
           <p class="mt-3 text-sm leading-relaxed text-foreground/65">{{ tool.description }}</p>
           <NuxtLink :to="`/tools/${tool.slug}`" class="mt-6 inline-flex items-center gap-2 text-sm font-black text-primary">
             Open tool <ArrowRight class="h-4 w-4" />
@@ -81,7 +107,7 @@ const groupedTools = computed(() => freeToolCategories.map((category) => ({
             <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <component :is="group.icon" class="h-5 w-5" />
             </div>
-            <h3 class="text-xl font-black tracking-tight text-foreground">{{ group.category }}</h3>
+            <div role="heading" aria-level="3" class="text-xl font-black tracking-tight text-foreground">{{ group.category }}</div>
           </div>
           <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <NuxtLink v-for="tool in group.tools" :key="tool.slug" :to="`/tools/${tool.slug}`" class="group rounded-[26px] border border-foreground/10 bg-background-card/70 p-5 transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5">

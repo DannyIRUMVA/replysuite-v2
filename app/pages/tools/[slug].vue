@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRight, Check, Clipboard, Loader2, MessageCircle, RefreshCw, Sparkles, Wand2 } from 'lucide-vue-next'
+import { ArrowRight, Check, Clipboard, Eraser, Loader2, MessageCircle, RefreshCw, Sparkles, Wand2 } from 'lucide-vue-next'
 import { getFreeTool, getRelatedFreeTools, type FreeToolLength, type FreeToolTone } from '~~/shared/free-tools'
 
 const route = useRoute()
@@ -16,8 +16,13 @@ const relatedTools = computed(() => getRelatedFreeTools(currentTool.value))
 useSeoMeta({
   title: () => currentTool.value.seoTitle,
   description: () => currentTool.value.seoDescription,
+  keywords: () => `${currentTool.value.keyword}, free ${currentTool.value.keyword}, AI reply generator, customer response generator, ReplySuite tools`,
+  robots: 'index, follow, max-image-preview:large',
   ogTitle: () => `${currentTool.value.seoTitle} | ReplySuite`,
   ogDescription: () => currentTool.value.seoDescription,
+  ogUrl: () => `https://replysuite.app/tools/${currentTool.value.slug}`,
+  twitterTitle: () => `${currentTool.value.seoTitle} | ReplySuite`,
+  twitterDescription: () => currentTool.value.seoDescription,
 })
 
 useHead(() => ({
@@ -49,6 +54,18 @@ useHead(() => ({
         })),
       }),
     },
+    {
+      type: 'application/ld+json',
+      children: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://replysuite.app' },
+          { '@type': 'ListItem', position: 2, name: 'Free tools', item: 'https://replysuite.app/tools' },
+          { '@type': 'ListItem', position: 3, name: currentTool.value.title, item: `https://replysuite.app/tools/${currentTool.value.slug}` },
+        ],
+      }),
+    },
   ],
 }))
 
@@ -62,6 +79,9 @@ const reply = ref('')
 const errorMessage = ref('')
 const isGenerating = ref(false)
 const copied = ref(false)
+const inputMaxLength = 2500
+const remainingCharacters = computed(() => Math.max(0, inputMaxLength - input.value.length))
+const canGenerate = computed(() => input.value.trim().length >= 8 && !isGenerating.value)
 
 watch(slug, () => {
   input.value = ''
@@ -80,8 +100,16 @@ const fillExample = (value: string) => {
   errorMessage.value = ''
 }
 
+const clearForm = () => {
+  input.value = ''
+  extraContext.value = ''
+  reply.value = ''
+  errorMessage.value = ''
+  copied.value = false
+}
+
 const generateReply = async () => {
-  if (input.value.trim().length < 8 || isGenerating.value) return
+  if (!canGenerate.value) return
 
   isGenerating.value = true
   errorMessage.value = ''
@@ -152,7 +180,7 @@ const copyReply = async () => {
           </div>
         </div>
 
-        <div class="rounded-[36px] border border-foreground/10 bg-background-card/80 p-4 shadow-2xl shadow-foreground/5 backdrop-blur-xl sm:p-6 lg:p-8">
+        <form class="rounded-[36px] border border-foreground/10 bg-background-card/80 p-4 shadow-2xl shadow-foreground/5 backdrop-blur-xl sm:p-6 lg:p-8" @submit.prevent="generateReply">
           <div class="grid gap-4 sm:grid-cols-2">
             <label class="block">
               <span class="text-xs font-black uppercase tracking-[0.14em] text-foreground/55">Business type</span>
@@ -167,9 +195,16 @@ const copyReply = async () => {
           </div>
 
           <label class="mt-5 block">
-            <span class="text-xs font-black uppercase tracking-[0.14em] text-foreground/55">{{ currentTool.inputLabel }}</span>
-            <textarea v-model="input" :placeholder="currentTool.inputPlaceholder" rows="7" class="mt-2 w-full resize-y rounded-[26px] border border-foreground/10 bg-background px-5 py-4 text-sm leading-relaxed text-foreground outline-none transition placeholder:text-foreground/45 focus:border-primary/50"></textarea>
+            <span class="flex items-center justify-between gap-3 text-xs font-black uppercase tracking-[0.14em] text-foreground/55">
+              <span>{{ currentTool.inputLabel }}</span>
+              <span class="rounded-full bg-foreground/[0.04] px-2.5 py-1 text-[10px] tracking-normal text-foreground/55">Required</span>
+            </span>
+            <textarea v-model="input" :maxlength="inputMaxLength" :placeholder="currentTool.inputPlaceholder" rows="7" class="mt-2 w-full resize-y rounded-[26px] border border-foreground/10 bg-background px-5 py-4 text-sm leading-relaxed text-foreground outline-none transition placeholder:text-foreground/45 focus:border-primary/50 focus:ring-4 focus:ring-primary/10"></textarea>
           </label>
+          <div class="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-foreground/55">
+            <span>Paste a real customer message, review, or booking request.</span>
+            <span>{{ remainingCharacters }} characters left</span>
+          </div>
 
           <div class="mt-4 flex flex-wrap gap-2">
             <button v-for="example in currentTool.examples" :key="example.label" type="button" class="rounded-full border border-foreground/10 px-4 py-2 text-xs font-bold text-foreground/65 transition hover:border-primary/30 hover:text-primary" @click="fillExample(example.input)">
@@ -181,7 +216,7 @@ const copyReply = async () => {
             <div>
               <span class="text-xs font-black uppercase tracking-[0.14em] text-foreground/55">Tone</span>
               <div class="mt-2 grid grid-cols-2 gap-2">
-                <button v-for="option in currentTool.tones" :key="option.value" type="button" class="rounded-2xl border px-3 py-2 text-sm font-bold transition" :class="tone === option.value ? 'border-primary bg-primary/10 text-primary' : 'border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground'" @click="tone = option.value">
+                <button v-for="option in currentTool.tones" :key="option.value" type="button" :aria-pressed="tone === option.value" class="rounded-2xl border px-3 py-2 text-sm font-bold transition focus:outline-none focus:ring-4 focus:ring-primary/10" :class="tone === option.value ? 'border-primary bg-primary/10 text-primary' : 'border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground'" @click="tone = option.value">
                   {{ option.label }}
                 </button>
               </div>
@@ -189,31 +224,39 @@ const copyReply = async () => {
             <div>
               <span class="text-xs font-black uppercase tracking-[0.14em] text-foreground/55">Length</span>
               <div class="mt-2 grid grid-cols-3 gap-2">
-                <button v-for="option in currentTool.lengths" :key="option.value" type="button" class="rounded-2xl border px-3 py-2 text-sm font-bold transition" :class="length === option.value ? 'border-primary bg-primary/10 text-primary' : 'border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground'" @click="length = option.value">
+                <button v-for="option in currentTool.lengths" :key="option.value" type="button" :aria-pressed="length === option.value" class="rounded-2xl border px-3 py-2 text-sm font-bold transition focus:outline-none focus:ring-4 focus:ring-primary/10" :class="length === option.value ? 'border-primary bg-primary/10 text-primary' : 'border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground'" @click="length = option.value">
                   {{ option.label }}
                 </button>
               </div>
             </div>
           </div>
 
-          <label class="mt-5 block">
-            <span class="text-xs font-black uppercase tracking-[0.14em] text-foreground/55">Extra context</span>
-            <input v-model="extraContext" type="text" placeholder="Optional: policy, location, next step, booking status..." class="mt-2 w-full rounded-2xl border border-foreground/10 bg-background px-4 py-3 text-sm font-semibold text-foreground outline-none transition placeholder:text-foreground/45 focus:border-primary/50" />
-          </label>
+          <details class="mt-5 rounded-[24px] border border-foreground/10 bg-foreground/[0.02] p-4">
+            <summary class="cursor-pointer text-xs font-black uppercase tracking-[0.14em] text-foreground/60">Optional business context</summary>
+            <label class="mt-4 block">
+              <span class="text-xs font-bold text-foreground/60">Add a policy, location, booking status, or next step</span>
+              <input v-model="extraContext" type="text" placeholder="Example: Ask the customer to DM us their order number." class="mt-2 w-full rounded-2xl border border-foreground/10 bg-background px-4 py-3 text-sm font-semibold text-foreground outline-none transition placeholder:text-foreground/45 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
+            </label>
+          </details>
 
-          <button type="button" class="btn-gradient mt-6 inline-flex w-full items-center justify-center gap-3 px-8 py-4 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60" :disabled="input.trim().length < 8 || isGenerating" @click="generateReply">
-            <Loader2 v-if="isGenerating" class="h-5 w-5 animate-spin" />
-            <Wand2 v-else class="h-5 w-5" />
-            {{ isGenerating ? 'Generating reply...' : 'Generate reply' }}
-          </button>
+          <div class="mt-6 grid gap-3 sm:grid-cols-[1fr_auto]">
+            <button type="submit" class="btn-gradient inline-flex w-full items-center justify-center gap-3 px-8 py-4 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60" :disabled="!canGenerate">
+              <Loader2 v-if="isGenerating" class="h-5 w-5 animate-spin" />
+              <Wand2 v-else class="h-5 w-5" />
+              {{ isGenerating ? 'Generating reply...' : 'Generate reply' }}
+            </button>
+            <button type="button" class="inline-flex items-center justify-center gap-2 rounded-full border border-foreground/10 px-5 py-4 text-sm font-black text-foreground/60 transition hover:border-foreground/20 hover:text-foreground" @click="clearForm">
+              <Eraser class="h-4 w-4" /> Clear
+            </button>
+          </div>
 
-          <p v-if="errorMessage" class="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-300">
+          <p v-if="errorMessage" role="alert" class="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-300">
             {{ errorMessage }}
           </p>
 
-          <section v-if="reply" class="mt-6 rounded-[30px] border border-primary/20 bg-primary/5 p-5">
+          <section v-if="reply" aria-live="polite" class="mt-6 rounded-[30px] border border-primary/20 bg-primary/5 p-5">
             <div class="mb-3 flex items-center justify-between gap-3">
-              <h2 class="text-lg font-black tracking-tight text-foreground">{{ currentTool.outputLabel }}</h2>
+              <div role="heading" aria-level="2" class="text-lg font-black tracking-tight text-foreground">{{ currentTool.outputLabel }}</div>
               <button type="button" class="inline-flex items-center gap-2 rounded-full border border-foreground/10 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-foreground/65 transition hover:border-primary/30 hover:text-primary" @click="copyReply">
                 <Check v-if="copied" class="h-4 w-4" />
                 <Clipboard v-else class="h-4 w-4" />
@@ -225,7 +268,7 @@ const copyReply = async () => {
               <RefreshCw class="h-4 w-4" /> Generate another version
             </button>
           </section>
-        </div>
+        </form>
       </div>
     </section>
 
@@ -235,7 +278,7 @@ const copyReply = async () => {
         <h2 class="mt-3 text-3xl font-black tracking-tight text-foreground">{{ currentTool.title }} examples</h2>
         <div class="mt-6 space-y-4">
           <article v-for="example in currentTool.examples" :key="example.label" class="rounded-[28px] border border-foreground/10 bg-background-card/70 p-5">
-            <h3 class="text-base font-black text-foreground">{{ example.label }}</h3>
+            <div role="heading" aria-level="3" class="text-base font-black text-foreground">{{ example.label }}</div>
             <p class="mt-3 text-sm font-bold text-foreground/55">Input</p>
             <p class="mt-1 text-sm leading-relaxed text-foreground/70">{{ example.input }}</p>
             <p class="mt-4 text-sm font-bold text-foreground/55">Example reply</p>

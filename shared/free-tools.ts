@@ -115,7 +115,7 @@ export const freeTools: FreeTool[] = [
       { question: 'Should negative review replies be long?', answer: 'Usually no. Keep them calm, specific, and short enough for public readers to trust your response.' },
       { question: 'Can I use this for complaints outside Google?', answer: 'Yes. The response can be adapted for Facebook, TripAdvisor, Booking.com, Instagram, or email.' },
     ],
-    related: ['google-review-reply-generator', 'customer-complaint-response-generator', 'apology-email-generator'],
+    related: ['google-review-reply-generator', 'customer-complaint-response-generator', 'refund-request-response-generator'],
   },
   {
     slug: 'customer-complaint-response-generator',
@@ -189,7 +189,7 @@ export const freeTools: FreeTool[] = [
       { question: 'Can this reply mention our refund policy?', answer: 'Yes, but only add policy details you know are correct.' },
       { question: 'Can ReplySuite handle payment-related messages?', answer: 'ReplySuite can guide booking or deposit conversations when configured, but payment amounts and actions must be verified server-side.' },
     ],
-    related: ['customer-complaint-response-generator', 'apology-email-generator', 'booking-confirmation-message-generator'],
+    related: ['customer-complaint-response-generator', 'negative-review-response-generator', 'booking-confirmation-message-generator'],
   },
   {
     slug: 'whatsapp-business-reply-generator',

@@ -21,6 +21,13 @@ ReplySuite is a calm AI command center for customer conversations across website
 ## Key Pages
 
 - [Pricing & Plans](https://replysuite.app/pricing)
+- [Free AI Reply Generators](https://replysuite.app/tools)
+- [Google Review Reply Generator](https://replysuite.app/tools/google-review-reply-generator)
+- [Negative Review Response Generator](https://replysuite.app/tools/negative-review-response-generator)
+- [Customer Complaint Response Generator](https://replysuite.app/tools/customer-complaint-response-generator)
+- [Refund Request Response Generator](https://replysuite.app/tools/refund-request-response-generator)
+- [WhatsApp Business Reply Generator](https://replysuite.app/tools/whatsapp-business-reply-generator)
+- [Booking Confirmation Message Generator](https://replysuite.app/tools/booking-confirmation-message-generator)
 - [Free Tool: AI PDF Content Analyzer](https://replysuite.app/tools/pdf-analyzer)
 - [Features](https://replysuite.app/features)
 - [Product Overview](https://replysuite.app/product)
