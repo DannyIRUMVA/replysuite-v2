@@ -236,14 +236,12 @@ export default defineNuxtConfig({
     routeRules: {
       '/widget/**': {
         headers: {
-          'Content-Security-Policy': "frame-ancestors * http: https: localhost:* file:;",
-          'X-Frame-Options': 'ALLOWALL'
+          'Content-Security-Policy': "frame-ancestors * http: https: localhost:* file:;"
         }
       },
       '/**': {
         headers: {
-          'Content-Security-Policy': "frame-ancestors * http: https: localhost:* file:;",
-          'X-Frame-Options': 'ALLOWALL'
+          'Content-Security-Policy': "frame-ancestors * http: https: localhost:* file:;"
         }
       }
     }

@@ -8,14 +8,33 @@ const requestBuckets = new Map<string, { count: number, resetAt: number }>()
 
 const normalizeString = (value: unknown, maxLength: number) => String(value || '').replace(/[\u0000-\u001F\u007F]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, maxLength)
 
+const normalizeHost = (value: string) => value.trim().toLowerCase().replace(/^www\./, '')
+
+const isAllowedReplySuiteHost = (hostname: string) => {
+  const host = normalizeHost(hostname)
+  return host === 'replysuite.app'
+    || host === 'localhost'
+    || host === '127.0.0.1'
+    || host === 'replysuite-v2.pages.dev'
+    || host.endsWith('.replysuite-v2.pages.dev')
+}
+
 const isAllowedRequestOrigin = (event: any, siteUrl: string) => {
   const origin = getHeader(event, 'origin')
   if (!origin) return true
 
   try {
     const originUrl = new URL(origin)
-    const site = new URL(siteUrl)
-    return originUrl.host === site.host || originUrl.hostname === 'localhost' || originUrl.hostname === '127.0.0.1'
+    const allowedHosts = new Set<string>()
+    const requestHost = getHeader(event, 'x-forwarded-host') || getHeader(event, 'host')
+
+    if (requestHost) allowedHosts.add(normalizeHost(requestHost.split(',')[0] || ''))
+
+    try {
+      allowedHosts.add(normalizeHost(new URL(siteUrl).host))
+    } catch {}
+
+    return allowedHosts.has(normalizeHost(originUrl.host)) || isAllowedReplySuiteHost(originUrl.hostname)
   } catch {
     return false
   }

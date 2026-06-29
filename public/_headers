@@ -5,8 +5,5 @@
   Referrer-Policy: strict-origin-when-cross-origin
 
 /widget/*
-  X-Frame-Options: 
   Content-Security-Policy: frame-ancestors * http: https: localhost:* file:;
-
-
 

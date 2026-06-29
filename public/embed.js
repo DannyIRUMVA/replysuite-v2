@@ -161,7 +161,7 @@
     iframe.src = iframeUrl;
     iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
     iframe.setAttribute('title', 'ReplySuite Chat');
-    iframe.setAttribute('allow', 'microphone; autoplay');
+    iframe.setAttribute('allow', 'microphone');
     container.appendChild(iframe);
 
     // ── Toggle logic ──
