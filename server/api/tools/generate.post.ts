@@ -160,7 +160,7 @@ export default defineEventHandler(async (event) => {
       }),
     })
   } catch (error: any) {
-    console.warn('[Free Tools] GPT-OSS request failed:', error?.name === 'AbortError' ? 'timeout' : error?.message || error)
+    console.warn('[Free Tools] generation request failed:', error?.name === 'AbortError' ? 'timeout' : error?.message || error)
     throw createError({ statusCode: 504, statusMessage: 'The free generator took too long. Please try again.' })
   } finally {
     clearTimeout(timeout)
@@ -168,8 +168,8 @@ export default defineEventHandler(async (event) => {
 
   const data: any = await response.json().catch(() => ({}))
   if (!response.ok || data?.error) {
-    const message = data?.error?.message || `OpenRouter request failed with HTTP ${response.status}`
-    console.warn('[Free Tools] GPT-OSS generation failed:', message)
+    const message = data?.error?.message || `Free tool generation failed with HTTP ${response.status}`
+    console.warn('[Free Tools] generation failed:', message)
     throw createError({ statusCode: 502, statusMessage: 'The free generator is busy. Please try again.' })
   }
 
@@ -180,7 +180,7 @@ export default defineEventHandler(async (event) => {
     .slice(0, 3000)
 
   if (!reply) {
-    throw createError({ statusCode: 502, statusMessage: 'The model returned an empty reply. Please try again.' })
+    throw createError({ statusCode: 502, statusMessage: 'The generator returned an empty reply. Please try again.' })
   }
 
   return {

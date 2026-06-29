@@ -110,7 +110,7 @@ const guidanceSections = [
           <span class="badge-gradient mb-5">Training</span>
           <h2 class="text-3xl font-extrabold tracking-tight text-foreground md:text-5xl">Add the content your assistant should know.</h2>
           <p class="mt-5 text-sm font-medium leading-relaxed text-foreground/55 md:text-base">
-            Training lets ReplySuite answer from your real business information instead of generic model memory.
+            Training lets ReplySuite answer from your real business information instead of generic AI guesses.
           </p>
         </div>
         <div class="grid gap-4 sm:grid-cols-3">

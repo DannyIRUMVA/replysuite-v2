@@ -49,7 +49,7 @@ ReplySuite is a calm AI command center for customer conversations across website
 ## Trust Infrastructure
 
 ReplySuite is built on a foundation of data privacy and ethical AI usage.
-- **Data Sovereignty**: Customer data is logically isolated and never used for training global models.
+- **Data Sovereignty**: Customer data is logically isolated and never used to train shared systems.
 - **Security**: AES-256 encryption at rest, TLS 1.3 in transit, and DDoS protection via Cloudflare.
 - **Transparency**: Clear labeling for AI-generated content is recommended for all users.
 
