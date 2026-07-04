@@ -681,7 +681,7 @@ export const paypackHandler = async (event: any, chatbotId: string, args: any, c
 
   const credentials = await getPaymentCredentials(event, chatbotId)
   if (!credentials.clientId || !credentials.clientSecret) {
-    const result = { error: 'Paypack is not configured for this assistant.' }
+    const result = { error: 'Mobile payment is not configured for this assistant.' }
     await logToolEvent(event, chatbotId, 'request_payment', args, result, context, { type: target.targetType, id: target.targetId })
     return result
   }
@@ -715,7 +715,7 @@ export const paypackHandler = async (event: any, chatbotId: string, args: any, c
   })
   const authData: any = await authRes.json().catch(() => ({}))
   if (!authRes.ok || !authData.access) {
-    const result = { error: 'Paypack authentication failed.', details: authData }
+    const result = { error: 'Mobile payment authentication failed.', details: authData }
     await logToolEvent(event, chatbotId, 'request_payment', args, result, context, { type: target.targetType, id: target.targetId })
     return result
   }

@@ -350,7 +350,7 @@ onMounted(fetchAssistants)
 
           <div class="rounded-2xl border border-foreground/10 bg-background-card p-5">
             <h2 class="text-lg font-black tracking-tight text-foreground">Optional deposits</h2>
-            <p class="mt-1 text-sm font-medium leading-relaxed text-foreground/50">Paypack remains contextual checkout only. The assistant can request deposits only for existing appointment or booking records verified by the server.</p>
+            <p class="mt-1 text-sm font-medium leading-relaxed text-foreground/50">MTN/Airtel mobile payment remains contextual checkout only. The assistant can request deposits only for existing appointment or booking records verified by the server.</p>
             <button type="button" :disabled="!isPremium || !appointmentsEnabled" :class="['mt-4 flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-50', depositsEnabled ? 'border-primary/40 bg-primary/10' : 'border-foreground/10 bg-foreground/[0.02] hover:bg-foreground/[0.04]']" @click="toggleDeposits">
               <div :class="['flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', depositsEnabled ? 'bg-primary text-black' : 'bg-foreground/5 text-foreground/50']"><CreditCard class="h-5 w-5" /></div>
               <div class="min-w-0 flex-1">

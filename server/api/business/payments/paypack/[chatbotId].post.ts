@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
   const config = useRuntimeConfig()
   if (!config.paypackSecretEncryptionKey || String(config.paypackSecretEncryptionKey).length < 24) {
-    throw createError({ statusCode: 503, statusMessage: 'Paypack secret encryption key is not configured.' })
+    throw createError({ statusCode: 503, statusMessage: 'Mobile payment secret encryption key is not configured.' })
   }
 
   const userScoped = await serverSupabaseClient(event) as any

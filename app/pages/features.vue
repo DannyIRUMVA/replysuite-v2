@@ -3,7 +3,7 @@ import { ArrowRight, BarChart3, Bot, CalendarDays, CheckCircle2, CreditCard, Fil
 
 useSeoMeta({
   title: 'Features | ReplySuite AI Chatbot Tools',
-  description: 'ReplySuite features for trained AI replies, website chat, WhatsApp, Instagram comment replies, Instagram comment-to-DM, appointments, bookings, Google Calendar, and Paypack checkout attached to real customer actions.',
+  description: 'ReplySuite features for trained AI replies, website chat, WhatsApp, Instagram comment replies, Instagram comment-to-DM, appointments, bookings, Google Calendar, and MTN/Airtel mobile checkout attached to real customer actions.',
   ogTitle: 'ReplySuite Features',
   ogDescription: 'Train once. Reply everywhere. Book appointments. Manage bookings. Get paid.',
   ogUrl: 'https://replysuite.app/features',
@@ -50,7 +50,7 @@ const features = [
   { title: 'Instagram comment-to-DM', desc: 'Follow up privately when a comment needs a more helpful DM conversation.', icon: MessageCircle },
   { title: 'Appointments', desc: 'Collect service, staff, time, contact, notes, and deposit intent.', icon: CalendarDays },
   { title: 'Google Calendar bookings', desc: 'Use connected calendars for reservations, events, and appointment availability.', icon: CalendarDays },
-  { title: 'Paypack checkout', desc: 'Request payment only for existing appointment or booking deposits.', icon: CreditCard },
+  { title: 'MTN/Airtel mobile checkout', desc: 'Request payment only for existing appointment or booking deposits.', icon: CreditCard },
   { title: 'Conversation memory', desc: 'Keep context connected to the customer conversation and session.', icon: Target },
   { title: 'Usage analytics', desc: 'Monitor replies, activity, plan limits, and customer automation performance.', icon: BarChart3 },
   { title: 'Multilingual support', desc: 'Support English, Kinyarwanda, Swahili, Kirundi, Luganda, Arabic, and more.', icon: Languages },
@@ -76,7 +76,7 @@ const paymentRules = [
         Everything needed to reply, book, sell, and review from one calm dashboard.
       </h1>
       <p class="relative mx-auto mt-6 max-w-3xl text-base font-medium leading-relaxed text-foreground/58 md:text-lg">
-        ReplySuite combines trained AI replies with practical business tools. Your assistant can answer questions, request appointments, manage bookings, and trigger verified Paypack checkout.
+        ReplySuite combines trained AI replies with practical business tools. Your assistant can answer questions, request appointments, manage bookings, and trigger verified MTN/Airtel mobile checkout.
       </p>
       <div class="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row">
         <NuxtLink to="/register" class="btn-gradient inline-flex h-12 items-center justify-center gap-3 px-6 text-sm">
@@ -131,9 +131,9 @@ const paymentRules = [
       <div class="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
         <div>
           <span class="badge-gradient mb-4">Payments without risk drift</span>
-          <h2 class="text-3xl font-black tracking-tight text-foreground md:text-5xl">Paypack is checkout, not an invoice bot.</h2>
+          <h2 class="text-3xl font-black tracking-tight text-foreground md:text-5xl">MTN/Airtel mobile payment is checkout, not an invoice bot.</h2>
           <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">
-            Payment requests attach to existing appointment or booking deposits. The server verifies the target, amount, ownership, and duplicate state before a Paypack prompt is created.
+            Payment requests attach to existing appointment or booking deposits. The server verifies the target, amount, ownership, and duplicate state before a mobile payment prompt is created.
           </p>
           <NuxtLink to="/pricing" class="mt-7 inline-flex h-12 items-center justify-center gap-3 rounded-full border border-foreground/10 px-6 text-sm font-black text-foreground/70 transition hover:border-primary/25 hover:text-foreground">
             View pricing
@@ -164,7 +164,7 @@ const paymentRules = [
       <div class="relative overflow-hidden rounded-[2rem] border border-foreground/10 bg-foreground/[0.025] p-8 backdrop-blur-xl md:p-12">
         <div class="absolute inset-x-0 -top-20 mx-auto h-56 w-56 rounded-full bg-primary/15 blur-[90px]" />
         <h2 class="relative z-10 text-3xl font-black tracking-tight text-foreground md:text-5xl">Build your first assistant, then add actions when ready.</h2>
-        <p class="relative z-10 mx-auto mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Start with trained replies on your website. Expand into appointments, bookings, WhatsApp, Instagram, and Paypack checkout as your business needs grow.</p>
+        <p class="relative z-10 mx-auto mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Start with trained replies on your website. Expand into appointments, bookings, WhatsApp, Instagram, and MTN/Airtel mobile checkout as your business needs grow.</p>
         <NuxtLink to="/register" class="btn-gradient relative z-10 mt-7 inline-flex h-12 items-center justify-center gap-3 px-7 text-sm">
           Start free
           <ArrowRight class="h-4 w-4" />

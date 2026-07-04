@@ -106,7 +106,7 @@ const cards = [
           </div>
           <div>
             <p class="text-[9px] font-black uppercase tracking-[0.18em] text-foreground/40">Optional add-on</p>
-            <h4 class="text-sm font-black text-foreground">Paypack payments</h4>
+            <h4 class="text-sm font-black text-foreground">MTN/Airtel mobile payments</h4>
             <p class="mt-1 max-w-2xl text-xs leading-relaxed text-foreground/55">
               Payment is not a standalone tool. It attaches to an existing appointment or booking deposit after the assistant creates that record.
             </p>

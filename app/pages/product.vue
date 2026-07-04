@@ -3,7 +3,7 @@ import { ArrowRight, Bot, BrainCircuit, CalendarDays, CheckCircle2, CreditCard, 
 
 useSeoMeta({
   title: 'Product | ReplySuite AI Command Center',
-  description: 'ReplySuite is a calm AI command center for customer conversations. Train once, reply everywhere, book appointments, manage bookings, and get paid with Paypack checkout.',
+  description: 'ReplySuite is a calm AI command center for customer conversations. Train once, reply everywhere, book appointments, manage bookings, and get paid with MTN/Airtel mobile checkout.',
   ogTitle: 'ReplySuite Product | AI command center for customer conversations',
   ogDescription: 'Train once. Reply everywhere. Book appointments. Manage bookings. Get paid.',
   ogUrl: 'https://replysuite.app/product',
@@ -26,7 +26,7 @@ const conversationRail = [
   { label: 'Customer message', title: '“Do you have availability tomorrow?”', icon: MessageCircle, tone: 'text-sky-500 bg-sky-500/10 border-sky-500/15' },
   { label: 'AI reply', title: 'Answers from your trained business content.', icon: BrainCircuit, tone: 'text-primary bg-primary/10 border-primary/15' },
   { label: 'Tool action', title: 'Books an appointment or reservation.', icon: CalendarDays, tone: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/15' },
-  { label: 'Checkout', title: 'Paypack payment attaches to the real record.', icon: CreditCard, tone: 'text-orange-500 bg-orange-500/10 border-orange-500/15' },
+  { label: 'Checkout', title: 'MTN/Airtel mobile payment attaches to the real record.', icon: CreditCard, tone: 'text-orange-500 bg-orange-500/10 border-orange-500/15' },
 ]
 
 const pillars = [
@@ -34,7 +34,7 @@ const pillars = [
   { title: 'Reply everywhere', desc: 'Start on your website, then expand customer conversations to WhatsApp and Instagram automation.', icon: Globe2 },
   { title: 'Book appointments', desc: 'Let customers request services, staff, preferred times, and deposits without turning the assistant into an invoice bot.', icon: CalendarDays },
   { title: 'Manage bookings', desc: 'Use Google Calendar-backed bookings for reservations, events, and appointment slots while keeping staff in control.', icon: CalendarDays },
-  { title: 'Get paid', desc: 'Use Paypack as checkout for existing appointment and booking deposits. The server verifies amount and ownership.', icon: CreditCard },
+  { title: 'Get paid', desc: 'Use mobile payment as checkout for existing appointment and booking deposits. The server verifies amount and ownership.', icon: CreditCard },
   { title: 'Review calmly', desc: 'Track every action in the dashboard so your team can approve, follow up, and improve the assistant.', icon: LayoutDashboard },
 ]
 
@@ -167,7 +167,7 @@ const businessFits = [
           <div>
             <span class="badge-gradient mb-4">Built for service and commerce teams</span>
             <h2 class="text-3xl font-black tracking-tight text-foreground md:text-5xl">Useful across offices, service businesses, restaurants, and sellers.</h2>
-            <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Appointments support service teams. Bookings support reservations, events, and appointment conversations. Paypack checkout only appears when there is a real appointment or booking deposit to pay for.</p>
+            <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Appointments support service teams. Bookings support reservations, events, and appointment conversations. MTN/Airtel mobile checkout only appears when there is a real appointment or booking deposit to pay for.</p>
           </div>
           <div class="grid gap-3 sm:grid-cols-2">
             <div v-for="item in businessFits" :key="item" class="flex items-center gap-3 rounded-2xl border border-foreground/10 bg-background/45 p-4 text-sm font-bold text-foreground/65">
@@ -184,7 +184,7 @@ const businessFits = [
         <div class="absolute inset-x-0 -top-20 mx-auto h-56 w-56 rounded-full bg-primary/15 blur-[90px]" />
         <MessageSquareText class="relative z-10 mx-auto mb-5 h-10 w-10 text-primary" />
         <h2 class="relative z-10 text-3xl font-black tracking-tight text-foreground md:text-5xl">Ready to turn messages into managed actions?</h2>
-        <p class="relative z-10 mx-auto mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Start with trained replies, then add appointments, bookings, Google Calendar, and Paypack checkout when your team is ready.</p>
+        <p class="relative z-10 mx-auto mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Start with trained replies, then add appointments, bookings, Google Calendar, and MTN/Airtel mobile checkout when your team is ready.</p>
         <NuxtLink to="/register" class="btn-gradient relative z-10 mt-7 inline-flex h-12 items-center justify-center gap-3 px-7 text-sm">
           Start free
           <ArrowRight class="h-4 w-4" />

@@ -30,7 +30,7 @@ const skillGroups = [
     skills: [
       { id: 'appointment_intake', name: 'Appointment & Booking Intake', desc: 'Collect service or reservation type, preferred time, name, phone, party size, and notes before handoff or confirmation.', icon: Calendar, channels: ['Website', 'WhatsApp'] },
       { id: 'whatsapp_service_closer', name: 'WhatsApp Service Closer', desc: 'Keep mobile replies short, confirm details clearly, and move toward one concrete next step.', icon: MessageCircle, channels: ['WhatsApp'] },
-      { id: 'checkout_guardrails', name: 'Deposit Checkout Guardrails', desc: 'Only discuss Paypack checkout for existing appointment or booking deposits verified by the server.', icon: CreditCard, channels: ['All'] },
+      { id: 'checkout_guardrails', name: 'Deposit Checkout Guardrails', desc: 'Only discuss MTN/Airtel mobile checkout for existing appointment or booking deposits verified by the server.', icon: CreditCard, channels: ['All'] },
       { id: 'concise_follow_up', name: 'Concise Follow-up', desc: 'End with one useful next step instead of many questions.', icon: ArrowRight, channels: ['All'] },
     ],
   },

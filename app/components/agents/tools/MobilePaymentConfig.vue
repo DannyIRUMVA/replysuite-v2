@@ -21,7 +21,7 @@ const loadConfig = async () => {
     configured.value = Boolean(data?.configured)
     clientId.value = data?.clientId || props.modelValue?.paypack_client_id || ''
   } catch (err) {
-    console.warn('[Paypack] Could not load saved provider config:', err)
+    console.warn('[mobile payment] Could not load saved provider config:', err)
   } finally {
     isLoading.value = false
   }
@@ -29,7 +29,7 @@ const loadConfig = async () => {
 
 const saveConfig = async () => {
   if (!clientId.value.trim() || !clientSecret.value.trim()) {
-    notify.warn('Add both Paypack client ID and client secret.')
+    notify.warn('Add both mobile payment client ID and client secret.')
     return
   }
   isSaving.value = true
@@ -44,9 +44,9 @@ const saveConfig = async () => {
     })
     configured.value = true
     clientSecret.value = ''
-    notify.success('Paypack payment setup saved securely.')
+    notify.success('MTN/Airtel mobile payment setup saved securely.')
   } catch (err: any) {
-    notify.error(err?.data?.statusMessage || err?.message || 'Unable to save Paypack setup.')
+    notify.error(err?.data?.statusMessage || err?.message || 'Unable to save mobile payment setup.')
   } finally {
     isSaving.value = false
   }
@@ -61,7 +61,7 @@ onMounted(loadConfig)
     <div class="mb-6 flex items-start justify-between gap-3">
       <div>
         <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Payment add-on</p>
-        <h3 class="mt-1 text-base font-black text-foreground">Paypack setup</h3>
+        <h3 class="mt-1 text-base font-black text-foreground">Mobile payment setup</h3>
         <p class="mt-1 text-xs leading-relaxed text-foreground/55">Used only for order totals or appointment deposits.</p>
       </div>
       <CreditCard class="h-5 w-5 text-primary/70" />
@@ -75,7 +75,7 @@ onMounted(loadConfig)
       <div v-if="configured" class="flex items-start gap-3 rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-4">
         <ShieldCheck class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
         <div>
-          <p class="text-xs font-black text-emerald-500">Paypack is configured</p>
+          <p class="text-xs font-black text-emerald-500">Mobile payment is configured</p>
           <p class="mt-1 text-[10px] leading-relaxed text-foreground/45">Client secret is stored server-side and is never sent back to the browser.</p>
         </div>
       </div>
@@ -92,11 +92,11 @@ onMounted(loadConfig)
 
       <button type="button" class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-xs font-black text-black transition hover:brightness-95 disabled:opacity-50" :disabled="isSaving" @click="saveConfig">
         <Loader2 v-if="isSaving" class="h-4 w-4 animate-spin" />
-        {{ configured ? 'Rotate Paypack secret' : 'Save Paypack setup' }}
+        {{ configured ? 'Rotate mobile payment secret' : 'Save mobile payment setup' }}
       </button>
 
       <p class="rounded-xl border border-orange-500/10 bg-orange-500/5 p-3 text-[10px] leading-relaxed text-orange-500/75">
-        Payment prompts are only created after the assistant has a real appointment or booking deposit. The server validates ownership and amount before contacting Paypack.
+        Payment prompts are only created after the assistant has a real appointment or booking deposit. The server validates ownership and amount before contacting the mobile payment provider.
       </p>
     </div>
   </section>

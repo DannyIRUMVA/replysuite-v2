@@ -26,7 +26,7 @@ import {
 import CustomSelect from '~~/app/components/CustomSelect.vue'
 import { chatbotLanguageCodeOptions, chatbotLanguageOptions, getChatbotLanguageCode, getChatbotLanguageName, normalizeChatbotLanguageName } from '~~/app/utils/chatbotLanguages'
 import ToolSelector from '~/components/agents/tools/ToolSelector.vue'
-import PaypackConfig from '~/components/agents/tools/PaypackConfig.vue'
+import MobilePaymentConfig from '~/components/agents/tools/MobilePaymentConfig.vue'
 
 definePageMeta({
   middleware: 'auth',
@@ -453,7 +453,7 @@ const launcherStyles = [
 ]
 
 // Tools & Catalog Logic
-// Moved to components: ToolSelector, PaypackConfig
+// Moved to components: ToolSelector, MobilePaymentConfig
 
 </script>
 
@@ -1264,8 +1264,8 @@ const launcherStyles = [
         </div>
 
         <div class="lg:col-span-4 space-y-6">
-            <!-- Paypack Configuration -->
-            <PaypackConfig 
+            <!-- Mobile Payment Configuration -->
+            <MobilePaymentConfig 
               v-if="form.enabled_tools.includes('payments')" 
               v-model="form.tools_config"
               :chatbot-id="chatbotId"

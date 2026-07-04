@@ -81,7 +81,7 @@ const statusClass = (status: string) => {
         <p class="text-[10px] font-black uppercase tracking-[0.22em] text-primary">Business actions</p>
         <h1 class="mt-2 text-2xl font-black tracking-tight text-foreground sm:text-3xl">Orders</h1>
         <p class="mt-2 max-w-2xl text-sm leading-relaxed text-foreground/58">
-          Manage orders created by assistants from your catalog. Payments attach to orders only when Paypack is enabled.
+          Manage orders created by assistants from your catalog. Payments attach only when MTN/Airtel mobile payment is enabled.
         </p>
       </div>
       <div class="flex flex-wrap gap-2">

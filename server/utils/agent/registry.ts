@@ -66,14 +66,14 @@ export const TOOLS = [
       },
       {
         name: 'request_payment',
-        description: 'Initiate a Paypack payment prompt for an existing appointment or booking deposit. Server validates the target and amount; do not invent payment amounts.',
+        description: 'Initiate an MTN/Airtel mobile payment prompt for an existing appointment or booking deposit. Server validates the target and amount; do not invent payment amounts.',
         parameters: {
           type: 'OBJECT',
           properties: {
             target_type: { type: 'STRING', description: 'appointment.' },
             target_id: { type: 'STRING', description: 'Appointment ID.' },
             appointment_id: { type: 'STRING', description: 'Appointment ID alternative.' },
-            phone: { type: 'STRING', description: 'Phone number to receive the Paypack prompt.' },
+            phone: { type: 'STRING', description: 'Phone number to receive the MTN/Airtel mobile payment prompt.' },
           },
           required: ['phone'],
         },
