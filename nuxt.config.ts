@@ -162,6 +162,7 @@ export default defineNuxtConfig({
     replySuiteHermesWebhookSecret: process.env.REPLYSUITE_HERMES_WEBHOOK_SECRET,
     replySuiteMediaWorkerUrl: process.env.REPLYSUITE_MEDIA_WORKER_URL,
     replySuiteMediaWorkerSecret: process.env.REPLYSUITE_MEDIA_WORKER_SECRET,
+    replySuiteMobilePaymentWorkerUrl: process.env.REPLYSUITE_MOBILE_PAYMENT_WORKER_URL || process.env.REPLYSUITE_SUBSCRIPTION_PAYMENT_WORKER_URL,
 
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL,

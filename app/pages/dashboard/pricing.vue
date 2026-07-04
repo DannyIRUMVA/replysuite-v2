@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, ArrowRight, Loader2, Shield, RefreshCcw } from 'lucide-vue-next'
+import { Check, ArrowRight, Loader2, Shield, RefreshCcw, Smartphone, X } from 'lucide-vue-next'
 
 definePageMeta({
   layout: 'dashboard',
@@ -13,6 +13,9 @@ useSeoMeta({
 
 const { refreshAuth, planSlug, polarCustomerId, syncWithPolar, isLoading: isAuthLoading } = useAuth()
 const isProcessing = ref<string | null>(null)
+const selectedMobilePlan = ref<any | null>(null)
+const mobilePhone = ref('')
+const mobilePaymentResult = ref<any | null>(null)
 const notify = useNotify()
 
 const isMounted = ref(false)
@@ -28,7 +31,7 @@ onMounted(async () => {
 })
 
 const handleSelect = async (plan: any) => {
-  isProcessing.value = plan.id
+  isProcessing.value = `${plan.id}:card`
 
   try {
     if (plan.id === 'starter') {
@@ -66,6 +69,51 @@ const handleSelect = async (plan: any) => {
   }
 }
 
+const openMobilePayment = (plan: any) => {
+  if (planSlug.value === plan.id) return
+  selectedMobilePlan.value = plan
+  mobilePhone.value = ''
+  mobilePaymentResult.value = null
+}
+
+const closeMobilePayment = () => {
+  if (isProcessing.value?.includes(':mobile')) return
+  selectedMobilePlan.value = null
+  mobilePhone.value = ''
+  mobilePaymentResult.value = null
+}
+
+const requestMobilePayment = async () => {
+  if (!selectedMobilePlan.value) return
+  isProcessing.value = `${selectedMobilePlan.value.id}:mobile`
+  mobilePaymentResult.value = null
+
+  try {
+    const res = await $fetch('/api/billing/mobile-payment/checkout', {
+      method: 'POST',
+      body: {
+        planId: selectedMobilePlan.value.id,
+        phone: mobilePhone.value,
+      },
+    })
+
+    mobilePaymentResult.value = res
+    notify.success('MTN/Airtel mobile payment prompt sent.')
+  } catch (err: any) {
+    console.error('[Dashboard Pricing] Mobile payment failed:', err)
+    const message = err?.data?.message || err?.data?.statusMessage || err?.statusMessage || err?.message || 'Mobile payment request failed. Please try again.'
+    notify.error(message)
+  } finally {
+    isProcessing.value = null
+  }
+}
+
+const formatRwf = (amount: number) => new Intl.NumberFormat('en-RW', {
+  style: 'currency',
+  currency: 'RWF',
+  maximumFractionDigits: 0,
+}).format(amount)
+
 const plans = [
   {
     id: 'starter',
@@ -80,6 +128,7 @@ const plans = [
     name: 'Silver',
     productId: 'dc070937-6444-40a6-8a02-fd8b25df7aae',
     price: '17.88',
+    mobilePriceRwf: 25000,
     desc: 'Best for growing businesses that need website and WhatsApp chatbots.',
     features: ['3 chatbots', 'Website + WhatsApp support', '5 connected domains / chatbot', '4,000 AI replies / mo', '30 training sessions'],
     popular: true
@@ -89,6 +138,7 @@ const plans = [
     name: 'Gold',
     productId: 'd0493f6f-16bc-4d3c-97bb-7be920840f12',
     price: '26.88',
+    mobilePriceRwf: 38000,
     desc: 'Best for higher-volume conversations across website, WhatsApp, and Instagram workflows.',
     features: ['5 chatbots', 'Website + WhatsApp support', 'Instagram workflows', '10,000 AI replies / mo', '100 training sessions'],
     popular: false
@@ -98,6 +148,7 @@ const plans = [
     name: 'Enterprise Ready',
     productId: '3e478611-c444-46e5-9827-7450a1c8d046',
     price: '350.00',
+    mobilePriceRwf: 490000,
     desc: 'Self-serve Enterprise for larger rollouts that need every channel plus AI business tools.',
     features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Appointments, bookings, Google Calendar, MTN/Airtel mobile checkout'],
     popular: false
@@ -202,21 +253,36 @@ const getCtaLabel = (plan: any) => {
               <span class="text-[10px] font-bold uppercase tracking-[0.1em] text-foreground/50">/month</span>
             </div>
 
-            <button
-              @click="handleSelect(plan)"
-              :disabled="isProcessing === plan.id || planSlug === plan.id"
-              class="mb-8 flex w-full items-center justify-center gap-2 rounded-full py-4 text-sm font-bold tracking-[0.1em] transition-all disabled:cursor-default disabled:opacity-80"
-              :class="plan.popular ? 'btn-gradient' : 'border border-foreground/10 bg-foreground/5 text-foreground hover:bg-foreground/10 hover:border-foreground/20'"
-            >
-              <template v-if="isProcessing === plan.id">
-                <Loader2 class="h-4 w-4 animate-spin" />
-                Processing...
-              </template>
-              <template v-else>
-                {{ getCtaLabel(plan) }}
-                <ArrowRight v-if="planSlug !== plan.id" class="h-4 w-4" />
-              </template>
-            </button>
+            <div class="mb-8 space-y-2">
+              <button
+                @click="handleSelect(plan)"
+                :disabled="isProcessing === `${plan.id}:card` || planSlug === plan.id"
+                class="flex w-full items-center justify-center gap-2 rounded-full py-4 text-sm font-bold tracking-[0.1em] transition-all disabled:cursor-default disabled:opacity-80"
+                :class="plan.popular ? 'btn-gradient' : 'border border-foreground/10 bg-foreground/5 text-foreground hover:bg-foreground/10 hover:border-foreground/20'"
+              >
+                <template v-if="isProcessing === `${plan.id}:card`">
+                  <Loader2 class="h-4 w-4 animate-spin" />
+                  Processing...
+                </template>
+                <template v-else>
+                  {{ getCtaLabel(plan) }} by card
+                  <ArrowRight v-if="planSlug !== plan.id" class="h-4 w-4" />
+                </template>
+              </button>
+
+              <button
+                type="button"
+                @click="openMobilePayment(plan)"
+                :disabled="Boolean(isProcessing) || planSlug === plan.id"
+                class="flex w-full items-center justify-center gap-2 rounded-full border border-foreground/10 bg-background/50 px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-foreground/70 transition-all hover:border-primary/25 hover:bg-primary/5 hover:text-foreground disabled:cursor-default disabled:opacity-60"
+              >
+                <Smartphone class="h-4 w-4" />
+                MTN/Airtel mobile payment
+              </button>
+              <p v-if="plan.mobilePriceRwf" class="text-center text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/35">
+                Mobile price: {{ formatRwf(plan.mobilePriceRwf) }}/month
+              </p>
+            </div>
 
             <div class="space-y-4">
               <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-3 text-sm font-medium text-foreground/55">
@@ -256,10 +322,10 @@ const getCtaLabel = (plan: any) => {
             </div>
             <button
               @click="handleSelect(freeStarterPlan)"
-              :disabled="isProcessing === freeStarterPlan.id || planSlug === freeStarterPlan.id"
+              :disabled="isProcessing === `${freeStarterPlan.id}:card` || planSlug === freeStarterPlan.id"
               class="flex w-full items-center justify-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-8 py-4 text-sm font-bold tracking-[0.1em] text-foreground transition-all hover:border-foreground/20 hover:bg-foreground/10 disabled:cursor-default disabled:opacity-80 lg:w-auto"
             >
-              <template v-if="isProcessing === freeStarterPlan.id">
+              <template v-if="isProcessing === `${freeStarterPlan.id}:card`">
                 <Loader2 class="h-4 w-4 animate-spin" />
                 Processing...
               </template>
@@ -271,5 +337,62 @@ const getCtaLabel = (plan: any) => {
         </div>
       </section>
     </template>
+
+    <div v-if="selectedMobilePlan" class="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 backdrop-blur-sm sm:items-center sm:p-6">
+      <div class="w-full max-w-lg overflow-hidden rounded-[28px] border border-foreground/10 bg-background shadow-2xl shadow-black/40">
+        <div class="flex items-start justify-between gap-4 border-b border-foreground/10 p-5 sm:p-6">
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">MTN/Airtel mobile payment</p>
+            <h3 class="mt-2 text-xl font-black tracking-tight text-foreground">Pay for {{ selectedMobilePlan.name }}</h3>
+            <p class="mt-1 text-sm font-medium text-foreground/50">
+              {{ formatRwf(selectedMobilePlan.mobilePriceRwf) }}/month. Enter the phone number that should receive the payment prompt.
+            </p>
+          </div>
+          <button type="button" class="rounded-full border border-foreground/10 p-2 text-foreground/50 transition hover:bg-foreground/5 hover:text-foreground" @click="closeMobilePayment">
+            <X class="h-4 w-4" />
+          </button>
+        </div>
+
+        <div class="space-y-4 p-5 sm:p-6">
+          <label class="block space-y-2">
+            <span class="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/45">Phone number</span>
+            <input
+              v-model="mobilePhone"
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
+              placeholder="078xxxxxxx"
+              class="w-full rounded-2xl border border-foreground/10 bg-foreground/[0.03] px-4 py-4 text-sm font-bold text-foreground outline-none transition placeholder:text-foreground/25 focus:border-primary/50"
+              @keyup.enter="requestMobilePayment"
+            />
+          </label>
+
+          <div v-if="mobilePaymentResult" class="rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-4">
+            <p class="text-sm font-black text-emerald-500">Payment prompt sent</p>
+            <p class="mt-1 text-xs leading-relaxed text-foreground/55">
+              Complete the prompt on your phone. Reference: <span class="font-mono text-foreground/70">{{ mobilePaymentResult.transactionRef }}</span>
+            </p>
+            <p class="mt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/35">
+              Plan activation is confirmed after the payment is verified.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            class="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-black transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="isProcessing === `${selectedMobilePlan.id}:mobile`"
+            @click="requestMobilePayment"
+          >
+            <Loader2 v-if="isProcessing === `${selectedMobilePlan.id}:mobile`" class="h-4 w-4 animate-spin" />
+            <Smartphone v-else class="h-4 w-4" />
+            Send payment prompt
+          </button>
+
+          <p class="text-center text-[10px] leading-relaxed text-foreground/40">
+            Prefer card payment? Close this window and choose the card option on your plan.
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
