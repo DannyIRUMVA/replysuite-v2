@@ -11,6 +11,7 @@ import {
   updateConversationState,
 } from '../../conversation-intelligence'
 import { safeLoadContactMemory, safeUpsertContactMemory } from '../../contact-memory'
+import { storeWhatsappImageWithMediaWorker, toCustomerSafeMediaContext } from './media'
 
 const normalizeWhatsappMessageIds = (metadata: any) => {
   const ids = metadata?.whatsapp_message_ids
@@ -25,11 +26,12 @@ const mergeWhatsappSessionMetadata = (metadata: any, updates: Record<string, any
 })
 
 export const processWhatsappMessage = async (supabase: any, messageData: any) => {
-  const { phone_number_id, from_number, text, customer_name, message_id } = messageData
+  const { phone_number_id, from_number, text, customer_name, message_id, media } = messageData
   let chatSession: any = null
   let sessionMetadata: any = null
   let inboundAlreadyRecorded = false
   let inboundRecorded = false
+  let storedMediaAsset: any = null
 
   console.log(`\n🚀 [WhatsApp Automation] START: Processing message from ${customer_name} (${from_number})`)
   console.log(`   📝 Text: "${text}"`)
@@ -118,6 +120,46 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
       last_inbound_text: text,
       whatsapp_message_ids: nextMessageIds,
     })
+
+    if (media?.id && waAccount?.access_token) {
+      try {
+        storedMediaAsset = await storeWhatsappImageWithMediaWorker({
+          event: (messageData as any)._event,
+          accessToken: waAccount.access_token,
+          chatbotId: waAccount.chatbot_id,
+          sessionId: chatSession.id,
+          messageId: message_id,
+          media,
+        })
+      } catch (mediaErr: any) {
+        console.warn('[WhatsApp Media] Failed to store inbound media:', mediaErr?.message || mediaErr)
+      }
+    }
+
+    if (storedMediaAsset) {
+      const mediaAssets = Array.isArray(sessionMetadata.media_assets) ? sessionMetadata.media_assets : []
+      sessionMetadata = mergeWhatsappSessionMetadata(sessionMetadata, {
+        media_assets: [
+          ...mediaAssets,
+          {
+            type: storedMediaAsset.type,
+            url: storedMediaAsset.url,
+            mime_type: storedMediaAsset.mimeType,
+            caption: storedMediaAsset.caption,
+            size: storedMediaAsset.size,
+            usage_hint: storedMediaAsset.usageHint,
+            created_at: new Date().toISOString(),
+          },
+        ].slice(-20),
+        last_media_asset: {
+          type: storedMediaAsset.type,
+          url: storedMediaAsset.url,
+          mime_type: storedMediaAsset.mimeType,
+          caption: storedMediaAsset.caption,
+          usage_hint: storedMediaAsset.usageHint,
+        },
+      })
+    }
 
     await supabase
       .from('chat_sessions')
@@ -286,6 +328,9 @@ ${buildAssistantSkillsPrompt((chatbot as any)?.tools_config)}
 [ADDITIONAL CONTEXT FROM KNOWLEDGE BASE]
 ${contextText || 'No specific background knowledge found for this query.'}
 
+[WHATSAPP MEDIA CONTEXT]
+${storedMediaAsset ? toCustomerSafeMediaContext(storedMediaAsset) : 'No stored customer image is attached to this turn.'}
+
 IMPORTANT INSTRUCTIONS:
 1. Format specifically for WhatsApp. You can use standard formatting like *bold* or _italics_ natively.
 2. Do not include markdown headers (#) or markdown horizontal lines (---).
@@ -307,7 +352,8 @@ IMPORTANT INSTRUCTIONS:
         platform: 'whatsapp',
         customerPhone: from_number,
         whatsappToken: waAccount.access_token,
-        phoneId: phone_number_id
+        phoneId: phone_number_id,
+        mediaAssets: storedMediaAsset ? [storedMediaAsset] : []
       }
     })
 

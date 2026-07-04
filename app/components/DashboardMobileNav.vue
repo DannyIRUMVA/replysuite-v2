@@ -6,10 +6,12 @@ import {
   TrendingUp,
   Zap,
   Bot,
-  MessageCircle
+  MessageCircle,
+  Crown
 } from 'lucide-vue-next'
 
 const route = useRoute()
+const { canUseBusinessTools } = usePlanAccess()
 
 // Map strings to components to avoid serialization of functions
 const iconMap: Record<string, any> = {
@@ -17,16 +19,17 @@ const iconMap: Record<string, any> = {
   Bot,
   TrendingUp,
   Zap,
-  MessageCircle
+  MessageCircle,
+  Crown
 }
 
-const navLinks = [
+const navLinks = computed(() => [
   { name: 'Hub', href: '/dashboard', icon: 'LayoutDashboard' },
   { name: 'Web', href: '/dashboard/integrations/website', icon: 'Zap' },
   { name: 'Forge', href: '/dashboard/agents', icon: 'Bot' },
-  { name: 'Stats', href: '/dashboard/analytics', icon: 'TrendingUp' },
+  ...(canUseBusinessTools.value ? [{ name: 'Ent', href: '/dashboard/enterprise', icon: 'Crown' }] : [{ name: 'Stats', href: '/dashboard/analytics', icon: 'TrendingUp' }]),
   { name: 'Chat', href: '/dashboard/conversations', icon: 'MessageCircle' },
-]
+])
 </script>
 
 <template>

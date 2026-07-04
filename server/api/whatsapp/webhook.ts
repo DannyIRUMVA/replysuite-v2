@@ -1,4 +1,5 @@
 import { processWhatsappMessage } from '../../utils/integrations/whatsapp/automation'
+import { extractWhatsappMedia } from '../../utils/integrations/whatsapp/media'
 import { serverSupabaseServiceRole } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
@@ -86,6 +87,7 @@ export default defineEventHandler(async (event) => {
                       ? (msg.button?.text || msg.button?.payload)
                       : msg[msg.type]?.caption || `[${msg.type || 'unknown'} message received]`
 
+              const media = extractWhatsappMedia(msg)
               const messageData = {
                 waba_id: val.metadata.display_phone_number,
                 phone_number_id: val.metadata.phone_number_id,
@@ -94,6 +96,7 @@ export default defineEventHandler(async (event) => {
                 message_id: msg.id,
                 customer_name: val.contacts?.[0]?.profile?.name || msg.from,
                 message_type: msg.type,
+                media,
                 _event: event
               }
               

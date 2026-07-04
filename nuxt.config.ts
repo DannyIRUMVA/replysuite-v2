@@ -159,6 +159,9 @@ export default defineNuxtConfig({
     whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN,
     whatsappWebhookUrl: process.env.WHATSAPP_WEBHOOK_URL,
     whatsappAppSecret: process.env.WHATSAPP_APP_SECRET,
+    replySuiteHermesWebhookSecret: process.env.REPLYSUITE_HERMES_WEBHOOK_SECRET,
+    replySuiteMediaWorkerUrl: process.env.REPLYSUITE_MEDIA_WORKER_URL,
+    replySuiteMediaWorkerSecret: process.env.REPLYSUITE_MEDIA_WORKER_SECRET,
 
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL,
