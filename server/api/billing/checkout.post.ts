@@ -3,6 +3,30 @@ import { Polar } from '@polar-sh/sdk'
 import { serverSupabaseUser, serverSupabaseServiceRole } from '#supabase/server'
 import { recoverPolarCustomerWithActiveSubscription, syncUserToPolar } from '~~/server/utils/polar'
 
+const getSafeBillingErrorMessage = (err: any) => {
+  const raw = [
+    err?.message,
+    err?.statusMessage,
+    err?.response?.data?.error,
+    err?.response?.data?.error_description,
+    err?.response?.data?.detail,
+  ].filter(Boolean).join(' ')
+
+  if (/invalid_token|expired|revoked|malformed|401/i.test(raw)) {
+    return 'Billing provider token is invalid or expired. Please update POLAR_ACCESS_TOKEN in Cloudflare Pages.'
+  }
+
+  if (/not found|404|product/i.test(raw)) {
+    return 'Billing plan is not available in the configured billing environment. Please verify the product IDs and POLAR_SERVER.'
+  }
+
+  if (/AlreadyActiveSubscriptionError/i.test(raw)) {
+    return 'You already have an active subscription. Please sync your dashboard to see your current plan.'
+  }
+
+  return 'Failed to create checkout session. Please contact support.'
+}
+
 export default defineEventHandler(async (event) => {
   try {
     const { userId } = await getAuthContext(event)
@@ -110,20 +134,17 @@ export default defineEventHandler(async (event) => {
     const checkout = await polar.checkouts.create(checkoutPayload)
     return { url: checkout.url }
   } catch (err: any) {
-    console.error('[Polar Checkout Error]', err.message)
-    
-    // Check for "Already have an active subscription" error
-    if (err.message?.includes('AlreadyActiveSubscriptionError') || (err.response?.data?.error === 'AlreadyActiveSubscriptionError')) {
-      throw createError({ 
-        statusCode: 409, 
-        message: 'You already have an active subscription. Please sync your dashboard to see your current plan.' 
-      })
-    }
-
+    const safeMessage = getSafeBillingErrorMessage(err)
+    console.error('[Polar Checkout Error]', err?.message || err)
     if (err.response) {
       console.error('Polar response:', err.response.status, JSON.stringify(err.response.data))
     }
-    if (err.statusCode) throw err
-    throw createError({ statusCode: 500, message: err.message || 'Failed to create checkout session' })
+
+    if (err.message?.includes('AlreadyActiveSubscriptionError') || (err.response?.data?.error === 'AlreadyActiveSubscriptionError')) {
+      throw createError({ statusCode: 409, statusMessage: safeMessage, message: safeMessage })
+    }
+
+    if (err.statusCode && err.statusCode < 500) throw err
+    throw createError({ statusCode: 500, statusMessage: safeMessage, message: safeMessage })
   }
 })

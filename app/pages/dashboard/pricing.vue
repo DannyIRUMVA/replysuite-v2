@@ -59,7 +59,8 @@ const handleSelect = async (plan: any) => {
     }
   } catch (err: any) {
     console.error('[Dashboard Pricing] Action failed:', err)
-    notify.error('Failed to process request. Please try again.')
+    const message = err?.data?.message || err?.data?.statusMessage || err?.statusMessage || err?.message || 'Failed to process request. Please try again.'
+    notify.error(message)
   } finally {
     isProcessing.value = null
   }
