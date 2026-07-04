@@ -71,6 +71,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     if (to.path.startsWith('/dashboard/appointments') && !isEnterprise) {
       return navigateTo('/dashboard/pricing')
     }
+
+    if (to.path.startsWith('/dashboard/agents/tools/website-builder') && !isEnterprise) {
+      return navigateTo('/dashboard/pricing')
+    }
   }
 
   // 2.5. Dashboard onboarding check

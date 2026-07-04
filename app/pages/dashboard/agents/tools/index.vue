@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, ArrowRight, Bot, Building2, CalendarCheck2, CalendarDays, Check, ChevronDown, Clock3, CreditCard, Hotel, Loader2, RefreshCcw, Save, Settings2, ShieldCheck, Stethoscope, XCircle } from 'lucide-vue-next'
+import { ArrowLeft, ArrowRight, Bot, Building2, CalendarCheck2, CalendarDays, Check, ChevronDown, Clock3, CreditCard, Crown, Globe2, Hotel, Loader2, RefreshCcw, Save, Settings2, ShieldCheck, Stethoscope, XCircle } from 'lucide-vue-next'
 
 definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 useHead({ title: 'Assistant Tools | ReplySuite' })
@@ -34,6 +34,7 @@ const googleCalendarConnected = computed(() => Boolean(
 ))
 const googleCalendarLabel = computed(() => googleMapping.value?.calendar_summary || googleCalendarStatus.value?.connection?.google_email || 'Connected calendar')
 const calendarSetupLink = computed(() => selectedAssistantId.value ? `/dashboard/appointments/settings?chatbotId=${selectedAssistantId.value}` : '/dashboard/appointments/settings')
+const websiteBuilderLink = computed(() => selectedAssistantId.value ? `/dashboard/agents/tools/website-builder?chatbotId=${selectedAssistantId.value}` : '/dashboard/agents/tools/website-builder')
 
 const activeCapabilities = computed(() => [
   { label: 'Request appointment', enabled: appointmentsEnabled.value, icon: CalendarCheck2 },
@@ -196,6 +197,10 @@ onMounted(fetchAssistants)
             Open skills
             <ArrowRight class="h-4 w-4" />
           </NuxtLink>
+          <NuxtLink :to="isPremium ? websiteBuilderLink : '/dashboard/pricing'" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/10 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15">
+            Website builder
+            <Crown class="h-4 w-4" />
+          </NuxtLink>
           <NuxtLink :to="calendarSetupLink" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/10 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15">
             Calendar setup
             <Settings2 class="h-4 w-4" />
@@ -252,6 +257,25 @@ onMounted(fetchAssistants)
           <p class="text-xs font-black uppercase tracking-widest text-primary">Enterprise booking tools</p>
           <p class="mt-2 max-w-3xl text-sm font-medium leading-relaxed text-foreground/60">Google Calendar appointments, bookings, cancellation, rescheduling, and booking deposits are available on Enterprise.</p>
           <NuxtLink to="/dashboard/pricing" class="mt-4 inline-flex rounded-xl bg-primary px-5 py-3 text-[10px] font-black uppercase tracking-widest text-black">Upgrade to Enterprise</NuxtLink>
+        </section>
+
+        <section class="rounded-2xl border border-primary/15 bg-background-card p-5">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex items-start gap-4">
+              <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Globe2 class="h-6 w-6" /></div>
+              <div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <h2 class="text-lg font-black tracking-tight text-foreground">Enterprise website builder</h2>
+                  <span class="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-primary">Enterprise only</span>
+                </div>
+                <p class="mt-2 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">Open the website builder control room for requested websites, private build jobs, bot working status, media assets, advance-payment readiness, and the connected website execution agent.</p>
+              </div>
+            </div>
+            <NuxtLink :to="isPremium ? websiteBuilderLink : '/dashboard/pricing'" class="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-[10px] font-black uppercase tracking-widest text-black transition hover:opacity-90">
+              {{ isPremium ? 'Open builder' : 'Upgrade' }}
+              <ArrowRight class="h-4 w-4" />
+            </NuxtLink>
+          </div>
         </section>
 
         <section class="rounded-2xl border border-foreground/10 bg-background-card p-5">

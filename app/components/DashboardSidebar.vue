@@ -15,13 +15,12 @@ import {
   MessageCircle,
   HelpCircle,
   Instagram,
-  CalendarDays,
-  Crown
+  CalendarDays
 } from 'lucide-vue-next'
 
 const { openFeedback } = useFeedback()
 const { user, membership, isLoading } = useAuth()
-const { canUseWhatsApp, canUseInstagramWorkflow, canUseBusinessTools } = usePlanAccess()
+const { canUseWhatsApp, canUseInstagramWorkflow } = usePlanAccess()
 const route = useRoute()
 const supabase = useSupabaseClient()
 
@@ -38,8 +37,7 @@ const iconMap: Record<string, any> = {
   MessageCircle,
   HelpCircle,
   Instagram,
-  CalendarDays,
-  Crown
+  CalendarDays
 }
 
 
@@ -103,7 +101,6 @@ const sections = computed(() => [
       { name: 'My Assistant', href: '/dashboard/agents', icon: 'MessageSquare' },
       { name: 'Skills', href: '/dashboard/agents/skills', icon: 'Database' },
       { name: 'Tools', href: '/dashboard/agents/tools', icon: 'CalendarDays' },
-      { name: 'Enterprise', href: '/dashboard/enterprise', icon: 'Crown', locked: !canUseBusinessTools.value },
       { name: 'Conversations', href: '/dashboard/conversations', icon: 'MessageCircle' },
     ]
   },
@@ -123,7 +120,7 @@ const sections = computed(() => [
 
 const openLockedFeatureModal = (link: any) => {
   lockedFeatureName.value = link.name || 'This feature'
-  lockedFeatureReason.value = ['WhatsApp', 'Instagram', 'Enterprise'].includes(link.name)
+  lockedFeatureReason.value = ['WhatsApp', 'Instagram'].includes(link.name)
     ? 'upgrade'
     : 'coming-soon'
   showLockedFeatureModal.value = true
