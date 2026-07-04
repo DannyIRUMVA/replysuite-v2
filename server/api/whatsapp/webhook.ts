@@ -102,11 +102,17 @@ export default defineEventHandler(async (event) => {
               
               console.log(`[WhatsApp Webhook] Incoming ${messageData.message_type} message to ${messageData.phone_number_id} from ${messageData.from_number}: "${messageData.text}"`)
               
-              // Throw it to the background automation worker
+              // Throw it to the background automation worker when the runtime supports it.
+              // Some Nitro/Pages contexts do not expose event.waitUntil directly, so never
+              // let background scheduling failure turn Meta's webhook acknowledgement into a 500.
               const supabase = serverSupabaseServiceRole(event)
-              event.waitUntil(processWhatsappMessage(supabase, messageData).catch(err => {
+              const job = processWhatsappMessage(supabase, messageData).catch(err => {
                 console.error('[WhatsApp Webhook Background Error]', err)
-              }))
+              })
+              const waitUntil = (event as any).waitUntil || (event as any).context?.cloudflare?.ctx?.waitUntil
+              if (typeof waitUntil === 'function') {
+                waitUntil(job)
+              }
             }
           }
         }
