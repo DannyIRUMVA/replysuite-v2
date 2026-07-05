@@ -1,8 +1,9 @@
-import { serverSupabaseUser } from '#supabase/server'
+import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 
 const sanitizeString = (value: unknown, maxLength = 500) => String(value || '').trim().slice(0, maxLength)
 const normalizePhoneForMobilePayment = (phone: string) => sanitizeString(phone, 32).replace(/\s+/g, '').replace(/^\+250/, '0').replace(/^250/, '0')
 const isValidRwandaPhone = (phone: string) => /^07[2389]\d{7}$/.test(phone)
+const TEST_COMPLETED_PAYMENT_PHONE = '0786200502'
 
 const SUBSCRIPTION_MOBILE_PLANS: Record<string, { name: string; amount: number; currency: 'RWF' }> = {
   silver: { name: 'Silver', amount: 25_000, currency: 'RWF' },
@@ -42,14 +43,85 @@ export default defineEventHandler(async (event) => {
   )
 
   const baseUrl = configuredUrl.replace(/\/+$/, '')
+  const transactionRef = makeTransactionRef(planId, userId)
+
+  if (phone === TEST_COMPLETED_PAYMENT_PHONE) {
+    const adminClient = serverSupabaseServiceRole(event)
+    const now = new Date()
+    const periodEnd = new Date(now)
+    periodEnd.setUTCDate(periodEnd.getUTCDate() + 30)
+
+    const { data: dbPlan, error: planError } = await adminClient
+      .from('plans')
+      .select('id, name, internal_slug')
+      .eq('internal_slug', planId)
+      .maybeSingle()
+
+    if (planError || !dbPlan?.id) {
+      console.warn('[Subscription Mobile Payment Test] Plan lookup failed:', planError)
+      throw createError({ statusCode: 500, statusMessage: 'Could not activate the selected test plan.' })
+    }
+
+    const { error: membershipError } = await adminClient
+      .from('user_memberships')
+      .upsert({
+        user_id: userId,
+        plan_id: dbPlan.id,
+        is_active: true,
+        amount: plan.amount,
+        starts_at: now.toISOString(),
+        ends_at: periodEnd.toISOString(),
+      }, { onConflict: 'user_id' })
+
+    if (membershipError) {
+      console.warn('[Subscription Mobile Payment Test] Membership activation failed:', membershipError)
+      throw createError({ statusCode: 500, statusMessage: 'Could not complete the test payment.' })
+    }
+
+    const { error: paymentError } = await adminClient
+      .from('payments')
+      .insert({
+        user_id: userId,
+        plan_id: dbPlan.id,
+        provider: 'paypack',
+        amount: plan.amount,
+        currency: plan.currency,
+        reference: transactionRef,
+        status: 'completed',
+      })
+
+    if (paymentError) {
+      console.warn('[Subscription Mobile Payment Test] Completed payment record insert failed:', paymentError)
+    }
+
+    return {
+      success: true,
+      paymentRequested: false,
+      paymentCompleted: true,
+      testMode: true,
+      status: 'completed',
+      planId,
+      planName: plan.name,
+      amount: plan.amount,
+      currency: plan.currency,
+      phone,
+      transactionRef,
+      periodEnd: periodEnd.toISOString(),
+      message: 'Test payment completed. Your plan is active for testing.',
+      providerResponse: {
+        status: 'completed',
+        reference: transactionRef,
+        testPhone: true,
+      },
+    }
+  }
+
   if (!baseUrl) {
     throw createError({
       statusCode: 503,
       statusMessage: 'MTN/Airtel mobile payment is not configured for subscriptions yet.',
     })
   }
-
-  const transactionRef = makeTransactionRef(planId, userId)
 
   const response = await fetch(`${baseUrl}/pay`, {
     method: 'POST',

@@ -98,7 +98,7 @@ const requestMobilePayment = async () => {
     })
 
     mobilePaymentResult.value = res
-    notify.success('MTN/Airtel mobile payment prompt sent.')
+    notify.success((res as any)?.paymentCompleted ? 'Test payment completed. Plan activated.' : 'MTN/Airtel mobile payment prompt sent.')
   } catch (err: any) {
     console.error('[Dashboard Pricing] Mobile payment failed:', err)
     const message = err?.data?.message || err?.data?.statusMessage || err?.statusMessage || err?.message || 'Mobile payment request failed. Please try again.'
@@ -368,12 +368,20 @@ const getCtaLabel = (plan: any) => {
           </label>
 
           <div v-if="mobilePaymentResult" class="rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-4">
-            <p class="text-sm font-black text-emerald-500">Payment prompt sent</p>
+            <p class="text-sm font-black text-emerald-500">
+              {{ mobilePaymentResult.paymentCompleted ? 'Payment complete' : 'Payment prompt sent' }}
+            </p>
             <p class="mt-1 text-xs leading-relaxed text-foreground/55">
-              Complete the prompt on your phone. Reference: <span class="font-mono text-foreground/70">{{ mobilePaymentResult.transactionRef }}</span>
+              <template v-if="mobilePaymentResult.paymentCompleted">
+                Your test payment was completed and the plan is active. Reference:
+              </template>
+              <template v-else>
+                Complete the prompt on your phone. Reference:
+              </template>
+              <span class="font-mono text-foreground/70">{{ mobilePaymentResult.transactionRef }}</span>
             </p>
             <p class="mt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/35">
-              Plan activation is confirmed after the payment is verified.
+              {{ mobilePaymentResult.paymentCompleted ? 'This test activation runs for 30 days.' : 'Plan activation is confirmed after the payment is verified.' }}
             </p>
           </div>
 
