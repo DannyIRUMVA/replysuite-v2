@@ -1,5 +1,5 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
-import { processInstagramComment } from '../../utils/integrations/instagram/automation'
+import { processInstagramComment, processInstagramMessage } from '../../utils/integrations/instagram/automation'
 
 const timingSafeEqualHex = (left: string, right: string) => {
   if (left.length !== right.length) return false
@@ -17,6 +17,44 @@ const verifyMetaSignature = async (rawBody: string, signature: string | undefine
   const digestBuffer = await crypto.subtle.sign('HMAC', key, encoder.encode(rawBody))
   const digest = 'sha256=' + Array.from(new Uint8Array(digestBuffer)).map((byte) => byte.toString(16).padStart(2, '0')).join('')
   return timingSafeEqualHex(signature, digest)
+}
+
+const extractInstagramMessageEvents = (body: any) => {
+  const events: any[] = []
+  const ignoredMessages: string[] = []
+
+  for (const entry of body?.entry || []) {
+    const igUserId = entry?.id ? String(entry.id) : null
+
+    for (const messageEvent of entry?.messaging || []) {
+      const senderId = messageEvent?.sender?.id ? String(messageEvent.sender.id) : null
+      const recipientId = messageEvent?.recipient?.id ? String(messageEvent.recipient.id) : igUserId
+      const messageText = messageEvent?.message?.text ? String(messageEvent.message.text).trim() : ''
+      const messageId = messageEvent?.message?.mid ? String(messageEvent.message.mid) : null
+
+      if (!senderId || !recipientId || !messageText) {
+        ignoredMessages.push(`sender=${Boolean(senderId)} recipient=${Boolean(recipientId)} text=${Boolean(messageText)}`)
+        continue
+      }
+
+      if (messageEvent?.message?.is_echo) {
+        ignoredMessages.push('echo=true')
+        continue
+      }
+
+      events.push({
+        igUserId,
+        senderId,
+        recipientId,
+        messageText,
+        messageId,
+        timestamp: messageEvent?.timestamp || null,
+        raw: messageEvent,
+      })
+    }
+  }
+
+  return { events, ignoredMessages }
 }
 
 const extractInstagramCommentEvents = (body: any) => {
@@ -88,26 +126,37 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = JSON.parse(rawText)
-  const { events, ignoredChanges } = extractInstagramCommentEvents(body)
+  const { events: commentEvents, ignoredChanges } = extractInstagramCommentEvents(body)
+  const { events: messageEvents, ignoredMessages } = extractInstagramMessageEvents(body)
 
   console.log('[Instagram Webhook] POST received', {
     object: body?.object || null,
     entries: Array.isArray(body?.entry) ? body.entry.length : 0,
-    events: events.length,
-    ignored: ignoredChanges.slice(0, 5),
+    commentEvents: commentEvents.length,
+    messageEvents: messageEvents.length,
+    ignoredChanges: ignoredChanges.slice(0, 5),
+    ignoredMessages: ignoredMessages.slice(0, 5),
   })
 
-  if (events.length) {
-    const supabase = serverSupabaseServiceRole(event)
-    for (const instagramEvent of events) {
-      instagramEvent.event = event
-      const job = processInstagramComment(supabase, instagramEvent).catch((error: any) => {
-        console.error('[Instagram Webhook Background Error]', error?.message || error)
-      })
-      if (typeof event.waitUntil === 'function') event.waitUntil(job)
-      else await job
-    }
+  const supabase = commentEvents.length || messageEvents.length ? serverSupabaseServiceRole(event) : null
+
+  for (const instagramEvent of commentEvents) {
+    instagramEvent.event = event
+    const job = processInstagramComment(supabase, instagramEvent).catch((error: any) => {
+      console.error('[Instagram Webhook Comment Background Error]', error?.message || error)
+    })
+    if (typeof event.waitUntil === 'function') event.waitUntil(job)
+    else await job
   }
 
-  return { status: 'received', events: events.length }
+  for (const instagramEvent of messageEvents) {
+    instagramEvent.event = event
+    const job = processInstagramMessage(supabase, instagramEvent).catch((error: any) => {
+      console.error('[Instagram Webhook DM Background Error]', error?.message || error)
+    })
+    if (typeof event.waitUntil === 'function') event.waitUntil(job)
+    else await job
+  }
+
+  return { status: 'received', commentEvents: commentEvents.length, messageEvents: messageEvents.length }
 })

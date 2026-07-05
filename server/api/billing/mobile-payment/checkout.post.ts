@@ -62,19 +62,39 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 500, statusMessage: 'Could not activate the selected test plan.' })
     }
 
-    const { error: membershipError } = await adminClient
-      .from('user_memberships')
-      .upsert({
-        user_id: userId,
-        plan_id: dbPlan.id,
-        is_active: true,
-        amount: plan.amount,
-        starts_at: now.toISOString(),
-        ends_at: periodEnd.toISOString(),
-      }, { onConflict: 'user_id' })
+    const membershipPayload = {
+      user_id: userId,
+      plan_id: dbPlan.id,
+      is_active: true,
+      amount: plan.amount,
+      starts_at: now.toISOString(),
+      ends_at: periodEnd.toISOString(),
+    }
 
-    if (membershipError) {
-      console.warn('[Subscription Mobile Payment Test] Membership activation failed:', membershipError)
+    const { data: existingMembership, error: existingMembershipError } = await adminClient
+      .from('user_memberships')
+      .select('id')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (existingMembershipError) {
+      console.warn('[Subscription Mobile Payment Test] Membership lookup failed:', existingMembershipError)
+      throw createError({ statusCode: 500, statusMessage: 'Could not complete the test payment.' })
+    }
+
+    const membershipResult = existingMembership?.id
+      ? await adminClient
+        .from('user_memberships')
+        .update(membershipPayload)
+        .eq('id', existingMembership.id)
+      : await adminClient
+        .from('user_memberships')
+        .insert(membershipPayload)
+
+    if (membershipResult.error) {
+      console.warn('[Subscription Mobile Payment Test] Membership activation failed:', membershipResult.error)
       throw createError({ statusCode: 500, statusMessage: 'Could not complete the test payment.' })
     }
 

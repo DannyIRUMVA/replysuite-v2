@@ -14,7 +14,18 @@ type InstagramCommentEvent = {
   raw?: any
 }
 
-type InstagramAction = 'comment_reply' | 'comment_to_dm'
+type InstagramMessageEvent = {
+  igUserId?: string | null
+  senderId: string
+  recipientId: string
+  messageText: string
+  messageId?: string | null
+  timestamp?: number | null
+  event?: any
+  raw?: any
+}
+
+type InstagramAction = 'comment_reply' | 'comment_to_dm' | 'direct_message'
 
 const cleanText = (value: unknown, fallback = '') => String(value || fallback).trim()
 
@@ -46,10 +57,10 @@ const actionAlreadyLogged = async (supabase: any, triggerId: string, commentId: 
 
 const logJob = async (supabase: any, payload: {
   instagramAccountId: string
-  instagramPostId: string
-  triggerId: string
+  instagramPostId?: string | null
+  triggerId?: string | null
   chatbotId: string
-  commentId: string
+  commentId?: string | null
   recipientAsid?: string | null
   status: string
   action: InstagramAction
@@ -59,10 +70,10 @@ const logJob = async (supabase: any, payload: {
 }) => {
   const { error } = await supabase.from('instagram_message_jobs').insert({
     instagram_account_id: payload.instagramAccountId,
-    instagram_post_id: payload.instagramPostId,
-    trigger_id: payload.triggerId,
+    instagram_post_id: payload.instagramPostId || null,
+    trigger_id: payload.triggerId || null,
     chatbot_id: payload.chatbotId,
-    comment_id: payload.commentId,
+    comment_id: payload.commentId || null,
     recipient_asid: payload.recipientAsid || null,
     status: payload.status,
     payload: {
@@ -170,11 +181,13 @@ const findOrCreateSession = async (supabase: any, chatbotId: string, account: an
     channel: 'instagram',
     source: 'instagram_comment',
     instagram_contact_key: contactKey,
+    instagram_sender_id: payload.commenterId || null,
     instagram_user_id: payload.commenterId || null,
     instagram_username: payload.commenterUsername || null,
     instagram_account_id: account.id,
     instagram_business_account_id: account.instagram_account_id || null,
     instagram_media_id: payload.mediaId,
+    instagram_message_ids: [],
   }
 
   const { data, error } = await supabase
@@ -209,7 +222,9 @@ const buildInstagramReply = async (supabase: any, chatbotId: string, commentText
 
   const modePrompt = mode === 'comment_reply'
     ? 'Write a public Instagram comment reply. Keep it safe, friendly, and under 2 short sentences. Do not ask for private details publicly. If private details are needed, invite the user to DM.'
-    : 'Write a private Instagram DM reply to someone who commented on a post. Be helpful, concise, conversational, and use the knowledge base when relevant.'
+    : mode === 'comment_to_dm'
+      ? 'Write a private Instagram DM reply to someone who commented on a post. Be helpful, concise, conversational, and use the knowledge base when relevant.'
+      : 'Write a private Instagram DM reply in an ongoing conversation. Be helpful, concise, conversational, and use the conversation history and knowledge base when relevant.'
 
   const systemPrompt = `${chatbot?.system_prompt || 'You are a helpful business assistant for Instagram.'}
 
@@ -242,6 +257,31 @@ Rules:
   ]
 
   return await getChatCompletion(messages, { systemPrompt })
+}
+
+const sendInstagramDirectMessage = async (account: any, recipientId: string, replyText: string) => {
+  const target = new URL(buildInstagramLoginGraphUrl('me/messages'))
+  target.searchParams.set('access_token', account.access_token)
+
+  const response = await fetch(target.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      recipient: { id: recipientId },
+      message: { text: replyText },
+    }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok || data?.error) {
+    const message = data?.error?.message || `Instagram DM request failed with HTTP ${response.status}`
+    const error = new Error(message) as Error & { payload?: unknown; status?: number }
+    error.payload = data
+    error.status = response.status
+    throw error
+  }
+
+  return data
 }
 
 const sendInstagramCommentDm = async (account: any, commentId: string, replyText: string) => {
@@ -277,6 +317,88 @@ const sendInstagramReply = async (account: any, commentId: string, action: Insta
   }
 
   return await sendInstagramCommentDm(account, commentId, replyText)
+}
+
+const resolveInstagramAccountForMessage = async (supabase: any, payload: InstagramMessageEvent) => {
+  const businessId = payload.recipientId || payload.igUserId
+  if (!businessId) return null
+
+  const { data } = await supabase
+    .from('instagram_accounts')
+    .select('*')
+    .or(`instagram_account_id.eq.${businessId},platform_id.eq.${businessId}`)
+    .maybeSingle()
+
+  return data || null
+}
+
+const normalizeInstagramMessageIds = (metadata: any) => {
+  const ids = metadata?.instagram_message_ids
+  return Array.isArray(ids) ? ids.filter(Boolean).map(String) : []
+}
+
+const findExistingDmSession = async (supabase: any, chatbotId: string, account: any, senderId: string) => {
+  const candidates = [
+    { instagram_sender_id: senderId },
+    { instagram_contact_key: senderId },
+  ]
+
+  for (const contains of candidates) {
+    const { data } = await supabase
+      .from('chat_sessions')
+      .select('id, metadata')
+      .eq('chatbot_id', chatbotId)
+      .contains('metadata', contains)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (data?.length) return data[0]
+  }
+
+  const metadata = {
+    type: 'instagram',
+    channel: 'instagram',
+    source: 'instagram_dm',
+    instagram_contact_key: senderId,
+    instagram_sender_id: senderId,
+    instagram_user_id: senderId,
+    instagram_account_id: account.id,
+    instagram_business_account_id: account.instagram_account_id || null,
+    instagram_message_ids: [],
+  }
+
+  const { data, error } = await supabase
+    .from('chat_sessions')
+    .insert({ chatbot_id: chatbotId, metadata })
+    .select('id, metadata')
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+const resolveChatbotForInstagramDm = async (supabase: any, account: any, senderId: string) => {
+  const { data: sessionMatches } = await supabase
+    .from('chat_sessions')
+    .select('id, chatbot_id, metadata, created_at')
+    .contains('metadata', { instagram_contact_key: senderId })
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  if (sessionMatches?.[0]?.chatbot_id) return { chatbotId: sessionMatches[0].chatbot_id, existingSession: sessionMatches[0] }
+
+  const { data: trigger } = await supabase
+    .from('instagram_comment_triggers')
+    .select('chatbot_id, instagram_posts!inner(instagram_account_id)')
+    .eq('is_active', true)
+    .eq('reply_in_dm', true)
+    .eq('instagram_posts.instagram_account_id', account.id)
+    .not('chatbot_id', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  return { chatbotId: trigger?.chatbot_id || null, existingSession: null }
 }
 
 export const processInstagramComment = async (supabase: any, payload: InstagramCommentEvent) => {
@@ -393,5 +515,100 @@ export const processInstagramComment = async (supabase: any, payload: InstagramC
         })
       }
     }
+  }
+}
+
+export const processInstagramMessage = async (supabase: any, payload: InstagramMessageEvent) => {
+  if (!payload.senderId || !payload.recipientId || !payload.messageText) return
+
+  console.log(`[Instagram DM] Processing message ${payload.messageId || 'no-id'} from ${payload.senderId}`)
+
+  const account = await resolveInstagramAccountForMessage(supabase, payload)
+  if (!account?.access_token) {
+    console.warn(`[Instagram DM] No connected account/token found for recipient ${payload.recipientId}`)
+    return
+  }
+
+  if (String(payload.senderId) === String(account.instagram_account_id) || String(payload.senderId) === String(account.platform_id)) {
+    console.log('[Instagram DM] Skipping account-owned message to prevent reply loops.')
+    return
+  }
+
+  const { chatbotId, existingSession } = await resolveChatbotForInstagramDm(supabase, account, payload.senderId)
+  if (!chatbotId) {
+    console.warn('[Instagram DM] No chatbot mapping found for this sender/account. Send is skipped.')
+    return
+  }
+
+  const session = existingSession || await findExistingDmSession(supabase, chatbotId, account, payload.senderId)
+  const sessionMetadata = session?.metadata || {}
+  const recordedMessageIds = normalizeInstagramMessageIds(sessionMetadata)
+
+  if (payload.messageId && recordedMessageIds.includes(String(payload.messageId))) {
+    console.warn(`[Instagram DM] Duplicate inbound message skipped: ${payload.messageId}`)
+    return
+  }
+
+  const nextMessageIds = payload.messageId
+    ? [...recordedMessageIds, String(payload.messageId)].slice(-50)
+    : recordedMessageIds
+
+  await supabase
+    .from('chat_sessions')
+    .update({
+      metadata: {
+        ...sessionMetadata,
+        type: 'instagram',
+        channel: 'instagram',
+        source: sessionMetadata.source || 'instagram_dm',
+        instagram_contact_key: payload.senderId,
+        instagram_sender_id: payload.senderId,
+        instagram_user_id: payload.senderId,
+        instagram_account_id: account.id,
+        instagram_business_account_id: account.instagram_account_id || null,
+        instagram_message_ids: nextMessageIds,
+        last_inbound_at: new Date().toISOString(),
+        last_inbound_text: payload.messageText,
+      },
+    })
+    .eq('id', session.id)
+
+  await supabase.from('chat_messages').insert({
+    session_id: session.id,
+    role: 'user',
+    content: payload.messageText,
+  })
+
+  let replyText = ''
+  try {
+    replyText = await buildInstagramReply(supabase, chatbotId, payload.messageText, 'direct_message', session.id)
+    const response = await sendInstagramDirectMessage(account, payload.senderId, replyText)
+
+    await supabase.from('chat_messages').insert({
+      session_id: session.id,
+      role: 'assistant',
+      content: `[Instagram DM reply] ${replyText}`,
+    })
+
+    await logJob(supabase, {
+      instagramAccountId: account.id,
+      chatbotId,
+      recipientAsid: payload.senderId,
+      status: 'sent',
+      action: 'direct_message',
+      replyText,
+      response,
+    })
+  } catch (error: any) {
+    console.error('[Instagram DM] direct_message failed:', error?.message || error)
+    await logJob(supabase, {
+      instagramAccountId: account.id,
+      chatbotId,
+      recipientAsid: payload.senderId,
+      status: 'failed',
+      action: 'direct_message',
+      replyText,
+      error,
+    })
   }
 }
