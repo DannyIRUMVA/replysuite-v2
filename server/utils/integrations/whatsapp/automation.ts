@@ -350,10 +350,18 @@ IMPORTANT INSTRUCTIONS:
       .replace(/[^a-z0-9\s]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
-    const kinyarwandaLowIntentReply = /^(muraho|amakuru|amakuru yanyu|bite|mwaramutse|mwiriwe)$/.test(normalizedLowIntentText)
-      ? (sessionState.greeted ? 'Nafasha nte uyu munsi?' : 'Muraho! Nafasha nte uyu munsi?')
+    const isKinyarwandaFirst = String(activeLanguageName || chatbotDefaultLanguage || '')
+      .toLowerCase()
+      .includes('kinyarwanda')
+    const englishLowIntentReply = getLowIntentDirectReply(text, Boolean(sessionState.greeted))
+    const kinyarwandaLowIntentReply = isKinyarwandaFirst && (/^(muraho|amakuru|amakuru yanyu|bite|mwaramutse|mwiriwe|hi|hello|hey|good morning|good afternoon|good evening)$/.test(normalizedLowIntentText) || englishLowIntentReply)
+      ? (/^(thanks|thank you|thx)$/.test(normalizedLowIntentText)
+        ? 'Murakoze — hari ikindi nabafasha?'
+        : /^(ok|okay|okey|k|cool|great|nice|yes|yeah|yep|sure)$/.test(normalizedLowIntentText)
+          ? 'Yego — ni iki kindi nabafasha?'
+          : (sessionState.greeted ? 'Nafasha nte uyu munsi?' : 'Muraho! Nafasha nte uyu munsi?'))
       : null
-    const directLowIntentReply = kinyarwandaLowIntentReply || getLowIntentDirectReply(text, Boolean(sessionState.greeted))
+    const directLowIntentReply = kinyarwandaLowIntentReply || englishLowIntentReply
 
     if (directLowIntentReply) {
       replyText = directLowIntentReply
