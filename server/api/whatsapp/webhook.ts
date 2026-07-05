@@ -3,6 +3,7 @@ import { extractWhatsappMedia } from '../../utils/integrations/whatsapp/media'
 import { serverSupabaseServiceRole } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
+  try {
   const config = useRuntimeConfig(event)
 
   // 1. GET Request: Webhook Challenge Verification (Meta setup)
@@ -125,5 +126,9 @@ export default defineEventHandler(async (event) => {
 
     // Always 200 OK to acknowledge receipt, otherwise Meta will retry and rate-limit
     return { status: 'received' }
+  }
+  } catch (err: any) {
+    console.error('[WhatsApp Webhook Fatal Error]', err?.message || err)
+    return { status: 'received', warning: 'webhook_guarded_error' }
   }
 })
