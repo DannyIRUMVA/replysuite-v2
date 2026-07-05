@@ -109,9 +109,13 @@ export default defineEventHandler(async (event) => {
               const job = processWhatsappMessage(supabase, messageData).catch(err => {
                 console.error('[WhatsApp Webhook Background Error]', err)
               })
-              const waitUntil = (event as any).waitUntil || (event as any).context?.cloudflare?.ctx?.waitUntil
-              if (typeof waitUntil === 'function') {
-                waitUntil(job)
+              const cloudflareCtx = (event as any).context?.cloudflare?.ctx
+              if (typeof (event as any).waitUntil === 'function') {
+                ;(event as any).waitUntil(job)
+              } else if (typeof cloudflareCtx?.waitUntil === 'function') {
+                cloudflareCtx.waitUntil(job)
+              } else {
+                await job
               }
             }
           }
