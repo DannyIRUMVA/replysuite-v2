@@ -1,4 +1,4 @@
-import { searchKnowledge, getChatCompletion } from '../../ai'
+import { searchKnowledge, getLowIntentDirectReply } from '../../ai'
 import { runAgentCycle } from '../../agent/engine'
 import { buildAssistantSkillsPrompt } from '../../agent/skills'
 import { buildChatbotLanguagePolicy } from '../../language-policy'
@@ -343,19 +343,35 @@ IMPORTANT INSTRUCTIONS:
       messagesHistory.push({ role: 'user', content: text })
     }
 
-    replyText = await runAgentCycle(messagesHistory, { 
-      systemPrompt, 
-      chatbotId: waAccount.chatbot_id,
-      enabledTools: chatbot?.enabled_tools || [],
-      event: (messageData as any)._event,
-      context: {
-        platform: 'whatsapp',
-        customerPhone: from_number,
-        whatsappToken: waAccount.access_token,
-        phoneId: phone_number_id,
-        mediaAssets: storedMediaAsset ? [storedMediaAsset] : []
-      }
-    })
+    const normalizedLowIntentText = String(text || '')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    const kinyarwandaLowIntentReply = /^(muraho|amakuru|amakuru yanyu|bite|mwaramutse|mwiriwe)$/.test(normalizedLowIntentText)
+      ? (sessionState.greeted ? 'Nafasha nte uyu munsi?' : 'Muraho! Nafasha nte uyu munsi?')
+      : null
+    const directLowIntentReply = kinyarwandaLowIntentReply || getLowIntentDirectReply(text, Boolean(sessionState.greeted))
+
+    if (directLowIntentReply) {
+      replyText = directLowIntentReply
+    } else {
+      replyText = await runAgentCycle(messagesHistory, { 
+        systemPrompt, 
+        chatbotId: waAccount.chatbot_id,
+        enabledTools: chatbot?.enabled_tools || [],
+        event: (messageData as any)._event,
+        context: {
+          platform: 'whatsapp',
+          customerPhone: from_number,
+          whatsappToken: waAccount.access_token,
+          phoneId: phone_number_id,
+          mediaAssets: storedMediaAsset ? [storedMediaAsset] : []
+        }
+      })
+    }
 
     console.log(`   🤖 AI Response Generated: "${replyText.substring(0, 50)}..."`)
   } catch (err) {
