@@ -24,6 +24,8 @@ const googleCalendarStatus = ref<any>(null)
 const isPremium = canUseBusinessTools
 
 const selectedAssistant = computed(() => assistants.value.find((assistant) => assistant.id === selectedAssistantId.value) || null)
+const toolStatusLabel = computed(() => appointmentsEnabled.value ? 'Enabled' : 'Disabled')
+const depositStatusLabel = computed(() => appointmentsEnabled.value ? (depositsEnabled.value ? 'Enabled' : 'Disabled') : 'Unavailable')
 const selectedConfig = computed(() => selectedAssistant.value?.tools_config || {})
 const selectedSchedulingConfig = computed(() => selectedConfig.value?.scheduling || {})
 const googleMapping = computed(() => googleCalendarStatus.value?.mapping || null)
@@ -36,15 +38,18 @@ const googleCalendarLabel = computed(() => googleMapping.value?.calendar_summary
 const calendarSetupLink = computed(() => selectedAssistantId.value ? `/dashboard/appointments/settings?chatbotId=${selectedAssistantId.value}` : '/dashboard/appointments/settings')
 const websiteBuilderLink = computed(() => selectedAssistantId.value ? `/dashboard/agents/tools/website-builder?chatbotId=${selectedAssistantId.value}` : '/dashboard/agents/tools/website-builder')
 
-const activeCapabilities = computed(() => [
-  { label: 'Request appointment', enabled: appointmentsEnabled.value, icon: CalendarCheck2 },
-  ...(googleCalendarConnected.value ? [
-    { label: 'Check Google Calendar availability', enabled: appointmentsEnabled.value, icon: Clock3 },
-    { label: 'Reschedule booking', enabled: appointmentsEnabled.value, icon: RefreshCcw },
-    { label: 'Cancel booking', enabled: appointmentsEnabled.value, icon: XCircle },
-  ] : []),
-  { label: 'Optional deposit checkout', enabled: appointmentsEnabled.value && depositsEnabled.value, icon: CreditCard },
-])
+const activeCapabilities = computed(() => {
+  const toolOn = appointmentsEnabled.value
+  return [
+    { label: 'Request appointment', enabled: toolOn, icon: CalendarCheck2 },
+    ...(toolOn && googleCalendarConnected.value ? [
+      { label: 'Check Google Calendar availability', enabled: true, icon: Clock3 },
+      { label: 'Reschedule booking', enabled: true, icon: RefreshCcw },
+      { label: 'Cancel booking', enabled: true, icon: XCircle },
+    ] : []),
+    { label: 'Optional deposit checkout', enabled: toolOn && depositsEnabled.value, icon: CreditCard },
+  ]
+})
 
 const modeCards = [
   {
@@ -73,7 +78,7 @@ const modeCards = [
 const hasChanges = computed(() => {
   const enabledTools = Array.isArray(selectedAssistant.value?.enabled_tools) ? selectedAssistant.value.enabled_tools : []
   const currentAppointments = enabledTools.includes('appointments')
-  const currentDeposits = enabledTools.includes('payments')
+  const currentDeposits = currentAppointments && enabledTools.includes('payments')
   return currentAppointments !== appointmentsEnabled.value
     || currentDeposits !== depositsEnabled.value
     || (selectedSchedulingConfig.value?.mode || 'mixed') !== bookingMode.value
@@ -109,7 +114,7 @@ const syncSelection = () => {
   const assistant = selectedAssistant.value
   const enabledTools = Array.isArray(assistant?.enabled_tools) ? assistant.enabled_tools : []
   appointmentsEnabled.value = enabledTools.includes('appointments')
-  depositsEnabled.value = enabledTools.includes('payments')
+  depositsEnabled.value = appointmentsEnabled.value && enabledTools.includes('payments')
   bookingMode.value = (assistant?.tools_config?.scheduling?.mode || 'mixed') as any
   confirmationMode.value = (assistant?.tools_config?.scheduling?.confirmation_mode || 'manual') as any
   void fetchGoogleStatus()
@@ -235,8 +240,8 @@ onMounted(fetchAssistants)
           <p class="text-sm font-bold text-foreground">{{ selectedAssistant.name }}</p>
           <p class="mt-1 text-[10px] font-bold uppercase tracking-widest text-foreground/45">{{ selectedAssistant.default_language || 'English' }} assistant</p>
           <div class="mt-4 grid grid-cols-2 gap-2">
-            <div class="rounded-xl bg-foreground/5 p-3"><p class="text-lg font-black text-foreground">{{ appointmentsEnabled ? 'On' : 'Off' }}</p><p class="text-[9px] font-black uppercase tracking-widest text-foreground/40">Bookings</p></div>
-            <div class="rounded-xl bg-foreground/5 p-3"><p class="text-lg font-black text-foreground">{{ depositsEnabled ? 'On' : 'Off' }}</p><p class="text-[9px] font-black uppercase tracking-widest text-foreground/40">Deposits</p></div>
+            <div class="rounded-xl bg-foreground/5 p-3"><p class="text-lg font-black text-foreground">{{ toolStatusLabel }}</p><p class="text-[9px] font-black uppercase tracking-widest text-foreground/40">Bookings</p></div>
+            <div class="rounded-xl bg-foreground/5 p-3"><p class="text-lg font-black text-foreground">{{ depositStatusLabel }}</p><p class="text-[9px] font-black uppercase tracking-widest text-foreground/40">Deposits</p></div>
           </div>
           <div v-if="googleCalendarConnected" class="mt-3 rounded-xl border border-primary/15 bg-primary/10 p-3">
             <p class="text-[9px] font-black uppercase tracking-widest text-primary">Google Calendar connected</p>
@@ -288,8 +293,8 @@ onMounted(fetchAssistants)
                   <span :class="['rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-widest', appointmentsEnabled ? 'bg-primary/10 text-primary' : 'bg-foreground/5 text-foreground/40']">{{ appointmentsEnabled ? 'Enabled' : 'Disabled' }}</span>
                 </div>
                 <p class="mt-2 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">One booking tool for clinics, service businesses, guest houses, hotels, restaurants, lounges, and venues. The assistant can collect booking details, request appointments, and use Google Calendar actions after this chatbot has a connected calendar.</p>
-                <p v-if="googleCalendarConnected" class="mt-2 text-xs font-black uppercase tracking-widest text-primary">Using {{ googleCalendarLabel }} for this chatbot.</p>
-                <p v-else-if="isCheckingGoogle" class="mt-2 text-xs font-black uppercase tracking-widest text-foreground/40">Checking calendar mapping…</p>
+                <p v-if="isCheckingGoogle" class="mt-2 text-xs font-black uppercase tracking-widest text-foreground/40">Checking calendar mapping…</p>
+                <p v-else-if="!appointmentsEnabled" class="mt-2 text-xs font-bold leading-relaxed text-foreground/40">Enable this tool to configure booking flow, confirmation mode, deposits, and calendar-backed actions.</p>
               </div>
             </div>
             <button type="button" class="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-primary px-5 text-[10px] font-black uppercase tracking-widest text-black transition hover:opacity-90 disabled:opacity-50" :disabled="!isPremium" @click="enableAppointments">
@@ -306,6 +311,13 @@ onMounted(fetchAssistants)
           </div>
         </section>
 
+        <section v-if="!appointmentsEnabled" class="rounded-2xl border border-dashed border-foreground/10 bg-background-card p-6 text-center">
+          <CalendarDays class="mx-auto h-10 w-10 text-foreground/20" />
+          <h2 class="mt-4 text-lg font-black tracking-tight text-foreground">Booking settings are paused</h2>
+          <p class="mx-auto mt-2 max-w-2xl text-sm font-medium leading-relaxed text-foreground/50">Turn on Appointments & bookings above before editing booking flow, confirmation mode, deposit checkout, or calendar behavior. Saved settings stay preserved while the tool is disabled.</p>
+        </section>
+
+        <template v-else>
         <section class="rounded-2xl border border-foreground/10 bg-background-card p-5">
           <div class="mb-4">
             <h2 class="text-lg font-black tracking-tight text-foreground">Choose the booking flow</h2>
@@ -361,7 +373,9 @@ onMounted(fetchAssistants)
           </div>
         </section>
 
-        <section v-if="googleCalendarConnected" class="rounded-2xl border border-primary/15 bg-primary/[0.04] p-5">
+        </template>
+
+        <section v-if="appointmentsEnabled && googleCalendarConnected" class="rounded-2xl border border-primary/15 bg-primary/[0.04] p-5">
           <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Connected Google Calendar</p>
@@ -375,7 +389,7 @@ onMounted(fetchAssistants)
           </div>
         </section>
 
-        <section v-else class="rounded-2xl border border-orange-500/15 bg-orange-500/[0.04] p-5">
+        <section v-else-if="appointmentsEnabled" class="rounded-2xl border border-orange-500/15 bg-orange-500/[0.04] p-5">
           <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p class="text-[10px] font-black uppercase tracking-[0.18em] text-orange-500">Calendar not connected</p>
