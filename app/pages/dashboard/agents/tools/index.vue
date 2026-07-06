@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, ArrowRight, Bot, Building2, CalendarCheck2, CalendarDays, Check, ChevronDown, Clock3, CreditCard, Crown, Globe2, Hotel, Loader2, RefreshCcw, Save, Settings2, ShieldCheck, Stethoscope, XCircle } from 'lucide-vue-next'
+import { ArrowLeft, ArrowRight, Bot, Building2, CalendarCheck2, CalendarDays, Check, ChevronDown, Clock3, CreditCard, Crown, Globe2, Hotel, Loader2, RefreshCcw, Save, Search, Settings2, ShieldCheck, Stethoscope, XCircle } from 'lucide-vue-next'
 
 definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 useHead({ title: 'Assistant Tools | ReplySuite' })
@@ -20,6 +20,10 @@ const depositsEnabled = ref(false)
 const bookingMode = ref<'appointments' | 'bookings' | 'mixed'>('mixed')
 const confirmationMode = ref<'instant' | 'manual'>('manual')
 const googleCalendarStatus = ref<any>(null)
+const toolSearch = ref('')
+const toolStatusFilter = ref('all')
+const toolCategoryFilter = ref('all')
+const selectedToolId = ref('appointments')
 
 const isPremium = canUseBusinessTools
 
@@ -74,6 +78,70 @@ const modeCards = [
     examples: ['Consultations', 'Reservations', 'Events'],
   },
 ]
+
+const toolRows = computed(() => [
+  {
+    id: 'appointments',
+    name: 'Appointments & bookings',
+    category: 'Booking',
+    status: appointmentsEnabled.value ? 'Enabled' : 'Disabled',
+    tone: appointmentsEnabled.value ? 'active' : 'disabled',
+    connectedData: `${bookingMode.value} · ${confirmationMode.value} approval`,
+    action: appointmentsEnabled.value ? 'Disable' : 'Enable',
+    icon: CalendarDays,
+  },
+  {
+    id: 'google_calendar',
+    name: 'Google Calendar',
+    category: 'Booking',
+    status: isCheckingGoogle.value ? 'Checking' : googleCalendarConnected.value ? 'Connected' : appointmentsEnabled.value ? 'Attention' : 'Paused',
+    tone: isCheckingGoogle.value ? 'pending' : googleCalendarConnected.value ? 'active' : appointmentsEnabled.value ? 'attention' : 'disabled',
+    connectedData: googleCalendarConnected.value ? googleCalendarLabel.value : appointmentsEnabled.value ? 'Calendar mapping required' : 'Enable bookings first',
+    action: 'Manage',
+    icon: CalendarCheck2,
+  },
+  {
+    id: 'deposits',
+    name: 'Booking deposit checkout',
+    category: 'Payments',
+    status: appointmentsEnabled.value ? (depositsEnabled.value ? 'Enabled' : 'Disabled') : 'Unavailable',
+    tone: appointmentsEnabled.value ? (depositsEnabled.value ? 'active' : 'disabled') : 'locked',
+    connectedData: depositsEnabled.value ? 'MTN/Airtel mobile checkout' : appointmentsEnabled.value ? 'No deposit checkout' : 'Requires bookings enabled',
+    action: depositsEnabled.value ? 'Disable' : 'Enable',
+    icon: CreditCard,
+  },
+  {
+    id: 'website_builder',
+    name: 'Enterprise website builder',
+    category: 'Websites',
+    status: isPremium.value ? 'Ready' : 'Locked',
+    tone: isPremium.value ? 'active' : 'locked',
+    connectedData: isPremium.value ? 'Assistant tool workspace' : 'Enterprise plan required',
+    action: isPremium.value ? 'Open' : 'Upgrade',
+    icon: Globe2,
+  },
+])
+
+const toolCategories = computed(() => ['all', ...Array.from(new Set(toolRows.value.map((row) => row.category)))])
+const toolStatuses = computed(() => ['all', ...Array.from(new Set(toolRows.value.map((row) => row.status)))])
+const filteredToolRows = computed(() => {
+  const query = toolSearch.value.trim().toLowerCase()
+  return toolRows.value.filter((row) => {
+    const matchesSearch = !query || [row.name, row.category, row.status, row.connectedData].join(' ').toLowerCase().includes(query)
+    const matchesStatus = toolStatusFilter.value === 'all' || row.status === toolStatusFilter.value
+    const matchesCategory = toolCategoryFilter.value === 'all' || row.category === toolCategoryFilter.value
+    return matchesSearch && matchesStatus && matchesCategory
+  })
+})
+const selectedTool = computed(() => toolRows.value.find((row) => row.id === selectedToolId.value) || toolRows.value[0])
+
+const statusDotClass = (tone: string) => ({
+  active: 'bg-emerald-400 shadow-emerald-400/30',
+  pending: 'bg-sky-400 shadow-sky-400/30',
+  attention: 'bg-orange-400 shadow-orange-400/30',
+  locked: 'bg-red-400 shadow-red-400/30',
+  disabled: 'bg-foreground/25 shadow-foreground/10',
+}[tone] || 'bg-foreground/25')
 
 const hasChanges = computed(() => {
   const enabledTools = Array.isArray(selectedAssistant.value?.enabled_tools) ? selectedAssistant.value.enabled_tools : []
@@ -151,6 +219,14 @@ const toggleDeposits = () => {
   depositsEnabled.value = !depositsEnabled.value
 }
 
+const handleToolAction = (toolId: string) => {
+  selectedToolId.value = toolId
+  if (toolId === 'appointments') return enableAppointments()
+  if (toolId === 'deposits') return toggleDeposits()
+  if (toolId === 'google_calendar') return navigateTo(calendarSetupLink.value)
+  if (toolId === 'website_builder') return navigateTo(isPremium.value ? websiteBuilderLink.value : '/dashboard/pricing')
+}
+
 const saveTools = async () => {
   if (!selectedAssistant.value || isSaving.value) return
   if ((appointmentsEnabled.value || depositsEnabled.value) && !isPremium.value) return notify.warn('Upgrade to Enterprise to save AI business tools.')
@@ -184,29 +260,25 @@ onMounted(fetchAssistants)
 </script>
 
 <template>
-  <div class="w-full overflow-x-hidden space-y-5 pb-24">
+  <div class="w-full overflow-x-hidden space-y-4 pb-12 xl:max-h-[calc(100vh-5.5rem)]">
     <NuxtLink to="/dashboard/agents" class="dashboard-back-link group">
       <ArrowLeft class="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
       Back to Assistants
     </NuxtLink>
 
-    <section class="overflow-hidden rounded-[1.75rem] border border-foreground/10 bg-background-card p-5 shadow-sm md:p-7">
-      <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+    <section class="overflow-hidden rounded-[1.5rem] border border-foreground/10 bg-background-card p-4 shadow-sm md:p-5">
+      <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">Tools</span>
-          <h1 class="mt-4 text-2xl font-extrabold tracking-tight text-foreground md:text-3xl">Enable Google Calendar bookings.</h1>
-          <p class="mt-2 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">Tools are actions your assistant can perform. ReplySuite now focuses on one business action tool: appointments and bookings powered by Google Calendar, with cancellation, rescheduling, and optional deposit checkout.</p>
+          <span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">Tools command center</span>
+          <h1 class="mt-3 text-2xl font-extrabold tracking-tight text-foreground md:text-3xl">Manage assistant actions at a glance.</h1>
+          <p class="mt-1 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">Compact rows show booking, calendar, payment, and website-builder readiness without long cards. Open a row to edit in the side drawer.</p>
         </div>
         <div class="flex flex-col gap-2 sm:flex-row">
-          <NuxtLink :to="selectedAssistant ? `/dashboard/agents/skills?id=${selectedAssistant.id}` : '/dashboard/agents/skills'" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-foreground/10 bg-foreground/5 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/65 transition hover:bg-foreground/10 hover:text-foreground">
+          <NuxtLink :to="selectedAssistant ? `/dashboard/agents/skills?id=${selectedAssistant.id}` : '/dashboard/agents/skills'" class="inline-flex items-center justify-center gap-2 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-foreground/65 transition hover:bg-foreground/10 hover:text-foreground">
             Open skills
             <ArrowRight class="h-4 w-4" />
           </NuxtLink>
-          <NuxtLink :to="isPremium ? websiteBuilderLink : '/dashboard/pricing'" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/10 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15">
-            Website builder
-            <Crown class="h-4 w-4" />
-          </NuxtLink>
-          <NuxtLink :to="calendarSetupLink" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/10 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15">
+          <NuxtLink :to="calendarSetupLink" class="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15">
             Calendar setup
             <Settings2 class="h-4 w-4" />
           </NuxtLink>
@@ -226,8 +298,8 @@ onMounted(fetchAssistants)
       <NuxtLink to="/dashboard/agents" class="mt-6 inline-flex rounded-xl bg-primary px-6 py-3 text-[10px] font-black uppercase tracking-widest text-black">Open assistants</NuxtLink>
     </section>
 
-    <div v-else class="grid gap-5 xl:grid-cols-[19rem_1fr]">
-      <aside class="rounded-2xl border border-foreground/10 bg-background-card p-5 xl:sticky xl:top-24 xl:self-start">
+    <div v-else class="grid gap-4 xl:grid-cols-[17rem_1fr]">
+      <aside class="rounded-2xl border border-foreground/10 bg-background-card p-4 xl:sticky xl:top-24 xl:self-start">
         <label class="mb-3 block text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Assistant</label>
         <div class="relative">
           <select v-model="selectedAssistantId" class="w-full cursor-pointer appearance-none rounded-xl border border-foreground/10 bg-background px-4 py-3 pr-10 text-sm font-bold text-foreground focus:border-primary/40 focus:outline-none">
@@ -237,16 +309,11 @@ onMounted(fetchAssistants)
         </div>
 
         <div v-if="selectedAssistant" class="mt-4 rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4">
-          <p class="text-sm font-bold text-foreground">{{ selectedAssistant.name }}</p>
+          <p class="truncate text-sm font-bold text-foreground">{{ selectedAssistant.name }}</p>
           <p class="mt-1 text-[10px] font-bold uppercase tracking-widest text-foreground/45">{{ selectedAssistant.default_language || 'English' }} assistant</p>
           <div class="mt-4 grid grid-cols-2 gap-2">
-            <div class="rounded-xl bg-foreground/5 p-3"><p class="text-lg font-black text-foreground">{{ toolStatusLabel }}</p><p class="text-[9px] font-black uppercase tracking-widest text-foreground/40">Bookings</p></div>
-            <div class="rounded-xl bg-foreground/5 p-3"><p class="text-lg font-black text-foreground">{{ depositStatusLabel }}</p><p class="text-[9px] font-black uppercase tracking-widest text-foreground/40">Deposits</p></div>
-          </div>
-          <div v-if="googleCalendarConnected" class="mt-3 rounded-xl border border-primary/15 bg-primary/10 p-3">
-            <p class="text-[9px] font-black uppercase tracking-widest text-primary">Google Calendar connected</p>
-            <p class="mt-1 truncate text-xs font-bold text-foreground">{{ googleCalendarLabel }}</p>
-            <p class="mt-1 truncate text-[10px] font-medium text-foreground/45">Chatbot ID: {{ selectedAssistant.id }}</p>
+            <div class="rounded-xl bg-foreground/5 p-3"><p class="text-sm font-black text-foreground">{{ toolStatusLabel }}</p><p class="text-[9px] font-black uppercase tracking-widest text-foreground/40">Bookings</p></div>
+            <div class="rounded-xl bg-foreground/5 p-3"><p class="text-sm font-black text-foreground">{{ depositStatusLabel }}</p><p class="text-[9px] font-black uppercase tracking-widest text-foreground/40">Deposits</p></div>
           </div>
         </div>
 
@@ -257,151 +324,129 @@ onMounted(fetchAssistants)
         </button>
       </aside>
 
-      <main class="space-y-5">
-        <section v-if="!isPremium" class="rounded-2xl border border-primary/15 bg-primary/[0.05] p-5">
-          <p class="text-xs font-black uppercase tracking-widest text-primary">Enterprise booking tools</p>
-          <p class="mt-2 max-w-3xl text-sm font-medium leading-relaxed text-foreground/60">Google Calendar appointments, bookings, cancellation, rescheduling, and booking deposits are available on Enterprise.</p>
-          <NuxtLink to="/dashboard/pricing" class="mt-4 inline-flex rounded-xl bg-primary px-5 py-3 text-[10px] font-black uppercase tracking-widest text-black">Upgrade to Enterprise</NuxtLink>
+      <main class="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <section class="min-w-0 rounded-2xl border border-foreground/10 bg-background-card shadow-sm">
+          <div class="flex flex-col gap-3 border-b border-foreground/10 p-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 class="text-base font-black tracking-tight text-foreground">Tools table</h2>
+              <p class="text-xs font-medium text-foreground/45">{{ filteredToolRows.length }} visible · row details open in the drawer</p>
+            </div>
+            <div class="flex flex-col gap-2 sm:flex-row">
+              <label class="relative block sm:w-64">
+                <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/35" />
+                <input v-model="toolSearch" type="search" placeholder="Search tools or data" class="h-10 w-full rounded-xl border border-foreground/10 bg-background py-2 pl-9 pr-3 text-sm font-semibold text-foreground outline-none transition focus:border-primary/40" />
+              </label>
+              <select v-model="toolStatusFilter" class="h-10 rounded-xl border border-foreground/10 bg-background px-3 text-xs font-black uppercase tracking-widest text-foreground/60 outline-none focus:border-primary/40">
+                <option v-for="status in toolStatuses" :key="status" :value="status">{{ status === 'all' ? 'All status' : status }}</option>
+              </select>
+              <select v-model="toolCategoryFilter" class="h-10 rounded-xl border border-foreground/10 bg-background px-3 text-xs font-black uppercase tracking-widest text-foreground/60 outline-none focus:border-primary/40">
+                <option v-for="category in toolCategories" :key="category" :value="category">{{ category === 'all' ? 'All categories' : category }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[760px] text-left">
+              <thead class="sticky top-0 z-10 bg-background-card text-[10px] font-black uppercase tracking-[0.18em] text-foreground/35">
+                <tr class="border-b border-foreground/10">
+                  <th class="px-4 py-3">Tool name</th>
+                  <th class="px-4 py-3">Category</th>
+                  <th class="px-4 py-3">Status</th>
+                  <th class="px-4 py-3">Connected data</th>
+                  <th class="px-4 py-3 text-right">Quick actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-foreground/10">
+                <tr v-for="row in filteredToolRows" :key="row.id" :class="['group cursor-pointer transition hover:bg-primary/[0.03]', selectedToolId === row.id ? 'bg-primary/[0.05]' : '']" @click="selectedToolId = row.id">
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-3">
+                      <div :class="['flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', selectedToolId === row.id ? 'bg-primary text-black' : 'bg-foreground/5 text-foreground/50']"><component :is="row.icon" class="h-4 w-4" /></div>
+                      <div class="min-w-0">
+                        <p class="truncate text-sm font-black text-foreground">{{ row.name }}</p>
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-foreground/35">{{ row.id }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-xs font-bold text-foreground/55">{{ row.category }}</td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-2 text-xs font-black text-foreground/70"><span :class="['h-2 w-2 rounded-full shadow-md', statusDotClass(row.tone)]" />{{ row.status }}</span>
+                  </td>
+                  <td class="max-w-[16rem] px-4 py-3"><p class="truncate text-xs font-semibold text-foreground/50">{{ row.connectedData }}</p></td>
+                  <td class="px-4 py-3 text-right">
+                    <button type="button" class="rounded-lg border border-foreground/10 bg-foreground/5 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-foreground/60 transition hover:border-primary/30 hover:text-primary" @click.stop="handleToolAction(row.id)">{{ row.action }}</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
 
-        <section class="rounded-2xl border border-primary/15 bg-background-card p-5">
-          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div class="flex items-start gap-4">
-              <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Globe2 class="h-6 w-6" /></div>
-              <div>
-                <div class="flex flex-wrap items-center gap-2">
-                  <h2 class="text-lg font-black tracking-tight text-foreground">Enterprise website builder</h2>
-                  <span class="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-primary">Enterprise only</span>
-                </div>
-                <p class="mt-2 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">Open the website builder control room for requested websites, private build jobs, bot working status, media assets, advance-payment readiness, and the connected website execution agent.</p>
+        <aside class="rounded-2xl border border-foreground/10 bg-background-card p-4 shadow-sm 2xl:sticky 2xl:top-24 2xl:max-h-[calc(100vh-8rem)] 2xl:overflow-y-auto">
+          <div class="flex items-start justify-between gap-3 border-b border-foreground/10 pb-4">
+            <div class="min-w-0">
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Detail drawer</p>
+              <h2 class="mt-1 truncate text-lg font-black text-foreground">{{ selectedTool.name }}</h2>
+              <p class="mt-1 truncate text-xs font-semibold text-foreground/45">{{ selectedTool.connectedData }}</p>
+            </div>
+            <span :class="['mt-1 h-2.5 w-2.5 rounded-full shadow-md', statusDotClass(selectedTool.tone)]" />
+          </div>
+
+          <div v-if="selectedTool.id === 'appointments'" class="space-y-4 pt-4">
+            <p class="text-sm font-medium leading-relaxed text-foreground/55">One booking action tool for clinics, service businesses, guest houses, hotels, restaurants, lounges, and venues.</p>
+            <button type="button" class="inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-[10px] font-black uppercase tracking-widest text-black disabled:opacity-50" :disabled="!isPremium" @click="enableAppointments">{{ appointmentsEnabled ? 'Disable tool' : 'Enable tool' }}</button>
+            <div class="grid gap-2">
+              <div v-for="capability in activeCapabilities" :key="capability.label" class="flex items-center justify-between rounded-xl border border-foreground/10 bg-foreground/[0.02] px-3 py-2">
+                <span class="text-xs font-bold text-foreground/60">{{ capability.label }}</span>
+                <span :class="['text-[10px] font-black uppercase tracking-widest', capability.enabled ? 'text-primary' : 'text-foreground/35']">{{ capability.enabled ? 'Ready' : 'Off' }}</span>
               </div>
             </div>
-            <NuxtLink :to="isPremium ? websiteBuilderLink : '/dashboard/pricing'" class="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-[10px] font-black uppercase tracking-widest text-black transition hover:opacity-90">
+          </div>
+
+          <div v-else-if="selectedTool.id === 'google_calendar'" class="space-y-4 pt-4">
+            <p class="text-sm font-medium leading-relaxed text-foreground/55">Calendar details stay in this drawer so the table remains compact. Connect a calendar before live confirmations.</p>
+            <NuxtLink :to="calendarSetupLink" class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-4 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15">Manage calendar <ArrowRight class="h-4 w-4" /></NuxtLink>
+            <div class="rounded-xl border border-foreground/10 bg-foreground/[0.02] p-3">
+              <p class="text-[10px] font-black uppercase tracking-widest text-foreground/35">Mapping</p>
+              <p class="mt-1 truncate text-sm font-bold text-foreground">{{ googleCalendarConnected ? googleCalendarLabel : 'Not connected' }}</p>
+            </div>
+          </div>
+
+          <div v-else-if="selectedTool.id === 'deposits'" class="space-y-4 pt-4">
+            <p class="text-sm font-medium leading-relaxed text-foreground/55">MTN/Airtel mobile payment remains contextual checkout only. Deposits require the appointments and bookings tool first.</p>
+            <button type="button" class="inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-[10px] font-black uppercase tracking-widest text-black disabled:cursor-not-allowed disabled:opacity-50" :disabled="!isPremium || !appointmentsEnabled" @click="toggleDeposits">{{ depositsEnabled ? 'Disable deposits' : 'Enable deposits' }}</button>
+          </div>
+
+          <div v-else class="space-y-4 pt-4">
+            <p class="text-sm font-medium leading-relaxed text-foreground/55">Enterprise-only website-builder controls stay inside Assistant Tools and open in their own workspace.</p>
+            <NuxtLink :to="isPremium ? websiteBuilderLink : '/dashboard/pricing'" class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[10px] font-black uppercase tracking-widest text-black transition hover:opacity-90">
               {{ isPremium ? 'Open builder' : 'Upgrade' }}
               <ArrowRight class="h-4 w-4" />
             </NuxtLink>
           </div>
-        </section>
 
-        <section class="rounded-2xl border border-foreground/10 bg-background-card p-5">
-          <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div class="flex items-start gap-4">
-              <div :class="['flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl', appointmentsEnabled ? 'bg-primary text-black' : 'bg-foreground/5 text-foreground/45']"><CalendarDays class="h-6 w-6" /></div>
-              <div>
-                <div class="flex flex-wrap items-center gap-2">
-                  <h2 class="text-lg font-black tracking-tight text-foreground">Appointments & bookings</h2>
-                  <span :class="['rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-widest', appointmentsEnabled ? 'bg-primary/10 text-primary' : 'bg-foreground/5 text-foreground/40']">{{ appointmentsEnabled ? 'Enabled' : 'Disabled' }}</span>
-                </div>
-                <p class="mt-2 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">One booking tool for clinics, service businesses, guest houses, hotels, restaurants, lounges, and venues. The assistant can collect booking details, request appointments, and use Google Calendar actions after this chatbot has a connected calendar.</p>
-                <p v-if="isCheckingGoogle" class="mt-2 text-xs font-black uppercase tracking-widest text-foreground/40">Checking calendar mapping…</p>
-                <p v-else-if="!appointmentsEnabled" class="mt-2 text-xs font-bold leading-relaxed text-foreground/40">Enable this tool to configure booking flow, confirmation mode, deposits, and calendar-backed actions.</p>
-              </div>
-            </div>
-            <button type="button" class="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-primary px-5 text-[10px] font-black uppercase tracking-widest text-black transition hover:opacity-90 disabled:opacity-50" :disabled="!isPremium" @click="enableAppointments">
-              {{ appointmentsEnabled ? 'Disable tool' : 'Enable tool' }}
-            </button>
-          </div>
-
-          <div class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-            <div v-for="capability in activeCapabilities" :key="capability.label" class="rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4">
-              <component :is="capability.icon" :class="['h-5 w-5', capability.enabled ? 'text-primary' : 'text-foreground/25']" />
-              <p class="mt-3 text-xs font-black uppercase tracking-wider text-foreground">{{ capability.label }}</p>
-              <p :class="['mt-1 text-[10px] font-black uppercase tracking-widest', capability.enabled ? 'text-primary' : 'text-foreground/35']">{{ capability.enabled ? 'Ready' : 'Off' }}</p>
-            </div>
-          </div>
-        </section>
-
-        <section v-if="!appointmentsEnabled" class="rounded-2xl border border-dashed border-foreground/10 bg-background-card p-6 text-center">
-          <CalendarDays class="mx-auto h-10 w-10 text-foreground/20" />
-          <h2 class="mt-4 text-lg font-black tracking-tight text-foreground">Booking settings are paused</h2>
-          <p class="mx-auto mt-2 max-w-2xl text-sm font-medium leading-relaxed text-foreground/50">Turn on Appointments & bookings above before editing booking flow, confirmation mode, deposit checkout, or calendar behavior. Saved settings stay preserved while the tool is disabled.</p>
-        </section>
-
-        <template v-else>
-        <section class="rounded-2xl border border-foreground/10 bg-background-card p-5">
-          <div class="mb-4">
-            <h2 class="text-lg font-black tracking-tight text-foreground">Choose the booking flow</h2>
-            <p class="mt-1 text-sm font-medium text-foreground/50">This changes how the assistant frames questions. Calendar availability and event creation only turn on after the selected chatbot has a connected Google Calendar.</p>
-          </div>
-          <div class="grid gap-3 lg:grid-cols-3">
-            <button v-for="mode in modeCards" :key="mode.id" type="button" :class="['rounded-2xl border p-4 text-left transition', bookingMode === mode.id ? 'border-primary/40 bg-primary/10 shadow-sm shadow-primary/5' : 'border-foreground/10 bg-foreground/[0.02] hover:bg-foreground/[0.04]']" @click="bookingMode = mode.id as any">
-              <div class="flex items-start gap-3">
-                <div :class="['flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', bookingMode === mode.id ? 'bg-primary text-black' : 'bg-foreground/5 text-foreground/50']"><component :is="mode.icon" class="h-5 w-5" /></div>
-                <div class="min-w-0 flex-1">
+          <div v-if="selectedTool.id === 'appointments' && appointmentsEnabled" class="mt-5 space-y-4 border-t border-foreground/10 pt-4">
+            <div>
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/35">Booking flow</p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="mode in modeCards" :key="mode.id" type="button" :class="['rounded-xl border px-3 py-2 text-left transition', bookingMode === mode.id ? 'border-primary/40 bg-primary/10' : 'border-foreground/10 bg-foreground/[0.02] hover:bg-foreground/[0.04]']" @click="bookingMode = mode.id as any">
                   <div class="flex items-center gap-2">
-                    <p class="text-sm font-black text-foreground">{{ mode.title }}</p>
+                    <component :is="mode.icon" class="h-4 w-4 text-primary" />
+                    <p class="truncate text-xs font-black text-foreground">{{ mode.title }}</p>
                     <Check v-if="bookingMode === mode.id" class="ml-auto h-4 w-4 text-primary" />
                   </div>
-                  <p class="mt-2 text-xs font-medium leading-relaxed text-foreground/50">{{ mode.desc }}</p>
-                </div>
+                </button>
               </div>
-              <div class="mt-4 flex flex-wrap gap-1.5">
-                <span v-for="example in mode.examples" :key="example" class="rounded-full bg-foreground/5 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-foreground/45">{{ example }}</span>
-              </div>
-            </button>
-          </div>
-        </section>
-
-        <section class="grid gap-5 lg:grid-cols-2">
-          <div class="rounded-2xl border border-foreground/10 bg-background-card p-5">
-            <h2 class="text-lg font-black tracking-tight text-foreground">Confirmation mode</h2>
-            <p class="mt-1 text-sm font-medium leading-relaxed text-foreground/50">Choose whether normal bookings can be confirmed immediately after Google Calendar availability is checked, or whether staff must approve first.</p>
-            <div class="mt-4 grid gap-3 sm:grid-cols-2">
-              <button type="button" :class="['rounded-2xl border p-4 text-left transition', confirmationMode === 'manual' ? 'border-primary/40 bg-primary/10' : 'border-foreground/10 bg-foreground/[0.02] hover:bg-foreground/[0.04]']" @click="confirmationMode = 'manual'">
-                <ShieldCheck class="h-5 w-5 text-primary" />
-                <p class="mt-3 text-sm font-black text-foreground">Manual approval</p>
-                <p class="mt-1 text-xs font-medium text-foreground/50">Safest for clinics, hotels, events, private rooms, and high-value bookings.</p>
-              </button>
-              <button type="button" :class="['rounded-2xl border p-4 text-left transition', confirmationMode === 'instant' ? 'border-primary/40 bg-primary/10' : 'border-foreground/10 bg-foreground/[0.02] hover:bg-foreground/[0.04]']" @click="confirmationMode = 'instant'">
-                <CalendarCheck2 class="h-5 w-5 text-primary" />
-                <p class="mt-3 text-sm font-black text-foreground">Instant when available</p>
-                <p class="mt-1 text-xs font-medium text-foreground/50">Useful for standard table reservations or simple service slots.</p>
-              </button>
             </div>
-          </div>
 
-          <div class="rounded-2xl border border-foreground/10 bg-background-card p-5">
-            <h2 class="text-lg font-black tracking-tight text-foreground">Optional deposits</h2>
-            <p class="mt-1 text-sm font-medium leading-relaxed text-foreground/50">MTN/Airtel mobile payment remains contextual checkout only. The assistant can request deposits only for existing appointment or booking records verified by the server.</p>
-            <button type="button" :disabled="!isPremium || !appointmentsEnabled" :class="['mt-4 flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-50', depositsEnabled ? 'border-primary/40 bg-primary/10' : 'border-foreground/10 bg-foreground/[0.02] hover:bg-foreground/[0.04]']" @click="toggleDeposits">
-              <div :class="['flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', depositsEnabled ? 'bg-primary text-black' : 'bg-foreground/5 text-foreground/50']"><CreditCard class="h-5 w-5" /></div>
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2"><p class="text-sm font-black text-foreground">Booking deposit checkout</p><Check v-if="depositsEnabled" class="ml-auto h-4 w-4 text-primary" /></div>
-                <p class="mt-1 text-xs font-medium leading-relaxed text-foreground/50">Enable only when your team needs deposits for appointments, rooms, tables, or private bookings.</p>
-              </div>
-            </button>
-          </div>
-        </section>
-
-        </template>
-
-        <section v-if="appointmentsEnabled && googleCalendarConnected" class="rounded-2xl border border-primary/15 bg-primary/[0.04] p-5">
-          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Connected Google Calendar</p>
-              <h2 class="mt-1 text-base font-black text-foreground">{{ googleCalendarLabel }}</h2>
-              <p class="mt-1 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">This calendar is mapped to chatbot ID <span class="font-black text-foreground/75">{{ selectedAssistantId }}</span>. ReplySuite will use it for availability checks and event sync when booking actions run.</p>
+              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/35">Confirmation</p>
+              <div class="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" :class="['rounded-xl border px-3 py-2 text-left text-xs font-black transition', confirmationMode === 'manual' ? 'border-primary/40 bg-primary/10 text-foreground' : 'border-foreground/10 bg-foreground/[0.02] text-foreground/50']" @click="confirmationMode = 'manual'">Manual</button>
+                <button type="button" :class="['rounded-xl border px-3 py-2 text-left text-xs font-black transition', confirmationMode === 'instant' ? 'border-primary/40 bg-primary/10 text-foreground' : 'border-foreground/10 bg-foreground/[0.02] text-foreground/50']" @click="confirmationMode = 'instant'">Instant</button>
+              </div>
             </div>
-            <NuxtLink :to="calendarSetupLink" class="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-5 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15">
-              Manage calendar
-              <ArrowRight class="h-4 w-4" />
-            </NuxtLink>
           </div>
-        </section>
-
-        <section v-else-if="appointmentsEnabled" class="rounded-2xl border border-orange-500/15 bg-orange-500/[0.04] p-5">
-          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-orange-500">Calendar not connected</p>
-              <h2 class="mt-1 text-base font-black text-foreground">Connect Google Calendar for this chatbot before live confirmations.</h2>
-              <p class="mt-1 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">The tools page will only show a connected Google Calendar after the selected chatbot has a saved calendar mapping. Current chatbot ID: <span class="font-black text-foreground/75">{{ selectedAssistantId }}</span>.</p>
-            </div>
-            <NuxtLink :to="calendarSetupLink" class="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/10 px-5 text-[10px] font-black uppercase tracking-widest text-orange-500 transition hover:bg-orange-500/15">
-              Connect calendar
-              <ArrowRight class="h-4 w-4" />
-            </NuxtLink>
-          </div>
-        </section>
+        </aside>
       </main>
     </div>
   </div>
