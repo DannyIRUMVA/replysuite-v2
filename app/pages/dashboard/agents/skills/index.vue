@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, ArrowRight, Bot, Calendar, Check, ChevronDown, CreditCard, Database, Globe2, Headphones, Instagram, Languages, Loader2, MessageCircle, MessageSquare, PackageCheck, RotateCcw, Save, Search, ShieldCheck, Sparkles, Target, Users, Zap } from 'lucide-vue-next'
+import { ArrowRight, Bot, Calendar, ChevronDown, CreditCard, Database, Globe2, Headphones, Instagram, Languages, Loader2, MessageCircle, MessageSquare, PackageCheck, RotateCcw, Save, Search, ShieldCheck, Sparkles, Target, Users, Zap } from 'lucide-vue-next'
 
 definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 useHead({ title: 'Assistant Skills | ReplySuite' })
@@ -58,19 +58,10 @@ const skillGroups = [
   },
 ]
 
-const recommendedBundles = [
-  { name: 'Website lead assistant', desc: 'Best first setup for website lead capture and clear handoff.', skills: ['website_conversion_guide', 'lead_qualification', 'sales_advisor', 'customer_memory_context', 'concise_follow_up'] },
-  { name: 'Bookings conversation assistant', desc: 'For clinics, salons, hotels, guest houses, lounges, and service teams that collect booking details.', skills: ['appointment_intake', 'whatsapp_service_closer', 'checkout_guardrails', 'concise_follow_up'] },
-  { name: 'Instagram comment-to-DM assistant', desc: 'For keyword-triggered comments, public replies, and DM follow-up.', skills: ['instagram_public_responder', 'instagram_comment_to_dm', 'keyword_trigger_router', 'sales_advisor', 'concise_follow_up'] },
-  { name: 'Support and recovery assistant', desc: 'For triage, complaints, escalation, and multilingual customers.', skills: ['support_triage', 'complaint_recovery', 'escalation_guardrails', 'multilingual_service', 'customer_memory_context'] },
-]
-
 const selectedAssistant = computed(() => assistants.value.find((assistant) => assistant.id === selectedAssistantId.value) || null)
 const activeToolsConfig = computed(() => selectedAssistant.value?.tools_config || {})
 const assistantSkills = computed(() => Array.isArray(activeToolsConfig.value?.assistant_skills) ? activeToolsConfig.value.assistant_skills : [])
-const assignedSkillCount = computed(() => assignedSkills.value.length)
 const allSkills = computed(() => skillGroups.flatMap((group) => group.skills.map((skill) => ({ ...skill, category: group.title, groupDesc: group.desc }))))
-const selectedSkillNames = computed(() => allSkills.value.filter((skill) => assignedSkills.value.includes(skill.id)).map((skill) => skill.name))
 const skillCategories = computed(() => ['all', ...skillGroups.map((group) => group.title)])
 const filteredSkills = computed(() => {
   const query = skillSearch.value.trim().toLowerCase()
@@ -120,11 +111,6 @@ const toggleSkill = (skillId: string) => {
   assignedSkills.value = assignedSkills.value.includes(skillId) ? assignedSkills.value.filter((value) => value !== skillId) : [...assignedSkills.value, skillId]
 }
 
-const applyBundle = (bundle: any) => {
-  assignedSkills.value = Array.from(new Set([...assignedSkills.value, ...bundle.skills]))
-  notify.success('Skill bundle applied to this assistant.')
-}
-
 const saveAssignments = async () => {
   if (!selectedAssistant.value || isSaving.value) return
   isSaving.value = true
@@ -148,25 +134,6 @@ onMounted(fetchAssistants)
 
 <template>
   <div class="w-full overflow-x-hidden space-y-4 pb-12 xl:max-h-[calc(100vh-5.5rem)]">
-    <NuxtLink to="/dashboard/agents" class="dashboard-back-link group">
-      <ArrowLeft class="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
-      Back to Assistants
-    </NuxtLink>
-
-    <section class="overflow-hidden rounded-[1.5rem] border border-foreground/10 bg-background-card p-4 shadow-sm md:p-5">
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">Skills command center</span>
-          <h1 class="mt-3 text-2xl font-extrabold tracking-tight text-foreground md:text-3xl">Tune assistant behavior from one table.</h1>
-          <p class="mt-1 max-w-3xl text-sm font-medium leading-relaxed text-foreground/55">Skills are now compact, searchable rows. Long descriptions and edits live in the side drawer so operators can scan many behaviors quickly.</p>
-        </div>
-        <NuxtLink :to="selectedAssistant ? `/dashboard/agents/tools?id=${selectedAssistant.id}` : '/dashboard/agents/tools'" class="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15">
-          Open tools
-          <ArrowRight class="h-4 w-4" />
-        </NuxtLink>
-      </div>
-    </section>
-
     <section v-if="isLoading" class="rounded-2xl border border-foreground/10 bg-background-card p-8 text-center">
       <Loader2 class="mx-auto h-7 w-7 animate-spin text-primary" />
       <p class="mt-4 text-[10px] font-black uppercase tracking-widest text-foreground/45">Loading skills</p>
@@ -179,46 +146,18 @@ onMounted(fetchAssistants)
       <NuxtLink to="/dashboard/agents" class="mt-6 inline-flex rounded-xl bg-primary px-6 py-3 text-[10px] font-black uppercase tracking-widest text-black">Open assistants</NuxtLink>
     </section>
 
-    <div v-else class="grid gap-4 xl:grid-cols-[17rem_1fr]">
-      <aside class="rounded-2xl border border-foreground/10 bg-background-card p-4 xl:sticky xl:top-24 xl:self-start">
-        <label class="mb-3 block text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Assistant</label>
-        <div class="relative">
-          <select v-model="selectedAssistantId" class="w-full cursor-pointer appearance-none rounded-xl border border-foreground/10 bg-background px-4 py-3 pr-10 text-sm font-bold text-foreground focus:border-primary/40 focus:outline-none">
-            <option v-for="assistant in assistants" :key="assistant.id" :value="assistant.id" class="bg-background">{{ assistant.name }}</option>
-          </select>
-          <ChevronDown class="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/50" />
-        </div>
-
-        <div v-if="selectedAssistant" class="mt-4 rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4">
-          <p class="truncate text-sm font-bold text-foreground">{{ selectedAssistant.name }}</p>
-          <p class="mt-1 text-[10px] font-bold uppercase tracking-widest text-foreground/45">{{ selectedAssistant.default_language || 'English' }} assistant</p>
-          <div class="mt-4 grid grid-cols-2 gap-2">
-            <div class="rounded-xl bg-foreground/5 p-3"><p class="text-lg font-black text-foreground">{{ assignedSkillCount }}</p><p class="text-[9px] font-black uppercase tracking-widest text-foreground/40">Enabled</p></div>
-            <div class="rounded-xl bg-foreground/5 p-3"><p class="text-lg font-black text-foreground">{{ allSkills.length }}</p><p class="text-[9px] font-black uppercase tracking-widest text-foreground/40">Total</p></div>
-          </div>
-        </div>
-
-        <button @click="saveAssignments" :disabled="!hasChanges || isSaving" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-[10px] font-black uppercase tracking-widest text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
-          <Loader2 v-if="isSaving" class="h-4 w-4 animate-spin" />
-          <Save v-else class="h-4 w-4" />
-          Save skills
-        </button>
-
-        <NuxtLink v-if="selectedAssistant" :to="`/dashboard/agents/skills/training?id=${selectedAssistant.id}`" class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-foreground/10 bg-foreground/5 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/60 transition hover:bg-foreground/10 hover:text-foreground">
-          <Database class="h-4 w-4 text-primary" />
-          Train knowledge
-        </NuxtLink>
-      </aside>
-
+    <div v-else>
       <main class="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_24rem]">
         <section class="min-w-0 rounded-2xl border border-foreground/10 bg-background-card shadow-sm">
-          <div class="space-y-3 border-b border-foreground/10 p-4">
-            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h2 class="text-base font-black tracking-tight text-foreground">Skills table</h2>
-                <p class="text-xs font-medium text-foreground/45">{{ filteredSkills.length }} visible · {{ assignedSkillCount }} enabled</p>
+          <div class="space-y-2 border-b border-foreground/10 p-3">
+            <div class="flex flex-col gap-2 lg:flex-row lg:items-center">
+              <div class="relative lg:w-64">
+                <select v-model="selectedAssistantId" class="h-10 w-full cursor-pointer appearance-none rounded-xl border border-foreground/10 bg-background px-3 pr-9 text-sm font-bold text-foreground focus:border-primary/40 focus:outline-none">
+                  <option v-for="assistant in assistants" :key="assistant.id" :value="assistant.id" class="bg-background">{{ assistant.name }}</option>
+                </select>
+                <ChevronDown class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/50" />
               </div>
-              <div class="flex flex-col gap-2 sm:flex-row">
+              <div class="flex flex-1 flex-col gap-2 sm:flex-row lg:justify-end">
                 <label class="relative block sm:w-64">
                   <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/35" />
                   <input v-model="skillSearch" type="search" placeholder="Search skills or channels" class="h-10 w-full rounded-xl border border-foreground/10 bg-background py-2 pl-9 pr-3 text-sm font-semibold text-foreground outline-none transition focus:border-primary/40" />
@@ -231,15 +170,14 @@ onMounted(fetchAssistants)
                 <select v-model="skillCategoryFilter" class="h-10 rounded-xl border border-foreground/10 bg-background px-3 text-xs font-black uppercase tracking-widest text-foreground/60 outline-none focus:border-primary/40">
                   <option v-for="category in skillCategories" :key="category" :value="category">{{ category === 'all' ? 'All categories' : category }}</option>
                 </select>
+                <button @click="saveAssignments" :disabled="!hasChanges || isSaving" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[10px] font-black uppercase tracking-widest text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
+                  <Loader2 v-if="isSaving" class="h-4 w-4 animate-spin" />
+                  <Save v-else class="h-4 w-4" />
+                  Save
+                </button>
               </div>
             </div>
 
-            <div class="flex gap-2 overflow-x-auto pb-1">
-              <button v-for="bundle in recommendedBundles" :key="bundle.name" type="button" class="shrink-0 rounded-xl border border-foreground/10 bg-foreground/[0.02] px-3 py-2 text-left transition hover:border-primary/30 hover:bg-primary/[0.04]" @click="applyBundle(bundle)">
-                <span class="block text-[10px] font-black uppercase tracking-widest text-primary">Bundle</span>
-                <span class="block max-w-[14rem] truncate text-xs font-black text-foreground">{{ bundle.name }}</span>
-              </button>
-            </div>
           </div>
 
           <div class="overflow-x-auto">
