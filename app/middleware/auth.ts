@@ -7,11 +7,19 @@ const getPlanPriority = (slug?: string | null) => {
   return 0
 }
 
+const isTrialingMembership = (membership: any) => {
+  const status = String(membership?.status || '').toLowerCase()
+  const provider = String(membership?.provider || '').toLowerCase()
+  return status === 'trialing' || provider === 'trial'
+}
+
 const isMembershipCurrentlyUsable = (membership: any, now = Date.now()) => {
   if (!membership || membership?.is_active === false) return false
   const status = String(membership?.status || '').toLowerCase()
   if (['expired', 'canceled', 'past_due'].includes(status)) return false
-  const rawEnd = membership?.trial_ends_at || membership?.ends_at
+  const rawEnd = isTrialingMembership(membership)
+    ? (membership?.trial_ends_at || membership?.ends_at)
+    : (membership?.ends_at || membership?.trial_ends_at)
   if (!rawEnd) return true
   const endTime = new Date(rawEnd).getTime()
   return Number.isFinite(endTime) ? endTime > now : true

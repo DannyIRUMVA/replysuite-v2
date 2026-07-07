@@ -17,11 +17,13 @@ export const isPaidPlanSlug = (slug?: string | null) => {
 export const isTrialingMembership = (membership: any) => {
   const status = String(membership?.status || '').toLowerCase()
   const provider = String(membership?.provider || '').toLowerCase()
-  return status === 'trialing' || provider === 'trial' || Boolean(membership?.trial_started_at || membership?.trial_ends_at)
+  return status === 'trialing' || provider === 'trial'
 }
 
 export const getMembershipEndTime = (membership: any) => {
-  const raw = membership?.trial_ends_at || membership?.ends_at
+  const raw = isTrialingMembership(membership)
+    ? (membership?.trial_ends_at || membership?.ends_at)
+    : (membership?.ends_at || membership?.trial_ends_at)
   if (!raw) return null
   const time = new Date(raw).getTime()
   return Number.isFinite(time) ? time : null
