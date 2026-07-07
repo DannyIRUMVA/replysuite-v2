@@ -17,6 +17,7 @@ import {
 const supabase = useSupabaseClient()
 const route = useRoute()
 const { user, userId, profile, planSlug, isVerified, refreshAuth, isTrialing } = useAuth()
+const { track } = useActivity()
 const forceOnboarding = useState<boolean>('dashboard-force-onboarding', () => false)
 const onboardingChecked = useState<boolean>('dashboard-force-onboarding-checked', () => false)
 const onboardingDismissed = useState<boolean>('dashboard-onboarding-dismissed', () => false)
@@ -43,6 +44,7 @@ const createdAgentId = ref<string | null>(null)
 const selectedIntegration = ref<'website' | 'whatsapp' | null>(null)
 const manualStep = ref<SetupStep | null>(null)
 const draftStatus = ref('')
+const lastTrackedOnboardingStep = ref('')
 let draftSaveTimer: ReturnType<typeof setTimeout> | null = null
 const ensuringRows = ref(false)
 const syncingSteps = reactive<Record<StepCode, boolean>>({
@@ -141,6 +143,7 @@ const shouldShow = computed(() => {
   if (!isOnboardingRoute.value) return false
   if (createdAgentId.value) return true
   if (!userId.value || pending.value || ensuringRows.value) return false
+  if (isVerified.value && !isOnboardingPreview.value) return false
   if (!hasAllRequiredRows.value && !isOnboardingPreview.value) return false
 
   const firstSetupNeeded = needsVerify.value || needsCompanyProfile.value || needsChoosePlan.value || needsCreateChatbot.value || needsChooseChannel.value
@@ -195,6 +198,18 @@ const activeStepLabel = computed(() => ({
   integration: 'Choose channel',
   done: 'Train and test',
 } as Record<SetupStep, string>)[activeStep.value] || 'Setup')
+
+const trackOnboarding = (event: string, meta: Record<string, any> = {}) => {
+  if (process.server || !userId.value) return
+  void track(`onboarding_${event}`, {
+    step: activeStep.value,
+    verified: isVerified.value,
+    has_plan: Boolean(planSlug.value),
+    has_bot: Boolean(activeBotId.value || onboardingState.value?.botCount),
+    preview: isOnboardingPreview.value,
+    ...meta,
+  })
+}
 
 watch(profile, (value: any) => {
   if (!value) return
@@ -281,22 +296,34 @@ watch([isVerified, completedSteps, companyComplete, planSlug, () => onboardingSt
   if ((onboardingState.value?.botId || onboardingState.value?.botCount) && !completed.has('create_chatbot')) await syncStep('create_chatbot')
 }, { immediate: true })
 
-watch([shouldShow, needsVerify, needsCompanyProfile, needsChoosePlan, needsCreateChatbot, needsChooseChannel, setupIncomplete, onboardingDismissed, isOnboardingPreview], ([open, verifyNeeded, companyNeeded, planNeeded, chatbotNeeded, channelNeeded, incomplete, dismissed, preview]) => {
+watch([shouldShow, needsVerify, needsCompanyProfile, needsChoosePlan, needsCreateChatbot, needsChooseChannel, setupIncomplete, onboardingDismissed, isOnboardingPreview, isVerified], ([open, verifyNeeded, companyNeeded, planNeeded, chatbotNeeded, channelNeeded, incomplete, dismissed, preview, verified]) => {
   if (process.server) return
-  if (preview) {
+  if (verified && !preview && !createdAgentId.value) {
+    forceOnboarding.value = false
+    onboardingDismissed.value = true
+    onboardingNavigationLocked.value = false
+  } else if (preview) {
     forceOnboarding.value = true
     onboardingDismissed.value = false
     if (!manualStep.value) manualStep.value = needsVerify.value ? 'verify' : 'company'
   } else if (verifyNeeded || companyNeeded || planNeeded || chatbotNeeded || channelNeeded) forceOnboarding.value = true
   else if (!createdAgentId.value) forceOnboarding.value = false
 
-  onboardingNavigationLocked.value = Boolean(!open && dismissed && incomplete && isOnboardingRoute.value)
+  onboardingNavigationLocked.value = Boolean(!open && dismissed && incomplete && isOnboardingRoute.value && !(verified && !preview))
   document.documentElement.style.overflow = open ? 'hidden' : ''
   document.body.style.overflow = open ? 'hidden' : ''
 }, { immediate: true })
 
-watch(activeStep, () => {
+watch(shouldShow, (open) => {
+  if (!open) return
+  trackOnboarding('modal_open')
+}, { immediate: true })
+
+watch(activeStep, (step) => {
   draftStatus.value = ''
+  if (!shouldShow.value || lastTrackedOnboardingStep.value === step) return
+  lastTrackedOnboardingStep.value = step
+  trackOnboarding('step_view', { viewed_step: step })
 })
 
 watch([companyDraft, agentDraft, selectedIntegration], () => {
@@ -331,9 +358,11 @@ const resendVerification = async () => {
   try {
     resendLoading.value = true
     await $fetch('/api/auth/resend-code', { method: 'POST' })
+    trackOnboarding('verification_code_resent')
     resendSuccess.value = true
     setTimeout(() => { resendSuccess.value = false }, 5000)
-  } catch (error) {
+  } catch (error: any) {
+    trackOnboarding('error', { action: 'resend_verification', message: error?.message || 'Unable to resend verification code.' })
     console.error('[Onboarding] Resend verification failed:', error)
   } finally {
     resendLoading.value = false
@@ -348,10 +377,12 @@ const verifyAccount = async () => {
     await $fetch('/api/auth/verify-code', { method: 'POST', body: { code: verificationCode.value.trim() } })
     await refreshAuth()
     await syncStep('verify_account')
+    trackOnboarding('step_complete', { completed_step: 'verify' })
     verificationCode.value = ''
     await refresh()
   } catch (error: any) {
     verifyError.value = error?.data?.statusMessage || error?.message || 'Unable to verify account.'
+    trackOnboarding('error', { action: 'verify_account', message: verifyError.value })
   } finally {
     verifying.value = false
   }
@@ -381,8 +412,10 @@ const saveCompanyInfo = async () => {
     companySavedThisSession.value = true
     await refreshAuth()
     await syncStep('company_profile')
+    trackOnboarding('step_complete', { completed_step: 'company' })
   } catch (error: any) {
     companyError.value = error?.message || 'Unable to save company information.'
+    trackOnboarding('error', { action: 'save_company', message: companyError.value })
   } finally {
     isSavingCompany.value = false
   }
@@ -441,11 +474,13 @@ const createChatbot = async () => {
     }
 
     await syncStep('create_chatbot')
+    trackOnboarding('step_complete', { completed_step: 'chatbot' })
     createdAgentId.value = data?.id || null
     selectedIntegration.value = null
     await refresh()
   } catch (error: any) {
     createError.value = error?.message || 'Unable to create chatbot right now.'
+    trackOnboarding('error', { action: 'create_chatbot', message: createError.value })
   } finally {
     isCreating.value = false
   }
@@ -468,10 +503,12 @@ const startTrial = async (planId: string) => {
     })
     await refreshAuth()
     await syncStep('choose_plan')
+    trackOnboarding('step_complete', { completed_step: 'trial', plan_id: planId })
     await refresh()
     manualStep.value = 'chatbot'
   } catch (error: any) {
     trialError.value = error?.data?.message || error?.data?.statusMessage || error?.statusMessage || error?.message || 'Could not start your trial.'
+    trackOnboarding('error', { action: 'start_trial', plan_id: planId, message: trialError.value })
   } finally {
     isStartingTrial.value = false
   }
@@ -479,6 +516,7 @@ const startTrial = async (planId: string) => {
 
 const continueStarter = async () => {
   await syncStep('choose_plan')
+  trackOnboarding('step_complete', { completed_step: 'trial', plan_id: 'starter' })
   await refresh()
   manualStep.value = 'chatbot'
 }
@@ -487,6 +525,7 @@ const chooseIntegration = async (integration: 'website' | 'whatsapp') => {
   if (integration === 'whatsapp' && !canUseWhatsApp.value) return
   selectedIntegration.value = integration
   await syncStep('choose_channel')
+  trackOnboarding('step_complete', { completed_step: 'integration', integration })
   await refresh()
   manualStep.value = 'done'
 }
@@ -545,6 +584,7 @@ const openTraining = () => {
   const id = activeBotId.value
   if (!id) return
   const integration = selectedIntegration.value || 'website'
+  trackOnboarding('training_opened', { integration, chatbot_id: id })
   createdAgentId.value = null
   onboardingDismissed.value = true
   forceOnboarding.value = false
@@ -558,10 +598,12 @@ const openIntegration = () => {
   onboardingDismissed.value = true
   forceOnboarding.value = false
   onboardingNavigationLocked.value = false
+  trackOnboarding('integration_opened', { integration: selectedIntegration.value || 'website' })
   navigateTo(target?.to || '/dashboard/integrations/website')
 }
 
 const closeModal = () => {
+  trackOnboarding('modal_closed', { incomplete: setupIncomplete.value })
   saveDraft()
   onboardingDismissed.value = true
   onboardingNavigationLocked.value = setupIncomplete.value

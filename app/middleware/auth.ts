@@ -122,6 +122,13 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         verified = !!profile?.is_verified
       }
 
+      if (verified && !previewOnboarding) {
+        forceOnboarding.value = false
+        onboardingChecked.value = true
+        onboardingDismissed.value = true
+        return
+      }
+
       const [onboardingRes, botsRes, profileRes, stepsRes] = await Promise.all([
         supabase
           .from('user_onboarding')
@@ -162,7 +169,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       const supportedStepCodes = stepsRes.data?.map((step: any) => step.code).filter(Boolean) || ['verify_account', 'create_chatbot']
       const needsOnboarding = supportedStepCodes.some((code) => rowsByCode[code] ?? !inferredCompletion[code])
 
-      forceOnboarding.value = previewOnboarding || needsOnboarding
+      forceOnboarding.value = previewOnboarding || (!verified && needsOnboarding)
       onboardingChecked.value = true
 
       if (forceOnboarding.value) {
