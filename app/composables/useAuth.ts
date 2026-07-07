@@ -11,13 +11,41 @@ const getPlanPriority = (slug?: string | null) => {
   return 0
 }
 
+const isTrialingMembership = (membership: any) => {
+  const status = String(membership?.status || '').toLowerCase()
+  const provider = String(membership?.provider || '').toLowerCase()
+  return status === 'trialing' || provider === 'trial' || Boolean(membership?.trial_started_at || membership?.trial_ends_at)
+}
+
+const getMembershipEndTime = (membership: any) => {
+  const raw = membership?.trial_ends_at || membership?.ends_at
+  if (!raw) return null
+  const time = new Date(raw).getTime()
+  return Number.isFinite(time) ? time : null
+}
+
+const isMembershipCurrentlyUsable = (membership: any, now = Date.now()) => {
+  if (!membership || membership?.is_active === false) return false
+  const status = String(membership?.status || '').toLowerCase()
+  if (['expired', 'canceled', 'past_due'].includes(status)) return false
+  const endsAt = getMembershipEndTime(membership)
+  if (endsAt && endsAt <= now) return false
+  return true
+}
+
 const selectBestMembership = (memberships: any[] = []) => memberships
-  .filter((membership) => membership?.is_active !== false)
+  .filter((membership) => isMembershipCurrentlyUsable(membership))
   .sort((a, b) => {
     const priorityDiff = getPlanPriority(b?.plans?.internal_slug) - getPlanPriority(a?.plans?.internal_slug)
     if (priorityDiff !== 0) return priorityDiff
     return new Date(b?.starts_at || b?.created_at || 0).getTime() - new Date(a?.starts_at || a?.created_at || 0).getTime()
   })[0] || null
+
+const getTrialDaysLeft = (membership: any) => {
+  const endsAt = getMembershipEndTime(membership)
+  if (!endsAt) return null
+  return Math.max(0, Math.ceil((endsAt - Date.now()) / 86_400_000))
+}
 
 export const useAuth = () => {
   const user = useSupabaseUser()
@@ -60,6 +88,9 @@ export const useAuth = () => {
   const membership = computed(() => authData.value?.membership || null)
   const plan = computed(() => membership.value?.plans || null)
   const planSlug = computed(() => plan.value?.internal_slug || null)
+  const isTrialing = computed(() => isTrialingMembership(membership.value))
+  const trialDaysLeft = computed(() => isTrialing.value ? getTrialDaysLeft(membership.value) : null)
+  const trialEndsAt = computed(() => isTrialing.value ? (membership.value?.trial_ends_at || membership.value?.ends_at || null) : null)
   
   const limits = computed(() => ({
     maxAgents: plan.value?.max_chatbots || 0,
@@ -178,6 +209,9 @@ export const useAuth = () => {
     polarCustomerId: computed(() => profile.value?.polar_customer_id || null),
     plan,
     planSlug,
+    isTrialing,
+    trialDaysLeft,
+    trialEndsAt,
     limits,
     isLoading,
     isAuthenticated,

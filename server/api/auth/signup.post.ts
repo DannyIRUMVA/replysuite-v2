@@ -102,7 +102,7 @@ export default defineEventHandler(async (event) => {
 
   return { 
     success: true, 
-    message: 'Check your email for link.' 
+    message: 'Check your email for your 6-digit verification code.'
   }
 })
 

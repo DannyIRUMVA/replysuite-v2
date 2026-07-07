@@ -11,7 +11,7 @@ useSeoMeta({
   description: 'Unlock the full power of ReplySuite AI automation.',
 })
 
-const { refreshAuth, planSlug, syncWithPolar, isLoading: isAuthLoading } = useAuth()
+const { refreshAuth, planSlug, syncWithPolar, isLoading: isAuthLoading, isVerified, isTrialing, trialDaysLeft } = useAuth()
 const isProcessing = ref<string | null>(null)
 const selectedMobilePlan = ref<any | null>(null)
 const mobilePhone = ref('')
@@ -76,6 +76,31 @@ const closeMobilePayment = () => {
   selectedMobilePlan.value = null
   mobilePhone.value = ''
   mobilePaymentResult.value = null
+}
+
+const startTrial = async (plan: any) => {
+  if (planActionDisabled(plan) || isProcessing.value) return
+  if (!isVerified.value) {
+    notify.warn('Verify your email before starting a trial.')
+    return
+  }
+
+  isProcessing.value = `${plan.id}:trial`
+  try {
+    const res = await $fetch('/api/billing/trial/start', {
+      method: 'POST',
+      body: { planId: plan.id },
+    })
+
+    await refreshAuth()
+    notify.success(`${(res as any)?.planName || plan.name} trial started for ${(res as any)?.trialDays || 3} days.`)
+  } catch (err: any) {
+    console.error('[Dashboard Pricing] Trial start failed:', err)
+    const message = err?.data?.message || err?.data?.statusMessage || err?.statusMessage || err?.message || 'Could not start trial. Please try again.'
+    notify.error(message)
+  } finally {
+    isProcessing.value = null
+  }
 }
 
 const requestMobilePayment = async () => {
@@ -176,10 +201,17 @@ const getPlanIcon = (plan: any) => {
 }
 
 const getCtaLabel = (plan: any) => {
-  if (planIsCurrent(plan)) return 'Current plan'
+  if (planIsCurrent(plan)) return isTrialing.value ? `Trial active${trialDaysLeft.value ? ` · ${trialDaysLeft.value}d left` : ''}` : 'Current plan'
   if (planIsCoveredByCurrent(plan)) return 'Included'
   if (plan.id === 'starter') return 'Activate free'
   return 'Continue with mobile money'
+}
+
+const getTrialLabel = (plan: any) => {
+  if (!isVerified.value) return 'Verify email to start trial'
+  if (planIsCurrent(plan) && isTrialing.value) return `Trial active${trialDaysLeft.value ? ` · ${trialDaysLeft.value}d left` : ''}`
+  if (planActionDisabled(plan)) return planIsCoveredByCurrent(plan) ? 'Included' : 'Current plan'
+  return 'Start 3-day trial'
 }
 </script>
 
@@ -252,6 +284,17 @@ const getCtaLabel = (plan: any) => {
           </div>
 
           <div class="mb-4 grid gap-2">
+            <button
+              type="button"
+              @click="startTrial(plan)"
+              :disabled="isProcessing === `${plan.id}:trial` || planActionDisabled(plan) || !isVerified"
+              class="dashboard-action-label inline-flex w-full items-center justify-center gap-1.5 rounded-[0.39rem] border border-primary/20 bg-primary/10 px-3 py-2 text-primary transition hover:bg-primary/15 disabled:cursor-default disabled:opacity-50"
+            >
+              <Loader2 v-if="isProcessing === `${plan.id}:trial`" class="h-3.5 w-3.5 animate-spin" />
+              <Sparkles v-else class="h-3.5 w-3.5" />
+              {{ isProcessing === `${plan.id}:trial` ? 'Starting trial...' : getTrialLabel(plan) }}
+            </button>
+
             <button
               type="button"
               @click="openMobilePayment(plan)"

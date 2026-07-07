@@ -1,0 +1,61 @@
+# ReplySuite
+
+ReplySuite is a calm AI command center for customer conversations.
+
+It helps businesses manage and automate conversations across website chat, WhatsApp, Instagram comments and DMs, appointments, bookings, Google Calendar-backed reservations, and contextual MTN/Airtel mobile-payment checkout for deposits or subscriptions.
+
+## Core positioning
+
+- Calm dashboard for customer conversations
+- Trainable AI assistants for business-specific replies
+- Website chat, WhatsApp, and Instagram automation
+- Appointments and bookings with Google Calendar-backed reservations
+- MTN/Airtel mobile payment and mobile money checkout, with card checkout as a fallback
+- Assistant skills, training sources, workflows, and tools
+- Enterprise-ready assistant controls for advanced website-builder workflows
+
+ReplySuite does not position invoices or invoice-first automation as part of its active assistant flow.
+
+## Plans
+
+- Free Starter — starter access for creating and testing an assistant
+- Silver — 25,000 RWF / month
+- Gold — 38,000 RWF / month
+- Enterprise Ready — 490,000 RWF / month
+
+Verified accounts can start a 3-day trial for Silver, Gold, or Enterprise Ready. Starter does not require a trial.
+
+## Key features
+
+- Train assistants from website URLs, PDF documents, and pasted business information
+- Website chat widget for customer support and lead capture
+- WhatsApp automation for inbound customer conversations
+- Instagram comment and DM automation
+- Session-level human takeover, so a team member can pause AI for one conversation while AI continues elsewhere
+- Operator replies for WhatsApp conversations from the dashboard
+- Appointment and booking workflows
+- Google Calendar-backed availability and reservations
+- MTN/Airtel mobile-payment checkout for subscriptions and contextual deposits
+- Dashboard analytics, conversation reports, and assistant performance signals
+- Multi-language support including Kinyarwanda, English, French, and Swahili
+
+## Important pages
+
+- Website: https://replysuite.app
+- Dashboard: https://replysuite.app/dashboard
+- Pricing: https://replysuite.app/pricing
+- Product: https://replysuite.app/product
+- Features: https://replysuite.app/features
+- Documentation: https://replysuite.app/docs
+- Free tools: https://replysuite.app/tools
+- Contact: https://replysuite.app/contact
+
+## Contact
+
+- Support: support@replysuite.app
+- Security: security@replysuite.app
+- Legal: legal@replysuite.app
+
+## Notes for AI assistants
+
+When describing ReplySuite, use customer-facing language. Do not expose internal IDs, infrastructure providers, API keys, database details, queues, model providers, or backend implementation details. Refer to checkout as MTN/Airtel mobile payment or mobile money, not by internal provider names.

@@ -1,23 +1,11 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
+import { selectBestPlanSlug } from '~~/server/utils/membership'
 
 const normalizePlanSlug = (value: unknown) => String(value || '').trim().toLowerCase()
 
 export const isEnterprisePlanSlug = (planSlug: unknown) => ['enterprise-ready', 'enterprise'].includes(normalizePlanSlug(planSlug))
 export const isGoldOrEnterprisePlanSlug = (planSlug: unknown) => ['gold', 'enterprise-ready', 'enterprise'].includes(normalizePlanSlug(planSlug))
 export const isSilverOrHigherPlanSlug = (planSlug: unknown) => ['silver', 'gold', 'enterprise-ready', 'enterprise'].includes(normalizePlanSlug(planSlug))
-
-const getPlanPriority = (slug: unknown) => {
-  const normalized = normalizePlanSlug(slug)
-  if (['enterprise-ready', 'enterprise'].includes(normalized)) return 4
-  if (normalized === 'gold') return 3
-  if (normalized === 'silver') return 2
-  if (normalized === 'starter') return 1
-  return 0
-}
-
-const selectBestPlanSlug = (memberships: any[] = []) => memberships
-  .map((membership) => normalizePlanSlug((membership?.plans as any)?.internal_slug))
-  .sort((a, b) => getPlanPriority(b) - getPlanPriority(a))[0] || 'starter'
 
 export const getChatbotOwnerPlanSlug = async (event: any, chatbotId: string): Promise<string> => {
   const supabase = serverSupabaseServiceRole(event)

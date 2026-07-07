@@ -19,7 +19,7 @@ useHead({
 
 const route = useRoute()
 const router = useRouter()
-const { membership, planSlug, isLoading: isAuthLoading, syncWithPolar } = useAuth()
+const { membership, planSlug, isLoading: isAuthLoading, syncWithPolar, isTrialing, trialDaysLeft, trialEndsAt } = useAuth()
 
 const isMounted = ref(false)
 const isLoading = computed(() => !isMounted.value || isAuthLoading.value)
@@ -90,14 +90,22 @@ const planNames: Record<string, string> = {
 
 const currentPlanName = computed(() => planSlug.value ? planNames[planSlug.value] || planSlug.value : 'No active plan')
 const isFreePlan = computed(() => planSlug.value === 'starter')
-const planStatusLabel = computed(() => isFreePlan.value ? 'Current plan' : 'Active subscription')
+const planStatusLabel = computed(() => {
+  if (isTrialing.value) return 'Trial active'
+  return isFreePlan.value ? 'Current plan' : 'Active subscription'
+})
 const planStatusDescription = computed(() => {
+  if (isTrialing.value) return 'Your trial unlocks this plan while you create, train, and test your assistant.'
   if (isFreePlan.value) return 'Free access is active. Upgrade anytime when you need more channels or usage.'
   if (!planSlug.value) return 'Choose a plan from dashboard pricing to activate your workspace.'
   return 'This is your current access level. Payment history below does not change it.'
 })
-const billingDateLabel = computed(() => isFreePlan.value ? 'Renewal' : 'Next billing date')
+const billingDateLabel = computed(() => {
+  if (isTrialing.value) return 'Trial ends'
+  return isFreePlan.value ? 'Renewal' : 'Next billing date'
+})
 const billingDateValue = computed(() => {
+  if (isTrialing.value) return trialEndsAt.value ? `${formatDate(trialEndsAt.value)}${trialDaysLeft.value !== null ? ` · ${trialDaysLeft.value}d left` : ''}` : 'Trial active'
   if (isFreePlan.value) return 'No renewal needed'
   return membership.value?.ends_at ? formatDate(membership.value.ends_at) : 'Not scheduled'
 })

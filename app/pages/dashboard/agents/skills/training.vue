@@ -42,6 +42,7 @@ const totalTrainings = ref(0)
 const isPremium = computed(() => ['silver', 'gold', 'enterprise-ready'].includes(planSlug.value || ''))
 const activeJobStatuses = ['queued', 'processing', 'retry_wait']
 const isOnboardingTraining = computed(() => route.query.onboarding === '1')
+const shouldOpenTestFromOnboarding = computed(() => ['1', 'true', 'yes'].includes(String(route.query.test || '').toLowerCase()))
 const onboardingIntegration = computed(() => route.query.integration === 'whatsapp' ? 'whatsapp' : 'website')
 const onboardingIntegrationPath = computed(() => onboardingIntegration.value === 'whatsapp' ? '/dashboard/integrations/whatsapp' : '/dashboard/integrations/website')
 const onboardingIntegrationLabel = computed(() => onboardingIntegration.value === 'whatsapp' ? 'WhatsApp' : 'Website')
@@ -115,7 +116,8 @@ onUnmounted(() => {
 onMounted(async () => {
   await fetchData()
   if (isOnboardingTraining.value) {
-    showTrainingModal.value = true
+    showTrainingModal.value = !shouldOpenTestFromOnboarding.value
+    showChatTest.value = shouldOpenTestFromOnboarding.value
     const website = String(profile.value?.website || '').trim()
     if (website && !urlForm.value.url) urlForm.value.url = website
   }
@@ -321,9 +323,9 @@ const handleTestChat = async () => {
             <LucideSparkles class="h-5 w-5" />
           </div>
           <div>
-            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">First training step</p>
-            <h2 class="mt-1 text-lg font-black tracking-tight text-foreground">Train your assistant before connecting {{ onboardingIntegrationLabel }}.</h2>
-            <p class="mt-1 max-w-2xl text-xs font-medium leading-relaxed text-foreground/55">Add your website, a PDF, or custom text. Once training finishes, continue to the integration setup you selected during onboarding.</p>
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Final onboarding step</p>
+            <h2 class="mt-1 text-lg font-black tracking-tight text-foreground">Train and test before connecting {{ onboardingIntegrationLabel }}.</h2>
+            <p class="mt-1 max-w-2xl text-xs font-medium leading-relaxed text-foreground/55">Add your website, a PDF, or custom text, then test replies from this selected assistant before channel setup.</p>
           </div>
         </div>
         <NuxtLink :to="onboardingIntegrationPath" class="inline-flex shrink-0 items-center justify-center rounded-xl border border-foreground/10 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/60 transition hover:border-primary/30 hover:text-primary">

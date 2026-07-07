@@ -1,6 +1,7 @@
 import { H3Event } from 'h3'
 import { serverSupabaseClient, serverSupabaseUser } from '#supabase/server'
 import { z } from 'zod'
+import { selectBestMembership } from '~~/server/utils/membership'
 
 export const SubscriptionLimitSchema = z.object({
   max_chatbots: z.number().default(1),
@@ -11,23 +12,6 @@ export const SubscriptionLimitSchema = z.object({
 })
 
 export type SubscriptionLimits = z.infer<typeof SubscriptionLimitSchema>
-
-const getPlanPriority = (slug?: string | null) => {
-  const normalized = String(slug || '').toLowerCase()
-  if (['enterprise-ready', 'enterprise'].includes(normalized)) return 4
-  if (normalized === 'gold') return 3
-  if (normalized === 'silver') return 2
-  if (normalized === 'starter') return 1
-  return 0
-}
-
-const selectBestMembership = (memberships: any[] = []) => memberships
-  .filter((membership) => membership?.is_active !== false)
-  .sort((a, b) => {
-    const priorityDiff = getPlanPriority(b?.plans?.internal_slug) - getPlanPriority(a?.plans?.internal_slug)
-    if (priorityDiff !== 0) return priorityDiff
-    return new Date(b?.starts_at || b?.created_at || 0).getTime() - new Date(a?.starts_at || a?.created_at || 0).getTime()
-  })[0] || null
 
 /**
  * Retrieves the current user's subscription limits from the database.

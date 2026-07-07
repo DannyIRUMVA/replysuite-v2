@@ -24,7 +24,9 @@ export default defineNuxtConfig({
         { name: 'twitter:image', content: 'https://replysuite.app/og-image.png' },
       ],
       link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'alternate icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
         { rel: 'canonical', href: 'https://replysuite.app/' },
         { rel: 'preconnect', href: 'https://www.googletagmanager.com' },
         { rel: 'preconnect', href: 'https://stats.g.doubleclick.net' },
@@ -45,7 +47,7 @@ export default defineNuxtConfig({
               url: 'https://replysuite.app',
               logo: {
                 '@type': 'ImageObject',
-                url: 'https://replysuite.app/favicon.ico'
+                url: 'https://replysuite.app/icon-512.png'
               }
             },
             potentialAction: {
@@ -62,7 +64,7 @@ export default defineNuxtConfig({
             '@type': 'Organization',
             name: 'ReplySuite',
             url: 'https://replysuite.app',
-            logo: 'https://replysuite.app/favicon.ico',
+            logo: 'https://replysuite.app/icon-512.png',
             description: 'AI-powered live chat and chatbot automation for Instagram, WhatsApp, and websites.',
             sameAs: [
               'https://twitter.com/replysuite'

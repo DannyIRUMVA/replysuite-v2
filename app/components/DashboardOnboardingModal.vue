@@ -9,7 +9,6 @@ import {
   Globe,
   Loader2,
   MessageCircle,
-  Save,
   ShieldCheck,
   Sparkles,
   X,
@@ -17,15 +16,15 @@ import {
 
 const supabase = useSupabaseClient()
 const route = useRoute()
-const { user, userId, profile, planSlug, isVerified, refreshAuth } = useAuth()
+const { user, userId, profile, planSlug, isVerified, refreshAuth, isTrialing } = useAuth()
 const forceOnboarding = useState<boolean>('dashboard-force-onboarding', () => false)
 const onboardingChecked = useState<boolean>('dashboard-force-onboarding-checked', () => false)
 const onboardingDismissed = useState<boolean>('dashboard-onboarding-dismissed', () => false)
 const onboardingNavigationLocked = useState<boolean>('dashboard-onboarding-navigation-locked', () => false)
 
-const requiredSteps = ['verify_account', 'create_chatbot'] as const
-type StepCode = typeof requiredSteps[number]
-type SetupStep = 'verify' | 'company' | 'chatbot' | 'integration' | 'done'
+const onboardingStepCodes = ['verify_account', 'company_profile', 'choose_plan', 'create_chatbot', 'choose_channel'] as const
+type StepCode = typeof onboardingStepCodes[number]
+type SetupStep = 'verify' | 'company' | 'trial' | 'chatbot' | 'integration' | 'done'
 
 const verificationCode = ref('')
 const verifyError = ref('')
@@ -38,12 +37,21 @@ const companyError = ref('')
 const companySavedThisSession = ref(false)
 const isCreating = ref(false)
 const createError = ref('')
+const isStartingTrial = ref(false)
+const trialError = ref('')
 const createdAgentId = ref<string | null>(null)
 const selectedIntegration = ref<'website' | 'whatsapp' | null>(null)
 const manualStep = ref<SetupStep | null>(null)
 const draftStatus = ref('')
+let draftSaveTimer: ReturnType<typeof setTimeout> | null = null
 const ensuringRows = ref(false)
-const syncingSteps = reactive<Record<StepCode, boolean>>({ verify_account: false, create_chatbot: false })
+const syncingSteps = reactive<Record<StepCode, boolean>>({
+  verify_account: false,
+  company_profile: false,
+  choose_plan: false,
+  create_chatbot: false,
+  choose_channel: false,
+})
 
 const companyDraft = ref({ full_name: '', company_name: '', contact_email: '', website: '', country: '' })
 const agentDraft = ref({ name: '', system_prompt: '', default_language: 'English' })
@@ -52,28 +60,45 @@ const languageOptions = chatbotLanguageNames
 const isPaidPlan = computed(() => !!planSlug.value && planSlug.value !== 'starter')
 const canUseWhatsApp = computed(() => isPaidPlan.value)
 
+const trialPlans = [
+  { id: 'silver', name: 'Silver', description: 'Website and WhatsApp automation for a focused launch.' },
+  { id: 'gold', name: 'Gold', description: 'Adds Instagram workflows for social conversations.' },
+  { id: 'enterprise-ready', name: 'Enterprise Ready', description: 'Full channel, booking, and business-tool trial.' },
+]
+
 const integrationOptions = computed(() => [
   { id: 'website' as const, title: 'Website widget', description: 'Train the assistant, then install it on your website.', icon: Globe, available: true, to: '/dashboard/integrations/website' },
   { id: 'whatsapp' as const, title: 'WhatsApp automation', description: canUseWhatsApp.value ? 'Connect WhatsApp after training for inbox automation.' : 'Upgrade to unlock WhatsApp automation.', icon: MessageCircle, available: canUseWhatsApp.value, to: '/dashboard/integrations/whatsapp' },
 ])
 
-const { data: onboardingState, pending, refresh } = useAsyncData('dashboard-onboarding-modal', async () => {
-  if (!userId.value) return { botCount: 0, onboarding: [] }
+const isOnboardingPreview = computed(() => ['1', 'true', 'yes'].includes(String(route.query.onboarding || '').toLowerCase()))
 
-  const [botsRes, onboardingRes] = await Promise.all([
-    supabase.from('chatbots').select('id', { count: 'exact', head: true }).eq('user_id', userId.value).is('deleted_at', null),
+const { data: onboardingState, pending, refresh } = useAsyncData('dashboard-onboarding-modal', async () => {
+  if (!userId.value) return { botId: null, botCount: 0, onboarding: [], stepCodes: [] }
+
+  const [botsRes, onboardingRes, stepsRes] = await Promise.all([
+    supabase.from('chatbots').select('id, created_at').eq('user_id', userId.value).is('deleted_at', null).order('created_at', { ascending: true }).limit(1),
     supabase.from('user_onboarding').select('id, step_code, completed, completed_at').eq('user_id', userId.value),
+    supabase.from('onboarding_steps').select('code').in('code', [...onboardingStepCodes]),
   ])
 
-  return { botCount: botsRes.count || 0, onboarding: onboardingRes.data || [] }
+  return {
+    botId: botsRes.data?.[0]?.id || null,
+    botCount: botsRes.data?.length || 0,
+    onboarding: onboardingRes.data || [],
+    stepCodes: stepsRes.data?.map((step: any) => step.code).filter(Boolean) || [],
+  }
 }, { watch: [userId, () => isVerified.value, () => route.path] })
 
 const onboardingRows = computed(() => onboardingState.value?.onboarding || [])
+const supportedStepCodes = computed(() => new Set<string>(onboardingState.value?.stepCodes?.length ? onboardingState.value.stepCodes : ['verify_account', 'create_chatbot']))
+const canPersistStep = (stepCode: StepCode) => supportedStepCodes.value.has(stepCode)
+const activeBotId = computed(() => createdAgentId.value || onboardingState.value?.botId || null)
 const onboardingByCode = computed(() => onboardingRows.value.reduce((acc, row: any) => {
   if (row?.step_code) acc[row.step_code] = row
   return acc
 }, {} as Record<string, any>))
-const hasAllRequiredRows = computed(() => requiredSteps.every((stepCode) => !!onboardingByCode.value[stepCode]))
+const hasAllRequiredRows = computed(() => [...supportedStepCodes.value].every((stepCode) => !!onboardingByCode.value[stepCode]))
 const completedSteps = computed(() => new Set(onboardingRows.value.filter((row: any) => row.completed && row.step_code).map((row: any) => row.step_code as string)))
 
 const companyComplete = computed(() => Boolean(
@@ -82,12 +107,30 @@ const companyComplete = computed(() => Boolean(
 ))
 const needsVerify = computed(() => {
   if (!userId.value || pending.value || ensuringRows.value) return false
+  if (isVerified.value) return false
   const row = onboardingByCode.value.verify_account
+  return row ? !row.completed : true
+})
+const needsCompanyProfile = computed(() => {
+  if (!userId.value || pending.value || ensuringRows.value) return false
+  const row = onboardingByCode.value.company_profile
+  return row ? !row.completed : !companyComplete.value
+})
+const needsChoosePlan = computed(() => {
+  if (!userId.value || pending.value || ensuringRows.value) return false
+  if (planSlug.value) return false
+  const row = onboardingByCode.value.choose_plan
   return row ? !row.completed : true
 })
 const needsCreateChatbot = computed(() => {
   if (!userId.value || pending.value || ensuringRows.value) return false
+  if (activeBotId.value || onboardingState.value?.botCount) return false
   const row = onboardingByCode.value.create_chatbot
+  return row ? !row.completed : true
+})
+const needsChooseChannel = computed(() => {
+  if (!userId.value || pending.value || ensuringRows.value) return false
+  const row = onboardingByCode.value.choose_channel
   return row ? !row.completed : true
 })
 const isOnboardingRoute = computed(() => {
@@ -98,30 +141,33 @@ const shouldShow = computed(() => {
   if (!isOnboardingRoute.value) return false
   if (createdAgentId.value) return true
   if (!userId.value || pending.value || ensuringRows.value) return false
-  if (!hasAllRequiredRows.value) return false
+  if (!hasAllRequiredRows.value && !isOnboardingPreview.value) return false
 
-  const firstSetupNeeded = needsVerify.value || needsCreateChatbot.value
-  if (!onboardingChecked.value && !firstSetupNeeded) return false
-  return !onboardingDismissed.value && (forceOnboarding.value || firstSetupNeeded)
+  const firstSetupNeeded = needsVerify.value || needsCompanyProfile.value || needsChoosePlan.value || needsCreateChatbot.value || needsChooseChannel.value
+  if (!onboardingChecked.value && !firstSetupNeeded && !forceOnboarding.value && !isOnboardingPreview.value) return false
+  return !onboardingDismissed.value && (forceOnboarding.value || isOnboardingPreview.value || firstSetupNeeded)
 })
 
 const currentStep = computed<SetupStep>(() => {
-  if (createdAgentId.value && selectedIntegration.value) return 'done'
-  if (createdAgentId.value) return 'integration'
   if (needsVerify.value) return 'verify'
-  if (needsCreateChatbot.value && !companySavedThisSession.value) return 'company'
-  return 'chatbot'
+  if (needsCompanyProfile.value) return 'company'
+  if (needsChoosePlan.value) return 'trial'
+  if (needsCreateChatbot.value) return 'chatbot'
+  if (activeBotId.value && selectedIntegration.value) return 'done'
+  if (activeBotId.value || (!needsCreateChatbot.value && needsChooseChannel.value)) return 'integration'
+  return 'done'
 })
 
 const draftStorageKey = computed(() => userId.value ? `replysuite:onboarding-draft:${userId.value}` : 'replysuite:onboarding-draft')
-const setupIncomplete = computed(() => needsVerify.value || needsCreateChatbot.value || !!createdAgentId.value)
-const stepOrder: SetupStep[] = ['verify', 'company', 'chatbot', 'integration', 'done']
+const setupIncomplete = computed(() => needsVerify.value || needsCompanyProfile.value || needsChoosePlan.value || needsCreateChatbot.value || needsChooseChannel.value || !!createdAgentId.value)
+const stepOrder: SetupStep[] = ['verify', 'company', 'trial', 'chatbot', 'integration', 'done']
 
 const isStepAccessible = (step: SetupStep) => {
   if (step === 'verify') return needsVerify.value || isVerified.value || completedSteps.value.has('verify_account')
   if (step === 'company') return !needsVerify.value
-  if (step === 'chatbot') return !needsVerify.value && (companyComplete.value || companySavedThisSession.value)
-  if (step === 'integration' || step === 'done') return !!createdAgentId.value
+  if (step === 'trial') return !needsVerify.value && companyComplete.value
+  if (step === 'chatbot') return !needsVerify.value && companyComplete.value && (completedSteps.value.has('choose_plan') || !!planSlug.value || !needsChoosePlan.value)
+  if (step === 'integration' || step === 'done') return !!activeBotId.value || completedSteps.value.has('create_chatbot')
   return false
 }
 
@@ -135,17 +181,20 @@ const canGoBack = computed(() => stepOrder.slice(0, activeStepIndex.value).some(
 const canGoNext = computed(() => {
   if (activeStep.value === 'verify') return !needsVerify.value || verificationCode.value.trim().length >= 6
   if (activeStep.value === 'company') return !!companyDraft.value.company_name.trim() && !!companyDraft.value.contact_email.trim() && !isSavingCompany.value
+  if (activeStep.value === 'trial') return isVerified.value && !isStartingTrial.value
   if (activeStep.value === 'chatbot') return !!agentDraft.value.name.trim() && !isCreating.value
   if (activeStep.value === 'integration') return !!selectedIntegration.value
   return true
 })
 
-const stepItems = computed(() => [
-  { title: 'Verify account', description: 'Confirm your email before setup.', active: activeStep.value === 'verify', complete: isVerified.value || completedSteps.value.has('verify_account') },
-  { title: 'Company info', description: 'Add business context for smarter replies.', active: activeStep.value === 'company', complete: companyComplete.value && (!needsCreateChatbot.value || companySavedThisSession.value) },
-  { title: 'Create chatbot', description: 'Name your assistant and set its basic prompt.', active: activeStep.value === 'chatbot', complete: completedSteps.value.has('create_chatbot') || !!createdAgentId.value },
-  { title: 'Choose channel', description: canUseWhatsApp.value ? 'Website and WhatsApp are available.' : 'Free plan starts with website only.', active: activeStep.value === 'integration' || activeStep.value === 'done', complete: activeStep.value === 'done' },
-])
+const activeStepLabel = computed(() => ({
+  verify: 'Verify email',
+  company: 'Business profile',
+  trial: 'Choose access',
+  chatbot: 'Create assistant',
+  integration: 'Choose channel',
+  done: 'Train and test',
+} as Record<SetupStep, string>)[activeStep.value] || 'Setup')
 
 watch(profile, (value: any) => {
   if (!value) return
@@ -166,7 +215,7 @@ watch(companyDraft, () => {
 
 const ensureOnboardingRows = async () => {
   if (!userId.value || pending.value || ensuringRows.value) return
-  const missingSteps = requiredSteps.filter((stepCode) => !onboardingByCode.value[stepCode])
+  const missingSteps = onboardingStepCodes.filter((stepCode) => canPersistStep(stepCode) && !onboardingByCode.value[stepCode])
   if (!missingSteps.length) return
 
   ensuringRows.value = true
@@ -174,8 +223,8 @@ const ensureOnboardingRows = async () => {
     const payload = missingSteps.map((stepCode) => ({
       user_id: userId.value,
       step_code: stepCode,
-      completed: stepCode === 'verify_account' ? isVerified.value : false,
-      completed_at: stepCode === 'verify_account' && isVerified.value ? new Date().toISOString() : null,
+      completed: stepCode === 'verify_account' ? isVerified.value : stepCode === 'company_profile' ? companyComplete.value : false,
+      completed_at: (stepCode === 'verify_account' && isVerified.value) || (stepCode === 'company_profile' && companyComplete.value) ? new Date().toISOString() : null,
     }))
     const { error } = await supabase.from('user_onboarding').insert(payload)
     if (error) throw error
@@ -188,7 +237,7 @@ const ensureOnboardingRows = async () => {
 }
 
 const syncStep = async (stepCode: StepCode) => {
-  if (!userId.value || syncingSteps[stepCode] || completedSteps.value.has(stepCode)) return
+  if (!userId.value || syncingSteps[stepCode] || completedSteps.value.has(stepCode) || !canPersistStep(stepCode)) return
 
   syncingSteps[stepCode] = true
   try {
@@ -223,14 +272,22 @@ watch([userId, pending], async ([currentUserId, isPending]) => {
   await ensureOnboardingRows()
 }, { immediate: true })
 
-watch([isVerified, completedSteps], async ([verified, steps]) => {
+watch([isVerified, completedSteps, companyComplete, planSlug, () => onboardingState.value?.botId, () => onboardingState.value?.botCount], async ([verified, steps]) => {
   if (!userId.value || pending.value) return
-  if (verified && !steps.has('verify_account')) await syncStep('verify_account')
+  const completed = steps as Set<string>
+  if (verified && !completed.has('verify_account')) await syncStep('verify_account')
+  if (companyComplete.value && !completed.has('company_profile')) await syncStep('company_profile')
+  if (planSlug.value && !completed.has('choose_plan')) await syncStep('choose_plan')
+  if ((onboardingState.value?.botId || onboardingState.value?.botCount) && !completed.has('create_chatbot')) await syncStep('create_chatbot')
 }, { immediate: true })
 
-watch([shouldShow, needsVerify, needsCreateChatbot, setupIncomplete, onboardingDismissed], ([open, verifyNeeded, chatbotNeeded, incomplete, dismissed]) => {
+watch([shouldShow, needsVerify, needsCompanyProfile, needsChoosePlan, needsCreateChatbot, needsChooseChannel, setupIncomplete, onboardingDismissed, isOnboardingPreview], ([open, verifyNeeded, companyNeeded, planNeeded, chatbotNeeded, channelNeeded, incomplete, dismissed, preview]) => {
   if (process.server) return
-  if (verifyNeeded || chatbotNeeded) forceOnboarding.value = true
+  if (preview) {
+    forceOnboarding.value = true
+    onboardingDismissed.value = false
+    if (!manualStep.value) manualStep.value = needsVerify.value ? 'verify' : 'company'
+  } else if (verifyNeeded || companyNeeded || planNeeded || chatbotNeeded || channelNeeded) forceOnboarding.value = true
   else if (!createdAgentId.value) forceOnboarding.value = false
 
   onboardingNavigationLocked.value = Boolean(!open && dismissed && incomplete && isOnboardingRoute.value)
@@ -241,6 +298,13 @@ watch([shouldShow, needsVerify, needsCreateChatbot, setupIncomplete, onboardingD
 watch(activeStep, () => {
   draftStatus.value = ''
 })
+
+watch([companyDraft, agentDraft, selectedIntegration], () => {
+  if (process.server || !userId.value) return
+  if (draftSaveTimer) clearTimeout(draftSaveTimer)
+  draftStatus.value = 'Saving draft...'
+  draftSaveTimer = setTimeout(() => saveDraft(true), 500)
+}, { deep: true })
 
 onMounted(() => {
   if (process.server) return
@@ -258,6 +322,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (process.server) return
+  if (draftSaveTimer) clearTimeout(draftSaveTimer)
   document.documentElement.style.overflow = ''
   document.body.style.overflow = ''
 })
@@ -315,6 +380,7 @@ const saveCompanyInfo = async () => {
     if (error) throw error
     companySavedThisSession.value = true
     await refreshAuth()
+    await syncStep('company_profile')
   } catch (error: any) {
     companyError.value = error?.message || 'Unable to save company information.'
   } finally {
@@ -385,13 +451,47 @@ const createChatbot = async () => {
   }
 }
 
-const chooseIntegration = (integration: 'website' | 'whatsapp') => {
+const startTrial = async (planId: string) => {
+  if (isStartingTrial.value) return
+  if (!isVerified.value) {
+    trialError.value = 'Verify your email before starting a trial.'
+    manualStep.value = 'verify'
+    return
+  }
+
+  isStartingTrial.value = true
+  trialError.value = ''
+  try {
+    await $fetch('/api/billing/trial/start', {
+      method: 'POST',
+      body: { planId },
+    })
+    await refreshAuth()
+    await syncStep('choose_plan')
+    await refresh()
+    manualStep.value = 'chatbot'
+  } catch (error: any) {
+    trialError.value = error?.data?.message || error?.data?.statusMessage || error?.statusMessage || error?.message || 'Could not start your trial.'
+  } finally {
+    isStartingTrial.value = false
+  }
+}
+
+const continueStarter = async () => {
+  await syncStep('choose_plan')
+  await refresh()
+  manualStep.value = 'chatbot'
+}
+
+const chooseIntegration = async (integration: 'website' | 'whatsapp') => {
   if (integration === 'whatsapp' && !canUseWhatsApp.value) return
   selectedIntegration.value = integration
+  await syncStep('choose_channel')
+  await refresh()
   manualStep.value = 'done'
 }
 
-const saveDraft = () => {
+const saveDraft = (silent = false) => {
   if (process.server) return
   localStorage.setItem(draftStorageKey.value, JSON.stringify({
     companyDraft: companyDraft.value,
@@ -399,10 +499,10 @@ const saveDraft = () => {
     selectedIntegration: selectedIntegration.value,
     savedAt: new Date().toISOString(),
   }))
-  draftStatus.value = 'Draft saved'
+  draftStatus.value = silent ? 'Draft autosaved' : 'Draft saved'
   window.setTimeout(() => {
-    if (draftStatus.value === 'Draft saved') draftStatus.value = ''
-  }, 2500)
+    if (draftStatus.value === 'Draft autosaved' || draftStatus.value === 'Draft saved') draftStatus.value = ''
+  }, 2200)
 }
 
 const goBack = () => {
@@ -419,7 +519,12 @@ const goNext = async () => {
   }
   if (activeStep.value === 'company') {
     await saveCompanyInfo()
-    if (!companyError.value) manualStep.value = 'chatbot'
+    if (!companyError.value) manualStep.value = isTrialing.value ? 'chatbot' : 'trial'
+    return
+  }
+  if (activeStep.value === 'trial') {
+    await syncStep('choose_plan')
+    manualStep.value = 'chatbot'
     return
   }
   if (activeStep.value === 'chatbot') {
@@ -427,21 +532,24 @@ const goNext = async () => {
     return
   }
   if (activeStep.value === 'integration') {
-    if (selectedIntegration.value) manualStep.value = 'done'
+    if (selectedIntegration.value) {
+      await syncStep('choose_channel')
+      manualStep.value = 'done'
+    }
     return
   }
   openTraining()
 }
 
 const openTraining = () => {
-  if (!createdAgentId.value) return
-  const id = createdAgentId.value
+  const id = activeBotId.value
+  if (!id) return
   const integration = selectedIntegration.value || 'website'
   createdAgentId.value = null
   onboardingDismissed.value = true
   forceOnboarding.value = false
   onboardingNavigationLocked.value = false
-  navigateTo(`/dashboard/agents/skills/training?id=${id}&onboarding=1&integration=${integration}`)
+  navigateTo(`/dashboard/agents/skills/training?id=${id}&onboarding=1&integration=${integration}&test=1`)
 }
 
 const openIntegration = () => {
@@ -472,71 +580,48 @@ const closeModal = () => {
     >
       <div v-if="shouldShow" class="fixed inset-0 z-[500] bg-background/85 p-3 backdrop-blur-xl sm:p-5">
         <div class="flex min-h-full items-end justify-center md:items-center">
-          <div class="relative flex w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-foreground/10 bg-background-card shadow-2xl shadow-black/40 md:max-h-[92vh] md:flex-row">
-            <aside class="relative w-full border-b border-foreground/5 bg-foreground/[0.02] p-5 md:w-[38%] md:border-b-0 md:border-r md:p-6">
-              <div class="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-
-              <div class="mb-6 flex items-start justify-between gap-3">
-                <div class="flex min-w-0 items-center gap-3">
-                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
-                    <ShieldCheck v-if="activeStep === 'verify'" class="h-5 w-5" />
-                    <Building2 v-else-if="activeStep === 'company'" class="h-5 w-5" />
-                    <Bot v-else-if="activeStep === 'chatbot'" class="h-5 w-5" />
-                    <Globe v-else-if="activeStep === 'integration'" class="h-5 w-5" />
-                    <Sparkles v-else class="h-5 w-5" />
+          <div class="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-[0.39rem] border border-foreground/10 bg-background-card shadow-2xl shadow-black/30 md:max-h-[78vh]">
+            <main class="flex w-full flex-col overflow-y-auto p-4 md:max-h-[78vh]">
+              <header class="mb-3 border-b border-foreground/10 pb-3">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex min-w-0 items-center gap-3">
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.39rem] border border-primary/20 bg-primary/10 text-primary">
+                      <Loader2 v-if="verifying || isSavingCompany || isStartingTrial || isCreating" class="h-4 w-4 animate-spin" />
+                      <ShieldCheck v-else-if="activeStep === 'verify'" class="h-4 w-4" />
+                      <Building2 v-else-if="activeStep === 'company'" class="h-4 w-4" />
+                      <Sparkles v-else-if="activeStep === 'trial'" class="h-4 w-4" />
+                      <Bot v-else-if="activeStep === 'chatbot'" class="h-4 w-4" />
+                      <Globe v-else-if="activeStep === 'integration'" class="h-4 w-4" />
+                      <CheckCircle2 v-else class="h-4 w-4" />
+                    </div>
+                    <div class="min-w-0">
+                      <p class="dashboard-action-label text-primary">Onboarding</p>
+                      <h2 class="truncate text-base font-black tracking-tight text-foreground">{{ activeStepLabel }}</h2>
+                      <p class="dashboard-muted mt-0.5">Launch your first assistant.</p>
+                    </div>
                   </div>
-                  <div class="min-w-0">
-                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Guided setup</p>
-                    <h2 class="truncate text-lg font-black tracking-tight text-foreground">Launch your first assistant</h2>
-                  </div>
-                </div>
 
-                <div class="flex items-center gap-2">
-                  <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-foreground/10 text-foreground/45 transition hover:border-foreground/20 hover:text-foreground" aria-label="Save draft and close onboarding" @click="closeModal">
+                  <button type="button" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.39rem] border border-foreground/10 text-foreground/45 transition hover:border-foreground/20 hover:text-foreground" aria-label="Save draft and close onboarding" @click="closeModal">
                     <X class="h-4 w-4" />
                   </button>
                 </div>
-              </div>
 
-              <div class="space-y-3">
-                <div v-for="(step, index) in stepItems" :key="step.title" class="rounded-2xl border px-4 py-3 transition-all" :class="step.active ? 'border-primary/30 bg-primary/10' : 'border-foreground/8 bg-transparent'">
-                  <div class="flex items-start gap-3">
-                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border text-[10px] font-black" :class="step.complete ? 'border-primary/30 bg-primary text-black' : step.active ? 'border-primary/30 bg-primary/10 text-primary' : 'border-foreground/10 bg-foreground/5 text-foreground/45'">
-                      <CheckCircle2 v-if="step.complete" class="h-4 w-4" />
-                      <span v-else>{{ index + 1 }}</span>
-                    </div>
-                    <div class="min-w-0">
-                      <p class="text-sm font-black tracking-tight text-foreground">{{ step.title }}</p>
-                      <p class="mt-0.5 text-xs leading-relaxed text-foreground/55">{{ step.description }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="mt-5 rounded-2xl border border-foreground/8 bg-background/60 p-4">
-                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Plan-aware onboarding</p>
-                <p class="mt-2 text-xs leading-relaxed text-foreground/60">
-                  Free accounts start with website setup. Paid subscriptions can choose website or WhatsApp after checkout sync.
-                </p>
-              </div>
-            </aside>
-
-            <main class="flex w-full flex-col overflow-y-auto p-5 sm:p-6 md:max-h-[92vh] md:flex-1">
+              </header>
               <section v-if="activeStep === 'verify'" class="mx-auto max-w-2xl">
                 <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Step 1</p>
                 <h3 class="mt-2 text-2xl font-black tracking-tight text-foreground">Verify your email</h3>
                 <p class="mt-2 text-sm leading-relaxed text-foreground/60">Enter the 6-digit code sent to <span class="font-bold text-foreground">{{ user?.email }}</span>.</p>
 
-                <div class="mt-6 rounded-3xl border border-foreground/8 bg-background/70 p-5">
+                <div class="mt-6 rounded-[0.39rem] border border-foreground/8 bg-background/70 p-5">
                   <label class="mb-3 block text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Verification code</label>
-                  <input v-model="verificationCode" type="text" maxlength="6" inputmode="numeric" placeholder="000000" class="w-full rounded-2xl border border-foreground/10 bg-background px-5 py-4 text-center font-mono text-2xl tracking-[0.45em] text-foreground outline-none transition placeholder:text-foreground/10 focus:border-primary/50" @keyup.enter="verifyAccount" />
-                  <p v-if="verifyError" class="mt-4 rounded-2xl border border-red-400/10 bg-red-400/5 p-4 text-sm font-semibold text-red-400">{{ verifyError }}</p>
+                  <input v-model="verificationCode" type="text" maxlength="6" inputmode="numeric" placeholder="000000" class="w-full rounded-[0.39rem] border border-foreground/10 bg-background px-5 py-4 text-center font-mono text-2xl tracking-[0.45em] text-foreground outline-none transition placeholder:text-foreground/10 focus:border-primary/50" @keyup.enter="verifyAccount" />
+                  <p v-if="verifyError" class="mt-4 rounded-[0.39rem] border border-red-400/10 bg-red-400/5 p-4 text-sm font-semibold text-red-400">{{ verifyError }}</p>
                   <div class="mt-5 flex flex-col gap-3 sm:flex-row">
-                    <button type="button" class="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-black text-black transition hover:brightness-95 disabled:opacity-50" :disabled="verifying || verificationCode.trim().length < 6" @click="verifyAccount">
+                    <button type="button" class="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-[0.39rem] bg-primary px-5 text-sm font-black text-black transition hover:brightness-95 disabled:opacity-50" :disabled="verifying || verificationCode.trim().length < 6" @click="verifyAccount">
                       <Loader2 v-if="verifying" class="h-4 w-4 animate-spin" />
                       {{ verifying ? 'Verifying...' : 'Verify account' }}
                     </button>
-                    <button type="button" class="inline-flex h-12 flex-1 items-center justify-center rounded-2xl border border-foreground/10 px-5 text-sm font-bold text-foreground/60 transition hover:border-foreground/20 hover:text-foreground disabled:opacity-50" :disabled="resendLoading" @click="resendVerification">
+                    <button type="button" class="inline-flex h-12 flex-1 items-center justify-center rounded-[0.39rem] border border-foreground/10 px-5 text-sm font-bold text-foreground/60 transition hover:border-foreground/20 hover:text-foreground disabled:opacity-50" :disabled="resendLoading" @click="resendVerification">
                       {{ resendLoading ? 'Sending...' : resendSuccess ? 'Code sent' : 'Resend code' }}
                     </button>
                   </div>
@@ -548,29 +633,29 @@ const closeModal = () => {
                 <h3 class="mt-2 text-2xl font-black tracking-tight text-foreground">Tell us about your company</h3>
                 <p class="mt-2 text-sm leading-relaxed text-foreground/60">This information helps prefill your chatbot behavior and integration setup.</p>
 
-                <div class="mt-6 grid gap-4 rounded-3xl border border-foreground/8 bg-background/70 p-5 sm:grid-cols-2">
+                <div class="mt-6 grid gap-4 rounded-[0.39rem] border border-foreground/8 bg-background/70 p-5 sm:grid-cols-2">
                   <label class="space-y-2">
                     <span class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Your name</span>
-                    <input v-model="companyDraft.full_name" class="w-full rounded-2xl border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50" placeholder="Jane Doe" />
+                    <input v-model="companyDraft.full_name" class="w-full rounded-[0.39rem] border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50" placeholder="Jane Doe" />
                   </label>
                   <label class="space-y-2">
                     <span class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Company name</span>
-                    <input v-model="companyDraft.company_name" class="w-full rounded-2xl border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50" placeholder="Acme Ltd" />
+                    <input v-model="companyDraft.company_name" class="w-full rounded-[0.39rem] border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50" placeholder="Acme Ltd" />
                   </label>
                   <label class="space-y-2">
                     <span class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Contact email</span>
-                    <input v-model="companyDraft.contact_email" type="email" class="w-full rounded-2xl border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50" placeholder="support@company.com" />
+                    <input v-model="companyDraft.contact_email" type="email" class="w-full rounded-[0.39rem] border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50" placeholder="support@company.com" />
                   </label>
                   <label class="space-y-2">
                     <span class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Website</span>
-                    <input v-model="companyDraft.website" class="w-full rounded-2xl border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50" placeholder="https://company.com" />
+                    <input v-model="companyDraft.website" class="w-full rounded-[0.39rem] border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50" placeholder="https://company.com" />
                   </label>
                   <label class="space-y-2 sm:col-span-2">
                     <span class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Country / market</span>
-                    <input v-model="companyDraft.country" class="w-full rounded-2xl border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50" placeholder="Rwanda, United States, Global..." />
+                    <input v-model="companyDraft.country" class="w-full rounded-[0.39rem] border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50" placeholder="Rwanda, United States, Global..." />
                   </label>
-                  <p v-if="companyError" class="rounded-2xl border border-red-400/10 bg-red-400/5 p-4 text-sm font-semibold text-red-400 sm:col-span-2">{{ companyError }}</p>
-                  <button type="button" class="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-black text-black transition hover:brightness-95 disabled:opacity-50 sm:col-span-2" :disabled="isSavingCompany || !companyDraft.company_name.trim() || !companyDraft.contact_email.trim()" @click="saveCompanyInfo">
+                  <p v-if="companyError" class="rounded-[0.39rem] border border-red-400/10 bg-red-400/5 p-4 text-sm font-semibold text-red-400 sm:col-span-2">{{ companyError }}</p>
+                  <button type="button" class="inline-flex h-12 items-center justify-center gap-2 rounded-[0.39rem] bg-primary px-5 text-sm font-black text-black transition hover:brightness-95 disabled:opacity-50 sm:col-span-2" :disabled="isSavingCompany || !companyDraft.company_name.trim() || !companyDraft.contact_email.trim()" @click="goNext">
                     <Loader2 v-if="isSavingCompany" class="h-4 w-4 animate-spin" />
                     {{ isSavingCompany ? 'Saving...' : 'Save and continue' }}
                     <ArrowRight v-if="!isSavingCompany" class="h-4 w-4" />
@@ -578,30 +663,61 @@ const closeModal = () => {
                 </div>
               </section>
 
-              <section v-else-if="activeStep === 'chatbot'" class="mx-auto max-w-3xl">
+              <section v-else-if="activeStep === 'trial'" class="mx-auto max-w-3xl">
                 <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Step 3</p>
+                <h3 class="mt-2 text-2xl font-black tracking-tight text-foreground">Start a 3-day trial</h3>
+                <p class="mt-2 text-sm leading-relaxed text-foreground/60">Create and train your assistant first. Pay only when you are ready to keep it live.</p>
+
+                <div class="mt-6 grid gap-3">
+                  <button
+                    v-for="plan in trialPlans"
+                    :key="plan.id"
+                    type="button"
+                    class="rounded-[0.39rem] border border-foreground/10 bg-background/70 p-4 text-left transition hover:border-primary/30 hover:bg-primary/[0.035] disabled:cursor-wait disabled:opacity-60"
+                    :disabled="isStartingTrial || !isVerified"
+                    @click="startTrial(plan.id)"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <p class="text-base font-black text-foreground">{{ plan.name }}</p>
+                        <p class="mt-1 text-sm leading-relaxed text-foreground/55">{{ plan.description }}</p>
+                      </div>
+                      <span class="shrink-0 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-primary">3 days</span>
+                    </div>
+                  </button>
+                </div>
+
+                <p v-if="trialError" class="mt-4 rounded-[0.39rem] border border-red-400/10 bg-red-400/5 p-4 text-sm font-semibold text-red-400">{{ trialError }}</p>
+
+                <button type="button" class="mt-4 inline-flex h-12 w-full items-center justify-center rounded-[0.39rem] border border-foreground/10 px-5 text-sm font-bold text-foreground/60 transition hover:border-foreground/20 hover:text-foreground" @click="continueStarter">
+                  Continue with Free Starter
+                </button>
+              </section>
+
+              <section v-else-if="activeStep === 'chatbot'" class="mx-auto max-w-3xl">
+                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Step 4</p>
                 <h3 class="mt-2 text-2xl font-black tracking-tight text-foreground">Create your chatbot</h3>
                 <p class="mt-2 text-sm leading-relaxed text-foreground/60">Add a name and basic prompt. You will train it right after setup.</p>
 
-                <div class="mt-6 rounded-3xl border border-foreground/8 bg-background/70 p-5">
+                <div class="mt-6 rounded-[0.39rem] border border-foreground/8 bg-background/70 p-5">
                   <div class="grid gap-4">
                     <label class="space-y-2">
                       <span class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Chatbot name</span>
-                      <input v-model="agentDraft.name" maxlength="80" class="w-full rounded-2xl border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50" placeholder="Company Assistant" />
+                      <input v-model="agentDraft.name" maxlength="80" class="w-full rounded-[0.39rem] border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50" placeholder="Company Assistant" />
                     </label>
                     <label class="space-y-2">
                       <span class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Basic prompt</span>
-                      <textarea v-model="agentDraft.system_prompt" rows="5" class="w-full resize-none rounded-2xl border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50" placeholder="Help visitors answer FAQs, qualify leads, and explain our services." />
+                      <textarea v-model="agentDraft.system_prompt" rows="5" class="w-full resize-none rounded-[0.39rem] border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50" placeholder="Help visitors answer FAQs, qualify leads, and explain our services." />
                     </label>
                     <label class="space-y-2">
                       <span class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Default language</span>
-                      <select v-model="agentDraft.default_language" class="w-full rounded-2xl border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50">
+                      <select v-model="agentDraft.default_language" class="w-full rounded-[0.39rem] border border-foreground/10 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/50">
                         <option v-for="language in languageOptions" :key="language" :value="language">{{ language }}</option>
                       </select>
                     </label>
                   </div>
-                  <p v-if="createError" class="mt-4 rounded-2xl border border-red-400/10 bg-red-400/5 p-4 text-sm font-semibold text-red-400">{{ createError }}</p>
-                  <button type="button" class="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-black text-black transition hover:brightness-95 disabled:opacity-50" :disabled="isCreating || !agentDraft.name.trim()" @click="createChatbot">
+                  <p v-if="createError" class="mt-4 rounded-[0.39rem] border border-red-400/10 bg-red-400/5 p-4 text-sm font-semibold text-red-400">{{ createError }}</p>
+                  <button type="button" class="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[0.39rem] bg-primary px-5 text-sm font-black text-black transition hover:brightness-95 disabled:opacity-50" :disabled="isCreating || !agentDraft.name.trim()" @click="createChatbot">
                     <Loader2 v-if="isCreating" class="h-4 w-4 animate-spin" />
                     {{ isCreating ? 'Creating...' : 'Create chatbot' }}
                     <ArrowRight v-if="!isCreating" class="h-4 w-4" />
@@ -610,13 +726,13 @@ const closeModal = () => {
               </section>
 
               <section v-else-if="activeStep === 'integration'" class="mx-auto max-w-3xl">
-                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Step 4</p>
+                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Step 5</p>
                 <h3 class="mt-2 text-2xl font-black tracking-tight text-foreground">Which integration do you need first?</h3>
                 <p class="mt-2 text-sm leading-relaxed text-foreground/60">We will start with training, then send you to the channel setup you choose.</p>
 
                 <div class="mt-6 grid gap-4 sm:grid-cols-2">
-                  <button v-for="option in integrationOptions" :key="option.id" type="button" class="rounded-3xl border p-5 text-left transition-all" :class="option.available ? 'border-foreground/10 bg-background/70 hover:border-primary/30' : 'cursor-not-allowed border-foreground/5 bg-foreground/[0.02] opacity-60'" :disabled="!option.available" @click="chooseIntegration(option.id)">
-                    <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+                  <button v-for="option in integrationOptions" :key="option.id" type="button" class="rounded-[0.39rem] border p-5 text-left transition-all" :class="option.available ? 'border-foreground/10 bg-background/70 hover:border-primary/30' : 'cursor-not-allowed border-foreground/5 bg-foreground/[0.02] opacity-60'" :disabled="!option.available" @click="chooseIntegration(option.id)">
+                    <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-[0.39rem] border border-primary/20 bg-primary/10 text-primary">
                       <component :is="option.icon" class="h-5 w-5" />
                     </div>
                     <p class="text-base font-black text-foreground">{{ option.title }}</p>
@@ -629,44 +745,36 @@ const closeModal = () => {
               </section>
 
               <section v-else class="mx-auto flex min-h-[440px] max-w-2xl flex-col items-center justify-center text-center">
-                <div class="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl border border-primary/20 bg-primary/10 text-primary shadow-lg shadow-primary/10">
+                <div class="mb-5 flex h-20 w-20 items-center justify-center rounded-[0.39rem] border border-primary/20 bg-primary/10 text-primary shadow-lg shadow-primary/10">
                   <CheckCircle2 class="h-9 w-9" />
                 </div>
-                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-primary">Setup complete</p>
-                <h3 class="mt-3 text-2xl font-black tracking-tight text-foreground">Your assistant is ready to train</h3>
+                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-primary">Final step</p>
+                <h3 class="mt-3 text-2xl font-black tracking-tight text-foreground">Train and test your assistant</h3>
                 <p class="mt-3 max-w-xl text-sm leading-relaxed text-foreground/60">
-                  Start by training your assistant with your website, PDF, or custom text. After training, continue to {{ selectedIntegration === 'whatsapp' ? 'WhatsApp' : 'website' }} setup.
+                  Add knowledge from your website, PDF, or business notes, then test replies on the selected assistant before connecting {{ selectedIntegration === 'whatsapp' ? 'WhatsApp' : 'website' }}.
                 </p>
 
-                <div class="mt-7 grid w-full max-w-md gap-3 sm:grid-cols-2">
-                  <button type="button" class="inline-flex h-12 items-center justify-center rounded-2xl border border-foreground/10 px-5 text-sm font-bold text-foreground/65 transition hover:border-foreground/20 hover:text-foreground" @click="openIntegration">
-                    Setup channel
-                  </button>
-                  <button type="button" class="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-black text-black transition hover:brightness-95" @click="openTraining">
-                    Start training
+                <div class="mt-7 w-full max-w-sm">
+                  <button type="button" class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[0.39rem] bg-primary px-5 text-sm font-black text-black transition hover:brightness-95" @click="openTraining">
+                    Go to training and test
                     <ArrowRight class="h-4 w-4" />
                   </button>
                 </div>
               </section>
 
-              <div class="mt-6 flex flex-col gap-3 border-t border-foreground/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex min-h-5 items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/45">
-                  <Save class="h-3.5 w-3.5" />
-                  <span>{{ draftStatus || 'Draft stays on this device' }}</span>
+              <div class="mt-4 flex flex-col gap-3 border-t border-foreground/10 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="min-h-5 text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/45">
+                  {{ draftStatus || 'Draft autosaves' }}
                 </div>
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <button type="button" class="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-foreground/10 px-4 text-xs font-black text-foreground/60 transition hover:border-foreground/20 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-35" :disabled="!canGoBack" @click="goBack">
+                  <button type="button" class="inline-flex h-10 items-center justify-center gap-2 rounded-[0.39rem] border border-foreground/10 px-4 text-xs font-black text-foreground/60 transition hover:border-foreground/20 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-35" :disabled="!canGoBack" @click="goBack">
                     <ArrowLeft class="h-4 w-4" />
                     Back
                   </button>
-                  <button type="button" class="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-foreground/10 px-4 text-xs font-black text-foreground/60 transition hover:border-foreground/20 hover:text-foreground" @click="saveDraft">
-                    <Save class="h-4 w-4" />
-                    Save draft
-                  </button>
-                  <button type="button" class="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-xs font-black text-black transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-45" :disabled="!canGoNext || verifying || isSavingCompany || isCreating" @click="goNext">
-                    <Loader2 v-if="verifying || isSavingCompany || isCreating" class="h-4 w-4 animate-spin" />
-                    <span>{{ activeStep === 'done' ? 'Start training' : 'Next' }}</span>
-                    <ArrowRight v-if="!(verifying || isSavingCompany || isCreating)" class="h-4 w-4" />
+                  <button type="button" class="inline-flex h-10 items-center justify-center gap-2 rounded-[0.39rem] bg-primary px-5 text-xs font-black text-black transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-45" :disabled="!canGoNext || verifying || isSavingCompany || isStartingTrial || isCreating" @click="goNext">
+                    <Loader2 v-if="verifying || isSavingCompany || isStartingTrial || isCreating" class="h-4 w-4 animate-spin" />
+                    <span>{{ activeStep === 'done' ? 'Go to training' : 'Next' }}</span>
+                    <ArrowRight v-if="!(verifying || isSavingCompany || isStartingTrial || isCreating)" class="h-4 w-4" />
                   </button>
                 </div>
               </div>
