@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -78,11 +80,40 @@
   }
 
   .dashboard-header-action-btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-4 py-2 text-[9px] font-black uppercase tracking-widest text-primary shadow-sm shadow-primary/5 transition-all hover:border-primary/30 hover:bg-primary/15 active:scale-95 dark:bg-primary dark:text-black dark:shadow-lg dark:shadow-primary/20 dark:hover:bg-primary-accent;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl border border-primary/20 bg-primary/10 px-3 py-1.5 text-[8.5px] font-black uppercase tracking-widest text-primary shadow-sm shadow-primary/5 transition-all hover:border-primary/30 hover:bg-primary/15 active:scale-95 dark:bg-primary dark:text-black dark:shadow-lg dark:shadow-primary/20 dark:hover:bg-primary-accent;
   }
 
   .dashboard-shell {
     background: rgb(var(--background));
+    font-family: "Geist", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  .dashboard-shell h1,
+  .dashboard-shell h2,
+  .dashboard-shell h3,
+  .dashboard-shell .font-display {
+    font-family: "Geist", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  .dashboard-eyebrow {
+    @apply text-[10px] font-bold uppercase tracking-[0.14em] text-foreground/40;
+  }
+
+  .dashboard-section-title {
+    @apply text-base font-black tracking-tight leading-tight text-foreground md:text-lg;
+  }
+
+  .dashboard-muted {
+    @apply text-xs font-medium leading-relaxed text-foreground/50;
+  }
+
+  .dashboard-metric-number {
+    @apply text-lg font-bold tracking-tight tabular-nums text-foreground;
+  }
+
+  .dashboard-action-label {
+    @apply text-[10px] font-black uppercase tracking-[0.12em];
   }
 
   :root:not(.dark) .dashboard-shell {

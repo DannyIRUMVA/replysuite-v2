@@ -13,7 +13,10 @@
     "tail:training-worker": "npx wrangler tail --config wrangler.training.toml",
     "deploy:media-worker": "npx wrangler deploy --config wrangler.media.toml",
     "tail:media-worker": "npx wrangler tail --config wrangler.media.toml",
-    "r2:create:media": "npx wrangler r2 bucket create replysuite-whatsapp-media"
+    "deploy:avatar-worker": "npx wrangler deploy --config wrangler.avatar.toml",
+    "tail:avatar-worker": "npx wrangler tail --config wrangler.avatar.toml",
+    "r2:create:media": "npx wrangler r2 bucket create replysuite-whatsapp-media",
+    "r2:create:avatars": "npx wrangler r2 bucket create replysuite-profile-avatars"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

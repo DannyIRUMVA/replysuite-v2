@@ -1,0 +1,19 @@
+name = "replysuite-avatar-worker"
+main = "avatar-worker/index.ts"
+compatibility_date = "2025-07-15"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[r2_buckets]]
+binding = "AVATAR_BUCKET"
+bucket_name = "replysuite-profile-avatars"
+
+[vars]
+MAX_UPLOAD_BYTES = "2097152"
+ALLOWED_MIME_TYPES = "image/jpeg,image/png,image/webp,image/gif"
+# Optional. If blank, the worker returns its own /avatar/:key URL.
+# Example for a custom domain: https://avatars.replysuite.app
+AVATAR_PUBLIC_BASE_URL = ""
+# Set with: npx wrangler secret put AVATAR_WORKER_SECRET --config wrangler.avatar.toml

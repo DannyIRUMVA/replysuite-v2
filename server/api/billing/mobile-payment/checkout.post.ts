@@ -62,6 +62,16 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 500, statusMessage: 'Could not activate the selected test plan.' })
     }
 
+    const { error: deactivateError } = await adminClient
+      .from('user_memberships')
+      .update({ is_active: false })
+      .eq('user_id', userId)
+
+    if (deactivateError) {
+      console.warn('[Subscription Mobile Payment Test] Membership deactivation failed:', deactivateError)
+      throw createError({ statusCode: 500, statusMessage: 'Could not complete the test payment.' })
+    }
+
     const membershipPayload = {
       user_id: userId,
       plan_id: dbPlan.id,
@@ -71,27 +81,9 @@ export default defineEventHandler(async (event) => {
       ends_at: periodEnd.toISOString(),
     }
 
-    const { data: existingMembership, error: existingMembershipError } = await adminClient
+    const membershipResult = await adminClient
       .from('user_memberships')
-      .select('id')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (existingMembershipError) {
-      console.warn('[Subscription Mobile Payment Test] Membership lookup failed:', existingMembershipError)
-      throw createError({ statusCode: 500, statusMessage: 'Could not complete the test payment.' })
-    }
-
-    const membershipResult = existingMembership?.id
-      ? await adminClient
-        .from('user_memberships')
-        .update(membershipPayload)
-        .eq('id', existingMembership.id)
-      : await adminClient
-        .from('user_memberships')
-        .insert(membershipPayload)
+      .insert(membershipPayload)
 
     if (membershipResult.error) {
       console.warn('[Subscription Mobile Payment Test] Membership activation failed:', membershipResult.error)
@@ -103,7 +95,7 @@ export default defineEventHandler(async (event) => {
       .insert({
         user_id: userId,
         plan_id: dbPlan.id,
-        provider: 'paypack',
+        provider: 'mobile_payment',
         amount: plan.amount,
         currency: plan.currency,
         reference: transactionRef,
@@ -143,6 +135,34 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  const adminClient = serverSupabaseServiceRole(event)
+  const { data: dbPlan, error: planError } = await adminClient
+    .from('plans')
+    .select('id, name, internal_slug')
+    .eq('internal_slug', planId)
+    .maybeSingle()
+
+  if (planError || !dbPlan?.id) {
+    console.warn('[Subscription Mobile Payment] Plan lookup failed:', planError)
+    throw createError({ statusCode: 500, statusMessage: 'Could not prepare the selected plan.' })
+  }
+
+  const { error: pendingPaymentError } = await adminClient
+    .from('payments')
+    .insert({
+      user_id: userId,
+      plan_id: dbPlan.id,
+      provider: 'mobile_payment',
+      amount: plan.amount,
+      currency: plan.currency,
+      reference: transactionRef,
+      status: 'pending',
+    })
+
+  if (pendingPaymentError) {
+    console.warn('[Subscription Mobile Payment] Pending payment record insert failed:', pendingPaymentError)
+  }
+
   const response = await fetch(`${baseUrl}/pay`, {
     method: 'POST',
     headers: {
@@ -165,6 +185,12 @@ export default defineEventHandler(async (event) => {
 
   if (!response.ok) {
     console.warn('[Subscription Mobile Payment] Worker rejected payment request:', response.status, providerResponse)
+    await adminClient
+      .from('payments')
+      .update({ status: 'failed' })
+      .eq('reference', transactionRef)
+      .eq('user_id', userId)
+
     throw createError({
       statusCode: 502,
       statusMessage: 'MTN/Airtel mobile payment request failed. Please try again or use card payment.',

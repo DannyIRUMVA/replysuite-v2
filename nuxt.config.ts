@@ -163,6 +163,8 @@ export default defineNuxtConfig({
     replySuiteMediaWorkerUrl: process.env.REPLYSUITE_MEDIA_WORKER_URL,
     replySuiteMediaWorkerSecret: process.env.REPLYSUITE_MEDIA_WORKER_SECRET,
     replySuiteMobilePaymentWorkerUrl: process.env.REPLYSUITE_MOBILE_PAYMENT_WORKER_URL || process.env.REPLYSUITE_SUBSCRIPTION_PAYMENT_WORKER_URL,
+    replySuiteAvatarWorkerUrl: process.env.REPLYSUITE_AVATAR_WORKER_URL,
+    replySuiteAvatarWorkerSecret: process.env.REPLYSUITE_AVATAR_WORKER_SECRET,
 
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL,

@@ -2,6 +2,20 @@ import { Polar } from '@polar-sh/sdk'
 import { H3Event } from 'h3'
 import { serverSupabaseServiceRole } from '#supabase/server'
 
+export const isPolarAuthError = (err: any) => {
+  const message = String(err?.message || err || '')
+  const body = String(err?.body || err?.response?.body || '')
+  return err?.status === 401
+    || err?.statusCode === 401
+    || message.includes('Status 401')
+    || message.includes('invalid_token')
+    || body.includes('invalid_token')
+}
+
+export const getPolarErrorMessage = (err: any) => isPolarAuthError(err)
+  ? 'Polar access token is invalid or expired.'
+  : String(err?.message || err || 'Unknown Polar error')
+
 /**
  * Ensures a user is synced as a customer in Polar.sh.
  * Uses the Supabase User ID as the external_id for reliable mapping.
@@ -86,7 +100,12 @@ export async function syncUserToPolar(event: H3Event, userId: string, email: str
 
     return customer
   } catch (err: any) {
-    console.error('[Polar Sync] Error syncing user to Polar:', err.message)
+    const message = getPolarErrorMessage(err)
+    if (isPolarAuthError(err)) {
+      console.warn(`[Polar Sync] ${message} Skipping customer sync.`)
+    } else {
+      console.error('[Polar Sync] Error syncing user to Polar:', message)
+    }
     return null
   }
 }
@@ -133,8 +152,14 @@ export async function getPolarSubscriptionStatus(polarCustomerId: string) {
     console.log(`[Polar API] Found ${subscription ? 1 : 0} selected valid (active/trialing/past_due) subscription.`)
 
     return subscription
-  } catch (err) {
-    console.error('[Polar API] Error fetching subscription status:', err)
+  } catch (err: any) {
+    const message = getPolarErrorMessage(err)
+    if (isPolarAuthError(err)) {
+      console.warn(`[Polar API] ${message} Subscription sync paused; local membership will be preserved.`)
+      return { __unavailable: true, reason: 'invalid_token' }
+    }
+
+    console.error('[Polar API] Error fetching subscription status:', message)
     return null
   }
 }
@@ -202,7 +227,13 @@ export async function recoverPolarCustomerWithActiveSubscription(event: H3Event,
       return { customer, subscription }
     }
   } catch (err: any) {
-    console.error('[Polar Sync] Failed to recover active Polar customer:', err?.message || err)
+    const message = getPolarErrorMessage(err)
+    if (isPolarAuthError(err)) {
+      console.warn(`[Polar Sync] ${message} Recovery lookup skipped.`)
+      return { unavailable: true, reason: 'invalid_token' }
+    }
+
+    console.error('[Polar Sync] Failed to recover active Polar customer:', message)
   }
 
   return null
@@ -246,14 +277,24 @@ export async function syncUserSubscriptions(event: any, userId: string, polarId:
   
   // 1. Fetch status directly from Polar
   const polarSub = await getPolarSubscriptionStatus(polarId)
+
+  if ((polarSub as any)?.__unavailable) {
+    console.warn(`[Polar Sync] Polar unavailable for ${polarId}. Preserving local membership records.`)
+    return {
+      hasActive: false,
+      unavailable: true,
+      reason: (polarSub as any).reason || 'polar_unavailable',
+      preservedLocal: true
+    }
+  }
   
   if (!polarSub) {
-    console.log(`[Polar Sync] No active subscription found for ${polarId}. Deactivating local records...`)
-    await adminClient
-      .from('user_memberships')
-      .update({ is_active: false })
-      .eq('user_id', userId)
-    return { hasActive: false }
+    console.log(`[Polar Sync] No active card subscription found for ${polarId}. Preserving local/mobile-payment memberships.`)
+    return {
+      hasActive: false,
+      preservedLocal: true,
+      reason: 'no_active_card_subscription'
+    }
   }
 
   // 2. Map Polar product to our local plans
@@ -264,14 +305,8 @@ export async function syncUserSubscriptions(event: any, userId: string, polarId:
     .maybeSingle()
 
   if (plan) {
-    // 3. Update local DB
-    // Deactivate old
-    await adminClient
-      .from('user_memberships')
-      .update({ is_active: false })
-      .eq('user_id', userId)
-
-    // Insert new active
+    // 3. Update local DB. Do not deactivate local/mobile-payment memberships here;
+    // plan priority selection decides the effective active plan when multiple rows exist.
     // polarSub.currentPeriodEnd is the most reliable for 'ends_at'
     const endsAt = polarSub.currentPeriodEnd || polarSub.endsAt || null
 

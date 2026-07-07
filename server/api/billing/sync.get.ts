@@ -36,11 +36,37 @@ export default defineEventHandler(async (event) => {
   // 3. Use core utility to reconcile
   let result = await syncUserSubscriptions(event, userId, polarId)
 
+  if ((result as any).unavailable) {
+    return {
+      success: true,
+      synced: false,
+      billingProviderAvailable: false,
+      hasActiveSubscription: false,
+      preservedLocalMembership: true,
+      message: 'Card billing sync is temporarily unavailable. Local membership records were preserved.',
+      plan: null,
+      polarSubscription: null
+    }
+  }
+
   // If the stored customer has no active subscription, Polar checkout may have
   // created a newer customer for the same email. Recover that customer and run
   // reconciliation again so the dashboard shows the active plan immediately.
   if (!result.hasActive && user.email) {
     const recovered = await recoverPolarCustomerWithActiveSubscription(event, userId, user.email, polarId)
+    if ((recovered as any)?.unavailable) {
+      return {
+        success: true,
+        synced: false,
+        billingProviderAvailable: false,
+        hasActiveSubscription: false,
+        preservedLocalMembership: true,
+        message: 'Card billing sync is temporarily unavailable. Local membership records were preserved.',
+        plan: null,
+        polarSubscription: null
+      }
+    }
+
     if (recovered?.customer?.id) {
       polarId = recovered.customer.id
       result = await syncUserSubscriptions(event, userId, polarId)

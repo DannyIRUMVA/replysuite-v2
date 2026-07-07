@@ -1,5 +1,6 @@
 import { Polar } from '@polar-sh/sdk'
 import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
+import { getPolarErrorMessage, isPolarAuthError } from '~~/server/utils/polar'
 
 const getSubscriptionDate = (subscription: any) => {
   return subscription?.startedAt || subscription?.createdAt || subscription?.currentPeriodStart || null
@@ -48,7 +49,17 @@ export default defineEventHandler(async (event) => {
       if (customer?.id) customerIds.add(customer.id)
     }
   } catch (err: any) {
-    console.warn('[Billing Subscriptions] Polar external-id customer lookup failed:', err?.message)
+    if (isPolarAuthError(err)) {
+      console.warn(`[Billing Subscriptions] ${getPolarErrorMessage(err)} Returning local-safe empty subscriptions.`)
+      return {
+        success: true,
+        billingProviderAvailable: false,
+        message: 'Card billing subscriptions are temporarily unavailable.',
+        customerCount: customerIds.size,
+        subscriptions: []
+      }
+    }
+    console.warn('[Billing Subscriptions] Polar external-id customer lookup failed:', getPolarErrorMessage(err))
   }
 
   if (user?.email) {
@@ -58,7 +69,17 @@ export default defineEventHandler(async (event) => {
         if (customer?.id) customerIds.add(customer.id)
       }
     } catch (err: any) {
-      console.warn('[Billing Subscriptions] Polar email customer lookup failed:', err?.message)
+      if (isPolarAuthError(err)) {
+        console.warn(`[Billing Subscriptions] ${getPolarErrorMessage(err)} Returning local-safe empty subscriptions.`)
+        return {
+          success: true,
+          billingProviderAvailable: false,
+          message: 'Card billing subscriptions are temporarily unavailable.',
+          customerCount: customerIds.size,
+          subscriptions: []
+        }
+      }
+      console.warn('[Billing Subscriptions] Polar email customer lookup failed:', getPolarErrorMessage(err))
     }
   }
 
@@ -96,7 +117,17 @@ export default defineEventHandler(async (event) => {
         })
       }
     } catch (err: any) {
-      console.warn(`[Billing Subscriptions] Polar subscription lookup failed for ${customerId}:`, err?.message)
+      if (isPolarAuthError(err)) {
+        console.warn(`[Billing Subscriptions] ${getPolarErrorMessage(err)} Returning local-safe empty subscriptions.`)
+        return {
+          success: true,
+          billingProviderAvailable: false,
+          message: 'Card billing subscriptions are temporarily unavailable.',
+          customerCount: customerIds.size,
+          subscriptions: []
+        }
+      }
+      console.warn(`[Billing Subscriptions] Polar subscription lookup failed for ${customerId}:`, getPolarErrorMessage(err))
     }
   }
 

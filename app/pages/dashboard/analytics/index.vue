@@ -3,13 +3,16 @@ import {
   Activity,
   AlertCircle,
   Bot,
+  BrainCircuit,
+  CreditCard,
+  Database,
   Globe2,
   Instagram,
   MessageCircle,
-  RefreshCw,
-  TrendingUp
+  MessageSquare,
+  TrendingUp,
+  Wrench
 } from 'lucide-vue-next'
-import CustomSelect from '~~/app/components/CustomSelect.vue'
 
 definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 
@@ -19,11 +22,14 @@ const { userId } = useAuth()
 const supabase = useSupabaseClient()
 const notify = useNotify()
 
-const selectedBotId = ref('all')
-const selectedChannel = ref<'all' | 'whatsapp' | 'web' | 'instagram'>('all')
-const isRefreshing = ref(false)
+const selectedBotId = useState<string>('dashboard-analytics-selected-bot-id', () => 'all')
+const selectedChannel = useState<'all' | 'whatsapp' | 'web' | 'instagram'>('dashboard-analytics-selected-channel', () => 'all')
+selectedChannel.value = 'all'
+const analyticsBotOptions = useState<Array<{ label: string; value: string }>>('dashboard-analytics-bot-options', () => [{ label: 'All chatbots', value: 'all' }])
+const chartRange = ref<'24h' | '7d' | '30d' | '90d' | '180d'>('30d')
+const chartChannel = ref<'all' | 'web' | 'whatsapp' | 'instagram'>('all')
 
-type ChatbotOption = { id: string; name: string }
+type ChatbotOption = { id: string; name: string; enabled_tools?: string[] | null; tools_config?: Record<string, any> | null }
 type ChatMessage = { id: string; role: string | null; content: string | null; created_at: string | null }
 type RawSession = {
   id: string
@@ -33,19 +39,27 @@ type RawSession = {
   chat_messages?: ChatMessage[]
 }
 
-const channelOptions = [
-  { label: 'All', value: 'all' as const },
-  { label: 'WhatsApp', value: 'whatsapp' as const },
-  { label: 'Website', value: 'web' as const },
-  { label: 'Instagram', value: 'instagram' as const }
-]
+const chartFilters = [
+  { label: '24H', value: '24h', days: 1 },
+  { label: 'WK', value: '7d', days: 7 },
+  { label: 'Month', value: '30d', days: 30 },
+  { label: '3M', value: '90d', days: 90 },
+  { label: '6M', value: '180d', days: 180 },
+] as const
 
-const { data: chatbots, pending: loadingChatbots, refresh: refreshChatbots } = await useAsyncData('analytics-chatbots', async () => {
+const channelFilters = [
+  { label: 'All', value: 'all', icon: Activity, activeClass: 'border-primary/45 bg-primary/18 text-primary shadow-sm shadow-primary/10', inactiveClass: 'border-foreground/10 bg-background/60 text-foreground/60 hover:border-primary/35 hover:bg-primary/10 hover:text-primary' },
+  { label: 'Web', value: 'web', icon: Globe2, activeClass: 'border-sky-400/45 bg-sky-400/15 text-sky-300 shadow-sm shadow-sky-400/10', inactiveClass: 'border-foreground/10 bg-background/60 text-foreground/60 hover:border-sky-400/35 hover:bg-sky-400/10 hover:text-sky-300' },
+  { label: 'WhatsApp', value: 'whatsapp', icon: MessageCircle, activeClass: 'border-emerald-400/45 bg-emerald-400/15 text-emerald-300 shadow-sm shadow-emerald-400/10', inactiveClass: 'border-foreground/10 bg-background/60 text-foreground/60 hover:border-emerald-400/35 hover:bg-emerald-400/10 hover:text-emerald-300' },
+  { label: 'Instagram', value: 'instagram', icon: Instagram, activeClass: 'border-pink-400/45 bg-pink-400/15 text-pink-300 shadow-sm shadow-pink-400/10', inactiveClass: 'border-foreground/10 bg-background/60 text-foreground/60 hover:border-pink-400/35 hover:bg-pink-400/10 hover:text-pink-300' },
+] as const
+
+const { data: chatbots, pending: loadingChatbots } = await useAsyncData('analytics-chatbots', async () => {
   if (!userId.value) return []
 
   const { data, error } = await supabase
     .from('chatbots')
-    .select('id, name')
+    .select('id, name, enabled_tools, tools_config')
     .eq('user_id', userId.value)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
@@ -64,18 +78,24 @@ const botOptions = computed(() => [
   ...(chatbots.value || []).map((bot) => ({ label: bot.name, value: bot.id }))
 ])
 
+watchEffect(() => {
+  analyticsBotOptions.value = botOptions.value
+})
+
 const activeBotIds = computed(() => {
   const ids = (chatbots.value || []).map((bot) => bot.id)
   if (selectedBotId.value !== 'all' && ids.includes(selectedBotId.value)) return [selectedBotId.value]
   return ids
 })
 
-const selectedBotName = computed(() => {
-  if (selectedBotId.value === 'all') return 'All chatbots'
-  return (chatbots.value || []).find((bot) => bot.id === selectedBotId.value)?.name || 'Selected chatbot'
+const selectedBot = computed(() => {
+  if (selectedBotId.value === 'all') return null
+  return (chatbots.value || []).find((bot) => bot.id === selectedBotId.value) || null
 })
 
-const { data: rawSessions, pending: loadingSessions, refresh: refreshSessions } = await useAsyncData('analytics-conversation-sessions', async () => {
+const selectedBotName = computed(() => selectedBot.value?.name || (selectedBotId.value === 'all' ? 'All chatbots' : 'Selected chatbot'))
+
+const { data: rawSessions, pending: loadingSessions } = await useAsyncData('analytics-conversation-sessions', async () => {
   if (!userId.value || activeBotIds.value.length === 0) return []
 
   const { data, error } = await supabase
@@ -108,20 +128,25 @@ const { data: rawSessions, pending: loadingSessions, refresh: refreshSessions } 
   }))
 }, { watch: [userId, selectedBotId, chatbots] })
 
-const isLoading = computed(() => loadingChatbots.value || loadingSessions.value)
+const { data: trainingJobs, pending: loadingTraining } = await useAsyncData('analytics-training-jobs', async () => {
+  if (!userId.value || activeBotIds.value.length === 0) return []
 
-const refreshAnalytics = async () => {
-  isRefreshing.value = true
-  try {
-    await refreshChatbots()
-    await refreshSessions()
-  } catch (err) {
-    console.error('[Analytics refresh]', err)
-    notify.error('Failed to refresh analytics.')
-  } finally {
-    isRefreshing.value = false
+  const { data, error } = await supabase
+    .from('training_jobs')
+    .select('id, chatbot_id, status, started_at')
+    .in('chatbot_id', activeBotIds.value)
+    .order('started_at', { ascending: false, nullsFirst: false })
+    .limit(1000)
+
+  if (error) {
+    console.error('[Analytics training jobs]', error)
+    return []
   }
-}
+
+  return data || []
+}, { watch: [userId, selectedBotId, chatbots] })
+
+const isLoading = computed(() => loadingChatbots.value || loadingSessions.value || loadingTraining.value)
 
 const getSessionChannel = (session: RawSession): 'whatsapp' | 'web' | 'instagram' => {
   const type = String(session?.metadata?.channel || session?.metadata?.type || 'web').toLowerCase()
@@ -188,11 +213,66 @@ const summary = computed(() => {
   }
 })
 
-const stats = computed(() => [
-  { label: 'Conversations', value: summary.value.conversations, sub: `${summary.value.totalMessages.toLocaleString()} total messages`, icon: MessageCircle },
-  { label: 'AI replies', value: summary.value.botReplies, sub: `${summary.value.userMessages.toLocaleString()} user messages`, icon: Bot },
-  { label: 'Channels', value: summary.value.web + summary.value.whatsapp + summary.value.instagram, sub: `${summary.value.web} website · ${summary.value.whatsapp} WhatsApp · ${summary.value.instagram} Instagram`, icon: Globe2 }
+const formatConfigLabel = (value: string) => String(value || '')
+  .replace(/[_-]+/g, ' ')
+  .replace(/\b\w/g, (char) => char.toUpperCase())
+
+const trainingCountByBot = computed(() => (trainingJobs.value || []).reduce((map: Record<string, number>, job: any) => {
+  const id = String(job?.chatbot_id || '')
+  if (!id) return map
+  map[id] = (map[id] || 0) + 1
+  return map
+}, {}))
+
+const selectedAssistantTools = computed(() => Array.isArray(selectedBot.value?.enabled_tools) ? selectedBot.value.enabled_tools.filter(Boolean) : [])
+const selectedAssistantSkills = computed(() => {
+  const skills = selectedBot.value?.tools_config?.assistant_skills
+  return Array.isArray(skills) ? skills.filter(Boolean) : []
+})
+const selectedAssistantTrainingCount = computed(() => selectedBot.value ? trainingCountByBot.value[selectedBot.value.id] || 0 : 0)
+const selectedAssistantConversations = computed(() => selectedBot.value ? conversations.value.filter((conversation) => conversation.chatbotId === selectedBot.value?.id).length : summary.value.conversations)
+
+const allAssistantToolsCount = computed(() => (chatbots.value || []).reduce((total, bot) => total + (Array.isArray(bot.enabled_tools) ? bot.enabled_tools.length : 0), 0))
+const allAssistantSkillsCount = computed(() => (chatbots.value || []).reduce((total, bot) => {
+  const skills = bot.tools_config?.assistant_skills
+  return total + (Array.isArray(skills) ? skills.length : 0)
+}, 0))
+const totalTrainingSessions = computed(() => (trainingJobs.value || []).length)
+const selectedPaymentEnabled = computed(() => selectedAssistantTools.value.includes('payments'))
+const paymentEnabledCount = computed(() => (chatbots.value || []).filter((bot) => Array.isArray(bot.enabled_tools) && bot.enabled_tools.includes('payments')).length)
+
+const statusCards = computed(() => selectedBot.value ? [
+  { label: 'Tools', value: selectedAssistantTools.value.length, detail: selectedAssistantTools.value.length ? 'Can take actions' : 'No tools added', icon: Wrench, tone: 'amber' },
+  { label: 'Skills', value: selectedAssistantSkills.value.length, detail: selectedAssistantSkills.value.length ? 'Reply rules active' : 'No skills added', icon: BrainCircuit, tone: 'violet' },
+  { label: 'Payments', value: selectedPaymentEnabled.value ? 'On' : 'Off', detail: selectedPaymentEnabled.value ? 'Mobile checkout ready' : 'Checkout disabled', icon: CreditCard, tone: selectedPaymentEnabled.value ? 'green' : 'primary' },
+] : [
+  { label: 'Tools', value: allAssistantToolsCount.value, detail: 'Total tools added', icon: Wrench, tone: 'amber' },
+  { label: 'Skills', value: allAssistantSkillsCount.value, detail: 'Total skills added', icon: BrainCircuit, tone: 'violet' },
+  { label: 'Payments', value: paymentEnabledCount.value, detail: 'Bots with checkout', icon: CreditCard, tone: paymentEnabledCount.value ? 'green' : 'primary' },
 ])
+
+const insightCards = computed(() => selectedBot.value ? [
+  { label: 'Chats', value: selectedAssistantConversations.value, detail: 'Customer conversations', icon: MessageSquare, tone: 'blue' },
+  { label: 'Training', value: selectedAssistantTrainingCount.value, detail: 'Knowledge updates', icon: Database, tone: 'green' },
+  { label: 'Channels', value: summary.value.conversations, detail: `Web ${summary.value.web} · WA ${summary.value.whatsapp} · IG ${summary.value.instagram}`, icon: Globe2, tone: 'pink' },
+  { label: 'Messages', value: summary.value.totalMessages, detail: `User ${summary.value.userMessages} · AI ${summary.value.botReplies}`, icon: MessageCircle, tone: 'primary' },
+] : [
+  { label: 'Chats', value: summary.value.conversations, detail: `${formatNumber(summary.value.totalMessages)} messages`, icon: MessageSquare, tone: 'blue' },
+  { label: 'AI replies', value: summary.value.botReplies, detail: `${formatNumber(summary.value.userMessages)} user messages`, icon: Bot, tone: 'primary' },
+  { label: 'Tools', value: allAssistantToolsCount.value, detail: 'Total tools added', icon: Wrench, tone: 'amber' },
+  { label: 'Training', value: totalTrainingSessions.value, detail: 'Knowledge updates', icon: Database, tone: 'green' },
+  { label: 'Channels', value: summary.value.conversations, detail: `Web ${summary.value.web} · WA ${summary.value.whatsapp} · IG ${summary.value.instagram}`, icon: Globe2, tone: 'pink' },
+  { label: 'Messages', value: summary.value.totalMessages, detail: `User ${summary.value.userMessages} · AI ${summary.value.botReplies}`, icon: MessageCircle, tone: 'primary' },
+])
+
+const insightToneClass = (tone: string) => ({
+  primary: 'bg-primary/10 text-primary ring-primary/15',
+  blue: 'bg-sky-400/10 text-sky-400 ring-sky-400/15',
+  green: 'bg-emerald-400/10 text-emerald-400 ring-emerald-400/15',
+  amber: 'bg-amber-400/10 text-amber-400 ring-amber-400/15',
+  pink: 'bg-pink-400/10 text-pink-400 ring-pink-400/15',
+  violet: 'bg-violet-400/10 text-violet-400 ring-violet-400/15',
+}[tone] || 'bg-foreground/5 text-foreground/60 ring-foreground/10')
 
 const chatbotReports = computed(() => {
   return (chatbots.value || [])
@@ -221,8 +301,40 @@ const chatbotReports = computed(() => {
 })
 
 const chartData = computed(() => {
+  const selected = chartFilters.find((item) => item.value === chartRange.value) || chartFilters[2]
+  const isHourly = selected.value === '24h'
+  const now = new Date()
+
+  if (isHourly) {
+    return Array.from({ length: 24 }, (_, index) => {
+      const hour = new Date(now)
+      hour.setHours(now.getHours() - (23 - index), 0, 0, 0)
+      const nextHour = new Date(hour)
+      nextHour.setHours(hour.getHours() + 1)
+      const list = conversations.value.filter((conversation) => {
+        const created = new Date(conversation.createdAt || 0)
+        return created >= hour && created < nextHour
+      })
+      const userMessages = list.reduce((sum, conversation) => sum + conversation.userMessages, 0)
+      const botReplies = list.reduce((sum, conversation) => sum + conversation.botMessages, 0)
+      const totalMessages = list.reduce((sum, conversation) => sum + conversation.messageCount, 0)
+      return {
+        date: hour.toISOString(),
+        label: hour.toLocaleTimeString(undefined, { hour: '2-digit' }),
+        count: list.length,
+        userMessages,
+        botReplies,
+        totalMessages,
+        website: list.filter((conversation) => conversation.channel === 'web').length,
+        whatsapp: list.filter((conversation) => conversation.channel === 'whatsapp').length,
+        instagram: list.filter((conversation) => conversation.channel === 'instagram').length,
+        replyShare: totalMessages > 0 ? Math.round((botReplies / totalMessages) * 100) : 0
+      }
+    })
+  }
+
   const days = []
-  for (let i = 13; i >= 0; i--) {
+  for (let i = selected.days - 1; i >= 0; i--) {
     const date = new Date()
     date.setDate(date.getDate() - i)
     const dateStr = date.toISOString().split('T')[0]
@@ -233,27 +345,38 @@ const chartData = computed(() => {
 
     days.push({
       date: dateStr,
+      label: date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
       count: list.length,
       userMessages,
       botReplies,
       totalMessages,
       website: list.filter((conversation) => conversation.channel === 'web').length,
       whatsapp: list.filter((conversation) => conversation.channel === 'whatsapp').length,
-      instagram: list.filter((conversation) => conversation.channel === 'instagram').length
+      instagram: list.filter((conversation) => conversation.channel === 'instagram').length,
+      replyShare: totalMessages > 0 ? Math.round((botReplies / totalMessages) * 100) : 0
     })
   }
 
-  const maxConversations = Math.max(...days.map((point) => point.count), 1)
-  const maxMessages = Math.max(...days.map((point) => point.totalMessages), 1)
-
-  return days.map((point) => ({
-    ...point,
-    height: point.count > 0 ? Math.max((point.count / maxConversations) * 100, 10) : 2,
-    messageHeight: point.totalMessages > 0 ? Math.max((point.totalMessages / maxMessages) * 100, 10) : 2,
-    replyShare: point.totalMessages > 0 ? Math.round((point.botReplies / point.totalMessages) * 100) : 0
-  }))
+  return days
 })
 
+const chartTotal = computed(() => chartData.value.reduce((sum, point) => sum + point.count, 0))
+const chartMax = computed(() => Math.max(1, ...chartData.value.flatMap((point) => [point.count, point.website, point.whatsapp, point.instagram])))
+const buildChartPath = (field: 'count' | 'website' | 'whatsapp' | 'instagram') => chartData.value.map((point, index) => {
+  const x = chartData.value.length <= 1 ? 0 : (index / (chartData.value.length - 1)) * 100
+  const y = 100 - (((point[field] || 0) / chartMax.value) * 76 + 12)
+  return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`
+}).join(' ')
+const chartPath = computed(() => buildChartPath('count'))
+const websiteChartPath = computed(() => buildChartPath('website'))
+const whatsappChartPath = computed(() => buildChartPath('whatsapp'))
+const instagramChartPath = computed(() => buildChartPath('instagram'))
+const chartAreaPath = computed(() => chartPath.value ? `${chartPath.value} L 100 100 L 0 100 Z` : '')
+const chartScaleLabels = computed(() => [
+  { label: formatNumber(chartMax.value), position: 'top-4' },
+  { label: formatNumber(Math.ceil(chartMax.value / 2)), position: 'top-1/2 -translate-y-1/2' },
+  { label: '0', position: 'bottom-11' },
+])
 const hasChartActivity = computed(() => chartData.value.some((point) => point.count > 0 || point.totalMessages > 0))
 
 const analysisCards = computed(() => {
@@ -263,19 +386,19 @@ const analysisCards = computed(() => {
 
   return [
     {
-      label: 'Avg. messages / conversation',
+      label: 'Avg. messages',
       value: avgMessages.toFixed(1),
       detail: `${formatNumber(summary.value.totalMessages)} total messages`,
       icon: Activity
     },
     {
-      label: 'AI reply coverage',
+      label: 'AI coverage',
       value: `${Math.round(replyRate)}%`,
       detail: `${formatNumber(summary.value.botReplies)} replies to ${formatNumber(summary.value.userMessages)} user messages`,
       icon: Bot
     },
     {
-      label: 'Peak conversation day',
+      label: 'Busiest day',
       value: peakDay?.count ? formatDate(peakDay.date) : '—',
       detail: peakDay?.count ? `${peakDay.count} conversations · ${peakDay.totalMessages} messages` : 'No activity yet',
       icon: TrendingUp
@@ -315,223 +438,173 @@ const truncatePreview = (content: string) => {
 }
 
 const formatNumber = (value: number) => value.toLocaleString()
+
+const openSelectedBotConversations = () => {
+  if (!selectedBot.value) return
+  const conversationBotId = useState<string>('selected-chatbot-id', () => '')
+  conversationBotId.value = selectedBot.value.id
+  navigateTo('/dashboard/conversations')
+}
 </script>
 
 <template>
-  <div class="space-y-5 pb-24 lg:pb-0">
+  <div class="min-h-[calc(100vh-4.5rem)] space-y-5 pt-[5vh] pb-24 lg:pb-0" style="zoom: 0.95">
     <template v-if="isLoading && !rawSessions">
-      <div class="grid gap-3 md:grid-cols-3">
-        <div v-for="i in 3" :key="i" class="h-24 animate-pulse rounded-xl border border-foreground/10 bg-foreground/5" />
-      </div>
-      <div class="h-[320px] animate-pulse rounded-2xl border border-foreground/10 bg-foreground/5" />
-      <div class="h-[380px] animate-pulse rounded-2xl border border-foreground/10 bg-foreground/5" />
+      <div class="h-[360px] animate-pulse rounded-[0.39rem] border border-foreground/10 bg-foreground/5" />
+      <div class="h-[360px] animate-pulse rounded-[0.39rem] border border-foreground/10 bg-foreground/5" />
     </template>
 
     <template v-else>
-      <div class="grid gap-3 md:grid-cols-3">
-        <article v-for="stat in stats" :key="stat.label" class="rounded-2xl border border-foreground/10 bg-background p-4">
-          <div class="mb-3 flex items-center justify-between gap-3">
-            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <component :is="stat.icon" class="h-5 w-5" />
-            </div>
-            <span class="text-[10px] font-black uppercase tracking-widest text-foreground/35">{{ selectedBotName }}</span>
-          </div>
-          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">{{ stat.label }}</p>
-          <p class="mt-1 text-3xl font-black tracking-tight text-foreground tabular-nums">{{ formatNumber(stat.value) }}</p>
-          <p class="mt-1 text-xs text-foreground/45">{{ stat.sub }}</p>
-        </article>
-      </div>
-
-      <section class="overflow-hidden rounded-2xl border border-foreground/10 bg-background">
-        <div class="space-y-4 border-b border-foreground/10 p-4">
-          <div class="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-            <div>
-              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Analytics</p>
-              <h2 class="mt-1 text-xl font-black tracking-tight text-foreground">{{ selectedBotName }} · {{ channelLabel }}</h2>
-              <p class="mt-1 text-sm text-foreground/45">Conversation, message, reply, and channel trends for the last 14 days.</p>
-            </div>
-
-            <div class="grid gap-3 md:grid-cols-[minmax(180px,240px)_minmax(280px,1fr)_auto] md:items-center">
-              <CustomSelect v-model="selectedBotId" :options="botOptions" placeholder="Select chatbot" />
-
-              <div class="grid grid-cols-3 gap-1 rounded-xl border border-foreground/10 bg-foreground/[0.03] p-1">
-                <button
-                  v-for="option in channelOptions"
-                  :key="option.value"
-                  type="button"
-                  @click="selectedChannel = option.value"
-                  :class="[
-                    'rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all',
-                    selectedChannel === option.value ? 'bg-primary text-black shadow-sm' : 'text-foreground/50 hover:bg-foreground/5 hover:text-foreground'
-                  ]"
-                >
-                  {{ option.label }}
-                </button>
-              </div>
-
-              <button
-                @click="refreshAnalytics"
-                :disabled="isLoading || isRefreshing"
-                class="inline-flex items-center justify-center gap-2 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-foreground/65 transition-all hover:bg-foreground/10 disabled:opacity-50"
+      <section class="rounded-[0.39rem] p-5 sm:p-6">
+        <div class="mb-4 grid gap-3 xl:grid-cols-[minmax(0,1fr)_18rem_22rem]">
+          <div class="rounded-[0.39rem] bg-background/25 p-3">
+            <p class="mb-2 flex items-center gap-1.5 text-sm font-bold text-foreground"><Activity class="h-4 w-4 text-primary" />Overview</p>
+            <div class="grid gap-3 sm:grid-cols-2">
+              <div
+                v-for="card in insightCards"
+                :key="card.label"
+                class="group flex items-center gap-2 rounded-[0.39rem] bg-background/45 py-3 pl-3 pr-1 transition hover:bg-foreground/[0.035]"
               >
-                <RefreshCw :class="['h-4 w-4 text-primary transition-transform duration-700', (isLoading || isRefreshing) ? 'animate-spin' : '']" />
-                Refresh
+                <div :class="['flex h-[2.65rem] w-[2.65rem] shrink-0 items-center justify-center rounded-[0.39rem] ring-1 transition group-hover:scale-105', insightToneClass(card.tone)]">
+                  <component :is="card.icon" class="h-[1.15rem] w-[1.15rem]" />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-lg font-bold leading-none tracking-tight tabular-nums text-foreground">{{ formatNumber(card.value) }}</p>
+                  <p class="mt-1 truncate text-sm font-semibold text-foreground/75">{{ card.label }}</p>
+                  <p class="mt-0.5 truncate text-[11px] font-semibold text-foreground/50">{{ card.detail }}</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="space-y-2 rounded-[0.39rem] bg-background/20 p-3">
+            <div
+              v-for="card in statusCards"
+              :key="card.label"
+              class="flex items-center gap-2 rounded-[0.39rem] bg-background/45 px-3 py-2.5"
+            >
+              <div :class="['flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.35rem] ring-1', insightToneClass(card.tone)]">
+                <component :is="card.icon" class="h-4 w-4" />
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-xs font-bold text-foreground">{{ card.label }}</p>
+                <p class="truncate text-[11px] font-medium text-foreground/45">{{ card.detail }}</p>
+              </div>
+              <span class="shrink-0 text-sm font-bold tabular-nums text-foreground">{{ typeof card.value === 'number' ? formatNumber(card.value) : card.value }}</span>
+            </div>
+          </div>
+
+          <aside class="space-y-3 rounded-[0.39rem] bg-background/15 p-3">
+            <div class="divide-y divide-foreground/[0.06] overflow-hidden rounded-[0.39rem] bg-background/35">
+              <div v-for="item in analysisCards" :key="item.label" class="px-3 py-2.5">
+                <p class="truncate text-xs font-bold text-foreground">{{ item.label }}</p>
+                <p class="mt-1 truncate text-[11px] font-medium text-foreground/45">{{ item.detail }}</p>
+                <p class="mt-1 text-lg font-bold tabular-nums text-foreground">{{ item.value }}</p>
+              </div>
+            </div>
+
+          </aside>
+        </div>
+
+        <div class="rounded-[0.39rem] border border-foreground/10 bg-background/20 p-3">
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p class="flex items-center gap-1.5 text-sm font-bold text-foreground"><TrendingUp class="h-4 w-4 text-primary" />Channel activity</p>
+            <p class="dashboard-muted mt-1"><span class="tabular-nums font-bold text-foreground/70">{{ formatNumber(chartTotal) }}</span> conversations · {{ selectedBotName }}</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              v-if="selectedBot"
+              type="button"
+              class="dashboard-action-label inline-flex items-center gap-1.5 rounded-[0.39rem] border border-foreground/10 bg-background/55 px-3 py-2 text-foreground/60 transition hover:border-primary/20 hover:text-primary"
+              @click="openSelectedBotConversations"
+            >
+              <MessageSquare class="h-3.5 w-3.5" />
+              <span>Open conversations</span>
+            </button>
+            <div class="flex w-fit gap-1 rounded-[0.39rem] border border-foreground/10 bg-background/55 p-1">
+              <button
+                v-for="filter in channelFilters"
+                :key="filter.value"
+                type="button"
+                :class="[
+                  'dashboard-action-label inline-flex items-center gap-1.5 rounded-[0.3rem] border px-2.5 py-1.5 transition',
+                  chartChannel === filter.value ? filter.activeClass : filter.inactiveClass
+                ]"
+                @click="chartChannel = filter.value"
+              >
+                <component :is="filter.icon" class="h-3.5 w-3.5" />
+                <span>{{ filter.label }}</span>
+              </button>
+            </div>
+            <div class="flex w-fit rounded-[0.39rem] border border-foreground/10 bg-background/55 p-1">
+            <button
+              v-for="filter in chartFilters"
+              :key="filter.value"
+              type="button"
+              :class="[
+                'dashboard-action-label rounded-[0.3rem] px-3 py-1.5 transition',
+                chartRange === filter.value ? 'bg-primary text-black shadow-sm shadow-primary/20' : 'text-foreground/45 hover:bg-foreground/5 hover:text-foreground'
+              ]"
+              @click="chartRange = filter.value"
+            >
+              {{ filter.label }}
               </button>
             </div>
           </div>
-
-          <div class="grid gap-3 md:grid-cols-3">
-            <article v-for="item in analysisCards" :key="item.label" class="rounded-xl border border-foreground/10 bg-foreground/[0.025] p-3.5">
-              <div class="flex items-center justify-between gap-3">
-                <p class="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/40">{{ item.label }}</p>
-                <component :is="item.icon" class="h-4 w-4 text-primary" />
-              </div>
-              <p class="mt-3 text-2xl font-black tracking-tight text-foreground">{{ item.value }}</p>
-              <p class="mt-1 text-xs text-foreground/45">{{ item.detail }}</p>
-            </article>
-          </div>
         </div>
 
-        <div class="grid gap-4 p-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
-          <div class="relative min-h-[300px] rounded-xl border border-foreground/10 bg-gradient-to-b from-foreground/[0.035] to-transparent p-4">
-            <div class="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p class="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/40">Daily volume</p>
-                <p class="text-sm font-bold text-foreground/70">Conversations with message intensity</p>
-              </div>
-              <p class="text-xs font-bold text-foreground/40">Last 14 days</p>
-            </div>
-
-            <div v-if="!hasChartActivity" class="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
-              <MessageCircle class="h-9 w-9 text-foreground/20" />
-              <p class="text-[10px] font-black uppercase tracking-widest text-foreground/45">No activity recorded yet</p>
-            </div>
-
-            <div v-else class="absolute inset-x-4 bottom-4 top-20 flex items-end justify-between gap-1.5 sm:gap-2">
-              <div v-for="(point, index) in chartData" :key="point.date" class="group relative flex h-full flex-1 items-end justify-center">
-                <div
-                  :class="[
-                    'pointer-events-none absolute bottom-full z-30 mb-2 w-36 translate-y-2 opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100',
-                    index < 3 ? 'left-0' : index > chartData.length - 4 ? 'right-0' : 'left-1/2 -translate-x-1/2'
-                  ]"
-                >
-                  <div class="rounded-lg bg-foreground px-2.5 py-2 text-[9px] font-bold text-background shadow-xl ring-1 ring-background/10">
-                    <div class="font-black uppercase tracking-tight">{{ formatDate(point.date) }}</div>
-                    <div class="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 opacity-75">
-                      <span>Conversations</span><span class="text-right">{{ point.count }}</span>
-                      <span>Messages</span><span class="text-right">{{ point.totalMessages }}</span>
-                      <span>User</span><span class="text-right">{{ point.userMessages }}</span>
-                      <span>AI replies</span><span class="text-right">{{ point.botReplies }}</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="relative flex h-full w-full max-w-9 items-end justify-center">
-                  <div class="absolute bottom-0 w-full rounded-t-xl bg-primary/15" :style="{ height: `${point.messageHeight}%` }" />
-                  <div class="relative z-[1] w-2/3 rounded-t-xl bg-gradient-to-t from-primary/90 via-primary/55 to-primary/20 shadow-sm shadow-primary/20 transition-all group-hover:from-primary" :style="{ height: `${point.height}%` }" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <aside class="space-y-3">
-            <div class="rounded-xl border border-foreground/10 bg-foreground/[0.025] p-4">
-              <p class="text-[10px] font-black uppercase tracking-[0.16em] text-primary">Channel mix</p>
-              <div class="mt-4 space-y-4">
-                <div v-for="channel in channelBreakdown" :key="channel.label">
-                  <div class="mb-2 flex items-center justify-between text-xs font-bold text-foreground/55">
-                    <span>{{ channel.label }}</span>
-                    <span>{{ channel.value }} · {{ channel.percent }}%</span>
-                  </div>
-                  <div class="h-2 overflow-hidden rounded-full bg-foreground/10">
-                    <div :class="['h-full rounded-full', channel.color]" :style="{ width: `${channel.percent}%` }" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="rounded-xl border border-foreground/10 bg-foreground/[0.025] p-4">
-              <p class="text-[10px] font-black uppercase tracking-[0.16em] text-primary">Message split</p>
-              <div class="mt-4 grid grid-cols-2 gap-3">
-                <div class="rounded-xl bg-background p-3">
-                  <p class="text-[10px] font-black uppercase tracking-widest text-foreground/35">User</p>
-                  <p class="mt-1 text-2xl font-black text-foreground">{{ formatNumber(summary.userMessages) }}</p>
-                </div>
-                <div class="rounded-xl bg-background p-3">
-                  <p class="text-[10px] font-black uppercase tracking-widest text-foreground/35">AI replies</p>
-                  <p class="mt-1 text-2xl font-black text-primary">{{ formatNumber(summary.botReplies) }}</p>
-                </div>
-              </div>
-              <div class="mt-4 h-2 overflow-hidden rounded-full bg-foreground/10">
-                <div class="h-full rounded-full bg-primary" :style="{ width: `${summary.totalMessages ? Math.round((summary.botReplies / summary.totalMessages) * 100) : 0}%` }" />
-              </div>
-            </div>
-          </aside>
-        </div>
-      </section>
-
-      <section class="overflow-hidden rounded-2xl border border-foreground/10 bg-background">
-        <div class="border-b border-foreground/10 p-4">
-          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Chatbot report</p>
-          <h2 class="mt-1 text-xl font-black tracking-tight text-foreground">Replies and conversations by chatbot</h2>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full min-w-[860px] text-left">
-            <thead class="border-b border-foreground/10 bg-foreground/[0.02]">
-              <tr>
-                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Chatbot</th>
-                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Conversations</th>
-                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Website</th>
-                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">WhatsApp</th>
-                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Instagram</th>
-                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">User messages</th>
-                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">AI replies</th>
-                <th class="px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Last activity</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-foreground/10">
-              <tr v-for="report in chatbotReports" :key="report.id" class="transition-colors hover:bg-foreground/[0.02]">
-                <td class="px-5 py-4">
-                  <div class="flex items-center gap-2">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary"><Bot class="h-4 w-4" /></span>
-                    <span class="max-w-56 truncate text-sm font-black text-foreground">{{ report.name }}</span>
-                  </div>
-                </td>
-                <td class="px-5 py-4 text-sm font-black tabular-nums text-foreground">{{ report.conversations }}</td>
-                <td class="px-5 py-4 text-sm font-bold tabular-nums text-foreground/60">{{ report.website }}</td>
-                <td class="px-5 py-4 text-sm font-bold tabular-nums text-foreground/60">{{ report.whatsapp }}</td>
-                <td class="px-5 py-4 text-sm font-bold tabular-nums text-foreground/60">{{ report.instagram }}</td>
-                <td class="px-5 py-4 text-sm font-bold tabular-nums text-foreground/60">{{ report.userMessages }}</td>
-                <td class="px-5 py-4 text-sm font-black tabular-nums text-primary">{{ report.botReplies }}</td>
-                <td class="px-5 py-4 text-sm font-medium text-foreground/55">{{ formatDateTime(report.lastActivity) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border border-foreground/10 bg-background p-4">
-        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Conversations</p>
-            <h2 class="mt-1 text-xl font-black tracking-tight text-foreground">View full conversation history</h2>
-            <p class="mt-1 text-sm text-foreground/50">Open the conversations page to search, inspect, export, and analyze individual customer threads.</p>
-          </div>
-          <NuxtLink
-            to="/dashboard/conversations"
-            class="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-xs font-black uppercase tracking-widest text-black transition-all hover:translate-y-[-1px] hover:shadow-lg hover:shadow-primary/20"
+        <div
+          class="relative min-h-[15rem] overflow-hidden rounded-[0.39rem] border border-foreground/15 bg-background/35 p-4 pl-11 ring-1 ring-foreground/[0.04]"
+          style="background-image: linear-gradient(rgb(var(--surface-border) / 0.055) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--surface-border) / 0.055) 1px, transparent 1px); background-size: 2.25rem 2.25rem;"
+        >
+          <span
+            v-for="scale in chartScaleLabels"
+            :key="scale.label + scale.position"
+            :class="['absolute left-3 z-20 text-[10px] font-bold tabular-nums text-foreground/40', scale.position]"
           >
-            View conversations
-          </NuxtLink>
+            {{ scale.label }}
+          </span>
+
+          <div v-if="!hasChartActivity" class="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
+            <MessageCircle class="h-9 w-9 text-foreground/20" />
+            <p class="dashboard-eyebrow text-foreground/45">No activity recorded yet</p>
+          </div>
+
+          <svg v-else viewBox="0 0 100 100" preserveAspectRatio="none" class="relative z-10 h-40 w-full overflow-visible">
+            <path v-if="chartChannel === 'all' && chartAreaPath" :d="chartAreaPath" fill="currentColor" class="text-primary/10" />
+            <path v-if="chartChannel === 'all' && websiteChartPath" :d="websiteChartPath" fill="none" vector-effect="non-scaling-stroke" class="stroke-sky-400/85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+            <path v-if="chartChannel === 'all' && whatsappChartPath" :d="whatsappChartPath" fill="none" vector-effect="non-scaling-stroke" class="stroke-emerald-400/85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+            <path v-if="chartChannel === 'all' && instagramChartPath" :d="instagramChartPath" fill="none" vector-effect="non-scaling-stroke" class="stroke-pink-400/85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+            <path v-if="chartChannel === 'all' && chartPath" :d="chartPath" fill="none" vector-effect="non-scaling-stroke" class="stroke-primary" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" />
+            <path v-if="chartChannel === 'web' && websiteChartPath" :d="websiteChartPath" fill="none" vector-effect="non-scaling-stroke" class="stroke-sky-400" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" />
+            <path v-if="chartChannel === 'whatsapp' && whatsappChartPath" :d="whatsappChartPath" fill="none" vector-effect="non-scaling-stroke" class="stroke-emerald-400" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" />
+            <path v-if="chartChannel === 'instagram' && instagramChartPath" :d="instagramChartPath" fill="none" vector-effect="non-scaling-stroke" class="stroke-pink-400" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+
+          <div class="mt-3 flex flex-wrap items-center justify-between gap-3 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/35">
+            <span>{{ chartData[0]?.label }}</span>
+            <div class="flex items-center gap-3">
+              <span v-if="chartChannel === 'all'" class="inline-flex items-center gap-1"><i class="h-1.5 w-1.5 rounded-full bg-primary"></i>Total</span>
+              <span v-if="chartChannel === 'all' || chartChannel === 'web'" class="inline-flex items-center gap-1"><i class="h-1.5 w-1.5 rounded-full bg-sky-400"></i>Web</span>
+              <span v-if="chartChannel === 'all' || chartChannel === 'whatsapp'" class="inline-flex items-center gap-1"><i class="h-1.5 w-1.5 rounded-full bg-emerald-400"></i>WhatsApp</span>
+              <span v-if="chartChannel === 'all' || chartChannel === 'instagram'" class="inline-flex items-center gap-1"><i class="h-1.5 w-1.5 rounded-full bg-pink-400"></i>Instagram</span>
+            </div>
+            <span>{{ chartData[chartData.length - 1]?.label }}</span>
+          </div>
+        </div>
         </div>
       </section>
+
+
     </template>
 
-    <section v-if="!isLoading && !(chatbots || []).length" class="rounded-2xl border border-dashed border-foreground/10 bg-background p-6 text-center">
-      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-foreground/5 text-foreground/25">
+    <section v-if="!isLoading && !(chatbots || []).length" class="rounded-[0.39rem] border border-dashed border-foreground/10 bg-background/35 p-6 text-center">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-[0.39rem] bg-foreground/5 text-foreground/25">
         <AlertCircle class="h-8 w-8" />
       </div>
-      <h2 class="mt-5 text-xl font-black tracking-tight text-foreground">No chatbots found</h2>
+      <h2 class="mt-5 text-xl font-bold tracking-tight text-foreground">No chatbots found</h2>
       <p class="mt-2 text-sm text-foreground/50">Create a chatbot first, then analytics will appear here.</p>
     </section>
   </div>

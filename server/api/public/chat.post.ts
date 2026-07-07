@@ -172,6 +172,20 @@ export default defineEventHandler(async (event) => {
       content: message,
     })
 
+    if (sessionMetadata?.human_takeover?.enabled) {
+      await supabase
+        .from('chat_sessions')
+        .update({ metadata: { ...(sessionMetadata || {}), last_seen_at: new Date().toISOString(), last_inbound_at: new Date().toISOString(), last_inbound_text: message } })
+        .eq('id', sessionId)
+
+      return {
+        success: true,
+        response: 'Your message has been received. The team will reply shortly.',
+        sessionId,
+        humanTakeover: true,
+      }
+    }
+
     const sessionState = conversationSettings.sessionMemoryEnabled
       ? getConversationStateFromMetadata(sessionMetadata)
       : {}

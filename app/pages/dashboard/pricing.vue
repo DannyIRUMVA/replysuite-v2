@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, ArrowRight, Loader2, Shield, RefreshCcw, Smartphone, X } from 'lucide-vue-next'
+import { Check, ArrowRight, Loader2, Shield, Smartphone, X, Crown, Sparkles } from 'lucide-vue-next'
 
 definePageMeta({
   layout: 'dashboard',
@@ -11,7 +11,7 @@ useSeoMeta({
   description: 'Unlock the full power of ReplySuite AI automation.',
 })
 
-const { refreshAuth, planSlug, polarCustomerId, syncWithPolar, isLoading: isAuthLoading } = useAuth()
+const { refreshAuth, planSlug, syncWithPolar, isLoading: isAuthLoading } = useAuth()
 const isProcessing = ref<string | null>(null)
 const selectedMobilePlan = ref<any | null>(null)
 const mobilePhone = ref('')
@@ -21,16 +21,12 @@ const notify = useNotify()
 const isMounted = ref(false)
 const isLoading = computed(() => !isMounted.value || isAuthLoading.value)
 
-onMounted(async () => {
+onMounted(() => {
   isMounted.value = true
-
-  if (!polarCustomerId.value || !planSlug.value) {
-    console.log('[Dashboard Pricing] Missing Polar identity or active plan. Syncing...')
-    await syncWithPolar()
-  }
 })
 
 const handleSelect = async (plan: any) => {
+  if (planActionDisabled(plan)) return
   isProcessing.value = `${plan.id}:card`
 
   try {
@@ -53,10 +49,9 @@ const handleSelect = async (plan: any) => {
       })
 
       if (res.url) {
-        // Full-page checkout avoids stale embedded iframe overlays after Polar redirects.
         window.location.href = res.url
       } else if (res.updated) {
-        notify.success('Plan updated successfully! Your new limits are active.')
+        notify.success('Plan updated successfully. Your new limits are active.')
         await syncWithPolar()
       }
     }
@@ -70,7 +65,7 @@ const handleSelect = async (plan: any) => {
 }
 
 const openMobilePayment = (plan: any) => {
-  if (planSlug.value === plan.id) return
+  if (planActionDisabled(plan)) return
   selectedMobilePlan.value = plan
   mobilePhone.value = ''
   mobilePaymentResult.value = null
@@ -98,7 +93,12 @@ const requestMobilePayment = async () => {
     })
 
     mobilePaymentResult.value = res
-    notify.success((res as any)?.paymentCompleted ? 'Test payment completed. Plan activated.' : 'MTN/Airtel mobile payment prompt sent.')
+
+    if ((res as any)?.paymentCompleted) {
+      await refreshAuth()
+    }
+
+    notify.success((res as any)?.paymentCompleted ? 'Payment completed. Plan activated.' : 'MTN/Airtel mobile payment prompt sent.')
   } catch (err: any) {
     console.error('[Dashboard Pricing] Mobile payment failed:', err)
     const message = err?.data?.message || err?.data?.statusMessage || err?.statusMessage || err?.message || 'Mobile payment request failed. Please try again.'
@@ -108,19 +108,17 @@ const requestMobilePayment = async () => {
   }
 }
 
-const formatRwf = (amount: number) => new Intl.NumberFormat('en-RW', {
-  style: 'currency',
-  currency: 'RWF',
+const formatRwf = (amount: number) => `${new Intl.NumberFormat('en-RW', {
   maximumFractionDigits: 0,
-}).format(amount)
+}).format(amount)} RWF`
 
 const plans = [
   {
     id: 'starter',
     name: 'Free Starter',
     price: '0.00',
-    desc: 'Best for launching one chatbot on one website domain.',
-    features: ['1 website chatbot', '1 connected domain / chatbot', '100 AI replies / mo', '10 training sessions', 'Email support'],
+    desc: 'Launch one website chatbot.',
+    features: ['1 website chatbot', '1 connected domain', '100 AI replies / mo', '10 training sessions', 'Email support'],
     popular: false
   },
   {
@@ -129,8 +127,8 @@ const plans = [
     productId: 'dc070937-6444-40a6-8a02-fd8b25df7aae',
     price: '17.88',
     mobilePriceRwf: 25000,
-    desc: 'Best for growing businesses that need website and WhatsApp chatbots.',
-    features: ['3 chatbots', 'Website + WhatsApp support', '5 connected domains / chatbot', '4,000 AI replies / mo', '30 training sessions'],
+    desc: 'Website and WhatsApp automation for growing teams.',
+    features: ['3 chatbots', 'Website + WhatsApp', '5 domains / chatbot', '4,000 AI replies / mo', '30 training sessions'],
     popular: true
   },
   {
@@ -139,8 +137,8 @@ const plans = [
     productId: 'd0493f6f-16bc-4d3c-97bb-7be920840f12',
     price: '26.88',
     mobilePriceRwf: 38000,
-    desc: 'Best for higher-volume conversations across website, WhatsApp, and Instagram workflows.',
-    features: ['5 chatbots', 'Website + WhatsApp support', 'Instagram workflows', '10,000 AI replies / mo', '100 training sessions'],
+    desc: 'More volume with Instagram workflows included.',
+    features: ['5 chatbots', 'Website + WhatsApp', 'Instagram workflows', '10,000 AI replies / mo', '100 training sessions'],
     popular: false
   },
   {
@@ -149,8 +147,8 @@ const plans = [
     productId: '3e478611-c444-46e5-9827-7450a1c8d046',
     price: '350.00',
     mobilePriceRwf: 490000,
-    desc: 'Self-serve Enterprise for larger rollouts that need every channel plus AI business tools.',
-    features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Appointments, bookings, Google Calendar, MTN/Airtel mobile checkout'],
+    desc: 'Scale channels, appointments, and AI business tools.',
+    features: ['50 chatbots', 'All supported channels', '500,000 AI replies / mo', 'AI business tools', 'Bookings + Google Calendar'],
     popular: false
   }
 ]
@@ -159,219 +157,196 @@ const paidPlans = computed(() => plans.filter((plan) => plan.id !== 'starter'))
 const freeStarterPlan = computed(() => plans.find((plan) => plan.id === 'starter'))
 const currentPlanName = computed(() => plans.find((plan) => plan.id === planSlug.value)?.name || 'No active plan')
 
+const planPriority = (slug?: string | null) => {
+  if (['enterprise-ready', 'enterprise'].includes(String(slug || '').toLowerCase())) return 4
+  if (slug === 'gold') return 3
+  if (slug === 'silver') return 2
+  if (slug === 'starter') return 1
+  return 0
+}
+const currentPlanPriority = computed(() => planPriority(planSlug.value))
+const planIsCurrent = (plan: any) => planSlug.value === plan.id
+const planIsCoveredByCurrent = (plan: any) => currentPlanPriority.value > planPriority(plan.id)
+const planActionDisabled = (plan: any) => Boolean(isProcessing.value) || planIsCurrent(plan) || planIsCoveredByCurrent(plan)
+
+const getPlanIcon = (plan: any) => {
+  if (plan.id === 'enterprise-ready') return Crown
+  if (plan.popular) return Shield
+  return Sparkles
+}
+
 const getCtaLabel = (plan: any) => {
-  if (planSlug.value === plan.id) return 'Current Plan'
-  if (plan.id === 'starter') return 'Activate Free'
-  if (plan.id === 'enterprise-ready') return 'Start Enterprise'
-  return 'Select Plan'
+  if (planIsCurrent(plan)) return 'Current plan'
+  if (planIsCoveredByCurrent(plan)) return 'Included'
+  if (plan.id === 'starter') return 'Activate free'
+  return 'Continue with mobile money'
 }
 </script>
 
 <template>
-  <div class="relative space-y-8 overflow-hidden pb-24 lg:pb-8">
-    <div class="pointer-events-none absolute -top-28 left-8 h-64 w-64 rounded-full bg-primary/10 blur-[100px]"></div>
-    <div class="pointer-events-none absolute top-40 right-0 h-72 w-72 rounded-full bg-sky-400/10 blur-[110px]"></div>
-
-    <section class="relative overflow-hidden rounded-[34px] border border-foreground/10 bg-foreground/[0.025] p-6 md:p-8 lg:p-10">
-      <div class="absolute inset-0 bg-gradient-to-br from-white/[0.045] via-transparent to-primary/[0.035]"></div>
-      <div class="relative grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-        <div>
-          <span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
-            Pricing subscription
-          </span>
-          <h1 class="mt-5 max-w-3xl text-2xl font-extrabold leading-tight tracking-tight text-foreground md:text-4xl">
-            Choose the subscription that fits your business.
-          </h1>
-          <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">
-            Upgrade your ReplySuite limits when you need more assistants, more replies, more training, WhatsApp, Instagram workflows, or Enterprise AI business tools.
-          </p>
+  <div class="space-y-4 pt-3 pb-24 md:pt-4 lg:pb-0">
+    <section class="rounded-[0.39rem] border border-foreground/10 bg-background p-3 shadow-sm shadow-black/5 md:p-4">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex min-w-0 items-center gap-3">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.39rem] border border-primary/15 bg-primary/10 text-primary">
+            <Shield class="h-4 w-4" />
+          </div>
+          <div class="min-w-0">
+            <h1 class="dashboard-section-title truncate">Pricing</h1>
+            <p class="dashboard-muted mt-0.5">Choose a plan. MTN/Airtel mobile checkout is the primary payment path.</p>
+          </div>
         </div>
 
-        <div class="rounded-[28px] border border-foreground/10 bg-background/60 p-5 backdrop-blur-xl">
-          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Active subscription</p>
-          <div class="mt-3 flex items-center justify-between gap-4">
-            <div>
-              <p class="text-xl font-black tracking-tight text-foreground md:text-2xl">{{ currentPlanName }}</p>
-              <p class="mt-1 text-xs font-medium text-foreground/50">Sync if your checkout just completed.</p>
-            </div>
-            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Shield class="h-6 w-6" />
-            </div>
-          </div>
-          <button
-            @click="syncWithPolar"
-            class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-foreground transition-all hover:bg-foreground/10"
-          >
-            <RefreshCcw class="h-3.5 w-3.5" />
-            Sync plan status
-          </button>
+        <div class="flex items-center gap-2 rounded-[0.39rem] border border-foreground/10 bg-foreground/[0.02] px-3 py-2">
+          <span class="text-[11px] font-bold text-foreground/45">Current</span>
+          <span class="text-sm font-bold text-foreground">{{ currentPlanName }}</span>
         </div>
       </div>
     </section>
 
-    <div v-if="isLoading" class="glass-card flex min-h-[40vh] flex-col items-center justify-center py-20">
-      <Loader2 class="mb-6 h-12 w-12 animate-spin text-primary" />
-      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/50">Loading plans...</p>
+    <div v-if="isLoading" class="flex min-h-[240px] items-center justify-center rounded-[0.39rem] border border-foreground/10 bg-background shadow-sm shadow-black/5">
+      <div class="flex flex-col items-center gap-3">
+        <Loader2 class="h-7 w-7 animate-spin text-primary" />
+        <p class="text-xs font-bold text-foreground/50">Loading plans...</p>
+      </div>
     </div>
 
     <template v-else>
-      <section class="relative">
-        <div class="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-          <div>
-            <span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
-              Pricing subscriptions
-            </span>
-            <h2 class="mt-3 text-xl font-extrabold tracking-tight text-foreground md:text-2xl">Choose your growth plan.</h2>
+      <section class="grid gap-3 xl:grid-cols-3">
+        <article
+          v-for="plan in paidPlans"
+          :key="plan.id"
+          class="relative flex min-h-full flex-col rounded-[0.39rem] border bg-background p-3 shadow-sm shadow-black/5 transition hover:border-primary/25 md:p-4"
+          :class="[
+            plan.popular ? 'border-primary/35 bg-primary/[0.035]' : 'border-foreground/10',
+            planSlug === plan.id ? 'ring-1 ring-primary/40' : '',
+            planIsCoveredByCurrent(plan) ? 'opacity-70' : ''
+          ]"
+        >
+          <div class="mb-3 flex items-start justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-2.5">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.35rem] border border-primary/15 bg-primary/10 text-primary">
+                <component :is="getPlanIcon(plan)" class="h-4 w-4" />
+              </div>
+              <div class="min-w-0">
+                <h2 class="truncate text-base font-bold text-foreground">{{ plan.name }}</h2>
+                <p class="mt-0.5 text-xs leading-5 text-foreground/45">{{ plan.desc }}</p>
+              </div>
+            </div>
+            <span v-if="plan.popular" class="shrink-0 rounded-[0.35rem] border border-primary/20 bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary">Best value</span>
+            <span v-else-if="planSlug === plan.id" class="shrink-0 rounded-[0.35rem] border border-primary/20 bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary">Current</span>
+            <span v-else-if="planIsCoveredByCurrent(plan)" class="shrink-0 rounded-[0.35rem] border border-emerald-400/20 bg-emerald-400/10 px-2 py-1 text-[10px] font-bold text-emerald-400">Included</span>
           </div>
-          <p class="max-w-md text-sm font-medium leading-relaxed text-foreground/50">Silver adds WhatsApp. Gold adds Instagram workflows. Enterprise Ready adds AI business tools, checkout, and scale.</p>
-        </div>
 
-        <div class="grid gap-5 xl:grid-cols-3">
-          <div
-            v-for="plan in paidPlans"
-            :key="plan.id"
-            class="glass-card relative flex flex-col border-foreground/10 bg-foreground/[0.02] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 md:p-7"
-            :class="[
-              plan.popular ? 'border-primary/40 !bg-primary/[0.035] shadow-xl shadow-primary/5' : '',
-              planSlug === plan.id ? 'ring-1 ring-primary/40' : ''
-            ]"
-          >
-            <div v-if="plan.popular" class="absolute -top-3 left-6 rounded-full bg-primary px-4 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-black shadow-xl shadow-primary/20">
-              Best Value
-            </div>
-            <div v-if="planSlug === plan.id" class="absolute right-5 top-5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-primary">
-              Current
-            </div>
-
-            <div class="mb-7">
-              <h3 class="text-xl font-black tracking-tight text-foreground">{{ plan.name }}</h3>
-              <p class="mt-3 min-h-[42px] text-sm font-medium leading-relaxed text-foreground/50">{{ plan.desc }}</p>
-            </div>
-
-            <div class="mb-7 flex items-baseline gap-2">
-              <span class="text-4xl font-extrabold tracking-tighter text-foreground md:text-5xl">${{ plan.price }}</span>
-              <span class="text-[10px] font-bold uppercase tracking-[0.1em] text-foreground/50">/month</span>
-            </div>
-
-            <div class="mb-8 space-y-2">
-              <button
-                @click="handleSelect(plan)"
-                :disabled="isProcessing === `${plan.id}:card` || planSlug === plan.id"
-                class="flex w-full items-center justify-center gap-2 rounded-full py-4 text-sm font-bold tracking-[0.1em] transition-all disabled:cursor-default disabled:opacity-80"
-                :class="plan.popular ? 'btn-gradient' : 'border border-foreground/10 bg-foreground/5 text-foreground hover:bg-foreground/10 hover:border-foreground/20'"
-              >
-                <template v-if="isProcessing === `${plan.id}:card`">
-                  <Loader2 class="h-4 w-4 animate-spin" />
-                  Processing...
-                </template>
-                <template v-else>
-                  {{ getCtaLabel(plan) }} by card
-                  <ArrowRight v-if="planSlug !== plan.id" class="h-4 w-4" />
-                </template>
-              </button>
-
-              <button
-                type="button"
-                @click="openMobilePayment(plan)"
-                :disabled="Boolean(isProcessing) || planSlug === plan.id"
-                class="flex w-full items-center justify-center gap-2 rounded-full border border-foreground/10 bg-background/50 px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-foreground/70 transition-all hover:border-primary/25 hover:bg-primary/5 hover:text-foreground disabled:cursor-default disabled:opacity-60"
-              >
-                <Smartphone class="h-4 w-4" />
-                MTN/Airtel mobile payment
-              </button>
-              <p v-if="plan.mobilePriceRwf" class="text-center text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/35">
-                Mobile price: {{ formatRwf(plan.mobilePriceRwf) }}/month
-              </p>
-            </div>
-
-            <div class="space-y-4">
-              <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-3 text-sm font-medium text-foreground/55">
-                <div class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <Check class="h-3 w-3 text-primary" />
-                </div>
-                {{ feat }}
+          <div class="mb-3 rounded-[0.39rem] border border-foreground/10 bg-foreground/[0.015] p-3">
+            <div class="flex items-end justify-between gap-3">
+              <div>
+                <p class="text-[11px] font-bold text-foreground/40">Mobile checkout</p>
+                <p class="mt-0.5 text-xl font-bold text-foreground">{{ formatRwf(plan.mobilePriceRwf) }}</p>
+              </div>
+              <div class="text-right">
+                <p class="text-[11px] font-bold text-foreground/40">Card payment</p>
+                <p class="mt-0.5 text-sm font-bold text-foreground/65">${{ plan.price }}/mo</p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      <section v-if="freeStarterPlan" class="glass-card border border-foreground/10 bg-foreground/[0.02] p-6 md:p-8">
-        <div class="grid gap-6 lg:grid-cols-[0.85fr_1.35fr_auto] lg:items-center">
-          <div>
-            <span class="mb-4 inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
-              Free Starter subscription
-            </span>
-            <h3 class="text-xl font-black tracking-tight text-foreground md:text-2xl">{{ freeStarterPlan.name }}</h3>
-            <p class="mt-2 text-sm font-medium leading-relaxed text-foreground/50">{{ freeStarterPlan.desc }}</p>
-          </div>
-
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div v-for="feat in freeStarterPlan.features" :key="feat" class="flex items-center gap-3 rounded-2xl border border-foreground/10 bg-background/40 px-4 py-3 text-xs font-medium text-foreground/55">
-              <div class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <Check class="h-2.5 w-2.5 text-primary" />
-              </div>
-              {{ feat }}
-            </div>
-          </div>
-
-          <div class="lg:text-right">
-            <div class="mb-4 flex items-baseline gap-2 lg:justify-end">
-              <span class="text-4xl font-extrabold tracking-tighter text-foreground">${{ freeStarterPlan.price }}</span>
-              <span class="text-[10px] font-bold uppercase tracking-[0.1em] text-foreground/50">/month</span>
-            </div>
+          <div class="mb-4 grid gap-2">
             <button
-              @click="handleSelect(freeStarterPlan)"
-              :disabled="isProcessing === `${freeStarterPlan.id}:card` || planSlug === freeStarterPlan.id"
-              class="flex w-full items-center justify-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-8 py-4 text-sm font-bold tracking-[0.1em] text-foreground transition-all hover:border-foreground/20 hover:bg-foreground/10 disabled:cursor-default disabled:opacity-80 lg:w-auto"
+              type="button"
+              @click="openMobilePayment(plan)"
+              :disabled="planActionDisabled(plan)"
+              class="dashboard-action-label inline-flex w-full items-center justify-center gap-1.5 rounded-[0.39rem] bg-primary px-3 py-2 text-black transition hover:bg-primary-accent disabled:cursor-default disabled:opacity-60"
             >
-              <template v-if="isProcessing === `${freeStarterPlan.id}:card`">
-                <Loader2 class="h-4 w-4 animate-spin" />
-                Processing...
-              </template>
-              <template v-else>
-                {{ getCtaLabel(freeStarterPlan) }}
-              </template>
+              <Smartphone class="h-3.5 w-3.5" />
+              {{ getCtaLabel(plan) }}
+              <ArrowRight v-if="!planActionDisabled(plan)" class="h-3.5 w-3.5" />
+            </button>
+
+            <button
+              @click="handleSelect(plan)"
+              :disabled="isProcessing === `${plan.id}:card` || planActionDisabled(plan)"
+              class="dashboard-action-label inline-flex w-full items-center justify-center gap-1.5 rounded-[0.39rem] border border-foreground/10 bg-background/60 px-3 py-2 text-foreground/55 transition hover:border-foreground/20 hover:text-foreground disabled:cursor-default disabled:opacity-50"
+            >
+              <Loader2 v-if="isProcessing === `${plan.id}:card`" class="h-3.5 w-3.5 animate-spin" />
+              {{ isProcessing === `${plan.id}:card` ? 'Processing...' : planIsCoveredByCurrent(plan) ? 'No payment needed' : 'Continue with card' }}
             </button>
           </div>
+
+          <div class="mt-auto space-y-2 border-t border-foreground/10 pt-3">
+            <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-2 text-xs font-medium text-foreground/55">
+              <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <Check class="h-2.5 w-2.5 text-primary" />
+              </span>
+              <span>{{ feat }}</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section v-if="freeStarterPlan" class="rounded-[0.39rem] border border-foreground/10 bg-background p-3 shadow-sm shadow-black/5 md:p-4">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <Sparkles class="h-4 w-4 text-primary" />
+              <h2 class="text-sm font-bold text-foreground">{{ freeStarterPlan.name }}</h2>
+              <span v-if="planIsCurrent(freeStarterPlan)" class="rounded-[0.35rem] border border-primary/20 bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary">Current</span>
+            </div>
+            <p class="mt-1 text-xs text-foreground/50">{{ freeStarterPlan.desc }}</p>
+          </div>
+
+          <div class="grid gap-2 sm:grid-cols-2 lg:flex lg:items-center">
+            <span v-for="feat in freeStarterPlan.features.slice(0, 3)" :key="feat" class="rounded-[0.35rem] border border-foreground/10 bg-foreground/[0.02] px-2.5 py-1.5 text-[11px] font-medium text-foreground/55">
+              {{ feat }}
+            </span>
+          </div>
+
+          <button
+            @click="handleSelect(freeStarterPlan)"
+            :disabled="isProcessing === `${freeStarterPlan.id}:card` || planActionDisabled(freeStarterPlan)"
+            class="dashboard-action-label inline-flex w-full items-center justify-center gap-1.5 rounded-[0.39rem] border border-foreground/10 px-3 py-2 text-foreground/60 transition hover:border-primary/20 hover:text-primary disabled:cursor-default disabled:opacity-50 lg:w-auto"
+          >
+            <Loader2 v-if="isProcessing === `${freeStarterPlan.id}:card`" class="h-3.5 w-3.5 animate-spin" />
+            {{ isProcessing === `${freeStarterPlan.id}:card` ? 'Processing...' : planIsCurrent(freeStarterPlan) ? 'Current plan' : 'Activate free' }}
+          </button>
         </div>
       </section>
     </template>
 
-    <div v-if="selectedMobilePlan" class="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 backdrop-blur-sm sm:items-center sm:p-6">
-      <div class="w-full max-w-lg overflow-hidden rounded-[28px] border border-foreground/10 bg-background shadow-2xl shadow-black/40">
-        <div class="flex items-start justify-between gap-4 border-b border-foreground/10 p-5 sm:p-6">
+    <div v-if="selectedMobilePlan" class="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 backdrop-blur-sm sm:items-center">
+      <div class="w-full max-w-md overflow-hidden rounded-[0.5rem] border border-foreground/10 bg-background shadow-2xl shadow-black/40">
+        <div class="flex items-start justify-between gap-4 border-b border-foreground/10 p-4">
           <div>
-            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">MTN/Airtel mobile payment</p>
-            <h3 class="mt-2 text-xl font-black tracking-tight text-foreground">Pay for {{ selectedMobilePlan.name }}</h3>
-            <p class="mt-1 text-sm font-medium text-foreground/50">
+            <p class="text-xs font-bold text-primary">MTN/Airtel mobile checkout</p>
+            <h3 class="mt-1 text-lg font-bold text-foreground">{{ selectedMobilePlan.name }}</h3>
+            <p class="mt-1 text-xs leading-5 text-foreground/50">
               {{ formatRwf(selectedMobilePlan.mobilePriceRwf) }}/month. Enter the phone number that should receive the payment prompt.
             </p>
           </div>
-          <button type="button" class="rounded-full border border-foreground/10 p-2 text-foreground/50 transition hover:bg-foreground/5 hover:text-foreground" @click="closeMobilePayment">
+          <button type="button" class="rounded-[0.35rem] border border-foreground/10 p-2 text-foreground/50 transition hover:bg-foreground/5 hover:text-foreground" @click="closeMobilePayment">
             <X class="h-4 w-4" />
           </button>
         </div>
 
-        <div class="space-y-4 p-5 sm:p-6">
-          <label class="block space-y-2">
-            <span class="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/45">Phone number</span>
+        <div class="space-y-3 p-4">
+          <label class="block space-y-1.5">
+            <span class="text-[11px] font-bold text-foreground/50">Phone number</span>
             <input
               v-model="mobilePhone"
               type="tel"
               inputmode="tel"
               autocomplete="tel"
               placeholder="078xxxxxxx"
-              class="w-full rounded-2xl border border-foreground/10 bg-foreground/[0.03] px-4 py-4 text-sm font-bold text-foreground outline-none transition placeholder:text-foreground/25 focus:border-primary/50"
+              class="w-full rounded-[0.39rem] border border-foreground/10 bg-foreground/[0.03] px-3 py-2.5 text-sm font-bold text-foreground outline-none transition placeholder:text-foreground/25 focus:border-primary/50"
               @keyup.enter="requestMobilePayment"
             />
           </label>
 
-          <div v-if="mobilePaymentResult" class="rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-4">
-            <p class="text-sm font-black text-emerald-500">
+          <div v-if="mobilePaymentResult" class="rounded-[0.39rem] border border-emerald-500/15 bg-emerald-500/5 p-3">
+            <p class="text-sm font-bold text-emerald-500">
               {{ mobilePaymentResult.paymentCompleted ? 'Payment complete' : 'Payment prompt sent' }}
             </p>
-            <p class="mt-1 text-xs leading-relaxed text-foreground/55">
+            <p class="mt-1 text-xs leading-5 text-foreground/55">
               <template v-if="mobilePaymentResult.paymentCompleted">
                 Your test payment was completed and the plan is active. Reference:
               </template>
@@ -380,24 +355,24 @@ const getCtaLabel = (plan: any) => {
               </template>
               <span class="font-mono text-foreground/70">{{ mobilePaymentResult.transactionRef }}</span>
             </p>
-            <p class="mt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/35">
-              {{ mobilePaymentResult.paymentCompleted ? 'This test activation runs for 30 days.' : 'Plan activation is confirmed after the payment is verified.' }}
+            <p class="mt-2 text-[11px] font-bold text-foreground/35">
+              {{ mobilePaymentResult.paymentCompleted ? 'This test activation runs for 30 days.' : 'Plan activation is confirmed after payment verification.' }}
             </p>
           </div>
 
           <button
             type="button"
-            class="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-black transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+            class="dashboard-action-label inline-flex w-full items-center justify-center gap-1.5 rounded-[0.39rem] bg-primary px-3 py-2.5 text-black transition hover:bg-primary-accent disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="isProcessing === `${selectedMobilePlan.id}:mobile`"
             @click="requestMobilePayment"
           >
-            <Loader2 v-if="isProcessing === `${selectedMobilePlan.id}:mobile`" class="h-4 w-4 animate-spin" />
-            <Smartphone v-else class="h-4 w-4" />
+            <Loader2 v-if="isProcessing === `${selectedMobilePlan.id}:mobile`" class="h-3.5 w-3.5 animate-spin" />
+            <Smartphone v-else class="h-3.5 w-3.5" />
             Send payment prompt
           </button>
 
-          <p class="text-center text-[10px] leading-relaxed text-foreground/40">
-            Prefer card payment? Close this window and choose the card option on your plan.
+          <p class="text-center text-[11px] leading-5 text-foreground/40">
+            Mobile money is recommended. Card payment remains available as fallback.
           </p>
         </div>
       </div>

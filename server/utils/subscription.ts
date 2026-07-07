@@ -12,6 +12,23 @@ export const SubscriptionLimitSchema = z.object({
 
 export type SubscriptionLimits = z.infer<typeof SubscriptionLimitSchema>
 
+const getPlanPriority = (slug?: string | null) => {
+  const normalized = String(slug || '').toLowerCase()
+  if (['enterprise-ready', 'enterprise'].includes(normalized)) return 4
+  if (normalized === 'gold') return 3
+  if (normalized === 'silver') return 2
+  if (normalized === 'starter') return 1
+  return 0
+}
+
+const selectBestMembership = (memberships: any[] = []) => memberships
+  .filter((membership) => membership?.is_active !== false)
+  .sort((a, b) => {
+    const priorityDiff = getPlanPriority(b?.plans?.internal_slug) - getPlanPriority(a?.plans?.internal_slug)
+    if (priorityDiff !== 0) return priorityDiff
+    return new Date(b?.starts_at || b?.created_at || 0).getTime() - new Date(a?.starts_at || a?.created_at || 0).getTime()
+  })[0] || null
+
 /**
  * Retrieves the current user's subscription limits from the database.
  * @param event - H3Event
@@ -45,14 +62,16 @@ export async function getUserSubscriptionLimits(event: H3Event, userId?: string 
     })
   }
 
-  // Get active membership and plan (limit to 1 to prevent PGRST116 errors on duplicates)
-  const { data: membership, error } = await client
+  // Get active memberships and choose the highest entitlement.
+  // Enterprise/Enterprise Ready covers all lower plans, so it must win even if
+  // an older Starter/Silver/Gold row is still active in the database.
+  const { data: memberships, error } = await client
     .from('user_memberships')
     .select('*, plans(*)')
     .eq('user_id', finalUserId)
     .eq('is_active', true)
-    .limit(1)
-    .maybeSingle()
+
+  const membership = selectBestMembership(memberships || [])
 
   if (error) {
     console.error('[SUBSCRIPTION] Error fetching membership for:', finalUserId, error)

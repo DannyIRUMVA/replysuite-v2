@@ -1,5 +1,6 @@
 import { Polar } from '@polar-sh/sdk'
 import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
+import { getPolarErrorMessage, isPolarAuthError } from '~~/server/utils/polar'
 
 const toIsoString = (value: any) => {
   if (!value) return null
@@ -10,6 +11,28 @@ const toIsoString = (value: any) => {
 
 const getTransactionDate = (transaction: any) => transaction?.createdAt || transaction?.modifiedAt || null
 
+const mapLocalSubscriptionPayments = (payments: any[] = []) => payments.map((payment: any) => ({
+  id: payment.reference || payment.id,
+  source: 'mobile_payment',
+  customerId: null,
+  status: payment.status || 'unknown',
+  paid: payment.status === 'completed',
+  productId: payment.plan_id || null,
+  productName: payment.plans?.display_name || payment.plans?.name || 'Mobile payment subscription',
+  planSlug: payment.plans?.internal_slug || null,
+  amount: payment.amount ?? null,
+  netAmount: payment.amount ?? null,
+  taxAmount: null,
+  refundedAmount: null,
+  currency: payment.currency || 'RWF',
+  billingReason: 'MTN/Airtel mobile payment subscription',
+  subscriptionId: `mobile:${payment.reference || payment.id}`,
+  checkoutId: null,
+  reference: payment.reference || null,
+  createdAt: toIsoString(payment.created_at),
+  modifiedAt: null,
+}))
+
 export default defineEventHandler(async (event) => {
   const auth = await getAuthContext(event)
   if (!auth) throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
@@ -18,12 +41,29 @@ export default defineEventHandler(async (event) => {
   const polarAccessToken = config.polarAccessToken
   const polarServer = config.polarServer
 
-  if (!polarAccessToken) {
-    throw createError({ statusCode: 500, statusMessage: 'Billing service misconfigured' })
-  }
-
   const user = await serverSupabaseUser(event)
   const adminClient = serverSupabaseServiceRole(event)
+
+  const { data: localPayments } = await adminClient
+    .from('payments')
+    .select('id, user_id, plan_id, provider, status, amount, currency, reference, created_at, plans(internal_slug, display_name, name)')
+    .eq('user_id', auth.userId)
+    .in('provider', ['mobile_payment', 'paypack'])
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const localTransactions = mapLocalSubscriptionPayments(localPayments || [])
+
+  if (!polarAccessToken) {
+    return {
+      success: true,
+      billingProviderAvailable: false,
+      message: 'Card billing transactions are temporarily unavailable.',
+      customerCount: 0,
+      transactions: localTransactions
+    }
+  }
+
   const polar = new Polar({
     accessToken: polarAccessToken,
     server: (polarServer?.toLowerCase() as any) || 'sandbox'
@@ -53,7 +93,17 @@ export default defineEventHandler(async (event) => {
       if (customer?.id) customerIds.add(customer.id)
     }
   } catch (err: any) {
-    console.warn('[Billing Transactions] Polar external-id customer lookup failed:', err?.message)
+    if (isPolarAuthError(err)) {
+      console.warn(`[Billing Transactions] ${getPolarErrorMessage(err)} Returning local mobile payment transactions.`)
+      return {
+        success: true,
+        billingProviderAvailable: false,
+        message: 'Card billing transactions are temporarily unavailable.',
+        customerCount: customerIds.size,
+        transactions: localTransactions
+      }
+    }
+    console.warn('[Billing Transactions] Polar external-id customer lookup failed:', getPolarErrorMessage(err))
   }
 
   if (user?.email) {
@@ -63,7 +113,17 @@ export default defineEventHandler(async (event) => {
         if (customer?.id) customerIds.add(customer.id)
       }
     } catch (err: any) {
-      console.warn('[Billing Transactions] Polar email customer lookup failed:', err?.message)
+      if (isPolarAuthError(err)) {
+        console.warn(`[Billing Transactions] ${getPolarErrorMessage(err)} Returning local mobile payment transactions.`)
+        return {
+          success: true,
+          billingProviderAvailable: false,
+          message: 'Card billing transactions are temporarily unavailable.',
+          customerCount: customerIds.size,
+          transactions: localTransactions
+        }
+      }
+      console.warn('[Billing Transactions] Polar email customer lookup failed:', getPolarErrorMessage(err))
     }
   }
 
@@ -94,8 +154,6 @@ export default defineEventHandler(async (event) => {
         refundedAmount: order?.refundedAmount ?? null,
         currency: order?.currency || 'usd',
         billingReason: order?.billingReason || null,
-        invoiceNumber: order?.invoiceNumber || null,
-        isInvoiceGenerated: Boolean(order?.isInvoiceGenerated),
         subscriptionId: order?.subscriptionId || null,
         checkoutId: order?.checkoutId || null,
         createdAt: toIsoString(order?.createdAt),
@@ -109,7 +167,17 @@ export default defineEventHandler(async (event) => {
       const response = await polar.orders.list({ customerId, limit: 100, sorting: ['-created_at'] as any })
       addOrders(response.result?.items || [], customerId)
     } catch (err: any) {
-      console.warn(`[Billing Transactions] Polar order lookup failed for ${customerId}:`, err?.message)
+      if (isPolarAuthError(err)) {
+        console.warn(`[Billing Transactions] ${getPolarErrorMessage(err)} Returning local mobile payment transactions.`)
+        return {
+          success: true,
+          billingProviderAvailable: false,
+          message: 'Card billing transactions are temporarily unavailable.',
+          customerCount: customerIds.size,
+          transactions: localTransactions
+        }
+      }
+      console.warn(`[Billing Transactions] Polar order lookup failed for ${customerId}:`, getPolarErrorMessage(err))
     }
   }
 
@@ -117,8 +185,20 @@ export default defineEventHandler(async (event) => {
     const byExternalCustomer = await polar.orders.list({ externalCustomerId: auth.userId, limit: 100, sorting: ['-created_at'] as any })
     addOrders(byExternalCustomer.result?.items || [])
   } catch (err: any) {
-    console.warn('[Billing Transactions] Polar external customer order lookup failed:', err?.message)
+    if (isPolarAuthError(err)) {
+      console.warn(`[Billing Transactions] ${getPolarErrorMessage(err)} Returning local mobile payment transactions.`)
+      return {
+        success: true,
+        billingProviderAvailable: false,
+        message: 'Card billing transactions are temporarily unavailable.',
+        customerCount: customerIds.size,
+        transactions: localTransactions
+      }
+    }
+    console.warn('[Billing Transactions] Polar external customer order lookup failed:', getPolarErrorMessage(err))
   }
+
+  transactions.push(...localTransactions)
 
   const uniqueTransactions = Array.from(
     new Map(transactions.filter((transaction) => transaction.id).map((transaction) => [transaction.id, transaction])).values()

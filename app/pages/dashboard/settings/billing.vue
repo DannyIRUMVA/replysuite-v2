@@ -71,15 +71,11 @@ const reconcileBilling = async (withRetry = false) => {
 onMounted(async () => {
   isMounted.value = true
 
-  // After Polar redirects back here, always reconcile first. The local profile
-  // may not have polar_customer_id/plan yet, and syncWithPolar can create/link it.
   if (route.query.success === 'true') {
     await reconcileBilling(true)
     const nextQuery = { ...route.query }
     delete nextQuery.success
     await router.replace({ path: route.path, query: nextQuery })
-  } else {
-    await reconcileBilling(false)
   }
 
   await refreshPolarTransactions()
@@ -93,6 +89,18 @@ const planNames: Record<string, string> = {
 }
 
 const currentPlanName = computed(() => planSlug.value ? planNames[planSlug.value] || planSlug.value : 'No active plan')
+const isFreePlan = computed(() => planSlug.value === 'starter')
+const planStatusLabel = computed(() => isFreePlan.value ? 'Current plan' : 'Active subscription')
+const planStatusDescription = computed(() => {
+  if (isFreePlan.value) return 'Free access is active. Upgrade anytime when you need more channels or usage.'
+  if (!planSlug.value) return 'Choose a plan from dashboard pricing to activate your workspace.'
+  return 'This is your current access level. Payment history below does not change it.'
+})
+const billingDateLabel = computed(() => isFreePlan.value ? 'Renewal' : 'Next billing date')
+const billingDateValue = computed(() => {
+  if (isFreePlan.value) return 'No renewal needed'
+  return membership.value?.ends_at ? formatDate(membership.value.ends_at) : 'Not scheduled'
+})
 
 const formatDate = (value?: string | null) => {
   if (!value) return 'N/A'
@@ -101,7 +109,32 @@ const formatDate = (value?: string | null) => {
 
 const formatMoney = (amount?: number | null, currency = 'usd') => {
   if (amount === null || amount === undefined) return '—'
-  return new Intl.NumberFormat('en', { style: 'currency', currency: currency.toUpperCase() }).format(amount / 100)
+  const normalizedCurrency = currency.toUpperCase()
+  const divisor = normalizedCurrency === 'RWF' ? 1 : 100
+  const value = amount / divisor
+
+  if (normalizedCurrency === 'RWF') {
+    return `${new Intl.NumberFormat('en-RW', { maximumFractionDigits: 0 }).format(value)} RWF`
+  }
+
+  return new Intl.NumberFormat('en', { style: 'currency', currency: normalizedCurrency, maximumFractionDigits: 2 }).format(value)
+}
+
+const getPaymentSourceLabel = (transaction: any) => {
+  if (transaction?.source === 'mobile_payment') return 'MTN/Airtel mobile payment'
+  return 'Card payment'
+}
+
+const isCurrentPlanTransaction = (transaction: any) => Boolean(transaction?.planSlug && transaction.planSlug === planSlug.value)
+
+const getPlanRecordLabel = (transaction: any) => {
+  if (!transaction?.planSlug) return 'Payment record'
+  return isCurrentPlanTransaction(transaction) ? 'Current plan payment' : 'Previous plan payment'
+}
+
+const getPlanRecordClass = (transaction: any) => {
+  if (isCurrentPlanTransaction(transaction)) return 'border-primary/20 bg-primary/10 text-primary'
+  return 'border-foreground/10 bg-foreground/5 text-foreground/45'
 }
 
 const getStatusClass = (status: string) => {
@@ -119,147 +152,174 @@ const getPlanIcon = (slug?: string | null) => {
 </script>
 
 <template>
-  <div class="space-y-6 pb-24 lg:pb-0">
-    <div class="grid items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+  <div class="space-y-4 pt-3 pb-24 md:pt-4 lg:pb-0">
+    <section class="rounded-[0.39rem] border border-foreground/10 bg-background p-3 shadow-sm shadow-black/5 md:p-4">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex min-w-0 items-center gap-3">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.39rem] border border-primary/15 bg-primary/10 text-primary">
+            <CreditCard class="h-4 w-4" />
+          </div>
+          <div class="min-w-0">
+            <h1 class="dashboard-section-title truncate">Billing</h1>
+            <p class="dashboard-muted mt-0.5">Plan status, mobile payments, and card subscription history.</p>
+          </div>
+        </div>
+
+        <NuxtLink
+          to="/dashboard/pricing"
+          class="dashboard-action-label inline-flex w-fit items-center justify-center rounded-[0.39rem] bg-primary px-3 py-2 text-black transition hover:bg-primary-accent"
+        >
+          View pricing
+        </NuxtLink>
+      </div>
+    </section>
+
+    <div class="grid items-start gap-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
       <SettingsNavigation align-on-lg />
 
-      <main class="space-y-6 overflow-hidden">
-        <div v-if="isLoading" class="flex min-h-[320px] items-center justify-center rounded-[24px] border border-foreground/10 bg-background">
-          <div class="flex flex-col items-center gap-4">
-            <Loader2 class="h-10 w-10 animate-spin text-primary" />
-            <p class="text-xs font-bold uppercase tracking-widest text-foreground/50">Synchronizing billing...</p>
+      <main class="space-y-4 overflow-hidden">
+        <div v-if="isLoading" class="flex min-h-[240px] items-center justify-center rounded-[0.39rem] border border-foreground/10 bg-background shadow-sm shadow-black/5">
+          <div class="flex flex-col items-center gap-3">
+            <Loader2 class="h-7 w-7 animate-spin text-primary" />
+            <p class="text-xs font-bold text-foreground/50">Synchronizing billing...</p>
           </div>
         </div>
 
         <template v-else>
-          <section class="rounded-[24px] border border-primary/20 bg-primary/10 p-5 md:p-6">
-            <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-              <div class="flex items-center gap-4">
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-background/70 text-primary">
-                  <component :is="getPlanIcon(planSlug)" class="h-6 w-6" />
+          <section class="overflow-hidden rounded-[0.39rem] border border-primary/20 bg-primary/10 shadow-sm shadow-black/5">
+            <div class="flex flex-col gap-3 p-3 md:flex-row md:items-center md:justify-between md:p-4">
+              <div class="flex min-w-0 items-center gap-3">
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.39rem] border border-primary/15 bg-background/70 text-primary">
+                  <component :is="getPlanIcon(planSlug)" class="h-4 w-4" />
                 </div>
-                <div>
-                  <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Active subscription</p>
-                  <h2 class="mt-1 text-xl font-black tracking-tight text-foreground md:text-2xl">{{ currentPlanName }}</h2>
-                  <p class="mt-1 text-sm text-foreground/55">Manage plan changes from the dashboard pricing page.</p>
+                <div class="min-w-0">
+                  <p class="text-xs font-bold text-primary">{{ planStatusLabel }}</p>
+                  <h2 class="mt-0.5 truncate text-lg font-bold text-foreground">{{ currentPlanName }}</h2>
+                  <p class="mt-0.5 text-xs text-foreground/55">{{ planStatusDescription }}</p>
                 </div>
               </div>
 
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-center lg:justify-end">
-                <div class="rounded-2xl border border-foreground/10 bg-background/60 px-4 py-3 sm:text-right">
-                  <p class="text-[10px] font-black uppercase tracking-widest text-foreground/40">Next billing date</p>
-                  <p class="mt-1 text-sm font-bold text-foreground">{{ membership?.ends_at ? formatDate(membership.ends_at) : 'N/A' }}</p>
+              <div class="grid gap-2 sm:grid-cols-[auto_auto] sm:items-center">
+                <div class="rounded-[0.39rem] border border-foreground/10 bg-background/60 px-3 py-2 sm:text-right">
+                  <p class="text-[11px] font-bold text-foreground/40">{{ billingDateLabel }}</p>
+                  <p class="mt-0.5 text-sm font-bold text-foreground">{{ billingDateValue }}</p>
                 </div>
-                <NuxtLink
-                  to="/dashboard/pricing"
-                  class="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-primary-accent"
+                <button
+                  @click="refreshPolarTransactions"
+                  :disabled="loadingTransactions"
+                  class="dashboard-action-label inline-flex items-center justify-center gap-1.5 rounded-[0.39rem] border border-foreground/10 bg-background/60 px-3 py-2 text-foreground/60 transition hover:border-primary/20 hover:text-primary disabled:opacity-50"
                 >
-                  View dashboard pricing
-                </NuxtLink>
+                  <Loader2 v-if="loadingTransactions" class="h-3.5 w-3.5 animate-spin" />
+                  <RefreshCcw v-else class="h-3.5 w-3.5" />
+                  Refresh
+                </button>
               </div>
             </div>
           </section>
 
-          <section class="overflow-hidden rounded-[24px] border border-foreground/10 bg-background">
-            <div class="flex flex-col gap-3 border-b border-foreground/10 bg-foreground/[0.015] p-5 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Polar subscriptions</p>
-                <h2 class="mt-1 text-lg font-black tracking-tight text-foreground">Subscription billing from Polar</h2>
-                <p class="mt-1 text-sm text-foreground/50">Only subscription orders and renewals connected to your Polar customer profile.</p>
+          <section class="overflow-hidden rounded-[0.39rem] border border-foreground/10 bg-background shadow-sm shadow-black/5">
+            <div class="flex flex-col gap-3 border-b border-foreground/10 bg-foreground/[0.015] p-3 md:flex-row md:items-center md:justify-between md:p-4">
+              <div class="flex items-center gap-2.5">
+                <div class="flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-primary/15 bg-primary/10">
+                  <CreditCard class="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h2 class="text-sm font-bold text-foreground">Payment history</h2>
+                  <p class="mt-0.5 text-xs text-foreground/45">Historical mobile money and card records. Your active plan is shown above.</p>
+                </div>
               </div>
-              <button
-                @click="refreshPolarTransactions"
-                :disabled="loadingTransactions"
-                class="inline-flex items-center justify-center gap-2 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-foreground/60 transition-all hover:bg-foreground/10 disabled:opacity-50"
-              >
-                <Loader2 v-if="loadingTransactions" class="h-3.5 w-3.5 animate-spin" />
-                <RefreshCcw v-else class="h-3.5 w-3.5" />
-                Refresh list
-              </button>
+              <span class="inline-flex w-fit items-center rounded-[0.35rem] border border-foreground/10 bg-background/70 px-2.5 py-1 text-[11px] font-bold text-foreground/45">
+                {{ polarTransactions.length }} records
+              </span>
             </div>
 
-            <div v-if="loadingTransactions" class="space-y-3 p-5">
-              <div v-for="i in 4" :key="i" class="h-16 animate-pulse rounded-2xl bg-foreground/5"></div>
+            <div v-if="loadingTransactions" class="space-y-2 p-3 md:p-4">
+              <div v-for="i in 4" :key="i" class="h-12 animate-pulse rounded-[0.39rem] bg-foreground/5"></div>
             </div>
 
-            <div v-else-if="!polarTransactions.length" class="p-8 text-center">
-              <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-foreground/5 text-foreground/40">
-                <CreditCard class="h-7 w-7" />
+            <div v-else-if="!polarTransactions.length" class="p-6 text-center">
+              <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-[0.39rem] border border-foreground/10 bg-foreground/5 text-foreground/40">
+                <CreditCard class="h-5 w-5" />
               </div>
-              <h3 class="mt-4 text-base font-black text-foreground">No Polar subscriptions found</h3>
-              <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-foreground/50">
-                Subscription checkout orders and renewals from Polar will appear here after they are associated with your customer profile.
+              <h3 class="mt-3 text-sm font-bold text-foreground">No payment history found</h3>
+              <p class="mx-auto mt-1.5 max-w-md text-xs leading-5 text-foreground/50">
+                Mobile money and card records will appear here after checkout starts.
               </p>
             </div>
 
             <div v-else>
               <div class="overflow-x-auto">
-                <table class="w-full min-w-[920px] text-left">
-                <thead class="border-b border-foreground/10 bg-foreground/[0.02] text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">
-                  <tr>
-                    <th class="px-5 py-4">Subscription</th>
-                    <th class="px-5 py-4">Status</th>
-                    <th class="px-5 py-4">Amount</th>
-                    <th class="px-5 py-4">Date</th>
-                    <th class="px-5 py-4">Invoice</th>
-                    <th class="px-5 py-4">Order ID</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-foreground/10">
-                  <tr v-for="transaction in paginatedPolarTransactions" :key="transaction.id" class="transition-colors hover:bg-foreground/[0.02]">
-                    <td class="px-5 py-4">
-                      <div class="flex items-center gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                          <component :is="getPlanIcon(transaction.planSlug)" class="h-5 w-5" />
+                <table class="w-full min-w-[840px] text-left">
+                  <thead class="border-b border-foreground/10 bg-foreground/[0.02] text-[11px] font-bold text-foreground/45">
+                    <tr>
+                      <th class="px-3 py-2.5 md:px-4">Subscription</th>
+                      <th class="px-3 py-2.5 md:px-4">Status</th>
+                      <th class="px-3 py-2.5 md:px-4">Amount</th>
+                      <th class="px-3 py-2.5 md:px-4">Date</th>
+                      <th class="px-3 py-2.5 md:px-4">Source</th>
+                      <th class="px-3 py-2.5 md:px-4">Reference</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-foreground/10">
+                    <tr v-for="transaction in paginatedPolarTransactions" :key="transaction.id" class="transition-colors hover:bg-foreground/[0.02]">
+                      <td class="px-3 py-3 md:px-4">
+                        <div class="flex items-center gap-2.5">
+                          <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.35rem] border border-primary/15 bg-primary/10 text-primary">
+                            <component :is="getPlanIcon(transaction.planSlug)" class="h-4 w-4" />
+                          </div>
+                          <div class="min-w-0">
+                            <p class="truncate text-sm font-bold text-foreground">{{ transaction.productName }}</p>
+                            <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                              <span class="inline-flex rounded-[0.3rem] border px-1.5 py-0.5 text-[10px] font-bold" :class="getPlanRecordClass(transaction)">
+                                {{ getPlanRecordLabel(transaction) }}
+                              </span>
+                              <span class="truncate text-xs text-foreground/40">{{ transaction.billingReason || transaction.planSlug || 'Payment record' }}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <p class="text-sm font-black text-foreground">{{ transaction.productName }}</p>
-                          <p class="text-xs text-foreground/40">{{ transaction.billingReason || transaction.planSlug || 'Polar order' }}</p>
+                      </td>
+                      <td class="px-3 py-3 md:px-4">
+                        <span class="inline-flex rounded-[0.35rem] border px-2 py-1 text-[11px] font-bold" :class="getStatusClass(transaction.status)">
+                          {{ transaction.status }}
+                        </span>
+                      </td>
+                      <td class="px-3 py-3 md:px-4">
+                        <div class="space-y-1">
+                          <p class="text-sm font-bold text-foreground/70">{{ formatMoney(transaction.amount, transaction.currency) }}</p>
+                          <p v-if="transaction.refundedAmount" class="text-[11px] font-bold text-rose-400">
+                            Refunded {{ formatMoney(transaction.refundedAmount, transaction.currency) }}
+                          </p>
                         </div>
-                      </div>
-                    </td>
-                    <td class="px-5 py-4">
-                      <span class="inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest" :class="getStatusClass(transaction.status)">
-                        {{ transaction.status }}
-                      </span>
-                    </td>
-                    <td class="px-5 py-4">
-                      <div class="space-y-1">
-                        <p class="text-sm font-bold text-foreground/70">{{ formatMoney(transaction.amount, transaction.currency) }}</p>
-                        <p v-if="transaction.refundedAmount" class="text-[10px] font-black uppercase tracking-widest text-rose-400">
-                          Refunded {{ formatMoney(transaction.refundedAmount, transaction.currency) }}
-                        </p>
-                      </div>
-                    </td>
-                    <td class="px-5 py-4 text-sm text-foreground/55">{{ formatDate(transaction.createdAt) }}</td>
-                    <td class="px-5 py-4 text-sm font-bold text-foreground/60">{{ transaction.invoiceNumber || 'N/A' }}</td>
-                    <td class="px-5 py-4">
-                      <code class="rounded-lg bg-foreground/5 px-2 py-1 text-[11px] text-foreground/45">{{ transaction.id }}</code>
-                    </td>
-                  </tr>
-                </tbody>
+                      </td>
+                      <td class="px-3 py-3 text-sm text-foreground/55 md:px-4">{{ formatDate(transaction.createdAt) }}</td>
+                      <td class="px-3 py-3 text-sm font-bold text-foreground/60 md:px-4">{{ getPaymentSourceLabel(transaction) }}</td>
+                      <td class="px-3 py-3 md:px-4">
+                        <code class="rounded-[0.35rem] bg-foreground/5 px-2 py-1 text-[11px] text-foreground/45">{{ transaction.reference || transaction.id }}</code>
+                      </td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
 
-              <div class="flex flex-col gap-3 border-t border-foreground/10 bg-foreground/[0.015] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex flex-col gap-3 border-t border-foreground/10 bg-foreground/[0.015] px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between md:px-4">
                 <p class="text-xs font-bold text-foreground/45">
-                  Showing {{ ((transactionPage - 1) * transactionsPerPage) + 1 }}-{{ Math.min(transactionPage * transactionsPerPage, polarTransactions.length) }} of {{ polarTransactions.length }} subscriptions
+                  Showing {{ ((transactionPage - 1) * transactionsPerPage) + 1 }}-{{ Math.min(transactionPage * transactionsPerPage, polarTransactions.length) }} of {{ polarTransactions.length }} payment records
                 </p>
                 <div class="flex items-center gap-2">
                   <button
                     @click="transactionPage = Math.max(1, transactionPage - 1)"
                     :disabled="transactionPage === 1"
-                    class="rounded-xl border border-foreground/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-foreground/50 transition-all hover:bg-foreground/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+                    class="dashboard-action-label rounded-[0.39rem] border border-foreground/10 px-3 py-2 text-foreground/50 transition hover:bg-foreground/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
                   >
                     Previous
                   </button>
-                  <span class="rounded-xl border border-foreground/10 bg-background px-3 py-2 text-xs font-black text-foreground/60">
+                  <span class="rounded-[0.39rem] border border-foreground/10 bg-background px-3 py-2 text-xs font-bold text-foreground/60">
                     {{ transactionPage }} / {{ totalTransactionPages }}
                   </span>
                   <button
                     @click="transactionPage = Math.min(totalTransactionPages, transactionPage + 1)"
                     :disabled="transactionPage === totalTransactionPages"
-                    class="rounded-xl border border-foreground/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-foreground/50 transition-all hover:bg-foreground/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+                    class="dashboard-action-label rounded-[0.39rem] border border-foreground/10 px-3 py-2 text-foreground/50 transition hover:bg-foreground/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
                   >
                     Next
                   </button>

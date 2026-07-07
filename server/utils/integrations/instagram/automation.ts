@@ -579,6 +579,11 @@ export const processInstagramMessage = async (supabase: any, payload: InstagramM
     content: payload.messageText,
   })
 
+  if (sessionMetadata?.human_takeover?.enabled) {
+    console.log(`[Instagram DM] Human takeover active for session ${session.id}. AI reply skipped.`)
+    return
+  }
+
   let replyText = ''
   try {
     replyText = await buildInstagramReply(supabase, chatbotId, payload.messageText, 'direct_message', session.id)

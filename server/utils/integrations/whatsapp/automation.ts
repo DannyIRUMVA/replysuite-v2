@@ -171,6 +171,11 @@ export const processWhatsappMessage = async (supabase: any, messageData: any) =>
     console.error('❌ [WhatsApp Debug] Failed to record inbound message:', err)
   }
 
+  if (sessionMetadata?.human_takeover?.enabled) {
+    console.log(`   ⏸️ [WhatsApp Automation] Human takeover active for Session: ${chatSession?.id}. AI reply skipped.`)
+    return
+  }
+
   // 2. Check User Plan & Limits
   const { data: profile } = await supabase
     .from('profiles')

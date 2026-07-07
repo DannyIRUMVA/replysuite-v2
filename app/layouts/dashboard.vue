@@ -2,15 +2,21 @@
 import { AlertCircle } from 'lucide-vue-next'
 
 const isMounted = ref(false)
-onMounted(() => { isMounted.value = true })
+onMounted(() => {
+  isMounted.value = true
+  document.getElementById('replysuite-chat-widget-container')?.remove()
+  document.getElementById('replysuite-widget-container')?.remove()
+  document.querySelectorAll('script[src*="/embed.js"]').forEach((script) => script.remove())
+})
 
-const { user, userId, isAuthenticated, profile, polarCustomerId, isVerified, isLoading, planSlug } = useAuth()
+const { user, userId, isAuthenticated, profile, isVerified, isLoading, planSlug } = useAuth()
 const { showFeedback, feedbackSource, closeFeedback } = useFeedback()
 const supabase = useSupabaseClient()
 const route = useRoute()
 const forceOnboarding = useState<boolean>('dashboard-force-onboarding', () => false)
 const onboardingDismissed = useState<boolean>('dashboard-onboarding-dismissed', () => false)
 const onboardingNavigationLocked = useState<boolean>('dashboard-onboarding-navigation-locked', () => false)
+const isFlushDashboardPage = computed(() => route.path === '/dashboard/conversations')
 
 const continueOnboarding = () => {
   onboardingDismissed.value = false
@@ -18,28 +24,28 @@ const continueOnboarding = () => {
   onboardingNavigationLocked.value = false
 }
 
-// 1. Subscription & Polar Identity Gating
-// If user has no Polar customer ID or no active plan, force them to pricing
-watch([polarCustomerId, planSlug, isLoading, isMounted, () => route.fullPath], ([polarId, slug, loading, mounted]) => {
+// 1. Subscription gating
+// Mobile-payment subscriptions do not require a Polar customer ID, so dashboard
+// access is gated by the active local plan only.
+watch([planSlug, isLoading, isMounted, () => route.fullPath], ([slug, loading, mounted]) => {
   if (mounted && !loading) {
     const isPricingPage = route.path === '/dashboard/pricing'
     const isCheckoutSyncPage = route.path === '/dashboard/billing/success'
       || (route.path === '/dashboard/settings/billing' && route.query.success === 'true')
     
-    // Strict block: No Polar Identity or No Active Plan.
-    // Let checkout return pages finish their server-side Polar sync first;
+    // Let checkout return pages finish their server-side sync first;
     // otherwise the dashboard can redirect mid-sync and leave users feeling stuck.
-    if ((!polarId || !slug) && !isPricingPage && !isCheckoutSyncPage) {
-      console.warn('[Dashboard Gate] Missing Polar ID or Plan. Redirecting...')
+    if (!slug && !isPricingPage && !isCheckoutSyncPage) {
+      console.warn('[Dashboard Gate] Missing active plan. Redirecting...')
       navigateTo('/dashboard/pricing')
     }
   }
 }, { immediate: true })
 
-// 2. Global Font Scaling (10% Increase)
+// Dashboard density: match the calmer feel of ~90% browser zoom without affecting public pages.
 useHead({
   htmlAttrs: {
-    style: 'font-size: 17.6px' // 16px * 1.1 = 17.6px
+    style: 'font-size: 15.84px'
   }
 })
 
@@ -52,9 +58,15 @@ useHead({
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col h-screen overflow-hidden">
-      <main class="flex-1 overflow-y-auto px-6 md:px-8 pt-0 relative pb-32 md:pb-8">
+      <main :class="[
+        'flex-1 pt-0 relative',
+        isFlushDashboardPage ? 'flex flex-col overflow-hidden p-0' : 'overflow-y-auto px-3 sm:px-5 md:px-6 xl:px-8 2xl:px-10 pb-28 md:pb-7'
+      ]">
 
-        <div class="dashboard-header-bar sticky top-0 z-40 -mx-6 px-6 md:-mx-8 md:px-8 pt-1.5 pb-1.5 mb-2 bg-background/80 backdrop-blur-xl border-b border-foreground/5">
+        <div :class="[
+          'dashboard-header-bar sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-foreground/5',
+          isFlushDashboardPage ? 'm-0 px-4 py-2.5' : '-mx-3 px-3 sm:-mx-5 sm:px-5 md:-mx-6 md:px-6 xl:-mx-8 xl:px-8 2xl:-mx-10 2xl:px-10 pt-2.5 pb-2.5 mb-2'
+        ]">
           <DashboardHeader />
         </div>
 

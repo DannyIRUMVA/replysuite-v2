@@ -1,3 +1,17 @@
+const getPlanPriority = (slug?: string | null) => {
+  const normalized = String(slug || '').toLowerCase()
+  if (['enterprise-ready', 'enterprise'].includes(normalized)) return 4
+  if (normalized === 'gold') return 3
+  if (normalized === 'silver') return 2
+  if (normalized === 'starter') return 1
+  return 0
+}
+
+const selectBestPlanSlug = (memberships: any[] = []) => memberships
+  .filter((membership) => membership?.is_active !== false)
+  .map((membership) => String((membership?.plans as any)?.internal_slug || '').toLowerCase())
+  .sort((a, b) => getPlanPriority(b) - getPlanPriority(a))[0] || ''
+
 export default defineNuxtRouteMiddleware(async (to, from) => {
   const auth = useAuth()
   const user = auth.user
@@ -49,12 +63,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       const supabase = useSupabaseClient()
       const { data } = await supabase
         .from('user_memberships')
-        .select('plans(internal_slug)')
+        .select('is_active, plans(internal_slug)')
         .eq('user_id', auth.userId.value)
         .eq('is_active', true)
-        .limit(1)
-        .maybeSingle()
-      slug = normalize((data?.plans as any)?.internal_slug)
+      slug = selectBestPlanSlug(data || [])
     }
 
     const isGoldOrEnterprise = ['gold', 'enterprise-ready', 'enterprise'].includes(slug)
