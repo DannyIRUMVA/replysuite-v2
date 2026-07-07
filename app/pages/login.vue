@@ -19,6 +19,13 @@ const loading = ref(false)
 const errorMsg = ref('')
 
 const verified = computed(() => route.query.verified === 'true')
+const redirectPath = computed(() => {
+  const redirect = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect
+  const path = typeof redirect === 'string' ? redirect : ''
+  if (!path.startsWith('/') || path.startsWith('//')) return '/dashboard'
+  if (path.startsWith('/login') || path.startsWith('/register')) return '/dashboard'
+  return path
+})
 const currentYear = new Date().getFullYear()
 
 const loginFeatures = [
@@ -51,7 +58,7 @@ const handleLogin = async (event?: Event) => {
     if (error) throw error
 
     await track('LOGIN_SUCCESS', { email: submittedEmail })
-    await navigateTo('/dashboard')
+    await navigateTo(redirectPath.value)
   } catch (err: any) {
     errorMsg.value = err.message
     await track('LOGIN_FAILED', { email: submittedEmail, error: err.message })

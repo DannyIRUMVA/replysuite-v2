@@ -30,6 +30,36 @@ const selectBestPlanSlug = (memberships: any[] = []) => memberships
   .map((membership) => String((membership?.plans as any)?.internal_slug || '').toLowerCase())
   .sort((a, b) => getPlanPriority(b) - getPlanPriority(a))[0] || ''
 
+const loadActiveMemberships = async (supabase: ReturnType<typeof useSupabaseClient>, userId: string, includePlans = false) => {
+  const selectWithTrial = includePlans
+    ? 'is_active, ends_at, trial_ends_at, status, provider, plans(internal_slug)'
+    : 'id, is_active, ends_at, trial_ends_at, status, provider'
+  const selectLegacy = includePlans
+    ? 'is_active, ends_at, plans(internal_slug)'
+    : 'id, is_active, ends_at'
+
+  const primary = await supabase
+    .from('user_memberships')
+    .select(selectWithTrial)
+    .eq('user_id', userId)
+    .eq('is_active', true)
+
+  if (!primary.error) return { data: primary.data || [], error: null }
+
+  const fallback = await supabase
+    .from('user_memberships')
+    .select(selectLegacy)
+    .eq('user_id', userId)
+    .eq('is_active', true)
+
+  if (fallback.error) {
+    console.warn('[Auth Middleware] Membership lookup failed:', fallback.error.message || primary.error.message)
+    return { data: [], error: fallback.error }
+  }
+
+  return { data: fallback.data || [], error: null }
+}
+
 const onboardingStepCodes = ['verify_account', 'company_profile', 'choose_plan', 'create_chatbot', 'choose_channel']
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
@@ -41,10 +71,18 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   // 1. Mandatory Login for dashboard & verify
   if (!user.value && (to.path.startsWith('/dashboard') || to.path === '/verify')) {
-    forceOnboarding.value = false
-    onboardingChecked.value = false
-    onboardingDismissed.value = false
-    return navigateTo('/login')
+    const supabase = useSupabaseClient()
+    const { data: sessionData } = await supabase.auth.getSession()
+
+    if (!sessionData?.session?.user) {
+      forceOnboarding.value = false
+      onboardingChecked.value = false
+      onboardingDismissed.value = false
+      return navigateTo({
+        path: '/login',
+        query: to.fullPath && to.fullPath !== '/dashboard' ? { redirect: to.fullPath } : undefined,
+      })
+    }
   }
 
   // 1.5. Verification is now handled inside the dashboard onboarding modal.
@@ -59,13 +97,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     // If reactivity hasn't resolved the membership yet, double-check the DB
     if (!hasMembership && auth.userId.value) {
       const supabase = useSupabaseClient()
-      const { data } = await supabase
-        .from('user_memberships')
-        .select('id, is_active, ends_at, trial_ends_at, status')
-        .eq('user_id', auth.userId.value)
-        .eq('is_active', true)
-
-      hasMembership = Array.isArray(data) ? data.some((membership: any) => isMembershipCurrentlyUsable(membership)) : false
+      const { data, error } = await loadActiveMemberships(supabase, auth.userId.value)
+      hasMembership = error ? true : data.some((membership: any) => isMembershipCurrentlyUsable(membership))
     }
 
     if (!hasMembership) {
@@ -80,11 +113,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
     if (!slug) {
       const supabase = useSupabaseClient()
-      const { data } = await supabase
-        .from('user_memberships')
-        .select('is_active, ends_at, trial_ends_at, status, plans(internal_slug)')
-        .eq('user_id', auth.userId.value)
-        .eq('is_active', true)
+      const { data, error } = await loadActiveMemberships(supabase, auth.userId.value, true)
+      if (error) return
       slug = selectBestPlanSlug(data || [])
     }
 
