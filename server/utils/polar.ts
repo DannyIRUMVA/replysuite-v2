@@ -1,66 +1,83 @@
-import { Polar } from '@polar-sh/sdk'
-import { H3Event } from 'h3'
-import { serverSupabaseServiceRole } from '#supabase/server'
+import { Polar } from "@polar-sh/sdk";
+import { H3Event } from "h3";
+import { serverSupabaseServiceRole } from "#supabase/server";
+import { deactivateOtherActiveMemberships } from "~~/server/utils/membership";
 
 export const isPolarAuthError = (err: any) => {
-  const message = String(err?.message || err || '')
-  const body = String(err?.body || err?.response?.body || '')
-  return err?.status === 401
-    || err?.statusCode === 401
-    || message.includes('Status 401')
-    || message.includes('invalid_token')
-    || body.includes('invalid_token')
-}
+  const message = String(err?.message || err || "");
+  const body = String(err?.body || err?.response?.body || "");
+  return (
+    err?.status === 401 ||
+    err?.statusCode === 401 ||
+    message.includes("Status 401") ||
+    message.includes("invalid_token") ||
+    body.includes("invalid_token")
+  );
+};
 
-export const getPolarErrorMessage = (err: any) => isPolarAuthError(err)
-  ? 'Polar access token is invalid or expired.'
-  : String(err?.message || err || 'Unknown Polar error')
+export const getPolarErrorMessage = (err: any) =>
+  isPolarAuthError(err)
+    ? "Polar access token is invalid or expired."
+    : String(err?.message || err || "Unknown Polar error");
 
 /**
  * Ensures a user is synced as a customer in Polar.sh.
  * Uses the Supabase User ID as the external_id for reliable mapping.
  */
-export async function syncUserToPolar(event: H3Event, userId: string, email: string, name?: string) {
-  const config = useRuntimeConfig()
-  const polarAccessToken = config.polarAccessToken
-  const polarServer = config.polarServer
+export async function syncUserToPolar(
+  event: H3Event,
+  userId: string,
+  email: string,
+  name?: string,
+) {
+  const config = useRuntimeConfig();
+  const polarAccessToken = config.polarAccessToken;
+  const polarServer = config.polarServer;
 
   if (!polarAccessToken) {
-    console.error('[Polar Sync] Missing POLAR_ACCESS_TOKEN. Skipping sync.')
-    return null
+    console.error("[Polar Sync] Missing POLAR_ACCESS_TOKEN. Skipping sync.");
+    return null;
   }
 
   const polar = new Polar({
     accessToken: polarAccessToken,
-    server: (polarServer?.toLowerCase() as any) || 'sandbox'
-  })
+    server: (polarServer?.toLowerCase() as any) || "sandbox",
+  });
 
   try {
     // Validation guard: Polar metadata and external_id MUST be strings.
-    if (!userId || userId === 'undefined') {
-       console.warn(`[Polar Sync] Aborting sync: userId is invalid (${userId}) for ${email}`)
-       return null
+    if (!userId || userId === "undefined") {
+      console.warn(
+        `[Polar Sync] Aborting sync: userId is invalid (${userId}) for ${email}`,
+      );
+      return null;
     }
 
-    const safeUserId = String(userId)
-    
-    console.log(`[Polar Sync] Syncing user ${safeUserId} (${email})...`)
+    const safeUserId = String(userId);
 
-    let customer: any
+    console.log(`[Polar Sync] Syncing user ${safeUserId} (${email})...`);
+
+    let customer: any;
 
     // 1. Try to find the customer by externalId first
     // In SDK 0.47, we use query or findByExternalId if available
-    const existingByExternal = await polar.customers.list({ query: safeUserId })
+    const existingByExternal = await polar.customers.list({
+      query: safeUserId,
+    });
     if (existingByExternal.result?.items?.[0]) {
-      console.log(`[Polar Sync] User ${safeUserId} already mapped in Polar: ${existingByExternal.result.items[0].id}`)
-      customer = existingByExternal.result.items[0]
+      console.log(
+        `[Polar Sync] User ${safeUserId} already mapped in Polar: ${existingByExternal.result.items[0].id}`,
+      );
+      customer = existingByExternal.result.items[0];
     } else {
       // 2. Try to find the customer by email (to avoid 409 and link existing)
-      const existingByEmail = await polar.customers.list({ email })
+      const existingByEmail = await polar.customers.list({ email });
       if (existingByEmail.result?.items?.[0]) {
-        customer = existingByEmail.result.items[0]
-        console.log(`[Polar Sync] Found existing customer by email ${email}: ${customer.id}. Linking externalId...`)
-        
+        customer = existingByEmail.result.items[0];
+        console.log(
+          `[Polar Sync] Found existing customer by email ${email}: ${customer.id}. Linking externalId...`,
+        );
+
         // Update them with our externalId
         customer = await polar.customers.update({
           id: customer.id,
@@ -68,45 +85,55 @@ export async function syncUserToPolar(event: H3Event, userId: string, email: str
             externalId: safeUserId,
             metadata: {
               ...customer.metadata,
-              supabase_user_id: safeUserId
-            }
-          }
-        })
+              supabase_user_id: safeUserId,
+            },
+          },
+        });
       } else {
         // 3. Create fresh if not found
         customer = await polar.customers.create({
           email,
           externalId: safeUserId,
-          name: name || email.split('@')[0],
+          name: name || email.split("@")[0],
           metadata: {
             supabase_user_id: safeUserId,
-            source: 'replysuite_v2_auto_sync'
-          }
-        })
-        console.log(`[Polar Sync] Successfully created new customer: ${customer.id}`)
+            source: "replysuite_v2_auto_sync",
+          },
+        });
+        console.log(
+          `[Polar Sync] Successfully created new customer: ${customer.id}`,
+        );
       }
     }
 
     // 4. Critically: Persist the ID to our local DB
     // We update both Profiles and User Memberships for maximum reach
-    const serviceClient = serverSupabaseServiceRole(event)
-    
-    await Promise.all([
-      serviceClient.from('profiles').update({ polar_customer_id: customer.id }).eq('id', safeUserId),
-      serviceClient.from('user_memberships').update({ polar_customer_id: customer.id }).eq('user_id', safeUserId)
-    ])
-    
-    console.log(`[Polar Sync] Persisted ${customer.id} to local DB for user ${safeUserId}`)
+    const serviceClient = serverSupabaseServiceRole(event);
 
-    return customer
+    await Promise.all([
+      serviceClient
+        .from("profiles")
+        .update({ polar_customer_id: customer.id })
+        .eq("id", safeUserId),
+      serviceClient
+        .from("user_memberships")
+        .update({ polar_customer_id: customer.id })
+        .eq("user_id", safeUserId),
+    ]);
+
+    console.log(
+      `[Polar Sync] Persisted ${customer.id} to local DB for user ${safeUserId}`,
+    );
+
+    return customer;
   } catch (err: any) {
-    const message = getPolarErrorMessage(err)
+    const message = getPolarErrorMessage(err);
     if (isPolarAuthError(err)) {
-      console.warn(`[Polar Sync] ${message} Skipping customer sync.`)
+      console.warn(`[Polar Sync] ${message} Skipping customer sync.`);
     } else {
-      console.error('[Polar Sync] Error syncing user to Polar:', message)
+      console.error("[Polar Sync] Error syncing user to Polar:", message);
     }
-    return null
+    return null;
   }
 }
 
@@ -116,51 +143,61 @@ export async function syncUserToPolar(event: H3Event, userId: string, email: str
  */
 const getMostRecentValidSubscription = (items: any[] = []) => {
   const validSubs = items.filter((s: any) =>
-    ['active', 'trialing', 'past_due'].includes(s.status)
-  )
+    ["active", "trialing", "past_due"].includes(s.status),
+  );
 
-  if (validSubs.length === 0) return null
+  if (validSubs.length === 0) return null;
 
-  return [...validSubs].sort((a: any, b: any) =>
-    new Date(b.startedAt || 0).getTime() - new Date(a.startedAt || 0).getTime()
-  )[0]
-}
+  return [...validSubs].sort(
+    (a: any, b: any) =>
+      new Date(b.startedAt || 0).getTime() -
+      new Date(a.startedAt || 0).getTime(),
+  )[0];
+};
 
 export async function getPolarSubscriptionStatus(polarCustomerId: string) {
-  const config = useRuntimeConfig()
-  const polarAccessToken = config.polarAccessToken
-  const polarServer = config.polarServer
+  const config = useRuntimeConfig();
+  const polarAccessToken = config.polarAccessToken;
+  const polarServer = config.polarServer;
 
-  if (!polarAccessToken || !polarCustomerId) return null
+  if (!polarAccessToken || !polarCustomerId) return null;
 
   const polar = new Polar({
     accessToken: polarAccessToken,
-    server: (polarServer?.toLowerCase() as any) || 'sandbox'
-  })
+    server: (polarServer?.toLowerCase() as any) || "sandbox",
+  });
 
   try {
-    console.log(`[Polar API] Listing subscriptions for customer ${polarCustomerId}...`)
+    console.log(
+      `[Polar API] Listing subscriptions for customer ${polarCustomerId}...`,
+    );
     const subscriptions = await polar.subscriptions.list({
       customerId: polarCustomerId,
       // We don't filter by 'active: true' here so we can see all states
-    })
+    });
 
-    const items = subscriptions.result?.items || []
-    console.log(`[Polar API] Found ${items.length} total subscriptions for customer.`)
+    const items = subscriptions.result?.items || [];
+    console.log(
+      `[Polar API] Found ${items.length} total subscriptions for customer.`,
+    );
 
-    const subscription = getMostRecentValidSubscription(items)
-    console.log(`[Polar API] Found ${subscription ? 1 : 0} selected valid (active/trialing/past_due) subscription.`)
+    const subscription = getMostRecentValidSubscription(items);
+    console.log(
+      `[Polar API] Found ${subscription ? 1 : 0} selected valid (active/trialing/past_due) subscription.`,
+    );
 
-    return subscription
+    return subscription;
   } catch (err: any) {
-    const message = getPolarErrorMessage(err)
+    const message = getPolarErrorMessage(err);
     if (isPolarAuthError(err)) {
-      console.warn(`[Polar API] ${message} Subscription sync paused; local membership will be preserved.`)
-      return { __unavailable: true, reason: 'invalid_token' }
+      console.warn(
+        `[Polar API] ${message} Subscription sync paused; local membership will be preserved.`,
+      );
+      return { __unavailable: true, reason: "invalid_token" };
     }
 
-    console.error('[Polar API] Error fetching subscription status:', message)
-    return null
+    console.error("[Polar API] Error fetching subscription status:", message);
+    return null;
   }
 }
 
@@ -169,36 +206,52 @@ export async function getPolarSubscriptionStatus(polarCustomerId: string) {
  * This recovers cases where checkout created a fresh Polar customer while the
  * local profile still points at an older customer whose subscriptions are canceled.
  */
-export async function recoverPolarCustomerWithActiveSubscription(event: H3Event, userId: string, email: string, currentPolarId?: string | null) {
-  const config = useRuntimeConfig()
-  const polarAccessToken = config.polarAccessToken
-  const polarServer = config.polarServer
+export async function recoverPolarCustomerWithActiveSubscription(
+  event: H3Event,
+  userId: string,
+  email: string,
+  currentPolarId?: string | null,
+) {
+  const config = useRuntimeConfig();
+  const polarAccessToken = config.polarAccessToken;
+  const polarServer = config.polarServer;
 
-  if (!polarAccessToken || !email) return null
+  if (!polarAccessToken || !email) return null;
 
   const polar = new Polar({
     accessToken: polarAccessToken,
-    server: (polarServer?.toLowerCase() as any) || 'sandbox'
-  })
+    server: (polarServer?.toLowerCase() as any) || "sandbox",
+  });
 
   try {
-    console.log(`[Polar Sync] Looking for active subscriptions across Polar customers for ${email}...`)
-    const customers = await polar.customers.list({ email })
-    const candidates = customers.result?.items || []
+    console.log(
+      `[Polar Sync] Looking for active subscriptions across Polar customers for ${email}...`,
+    );
+    const customers = await polar.customers.list({ email });
+    const candidates = customers.result?.items || [];
 
     const orderedCandidates = [...candidates].sort((a: any, b: any) => {
-      const aStrongMatch = a.externalId === userId || a.metadata?.supabase_user_id === userId
-      const bStrongMatch = b.externalId === userId || b.metadata?.supabase_user_id === userId
-      if (aStrongMatch !== bStrongMatch) return aStrongMatch ? -1 : 1
-      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-    })
+      const aStrongMatch =
+        a.externalId === userId || a.metadata?.supabase_user_id === userId;
+      const bStrongMatch =
+        b.externalId === userId || b.metadata?.supabase_user_id === userId;
+      if (aStrongMatch !== bStrongMatch) return aStrongMatch ? -1 : 1;
+      return (
+        new Date(b.createdAt || 0).getTime() -
+        new Date(a.createdAt || 0).getTime()
+      );
+    });
 
     for (const customer of orderedCandidates) {
-      if (!customer?.id || customer.id === currentPolarId) continue
+      if (!customer?.id || customer.id === currentPolarId) continue;
 
-      const subscriptions = await polar.subscriptions.list({ customerId: customer.id })
-      const subscription = getMostRecentValidSubscription(subscriptions.result?.items || [])
-      if (!subscription) continue
+      const subscriptions = await polar.subscriptions.list({
+        customerId: customer.id,
+      });
+      const subscription = getMostRecentValidSubscription(
+        subscriptions.result?.items || [],
+      );
+      if (!subscription) continue;
 
       try {
         if (customer.externalId !== userId) {
@@ -208,60 +261,74 @@ export async function recoverPolarCustomerWithActiveSubscription(event: H3Event,
               externalId: userId,
               metadata: {
                 ...customer.metadata,
-                supabase_user_id: userId
-              }
-            }
-          })
+                supabase_user_id: userId,
+              },
+            },
+          });
         }
       } catch (linkErr: any) {
-        console.warn('[Polar Sync] Active customer found, but externalId link failed:', linkErr?.message)
+        console.warn(
+          "[Polar Sync] Active customer found, but externalId link failed:",
+          linkErr?.message,
+        );
       }
 
-      const serviceClient = serverSupabaseServiceRole(event)
+      const serviceClient = serverSupabaseServiceRole(event);
       await Promise.all([
-        serviceClient.from('profiles').update({ polar_customer_id: customer.id }).eq('id', userId),
-        serviceClient.from('user_memberships').update({ polar_customer_id: customer.id }).eq('user_id', userId)
-      ])
+        serviceClient
+          .from("profiles")
+          .update({ polar_customer_id: customer.id })
+          .eq("id", userId),
+        serviceClient
+          .from("user_memberships")
+          .update({ polar_customer_id: customer.id })
+          .eq("user_id", userId),
+      ]);
 
-      console.log(`[Polar Sync] Recovered active Polar customer ${customer.id} for user ${userId}.`)
-      return { customer, subscription }
+      console.log(
+        `[Polar Sync] Recovered active Polar customer ${customer.id} for user ${userId}.`,
+      );
+      return { customer, subscription };
     }
   } catch (err: any) {
-    const message = getPolarErrorMessage(err)
+    const message = getPolarErrorMessage(err);
     if (isPolarAuthError(err)) {
-      console.warn(`[Polar Sync] ${message} Recovery lookup skipped.`)
-      return { unavailable: true, reason: 'invalid_token' }
+      console.warn(`[Polar Sync] ${message} Recovery lookup skipped.`);
+      return { unavailable: true, reason: "invalid_token" };
     }
 
-    console.error('[Polar Sync] Failed to recover active Polar customer:', message)
+    console.error(
+      "[Polar Sync] Failed to recover active Polar customer:",
+      message,
+    );
   }
 
-  return null
+  return null;
 }
 
 /**
  * Creates a Customer Portal session for the user to manage their subscription.
  */
 export async function createCustomerPortalSession(polarCustomerId: string) {
-  const config = useRuntimeConfig()
-  const polarAccessToken = config.polarAccessToken
-  const polarServer = config.polarServer
+  const config = useRuntimeConfig();
+  const polarAccessToken = config.polarAccessToken;
+  const polarServer = config.polarServer;
 
-  if (!polarAccessToken || !polarCustomerId) return null
+  if (!polarAccessToken || !polarCustomerId) return null;
 
   const polar = new Polar({
     accessToken: polarAccessToken,
-    server: (polarServer?.toLowerCase() as any) || 'sandbox'
-  })
+    server: (polarServer?.toLowerCase() as any) || "sandbox",
+  });
 
   try {
     const session = await polar.customerSessions.create({
       customerId: polarCustomerId,
-    })
-    return (session as any).customerPortalUrl
+    });
+    return (session as any).customerPortalUrl;
   } catch (err) {
-    console.error('[Polar API] Error creating portal session:', err)
-    return null
+    console.error("[Polar API] Error creating portal session:", err);
+    return null;
   }
 }
 
@@ -269,49 +336,59 @@ export async function createCustomerPortalSession(polarCustomerId: string) {
  * Reconciles a user's Polar subscriptions with the local database.
  * This is the source of truth for "Active" vs "Current" plans.
  */
-export async function syncUserSubscriptions(event: any, userId: string, polarId: string) {
-  const { serverSupabaseServiceRole } = await import('#supabase/server')
-  const adminClient = serverSupabaseServiceRole(event)
+export async function syncUserSubscriptions(
+  event: any,
+  userId: string,
+  polarId: string,
+) {
+  const { serverSupabaseServiceRole } = await import("#supabase/server");
+  const adminClient = serverSupabaseServiceRole(event);
 
-  console.log(`[Polar Sync] Reconciling subscriptions for user ${userId} (Polar: ${polarId})...`)
-  
+  console.log(
+    `[Polar Sync] Reconciling subscriptions for user ${userId} (Polar: ${polarId})...`,
+  );
+
   // 1. Fetch status directly from Polar
-  const polarSub = await getPolarSubscriptionStatus(polarId)
+  const polarSub = await getPolarSubscriptionStatus(polarId);
 
   if ((polarSub as any)?.__unavailable) {
-    console.warn(`[Polar Sync] Polar unavailable for ${polarId}. Preserving local membership records.`)
+    console.warn(
+      `[Polar Sync] Polar unavailable for ${polarId}. Preserving local membership records.`,
+    );
     return {
       hasActive: false,
       unavailable: true,
-      reason: (polarSub as any).reason || 'polar_unavailable',
-      preservedLocal: true
-    }
+      reason: (polarSub as any).reason || "polar_unavailable",
+      preservedLocal: true,
+    };
   }
-  
+
   if (!polarSub) {
-    console.log(`[Polar Sync] No active card subscription found for ${polarId}. Preserving local/mobile-payment memberships.`)
+    console.log(
+      `[Polar Sync] No active card subscription found for ${polarId}. Preserving local/mobile-payment memberships.`,
+    );
     return {
       hasActive: false,
       preservedLocal: true,
-      reason: 'no_active_card_subscription'
-    }
+      reason: "no_active_card_subscription",
+    };
   }
 
   // 2. Map Polar product to our local plans
   const { data: plan } = await adminClient
-    .from('plans')
-    .select('id, internal_slug')
+    .from("plans")
+    .select("id, internal_slug")
     .or(`polar_product_id.eq.${polarSub.productId}`)
-    .maybeSingle()
+    .maybeSingle();
 
   if (plan) {
     // 3. Update local DB. Do not deactivate local/mobile-payment memberships here;
     // plan priority selection decides the effective active plan when multiple rows exist.
     // polarSub.currentPeriodEnd is the most reliable for 'ends_at'
-    const endsAt = polarSub.currentPeriodEnd || polarSub.endsAt || null
+    const endsAt = polarSub.currentPeriodEnd || polarSub.endsAt || null;
 
-    await adminClient
-      .from('user_memberships')
+    const { data: membership, error: membershipError } = await adminClient
+      .from("user_memberships")
       .insert({
         user_id: userId,
         plan_id: plan.id,
@@ -319,19 +396,35 @@ export async function syncUserSubscriptions(event: any, userId: string, polarId:
         polar_subscription_id: polarSub.id,
         is_active: true,
         starts_at: polarSub.startedAt || new Date().toISOString(),
-        ends_at: endsAt
+        ends_at: endsAt,
       })
-    
-    console.log(`[Polar Sync] Successfully mapped user ${userId} to plan ${plan.internal_slug}. Expiry: ${endsAt}`)
-    return { 
-      hasActive: true, 
-      plan: plan.internal_slug, 
+      .select("id")
+      .single();
+
+    if (membershipError) throw membershipError;
+
+    const { error: deactivateError } = await deactivateOtherActiveMemberships(
+      adminClient,
+      userId,
+      membership?.id,
+    );
+    if (deactivateError)
+      console.warn("[Polar Sync] Membership cleanup failed:", deactivateError);
+
+    console.log(
+      `[Polar Sync] Successfully mapped user ${userId} to plan ${plan.internal_slug}. Expiry: ${endsAt}`,
+    );
+    return {
+      hasActive: true,
+      plan: plan.internal_slug,
       planName: plan.display_name || plan.name,
-      subscription: polarSub 
-    }
+      subscription: polarSub,
+    };
   } else {
-    console.warn(`[Polar Sync] Polar product ${polarSub.productId} not found in local plans table.`)
-    return { hasActive: true, plan: 'custom', subscription: polarSub }
+    console.warn(
+      `[Polar Sync] Polar product ${polarSub.productId} not found in local plans table.`,
+    );
+    return { hasActive: true, plan: "custom", subscription: polarSub };
   }
 }
 
@@ -339,29 +432,34 @@ export async function syncUserSubscriptions(event: any, userId: string, polarId:
  * Updates an existing subscription to a new product.
  * Triggers immediate proration invoicing.
  */
-export async function updatePolarSubscription(subscriptionId: string, productId: string) {
-  const config = useRuntimeConfig()
-  const polarAccessToken = config.polarAccessToken
-  const polarServer = config.polarServer
+export async function updatePolarSubscription(
+  subscriptionId: string,
+  productId: string,
+) {
+  const config = useRuntimeConfig();
+  const polarAccessToken = config.polarAccessToken;
+  const polarServer = config.polarServer;
 
-  if (!polarAccessToken || !subscriptionId) return null
+  if (!polarAccessToken || !subscriptionId) return null;
 
   const polar = new Polar({
     accessToken: polarAccessToken,
-    server: (polarServer?.toLowerCase() as any) || 'sandbox'
-  })
+    server: (polarServer?.toLowerCase() as any) || "sandbox",
+  });
 
   try {
-    console.log(`[Polar API] Updating subscription ${subscriptionId} to product ${productId}...`)
+    console.log(
+      `[Polar API] Updating subscription ${subscriptionId} to product ${productId}...`,
+    );
     const result = await polar.subscriptions.update({
       id: subscriptionId,
       subscriptionUpdate: {
         productId: productId,
-      }
-    })
-    return result
+      },
+    });
+    return result;
   } catch (err: any) {
-    console.error('[Polar API] Error updating subscription:', err.message)
-    throw err
+    console.error("[Polar API] Error updating subscription:", err.message);
+    throw err;
   }
 }
