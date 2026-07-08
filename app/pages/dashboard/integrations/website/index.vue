@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import {
-  ArrowLeft,
   Check,
-  ChevronDown,
   Code2,
   Copy,
   Globe,
@@ -30,7 +28,8 @@ const supabase = useSupabaseClient()
 const notify = useNotify()
 
 const chatbots = ref<any[]>([])
-const selectedChatbotId = ref('')
+const selectedChatbotId = useState<string>('dashboard-website-selected-bot-id', () => '')
+const websiteBotOptions = useState<Array<{ label: string; value: string }>>('dashboard-website-bot-options', () => [])
 const isLoading = ref(true)
 const isSaving = ref(false)
 const copiedType = ref<string | null>(null)
@@ -113,8 +112,9 @@ const fetchChatbots = async () => {
     if (error) throw error
 
     chatbots.value = data || []
+    websiteBotOptions.value = chatbots.value.map((bot) => ({ label: bot.name || 'Untitled assistant', value: bot.id }))
 
-    if (!selectedChatbotId.value && chatbots.value.length > 0) {
+    if ((!selectedChatbotId.value || !chatbots.value.some((bot) => bot.id === selectedChatbotId.value)) && chatbots.value.length > 0) {
       selectedChatbotId.value = chatbots.value[0].id
     }
 
@@ -203,233 +203,227 @@ const scriptTag = computed(() => {
   const id = selectedChatbotId.value || 'YOUR_CHATBOT_ID'
   return `<script src="${siteOrigin.value}/embed.js" data-chatbot="${id}"><\/script>`
 })
+
+const scriptTagParts = computed(() => ({
+  src: `${siteOrigin.value}/embed.js`,
+  chatbotId: selectedChatbotId.value || 'YOUR_CHATBOT_ID',
+}))
+
+const connectionMetrics = computed(() => [
+  {
+    label: 'Approved domains',
+    value: `${domainCount.value} / ${maxWebsiteDomains.value}`,
+    detail: `${currentPlanLabel.value} limit`,
+    icon: Globe,
+    tone: 'primary',
+  },
+  {
+    label: 'Connection status',
+    value: isConnectionActive.value ? 'Active' : 'Draft',
+    detail: isConnectionActive.value ? 'Website chat can load' : 'Save a domain to activate',
+    icon: isConnectionActive.value ? ShieldCheck : Shield,
+    tone: isConnectionActive.value ? 'green' : 'muted',
+  },
+  {
+    label: 'Assistant',
+    value: selectedChatbot.value?.name || 'None',
+    detail: selectedChatbot.value ? 'Controls widget replies' : 'Create or select one',
+    icon: MessageSquare,
+    tone: 'blue',
+  },
+  {
+    label: 'Local testing',
+    value: localhostTestingEnabled.value ? 'On' : 'Off',
+    detail: localhostTestingEnabled.value ? 'Allowed for development' : 'Production domains only',
+    icon: Code2,
+    tone: localhostTestingEnabled.value ? 'amber' : 'muted',
+  },
+])
+
+const metricToneClass = (tone: string) => ({
+  primary: 'bg-primary/10 text-primary ring-primary/15',
+  blue: 'bg-sky-400/10 text-sky-400 ring-sky-400/15',
+  green: 'bg-emerald-400/10 text-emerald-400 ring-emerald-400/15',
+  amber: 'bg-amber-400/10 text-amber-400 ring-amber-400/15',
+  muted: 'bg-foreground/5 text-foreground/45 ring-foreground/10',
+}[tone] || 'bg-foreground/5 text-foreground/45 ring-foreground/10')
+
 </script>
 
 <template>
-  <div class="w-full space-y-6 pb-20">
-    <NuxtLink to="/dashboard" class="dashboard-back-link group mb-2">
-      <ArrowLeft class="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
-      Back to Overview
-    </NuxtLink>
-
-    <section class="glass-card p-6 md:p-7">
-      <div class="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+  <div class="min-h-[calc(100vh-4.5rem)] space-y-5 pt-3 pb-24 lg:pb-0" style="zoom: 0.95">
+    <section class="rounded-[0.39rem] p-5 sm:p-6">
+      <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
-            Website integration
-          </span>
-          <h1 class="mt-4 text-2xl font-extrabold tracking-tight text-foreground md:text-3xl">
-            Connect your chatbot to your website.
-          </h1>
-          <p class="mt-2 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55">
-            Choose an assistant, approve your domain, save, then copy the embed script into your site.
-          </p>
+          <p class="dashboard-eyebrow text-primary/80">Website channel</p>
+          <h1 class="dashboard-section-title mt-2">Connect website chat</h1>
+          <p class="dashboard-muted mt-1 max-w-2xl">Approve production domains, save the channel, then install the widget script on your website.</p>
         </div>
+        <NuxtLink to="/dashboard/pricing" class="dashboard-action-label inline-flex w-fit items-center justify-center rounded-[0.39rem] border border-foreground/10 bg-background/55 px-3 py-2 text-foreground/55 transition hover:border-primary/25 hover:text-primary">
+          Upgrade plan
+        </NuxtLink>
+      </div>
 
-        <div class="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-widest">
-          <div class="rounded-xl border border-primary/20 bg-primary/10 px-4 py-2 text-primary">
-            {{ domainCount }} / {{ maxWebsiteDomains }} domains
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div v-for="metric in connectionMetrics" :key="metric.label" class="group flex items-center gap-2.5 rounded-[0.39rem] bg-background/45 py-3 pl-3 pr-2 transition hover:bg-foreground/[0.035]">
+          <div :class="['flex h-[2.85rem] w-[2.85rem] shrink-0 items-center justify-center rounded-[0.39rem] ring-1 transition group-hover:scale-105', metricToneClass(metric.tone)]">
+            <component :is="metric.icon" class="h-5 w-5" />
           </div>
-          <div
-            class="rounded-xl border px-4 py-2"
-            :class="isConnectionActive ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : 'border-foreground/10 bg-foreground/5 text-foreground/60'"
-          >
-            {{ isConnectionActive ? 'Active' : 'Draft' }}
+          <div class="min-w-0">
+            <p class="truncate text-base font-bold leading-none tracking-tight text-foreground">{{ metric.value }}</p>
+            <p class="mt-1 truncate text-sm font-semibold text-foreground/75">{{ metric.label }}</p>
+            <p class="mt-0.5 truncate text-[11px] font-semibold text-foreground/50">{{ metric.detail }}</p>
           </div>
         </div>
       </div>
     </section>
 
-    <div v-if="!isVerified" class="glass-card flex flex-col items-center border-primary/20 bg-primary/5 p-10 text-center">
-      <ShieldCheck class="mb-5 h-12 w-12 text-primary opacity-40" />
-      <h2 class="mb-3 text-xl font-black text-foreground">Verification Required</h2>
-      <p class="mb-6 max-w-sm text-xs font-bold uppercase tracking-widest text-foreground/50">
-        Please verify your account to unlock external embeddings and website access.
-      </p>
-      <NuxtLink to="/dashboard/settings" class="rounded-xl bg-primary px-7 py-3 text-xs font-bold uppercase tracking-widest text-black transition-all hover:scale-105">
+    <section v-if="!isVerified" class="rounded-[0.39rem] border border-primary/20 bg-primary/5 p-6 text-center shadow-sm shadow-black/5">
+      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-[0.39rem] bg-primary/10 text-primary ring-1 ring-primary/15">
+        <ShieldCheck class="h-6 w-6" />
+      </div>
+      <h2 class="mt-4 text-lg font-bold tracking-tight text-foreground">Verify your email to connect website chat</h2>
+      <p class="dashboard-muted mx-auto mt-2 max-w-md">Account verification is required before publishing an assistant on your website.</p>
+      <NuxtLink to="/dashboard/settings" class="dashboard-action-label mt-5 inline-flex items-center justify-center rounded-[0.39rem] bg-primary px-4 py-2.5 text-black transition hover:brightness-95">
         Go to settings
       </NuxtLink>
-    </div>
+    </section>
 
-    <div v-else-if="isLoading" class="grid gap-5 lg:grid-cols-2">
-      <section class="glass-card p-6">
-        <Skeleton width="180px" height="12px" class="mb-5" />
-        <Skeleton height="180px" radius="1rem" />
-      </section>
-      <section class="glass-card p-6">
-        <Skeleton width="180px" height="12px" class="mb-5" />
-        <Skeleton height="180px" radius="1rem" />
-      </section>
-    </div>
+    <template v-else-if="isLoading">
+      <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <section class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 sm:p-6">
+          <Skeleton width="9rem" height="0.8rem" class="mb-3" />
+          <Skeleton width="14rem" height="1.35rem" class="mb-5" />
+          <Skeleton height="18rem" radius="0.39rem" />
+        </section>
+        <section class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 sm:p-6">
+          <Skeleton width="8rem" height="0.8rem" class="mb-3" />
+          <Skeleton height="16rem" radius="0.39rem" />
+        </section>
+      </div>
+    </template>
 
-    <div v-else class="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
-      <section class="glass-card space-y-6 p-6 md:p-7">
-        <div>
-          <label class="mb-3 block text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Assistant</label>
-          <div class="relative max-w-xl">
-            <select
-              v-model="selectedChatbotId"
-              class="w-full cursor-pointer appearance-none rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-3 pr-11 text-sm font-bold text-foreground transition-all focus:border-primary/40 focus:outline-none"
-            >
-              <option v-for="bot in chatbots" :key="bot.id" :value="bot.id" class="bg-background">{{ bot.name }}</option>
-            </select>
-            <ChevronDown class="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/50" />
-            <div v-if="chatbots.length === 0" class="absolute inset-0 flex items-center rounded-xl bg-background/90 px-4 backdrop-blur-sm">
-              <NuxtLink to="/dashboard/agents" class="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">
-                Create your first assistant to continue
-              </NuxtLink>
-            </div>
+    <div v-else class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <section class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 sm:p-6">
+        <div class="mb-5 flex items-end justify-between gap-3">
+          <div>
+            <p class="dashboard-eyebrow text-primary/80">Connection setup</p>
+            <h2 class="dashboard-section-title mt-2">Approved website access</h2>
+            <p class="dashboard-muted mt-1">Approve where the selected assistant widget can load.</p>
           </div>
         </div>
 
-        <div class="rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Plan limit</p>
-              <p class="mt-1 text-sm font-bold text-foreground">{{ currentPlanLabel }} allows {{ maxWebsiteDomains }} domain{{ maxWebsiteDomains === 1 ? '' : 's' }} per assistant.</p>
-            </div>
-            <NuxtLink to="/dashboard/pricing" class="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">
-              Upgrade plan
-            </NuxtLink>
-          </div>
-        </div>
-
-        <div class="space-y-4">
-          <label class="block text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Approved domains</label>
-          <div class="flex flex-col gap-3 sm:flex-row">
-            <input
-              v-model="newDomainInput"
-              type="text"
-              class="flex-1 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-3 text-sm text-foreground transition-colors placeholder:text-foreground/35 focus:border-primary/40 focus:outline-none"
-              placeholder="example.com"
-              @keydown.enter.prevent="addDomain"
-            />
-            <button
-              @click="addDomain"
-              :disabled="hasReachedLimit"
-              class="inline-flex items-center justify-center gap-2 rounded-xl border border-foreground/10 bg-foreground/5 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-foreground transition-all hover:bg-foreground/10 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Plus class="h-4 w-4" />
-              Add
-            </button>
+        <div class="space-y-5">
+          <div v-if="chatbots.length === 0" class="rounded-[0.39rem] border border-primary/15 bg-primary/5 p-3">
+            <p class="text-sm font-bold text-foreground">No assistant yet</p>
+            <p class="dashboard-muted mt-1">Create an assistant before connecting website chat.</p>
+            <NuxtLink to="/dashboard/agents" class="dashboard-action-label mt-3 inline-flex text-primary hover:underline">Create your first assistant</NuxtLink>
           </div>
 
-          <div class="space-y-2">
-            <div
-              v-for="domain in connectionForm.allowedDomains"
-              :key="domain"
-              class="flex items-center gap-3 rounded-xl border border-foreground/10 bg-foreground/[0.02] px-4 py-3"
-            >
-              <Globe class="h-4 w-4 shrink-0 text-primary" />
-              <span class="flex-1 text-sm font-medium text-foreground">{{ domain }}</span>
-              <button
-                @click="removeDomain(domain)"
-                class="rounded-lg p-2 text-foreground/40 transition-colors hover:bg-red-500/10 hover:text-red-400"
-                aria-label="Remove domain"
-              >
-                <Trash2 class="h-4 w-4" />
+
+          <div>
+            <label class="dashboard-eyebrow mb-2 block">Approved domains</label>
+            <div class="flex flex-col gap-2 sm:flex-row">
+              <input v-model="newDomainInput" type="text" class="min-w-0 flex-1 rounded-[0.39rem] border border-foreground/10 bg-background/55 px-3 py-2.5 text-sm text-foreground outline-none transition placeholder:text-foreground/35 focus:border-primary/40" placeholder="example.com" @keydown.enter.prevent="addDomain" />
+              <button type="button" @click="addDomain" :disabled="hasReachedLimit" class="dashboard-action-label inline-flex items-center justify-center gap-1.5 rounded-[0.39rem] border border-foreground/10 bg-background/55 px-3 py-2.5 text-foreground/60 transition hover:border-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50">
+                <Plus class="h-3.5 w-3.5" /> Add
               </button>
             </div>
 
-            <div v-if="connectionForm.allowedDomains.length === 0" class="rounded-xl border border-dashed border-foreground/10 bg-foreground/[0.02] p-5 text-center">
-              <p class="text-[10px] font-black uppercase tracking-widest text-foreground/45">
-                Add at least one production domain to activate the connection.
-              </p>
+            <div class="mt-3 overflow-hidden rounded-[0.39rem] border border-foreground/10 bg-background/35">
+              <div v-for="domain in connectionForm.allowedDomains" :key="domain" class="flex items-center gap-3 border-b border-foreground/[0.06] px-3 py-2.5 last:border-b-0">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.35rem] bg-primary/10 text-primary ring-1 ring-primary/15">
+                  <Globe class="h-4 w-4" />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-bold text-foreground">{{ domain }}</p>
+                  <p class="text-[11px] font-semibold text-foreground/40">Production domain</p>
+                </div>
+                <span class="hidden rounded-[0.3rem] border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300 sm:inline-flex">Approved</span>
+                <button type="button" @click="removeDomain(domain)" class="rounded-[0.35rem] p-2 text-foreground/35 transition hover:bg-red-500/10 hover:text-red-400" aria-label="Remove domain">
+                  <Trash2 class="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <div v-if="connectionForm.allowedDomains.length === 0" class="flex min-h-[7rem] flex-col items-center justify-center p-5 text-center">
+                <Globe class="mb-3 h-9 w-9 text-foreground/15" />
+                <p class="text-sm font-bold text-foreground/55">No approved domains yet</p>
+                <p class="dashboard-muted mt-1 max-w-sm">Add your production domain to activate website chat for this assistant.</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="flex flex-col gap-4 rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Localhost testing</p>
-            <p class="mt-1 text-sm font-medium leading-relaxed text-foreground/55">
-              Keep enabled while testing locally. You can turn it off after the connection is active.
-            </p>
-          </div>
-
-          <button
-            @click="localhostTestingEnabled = !localhostTestingEnabled"
-            :disabled="!canDisableLocalhost"
-            :class="[
-              'h-8 w-14 shrink-0 rounded-full p-1 transition-all',
-              localhostTestingEnabled ? 'bg-primary' : 'bg-foreground/10',
-              !canDisableLocalhost ? 'cursor-not-allowed opacity-60' : ''
-            ]"
-            aria-label="Toggle localhost testing"
-          >
-            <div :class="['h-6 w-6 rounded-full bg-white transition-all', localhostTestingEnabled ? 'translate-x-6' : 'translate-x-0']" />
-          </button>
-        </div>
-
-        <button
-          @click="saveConnection"
-          :disabled="!selectedChatbotId || isSaving || domainCount === 0"
-          class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-4 text-[11px] font-black uppercase tracking-widest text-black transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-        >
-          <Loader2 v-if="isSaving" class="h-4 w-4 animate-spin" />
-          <Check v-else class="h-4 w-4" />
-          {{ isConnectionActive ? 'Update connection' : 'Activate connection' }}
-        </button>
-      </section>
-
-      <section class="glass-card space-y-6 p-6 md:p-7">
-        <div class="flex items-start gap-4">
-          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Code2 class="h-5 w-5" />
-          </div>
-          <div>
-            <h2 class="text-xl font-black tracking-tight text-foreground">Embed script</h2>
-            <p class="mt-1 text-sm font-medium leading-relaxed text-foreground/55">
-              Paste this snippet before the closing body tag on your approved website.
-            </p>
-          </div>
-        </div>
-
-        <div class="relative flex items-center gap-4 overflow-x-auto rounded-xl border border-foreground/10 bg-foreground/[0.03] p-4">
-          <pre class="flex-1 whitespace-pre-wrap break-all text-[11px] leading-relaxed text-foreground/60">{{ scriptTag }}</pre>
-          <button
-            @click="copyText(scriptTag, 'Embed script')"
-            class="shrink-0 rounded-xl bg-foreground/5 p-3 text-foreground/50 transition-all hover:bg-foreground/10 hover:text-foreground"
-            aria-label="Copy embed script"
-          >
-            <component :is="copiedType === 'Embed script' ? Check : Copy" class="h-4 w-4" />
-          </button>
-        </div>
-
-        <div v-if="selectedChatbot" class="rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4">
-          <p class="mb-4 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Launcher preview</p>
-          <div class="flex items-center gap-4">
-            <div
-              class="flex h-12 w-12 items-center justify-center shadow-xl"
-              :style="{
-                backgroundColor: selectedChatbot.launcher_color || selectedChatbot.primary_color || '#D4AF37',
-                borderRadius: selectedChatbot.launcher_style === 'circle' ? '50%' : selectedChatbot.launcher_style === 'square' ? '0px' : selectedChatbot.launcher_style === 'rounded-square' ? '12px' : '9999px'
-              }"
-            >
-              <component :is="launcherIconsMap[selectedChatbot.launcher_icon] || MessageSquare" class="h-6 w-6 text-black" />
-            </div>
+          <div class="flex flex-col gap-3 rounded-[0.39rem] border border-foreground/10 bg-background/35 p-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p class="text-sm font-bold text-foreground">{{ selectedChatbot.name }}</p>
-              <p class="mt-1 text-xs font-medium text-foreground/50">This launcher appears after the script loads on an approved domain.</p>
+              <p class="text-sm font-bold text-foreground">Localhost testing</p>
+              <p class="dashboard-muted mt-1">Keep enabled while testing locally, then disable after launch.</p>
+            </div>
+            <button type="button" @click="localhostTestingEnabled = !localhostTestingEnabled" :disabled="!canDisableLocalhost" :class="['h-7 w-12 shrink-0 rounded-full p-1 transition-all', localhostTestingEnabled ? 'bg-primary' : 'bg-foreground/10', !canDisableLocalhost ? 'cursor-not-allowed opacity-60' : '']" aria-label="Toggle localhost testing">
+              <div :class="['h-5 w-5 rounded-full bg-white transition-all', localhostTestingEnabled ? 'translate-x-5' : 'translate-x-0']" />
+            </button>
+          </div>
+
+          <button type="button" @click="saveConnection" :disabled="!selectedChatbotId || isSaving || domainCount === 0" class="dashboard-action-label inline-flex w-full items-center justify-center gap-1.5 rounded-[0.39rem] bg-primary px-4 py-3 text-black transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+            <Loader2 v-if="isSaving" class="h-3.5 w-3.5 animate-spin" />
+            <Check v-else class="h-3.5 w-3.5" />
+            Save website channel
+          </button>
+        </div>
+      </section>
+
+      <aside class="space-y-3 rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 sm:p-6">
+        <div>
+          <p class="dashboard-eyebrow text-primary/80">Install widget</p>
+          <h2 class="dashboard-section-title mt-2">Embed script</h2>
+          <p class="dashboard-muted mt-1">Paste this before the closing body tag on an approved website.</p>
+        </div>
+
+        <div class="overflow-hidden rounded-[0.39rem] border border-primary/15 bg-gradient-to-br from-background/80 via-background-card/70 to-primary/[0.055] shadow-sm shadow-black/10">
+          <div class="flex items-center justify-between gap-3 border-b border-foreground/10 bg-foreground/[0.035] px-3 py-2.5">
+            <div class="flex min-w-0 items-center gap-2">
+              <div class="flex items-center gap-1.5">
+                <span class="h-2 w-2 rounded-full bg-red-400/80" />
+                <span class="h-2 w-2 rounded-full bg-amber-300/80" />
+                <span class="h-2 w-2 rounded-full bg-emerald-400/80" />
+              </div>
+              <span class="truncate text-[11px] font-bold text-foreground/50">widget install</span>
+            </div>
+            <span class="rounded-[0.3rem] border border-primary/15 bg-primary/10 px-2 py-0.5 text-[10px] font-black text-primary">1 line</span>
+          </div>
+
+          <div class="relative p-3">
+            <div class="pointer-events-none absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-[0.35rem] bg-primary/10 text-primary ring-1 ring-primary/15">
+              <Code2 class="h-3.5 w-3.5" />
+            </div>
+            <pre class="max-h-40 overflow-auto rounded-[0.35rem] border border-foreground/10 bg-background/65 p-3 pr-11 text-[11px] leading-relaxed text-foreground/70 shadow-inner shadow-black/10"><code class="whitespace-pre-wrap break-all"><span class="text-primary/90">&lt;script</span> <span class="text-sky-300">src</span>=<span class="text-emerald-300">&quot;{{ scriptTagParts.src }}&quot;</span> <span class="text-sky-300">data-chatbot</span>=<span class="text-emerald-300">&quot;{{ scriptTagParts.chatbotId }}&quot;</span><span class="text-primary/90">&gt;&lt;/script&gt;</span></code></pre>
+            <button type="button" @click="copyText(scriptTag, 'Embed script')" class="dashboard-action-label mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-[0.39rem] bg-primary px-3 py-2.5 text-black shadow-sm shadow-primary/10 transition hover:brightness-95 active:scale-[0.99]">
+              <component :is="copiedType === 'Embed script' ? Check : Copy" class="h-3.5 w-3.5" />
+              {{ copiedType === 'Embed script' ? 'Script copied' : 'Copy embed script' }}
+            </button>
+          </div>
+        </div>
+
+        <div v-if="selectedChatbot" class="rounded-[0.39rem] border border-foreground/10 bg-background/35 p-3">
+          <p class="dashboard-eyebrow mb-3">Launcher preview</p>
+          <div class="flex items-center gap-3">
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center shadow-sm ring-1 ring-black/10" :style="{ backgroundColor: selectedChatbot.launcher_color || selectedChatbot.primary_color || '#D4AF37', borderRadius: selectedChatbot.launcher_style === 'circle' ? '50%' : selectedChatbot.launcher_style === 'square' ? '0px' : selectedChatbot.launcher_style === 'rounded-square' ? '0.39rem' : '9999px' }">
+              <component :is="launcherIconsMap[selectedChatbot.launcher_icon] || MessageSquare" class="h-5 w-5 text-black" />
+            </div>
+            <div class="min-w-0">
+              <p class="truncate text-sm font-bold text-foreground">{{ selectedChatbot.name }}</p>
+              <p class="dashboard-muted mt-0.5">Appears after the script loads on an approved domain.</p>
             </div>
           </div>
         </div>
 
-        <div class="rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4">
-          <div class="flex items-start gap-3">
+
+        <div class="rounded-[0.39rem] border border-foreground/10 bg-background/35 p-3">
+          <div class="flex items-start gap-2">
             <Shield class="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <p class="text-xs font-medium leading-relaxed text-foreground/55">
-              Only domains saved on this page can use the public widget for this assistant. Localhost is for testing only.
-            </p>
+            <p class="dashboard-muted">Only approved domains can load this assistant widget. Localhost is for development testing only.</p>
           </div>
         </div>
-      </section>
+      </aside>
     </div>
   </div>
 </template>
-
-<style scoped>
-.glass-card {
-  @apply rounded-[20px] border border-foreground/10 bg-foreground/[0.03] backdrop-blur-xl;
-}
-</style>

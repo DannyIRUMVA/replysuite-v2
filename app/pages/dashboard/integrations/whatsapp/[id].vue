@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import { 
-  ArrowLeft, 
-  MessageSquare, 
-  Bot, 
-  Trash2, 
-  CheckCircle2, 
-  Terminal, 
-  Send, 
-  Layout, 
-  Loader2,
-  Trash,
-  Settings,
-  Activity
+import {
+  ArrowLeft,
+  Activity,
+  Bot,
+  CheckCircle2,
+  Clock3,
+  HelpCircle,
+  MessageSquare,
+  ShieldCheck,
+  Smartphone,
+  Trash2,
+  Zap
 } from 'lucide-vue-next'
 
 definePageMeta({
@@ -21,34 +20,85 @@ definePageMeta({
 
 const route = useRoute()
 const accountId = route.params.id as string
-const { user, setInteracting, planSlug } = useAuth()
+const { setInteracting, planSlug, userId } = useAuth()
 const supabase = useSupabaseClient()
-const isLocked = computed(() => planSlug.value === 'starter' || !planSlug.value)
 const notify = useNotify()
-const config = useRuntimeConfig()
+const isLocked = computed(() => planSlug.value === 'starter' || !planSlug.value)
 
 const waAccount = ref<any>(null)
 const isLoading = ref(true)
-const isDeploying = ref(false)
-const isSendingTest = ref(false)
-const isCreatingTemplate = ref(false)
-const showReviewToolkit = ref(true)
+const isUpdating = ref(false)
 
-// Test States
-const testPhone = ref('')
-const testMessage = ref('Hello from ReplySuite! This is a test message for Meta App Review.')
-const templateName = ref('')
-const templateBody = ref('Thank you for contacting us. Our AI agent is currently reviewing your request.')
-
-// Agents for mapping
 const { data: agentsData } = useAsyncData('agents-list-whatsapp-config', async () => {
-    const { data } = await supabase.from('chatbots').select('id, name').is('deleted_at', null)
-    return data || []
-})
+  if (!userId.value) return []
+  const { data } = await supabase
+    .from('chatbots')
+    .select('id, name')
+    .eq('user_id', userId.value)
+    .is('deleted_at', null)
+    .order('name')
+  return data || []
+}, { watch: [userId], server: false })
 const agents = computed(() => agentsData.value || [])
 
+const selectedAssistantName = computed(() => {
+  const agent = agents.value.find((item: any) => item.id === waAccount.value?.chatbot_id)
+  return agent?.name || null
+})
+
+const isLive = computed(() => waAccount.value?.status === 'deployed' || waAccount.value?.status === 'active')
+const isPending = computed(() => !isLive.value)
+
+const statusLabel = computed(() => {
+  if (isLive.value) return 'Live'
+  if (waAccount.value?.status === 'failed') return 'Needs attention'
+  return 'Pending setup'
+})
+
+const statusDetail = computed(() => {
+  if (isLive.value) return 'AI replies can run on this WhatsApp number.'
+  if (waAccount.value?.status === 'failed') return 'ReplySuite needs to review this connection before it can go live.'
+  return 'ReplySuite is finishing the technical WhatsApp setup for this number.'
+})
+
+const statusToneClass = computed(() => {
+  if (isLive.value) return 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300'
+  if (waAccount.value?.status === 'failed') return 'border-red-400/20 bg-red-400/10 text-red-300'
+  return 'border-amber-400/20 bg-amber-400/10 text-amber-300'
+})
+
+const statusIcon = computed(() => {
+  if (isLive.value) return CheckCircle2
+  if (waAccount.value?.status === 'failed') return HelpCircle
+  return Clock3
+})
+
+const connectionHealth = computed(() => [
+  {
+    label: 'Number received',
+    value: waAccount.value?.phone_number || '—',
+    detail: 'Saved for connection setup',
+    done: Boolean(waAccount.value?.phone_number),
+    icon: Smartphone,
+  },
+  {
+    label: 'Reply assistant',
+    value: selectedAssistantName.value || 'Not selected',
+    detail: selectedAssistantName.value ? 'Assigned to this line' : 'Choose who should reply',
+    done: Boolean(waAccount.value?.chatbot_id),
+    icon: Bot,
+  },
+  {
+    label: 'Technical setup',
+    value: isLive.value ? 'Complete' : 'In progress',
+    detail: isLive.value ? 'Connection is ready' : 'ReplySuite is handling this step',
+    done: isLive.value,
+    icon: ShieldCheck,
+  },
+])
+
 const fetchAccount = async () => {
-  if (isLocked.value) {
+  if (isLocked.value || !userId.value) {
     isLoading.value = false
     return
   }
@@ -59,12 +109,13 @@ const fetchAccount = async () => {
       .from('whatsapp_accounts')
       .select('*')
       .eq('id', accountId)
+      .eq('user_id', userId.value)
       .single()
-    
+
     if (error) throw error
     waAccount.value = data
   } catch (err: any) {
-    notify.error('Failed to load WhatsApp account.')
+    notify.error('Failed to load WhatsApp number.')
     navigateTo('/dashboard/integrations/whatsapp')
   } finally {
     isLoading.value = false
@@ -72,112 +123,45 @@ const fetchAccount = async () => {
 }
 
 const updateMapping = async (chatbotId: string | null) => {
-    try {
-        const { error } = await supabase
-            .from('whatsapp_accounts')
-            .update({ chatbot_id: chatbotId })
-            .eq('id', accountId)
-        
-        if (error) throw error
-        notify.success('AI Agent mapping updated!')
-        fetchAccount()
-    } catch (err: any) {
-        notify.error(`Mapping Failed: ${err.message}`)
-    }
-}
+  if (isUpdating.value || !userId.value) return
 
-const deployNode = async () => {
-    isDeploying.value = true
-    try {
-        const { error } = await supabase
-            .from('whatsapp_accounts')
-            .update({ status: 'deployed' })
-            .eq('id', accountId)
-        
-        if (error) throw error
-        notify.success('Node Deployed! Your AI agent is now live.')
-        fetchAccount()
-    } catch (err: any) {
-        notify.error(`Deployment Failed: ${err.message}`)
-    } finally {
-        isDeploying.value = false
-    }
-}
+  if (chatbotId && !agents.value.some((agent: any) => agent.id === chatbotId)) {
+    notify.error('Choose one of your own assistants for this WhatsApp number.')
+    return
+  }
 
-const sendTestMessage = async () => {
-    if (!testPhone.value || !testMessage.value) return
-    isSendingTest.value = true
-    try {
-        await $fetch('/api/whatsapp/test-message', {
-            method: 'POST',
-            body: {
-                whatsappAccountId: accountId,
-                to: testPhone.value,
-                message: testMessage.value
-            }
-        })
-        notify.success('Test Message Sent!')
-    } catch (err: any) {
-        notify.error(`Send Failed: ${err.data?.statusMessage || err.message}`)
-    } finally {
-        isSendingTest.value = false
-    }
-}
+  isUpdating.value = true
+  try {
+    const { error } = await supabase
+      .from('whatsapp_accounts')
+      .update({ chatbot_id: chatbotId, updated_at: new Date().toISOString() })
+      .eq('id', accountId)
+      .eq('user_id', userId.value)
 
-const createReviewTemplate = async () => {
-    if (!templateName.value || !templateBody.value) return
-    isCreatingTemplate.value = true
-    try {
-        await $fetch('/api/whatsapp/templates', {
-            method: 'POST',
-            body: {
-                whatsappAccountId: accountId,
-                name: templateName.value,
-                category: 'UTILITY',
-                language: 'en_US',
-                bodyText: templateBody.value
-            }
-        })
-        notify.success('Template Created Successfully!')
-    } catch (err: any) {
-        notify.error(`Template Creation Failed: ${err.data?.statusMessage || err.message}`)
-    } finally {
-        isCreatingTemplate.value = false
-    }
+    if (error) throw error
+    notify.success('Reply assistant updated.')
+    await fetchAccount()
+  } catch (err: any) {
+    notify.error(err?.message || 'Could not update the reply assistant.')
+  } finally {
+    isUpdating.value = false
+  }
 }
 
 const deleteAccount = async () => {
-    if (!(await notify.confirm('Are you sure you want to disconnect this number?'))) return
-    const { error } = await supabase.from('whatsapp_accounts').delete().eq('id', accountId)
-    if (!error) {
-      notify.success('Disconnected successfully.')
-      navigateTo('/dashboard/integrations/whatsapp')
-    }
+  if (!(await notify.confirm('Disconnect this number?'))) return
+  if (!userId.value) return
+  const { error } = await supabase.from('whatsapp_accounts').delete().eq('id', accountId).eq('user_id', userId.value)
+  if (!error) {
+    notify.success('Disconnected successfully.')
+    navigateTo('/dashboard/integrations/whatsapp')
+  }
 }
 
-onMounted(() => {
-  fetchAccount()
-})
+onMounted(fetchAccount)
 
 useHead({
-  title: computed(() => waAccount.value ? `${waAccount.value.phone_number} | WhatsApp Configuration` : 'WhatsApp Config'),
-  script: [
-    {
-      src: 'https://connect.facebook.net/en_US/sdk.js',
-      async: true,
-      defer: true,
-      onload: () => {
-        if ((window as any).FB) {
-          (window as any).FB.init({
-            appId: config.public.metaAppId,
-            autoLogAppEvents: true,
-            xfbml: true,
-            version: 'v21.0'
-          })
-        }
-      }
-    }
-  ]
+  title: computed(() => waAccount.value ? `${waAccount.value.phone_number} | WhatsApp` : 'WhatsApp number')
 })
 </script>
 
@@ -185,168 +169,120 @@ useHead({
   <WhatsAppUpgradeGate
     v-if="isLocked"
     title="Upgrade to manage WhatsApp"
-    description="Viewing and managing WhatsApp numbers is locked on Starter. Upgrade your plan to unlock number mapping, test messages, and deployment controls."
+    description="Upgrade to manage WhatsApp numbers and let your assistant reply from approved lines."
     back-to="/dashboard"
     back-label="Back to dashboard"
   />
 
-  <div v-else class="w-full space-y-12 pb-20">
-    <NuxtLink to="/dashboard/integrations/whatsapp" class="dashboard-back-link group mb-2">
-        <ArrowLeft class="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-        Back to WhatsApp Hub
+  <div v-else class="w-full space-y-5 pb-24 pt-3 lg:pb-7">
+    <NuxtLink to="/dashboard/integrations/whatsapp" class="dashboard-action-label inline-flex items-center gap-1.5 text-foreground/45 transition hover:text-primary">
+      <ArrowLeft class="h-3.5 w-3.5" />
+      Back to WhatsApp
     </NuxtLink>
 
-    <div class="flex justify-end mb-12">
-      <div class="flex items-center gap-4">
-        <button @click="sendTestMessage" class="px-8 py-4 rounded-xl bg-foreground/5 border border-foreground/10 text-foreground font-bold uppercase tracking-widest text-[10px] hover:bg-foreground/10 transition-all flex items-center gap-3">
-          <Send class="w-3.5 h-3.5" />
-          Quick Test
-        </button>
-        <button @click="deleteAccount" class="px-8 py-4 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 font-bold uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-foreground transition-all flex items-center gap-3">
-          <Trash2 class="w-3.5 h-3.5" />
-          Disconnect
-        </button>
-      </div>
-    </div>
+    <template v-if="isLoading">
+      <section class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 sm:p-6">
+        <Skeleton width="10rem" height="0.8rem" class="mb-3" />
+        <Skeleton width="18rem" height="1.3rem" class="mb-5" />
+        <Skeleton height="14rem" radius="0.39rem" />
+      </section>
+    </template>
 
-    <div v-if="isLoading" class="space-y-12">
-        <div class="h-64 bg-foreground/5 rounded-[3rem] animate-pulse"></div>
-        <div class="grid md:grid-cols-2 gap-8">
-            <div class="h-48 bg-foreground/5 rounded-[2rem] animate-pulse"></div>
-            <div class="h-48 bg-foreground/5 rounded-[2rem] animate-pulse"></div>
-        </div>
-    </div>
-
-    <main v-else-if="waAccount" class="space-y-12">
-      <!-- Node Configuration Section -->
-      <section class="grid lg:grid-cols-3 gap-8">
-        <!-- AI Brain Mapping -->
-        <div class="lg:col-span-2 glass-card p-10 bg-background border-foreground/10 relative overflow-hidden">
-          <div class="flex items-center gap-4 mb-10">
-            <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
-              <Bot class="w-6 h-6 text-primary" />
+    <main v-else-if="waAccount" class="space-y-5">
+      <section class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 sm:p-6">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div class="min-w-0">
+            <p class="dashboard-eyebrow text-primary/80">WhatsApp number</p>
+            <div class="mt-2 flex flex-wrap items-center gap-3">
+              <h1 class="dashboard-section-title truncate">{{ waAccount.phone_number }}</h1>
+              <span :class="['inline-flex items-center gap-1.5 rounded-[0.35rem] border px-2.5 py-1 text-[11px] font-bold', statusToneClass]">
+                <component :is="statusIcon" class="h-3.5 w-3.5" />
+                {{ statusLabel }}
+              </span>
             </div>
+            <p class="dashboard-muted mt-2 max-w-2xl">{{ statusDetail }}</p>
+          </div>
+
+          <button type="button" class="dashboard-action-label inline-flex w-fit items-center justify-center gap-1.5 rounded-[0.39rem] border border-red-400/20 bg-red-400/10 px-3 py-2 text-red-300 transition hover:bg-red-400/15" @click="deleteAccount">
+            <Trash2 class="h-3.5 w-3.5" />
+            Disconnect
+          </button>
+        </div>
+      </section>
+
+      <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <section class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 sm:p-6">
+          <div class="mb-5">
+            <p class="dashboard-eyebrow text-primary/80">Reply assistant</p>
+            <h2 class="dashboard-section-title mt-2">Choose who replies</h2>
+            <p class="dashboard-muted mt-1">This assistant will handle incoming WhatsApp conversations once the number is live.</p>
+          </div>
+
+          <div class="space-y-4">
             <div>
-              <h3 class="text-xl font-black text-foreground uppercase tracking-tighter">Assistant Mapping</h3>
-              <p class="text-[10px] text-foreground/50 font-bold uppercase tracking-widest">Choose which assistant should reply on this number</p>
-            </div>
-          </div>
-
-          <div class="space-y-8">
-            <div class="relative">
-              <select 
-                :value="waAccount.chatbot_id"
-                @change="(e: any) => updateMapping(e.target.value || null)"
-                class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-6 py-5 text-sm font-black text-foreground focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer pr-12"
+              <label class="dashboard-eyebrow mb-2 block">Assigned assistant</label>
+              <select
+                :value="waAccount.chatbot_id || ''"
+                class="w-full cursor-pointer rounded-[0.39rem] border border-foreground/10 bg-background/55 px-3 py-2.5 text-sm font-semibold text-foreground outline-none transition focus:border-primary/40"
+                :disabled="isUpdating"
+                @focus="setInteracting(true)"
+                @blur="setInteracting(false)"
+                @change="(event: any) => updateMapping(event.target.value || null)"
               >
-                <option :value="null" class="bg-background">Select Assistant...</option>
-                <option v-for="agent in agents" :key="agent.id" :value="agent.id" class="bg-background">
-                  {{ agent.name }}
-                </option>
+                <option value="" class="bg-background">No assistant selected</option>
+                <option v-for="agent in agents" :key="agent.id" :value="agent.id" class="bg-background">{{ agent.name }}</option>
               </select>
-              <Settings class="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 text-primary pointer-events-none" />
             </div>
 
-            <div v-if="waAccount.chatbot_id" class="p-6 bg-green-500/10 border border-green-500/20 rounded-[2rem] flex items-center gap-4">
-              <CheckCircle2 class="w-6 h-6 text-green-500" />
-              <div>
-                <p class="text-[11px] font-black text-foreground uppercase tracking-widest">Connection Active</p>
-                <p class="text-[9px] font-bold text-green-500/60 uppercase tracking-tighter">Inbound WhatsApp messages will now use this assistant.</p>
+            <div :class="['rounded-[0.39rem] border p-3', waAccount.chatbot_id ? 'border-emerald-400/20 bg-emerald-400/10' : 'border-amber-400/20 bg-amber-400/10']">
+              <div class="flex items-start gap-2.5">
+                <MessageSquare :class="['mt-0.5 h-4 w-4 shrink-0', waAccount.chatbot_id ? 'text-emerald-300' : 'text-amber-300']" />
+                <div>
+                  <p class="text-sm font-bold text-foreground">{{ waAccount.chatbot_id ? 'Assistant assigned' : 'Assistant needed' }}</p>
+                  <p class="dashboard-muted mt-0.5">{{ waAccount.chatbot_id ? 'ReplySuite knows which assistant should answer on this number.' : 'Choose an assistant before this number goes live.' }}</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Node Status -->
-        <div class="glass-card p-10 bg-foreground/[0.02] border-foreground/10 flex flex-col justify-between">
-           <div class="space-y-6">
-              <div class="flex items-center justify-between">
-                <span class="text-[10px] font-black text-foreground/50 uppercase tracking-widest">Current Status</span>
-                <span :class="['px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest', 
-                  waAccount.status === 'deployed' ? 'bg-green-500/20 text-green-500' : 'bg-orange-500/20 text-orange-500']">
-                  {{ waAccount.status }}
-                </span>
+        <aside class="space-y-3 rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 sm:p-6">
+          <div>
+            <p class="dashboard-eyebrow text-primary/80">Connection health</p>
+            <h2 class="dashboard-section-title mt-2">Setup progress</h2>
+            <p class="dashboard-muted mt-1">ReplySuite handles the technical steps behind the scenes.</p>
+          </div>
+
+          <div class="space-y-2">
+            <div v-for="item in connectionHealth" :key="item.label" class="rounded-[0.39rem] border border-foreground/10 bg-background/35 p-3">
+              <div class="flex items-start gap-2.5">
+                <div :class="['flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.35rem] ring-1', item.done ? 'bg-emerald-400/10 text-emerald-300 ring-emerald-400/20' : 'bg-amber-400/10 text-amber-300 ring-amber-400/20']">
+                  <component :is="item.icon" class="h-4 w-4" />
+                </div>
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-bold text-foreground">{{ item.value }}</p>
+                  <p class="mt-0.5 text-[11px] font-semibold text-foreground/55">{{ item.label }}</p>
+                  <p class="dashboard-muted mt-0.5">{{ item.detail }}</p>
+                </div>
               </div>
-              <div class="w-full h-px bg-foreground/5"></div>
-              <div class="flex items-center justify-between">
-                <span class="text-[10px] font-black text-foreground/50 uppercase tracking-widest">Connection Type</span>
-                <span class="text-[10px] font-black text-foreground uppercase tracking-widest italic">Official WABA</span>
-              </div>
-           </div>
-
-           <button v-if="waAccount.status !== 'deployed'" @click="deployNode" :disabled="isDeploying" class="w-full py-4 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-2xl mt-12 hover:scale-105 transition-all shadow-xl shadow-primary/20">
-              <Loader2 v-if="isDeploying" class="w-4 h-4 animate-spin inline mr-2" />
-              Finalize Deployment
-           </button>
-           <div v-else class="mt-12 flex items-center gap-3 text-green-500/40">
-              <Activity class="w-4 h-4 animate-pulse" />
-              <span class="text-[9px] font-black uppercase tracking-widest">WhatsApp Connection Active</span>
-           </div>
-        </div>
-      </section>
-
-      <!-- Meta Review Toolkit -->
-      <section class="space-y-8">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <Terminal class="w-5 h-5 text-primary/60" />
-                <h2 class="text-2xl font-black text-foreground uppercase tracking-tighter">Meta Review Toolkit</h2>
             </div>
-        </div>
+          </div>
 
-        <div class="grid lg:grid-cols-2 gap-8">
-            <!-- Test Messenger -->
-            <div class="glass-card p-10 bg-foreground/5 border-foreground/10 space-y-8">
-                <div class="flex items-center gap-3">
-                    <Send class="w-5 h-5 text-primary/60" />
-                    <span class="text-[10px] font-black uppercase tracking-widest text-foreground">Live Message Test</span>
-                </div>
-                <div class="space-y-4">
-                    <div class="space-y-2">
-                      <label class="text-[9px] font-black text-foreground/50 uppercase tracking-widest ml-1">Recipient Number</label>
-                      <input v-model="testPhone" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" placeholder="+123..." class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-5 py-4 text-xs font-bold text-foreground focus:outline-none focus:border-primary/50 transition-all font-mono" />
-                    </div>
-                    <div class="space-y-2">
-                      <label class="text-[9px] font-black text-foreground/50 uppercase tracking-widest ml-1">Message Payload</label>
-                      <textarea v-model="testMessage" @focus="setInteracting(true)" @blur="setInteracting(false)" rows="3" class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-5 py-4 text-xs font-bold text-foreground focus:outline-none focus:border-primary/50 transition-all resize-none"></textarea>
-                    </div>
-                    <button @click="sendTestMessage" :disabled="isSendingTest" class="w-full py-5 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 transition-all flex items-center justify-center gap-3 shadow-2xl shadow-primary/20">
-                        <Loader2 v-if="isSendingTest" class="w-4 h-4 animate-spin" />
-                        <Send v-else class="w-4 h-4" />
-                        Send Live Test
-                    </button>
-                </div>
+          <div v-if="isPending" class="rounded-[0.39rem] border border-primary/15 bg-primary/5 p-3">
+            <div class="flex items-start gap-2">
+              <Zap class="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p class="dashboard-muted">This number is saved. ReplySuite will finish the manual connection setup and update the status when it is live.</p>
             </div>
+          </div>
 
-            <!-- Template Deployer -->
-            <div class="glass-card p-10 bg-foreground/5 border-foreground/10 space-y-8">
-                <div class="flex items-center gap-3">
-                    <Layout class="w-5 h-5 text-primary/60" />
-                    <span class="text-[10px] font-black uppercase tracking-widest text-foreground">Review Template Proof</span>
-                </div>
-                <div class="space-y-4">
-                    <div class="space-y-2">
-                      <label class="text-[9px] font-black text-foreground/50 uppercase tracking-widest ml-1">Template Name</label>
-                      <input v-model="templateName" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" placeholder="meta_review_v1" class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-5 py-4 text-xs font-bold text-foreground focus:outline-none focus:border-primary/50 transition-all font-mono" />
-                    </div>
-                    <div class="space-y-2">
-                      <label class="text-[9px] font-black text-foreground/50 uppercase tracking-widest ml-1">Template Body</label>
-                      <textarea v-model="templateBody" @focus="setInteracting(true)" @blur="setInteracting(false)" rows="3" class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-5 py-4 text-xs font-bold text-foreground focus:outline-none focus:border-primary/50 transition-all resize-none"></textarea>
-                    </div>
-                    <button @click="createReviewTemplate" :disabled="isCreatingTemplate" class="w-full py-5 bg-foreground/5 text-foreground border border-foreground/10 font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-foreground/10 transition-all flex items-center justify-center gap-3">
-                        <Loader2 v-if="isCreatingTemplate" class="w-4 h-4 animate-spin" />
-                        Deploy to Meta
-                    </button>
-                </div>
+          <div v-else class="rounded-[0.39rem] border border-emerald-400/20 bg-emerald-400/10 p-3">
+            <div class="flex items-start gap-2">
+              <Activity class="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
+              <p class="dashboard-muted">This WhatsApp line is live and ready for assistant replies.</p>
             </div>
-        </div>
-      </section>
+          </div>
+        </aside>
+      </div>
     </main>
   </div>
 </template>
-
-<style scoped>
-.glass-card {
-  @apply rounded-[24px];
-}
-</style>

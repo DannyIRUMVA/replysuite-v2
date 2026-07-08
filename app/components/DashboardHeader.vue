@@ -11,12 +11,15 @@ const statusPopoverRef = ref<HTMLElement | null>(null)
 // Dynamic Header Content
 const isAnalyticsPage = computed(() => route.path === '/dashboard/analytics')
 const isConversationsPage = computed(() => route.path === '/dashboard/conversations')
-const showPageContext = computed(() => route.path !== '/dashboard' && !isAnalyticsPage.value && !isConversationsPage.value)
+const isWebsiteIntegrationPage = computed(() => route.path === '/dashboard/integrations/website')
+const showPageContext = computed(() => route.path !== '/dashboard' && !isAnalyticsPage.value && !isConversationsPage.value && !isWebsiteIntegrationPage.value)
 
 const analyticsBotId = useState<string>('dashboard-analytics-selected-bot-id', () => 'all')
 const analyticsBotOptions = useState<Array<{ label: string; value: string }>>('dashboard-analytics-bot-options', () => [{ label: 'All chatbots', value: 'all' }])
 const conversationsBotId = useState<string>('selected-chatbot-id', () => '')
 const conversationsBotOptions = useState<Array<{ label: string; value: string }>>('dashboard-conversations-bot-options', () => [])
+const websiteBotId = useState<string>('dashboard-website-selected-bot-id', () => '')
+const websiteBotOptions = useState<Array<{ label: string; value: string }>>('dashboard-website-bot-options', () => [])
 
 const { data: headerStats } = useAsyncData('dashboard-header-status-pills', async () => {
   if (!userId.value) return { assistants: 0, conversations: 0, channels: 0 }
@@ -73,7 +76,6 @@ const pageContext = computed(() => {
   if (path.includes('/dashboard/agents')) return { title: 'Assistants', subtitle: 'Create, configure, and manage your AI assistants.' }
   if (path.includes('/dashboard/analytics')) return { title: 'Analytics', subtitle: 'Review conversations, usage, and performance trends.' }
   if (path.includes('/dashboard/integrations/whatsapp')) return { title: 'WhatsApp', subtitle: 'Connect your business number and manage WhatsApp AI support.' }
-  if (path.includes('/dashboard/integrations/website')) return { title: 'Website', subtitle: 'Connect your website chatbot to approved domains.' }
   if (path.includes('/dashboard/conversations')) return { title: 'Conversations', subtitle: 'Browse and review customer conversations.' }
   if (path.includes('/dashboard/pricing')) return { title: 'Pricing', subtitle: 'Choose the plan that fits your current stage.' }
   return { title: 'Dashboard', subtitle: 'Welcome back to ReplySuite.' }
@@ -108,14 +110,15 @@ const pageContext = computed(() => {
     </div>
 
     <div class="min-h-[2rem] flex-1 animate-in fade-in slide-in-from-left-4 duration-500">
-      <template v-if="isAnalyticsPage || isConversationsPage">
+      <template v-if="isAnalyticsPage || isConversationsPage || isWebsiteIntegrationPage">
         <div class="flex w-full items-center gap-2 md:max-w-xs">
           <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.39rem] bg-primary/10 text-primary ring-1 ring-primary/15">
             <Bot class="h-4 w-4" />
           </div>
           <div class="min-w-0 flex-1 [&_button]:!rounded-[0.39rem] [&_button]:!px-3 [&_button]:!py-2 [&_button]:!text-xs [&_button]:!shadow-none">
             <CustomSelect v-if="isAnalyticsPage" v-model="analyticsBotId" :options="analyticsBotOptions" placeholder="Select assistant" />
-            <CustomSelect v-else v-model="conversationsBotId" :options="conversationsBotOptions" placeholder="Select assistant" />
+            <CustomSelect v-else-if="isConversationsPage" v-model="conversationsBotId" :options="conversationsBotOptions" placeholder="Select assistant" />
+            <CustomSelect v-else v-model="websiteBotId" :options="websiteBotOptions" placeholder="Select website assistant" />
           </div>
         </div>
       </template>

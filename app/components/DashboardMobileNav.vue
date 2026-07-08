@@ -1,78 +1,81 @@
 <script setup lang="ts">
-import { 
-  LayoutDashboard, 
-  MessageSquare, 
-  Settings, 
-  TrendingUp,
-  Zap,
+import {
   Bot,
-  MessageCircle
-} from 'lucide-vue-next'
+  Code2,
+  LayoutDashboard,
+  MessageCircle,
+  TrendingUp,
+} from "lucide-vue-next";
 
-const route = useRoute()
+const route = useRoute();
 
-// Map strings to components to avoid serialization of functions
 const iconMap: Record<string, any> = {
   LayoutDashboard,
+  MessageCircle,
   Bot,
+  Code2,
   TrendingUp,
-  Zap,
-  MessageCircle
-}
+};
 
 const navLinks = computed(() => [
-  { name: 'Hub', href: '/dashboard', icon: 'LayoutDashboard' },
-  { name: 'Web', href: '/dashboard/integrations/website', icon: 'Zap' },
-  { name: 'Forge', href: '/dashboard/agents', icon: 'Bot' },
-  { name: 'Stats', href: '/dashboard/analytics', icon: 'TrendingUp' },
-  { name: 'Chat', href: '/dashboard/conversations', icon: 'MessageCircle' },
-])
+  { name: "Home", href: "/dashboard", icon: "LayoutDashboard", exact: true },
+  { name: "Inbox", href: "/dashboard/conversations", icon: "MessageCircle" },
+  { name: "Assistants", href: "/dashboard/agents", icon: "Bot" },
+  { name: "Website", href: "/dashboard/integrations/website", icon: "Code2" },
+  { name: "Reports", href: "/dashboard/analytics", icon: "TrendingUp" },
+]);
+
+const isActive = (link: any) => {
+  if (link.exact) return route.path === link.href;
+  return route.path === link.href || route.path.startsWith(`${link.href}/`);
+};
 </script>
 
 <template>
-  <nav class="md:hidden fixed bottom-3 left-1/2 -translate-x-1/2 z-[100] w-[94%] max-w-lg">
-    <div class="glass-dock flex items-center justify-around py-2 px-3 rounded-[1.5rem] border border-foreground/10 shadow-2xl shadow-foreground/20">
-      <NuxtLink 
-        v-for="link in navLinks" 
-        :key="link.name" 
+  <nav
+    class="fixed bottom-3 left-1/2 z-[100] w-[94%] max-w-lg -translate-x-1/2 md:hidden"
+  >
+    <div
+      class="dashboard-mobile-dock flex items-center justify-around rounded-[0.75rem] border border-foreground/10 px-2 py-2 shadow-xl shadow-black/20"
+    >
+      <NuxtLink
+        v-for="link in navLinks"
+        :key="link.name"
         :to="link.href"
-        class="relative flex flex-col items-center gap-0.5 py-0.5 transition-all duration-300 group"
-        :class="[route.path === link.href ? 'text-primary' : 'text-foreground/40']"
+        class="group relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-[0.39rem] px-1 py-1 transition"
+        :class="
+          isActive(link)
+            ? 'text-primary'
+            : 'text-foreground/45 active:text-foreground'
+        "
       >
-        <div class="relative flex items-center justify-center">
-           <component 
-            :is="iconMap[link.icon]" 
-            class="w-4.5 h-4.5 transition-all duration-300" 
-            :class="[route.path === link.href ? 'scale-110' : 'group-active:scale-90']"
-           />
-           
-           <!-- Active Aura -->
-           <div 
-            v-if="route.path === link.href" 
-            class="absolute inset-0 bg-primary/20 blur-md rounded-full animate-pulse"
-           ></div>
+        <div class="relative flex h-5 w-5 items-center justify-center">
+          <component
+            :is="iconMap[link.icon]"
+            class="h-4 w-4 transition-transform duration-200"
+            :class="isActive(link) ? 'scale-110' : 'group-active:scale-95'"
+          />
+          <div
+            v-if="isActive(link)"
+            class="absolute inset-0 rounded-full bg-primary/15 blur-md"
+          />
         </div>
-        <span class="text-[8px] font-bold tracking-widest uppercase transition-all duration-300">
+        <span
+          class="max-w-full truncate text-[9px] font-semibold leading-none transition"
+        >
           {{ link.name }}
         </span>
-        
-        <!-- Indicator Dot -->
-        <div 
-          v-if="route.path === link.href" 
-          class="absolute -bottom-0.5 w-1 h-1 bg-primary rounded-full"
-        ></div>
+        <div
+          v-if="isActive(link)"
+          class="absolute -bottom-0.5 h-0.5 w-4 rounded-full bg-primary"
+        />
       </NuxtLink>
     </div>
   </nav>
 </template>
 
 <style scoped>
-.glass-dock {
-  @apply bg-background/95 backdrop-blur-3xl border border-foreground/5 shadow-[0_20px_50px_rgba(0,0,0,0.3)];
-}
-
-.router-link-active span {
-  @apply text-primary;
+.dashboard-mobile-dock {
+  @apply bg-background/95 backdrop-blur-3xl;
 }
 </style>
-

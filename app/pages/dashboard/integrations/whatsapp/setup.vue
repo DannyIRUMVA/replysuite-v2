@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { 
-  MessageSquare, 
-  Plus, 
-  Loader2, 
-  HelpCircle,
+import {
   ArrowLeft,
-  Smartphone,
+  HelpCircle,
+  Loader2,
+  MessageSquare,
   ShieldCheck,
+  Smartphone,
   Zap
 } from 'lucide-vue-next'
 
@@ -15,8 +14,7 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-const { user, setInteracting, planSlug } = useAuth()
-const supabase = useSupabaseClient()
+const { setInteracting, planSlug } = useAuth()
 const notify = useNotify()
 const isLocked = computed(() => planSlug.value === 'starter' || !planSlug.value)
 
@@ -28,128 +26,178 @@ const isSubmittingManual = ref(false)
 const manualGuideUrl = 'https://docs.replysuite.com/integrations/whatsapp'
 
 const submitManualSetup = async () => {
-    if (!manualPhone.value || !manualPhoneId.value || !manualWabaId.value || !manualToken.value) {
-        notify.warn('Please fill in all required WhatsApp setup fields.')
-        return
-    }
+  if (!manualPhone.value || !manualPhoneId.value || !manualWabaId.value || !manualToken.value) {
+    notify.warn('Please fill in all required WhatsApp setup fields.')
+    return
+  }
 
-    isSubmittingManual.value = true
-    try {
-        const response: any = await $fetch('/api/whatsapp/connect', {
-            method: 'POST',
-            body: {
-                phone_number: manualPhone.value,
-                phone_number_id: manualPhoneId.value,
-                waba_id: manualWabaId.value,
-                accessToken: manualToken.value
-            }
-        })
-        
-        notify.success(response.message || 'WhatsApp connected successfully!')
-        navigateTo('/dashboard/integrations/whatsapp')
-    } catch (err: any) {
-        console.error('Manual activation error:', err)
-        notify.error(`WhatsApp connection failed: ${err.data?.statusMessage || err.message}`)
-    } finally {
-        isSubmittingManual.value = false
-    }
+  isSubmittingManual.value = true
+  try {
+    const response: any = await $fetch('/api/whatsapp/connect', {
+      method: 'POST',
+      body: {
+        phone_number: manualPhone.value,
+        phone_number_id: manualPhoneId.value,
+        waba_id: manualWabaId.value,
+        accessToken: manualToken.value
+      }
+    })
+
+    notify.success(response.message || 'WhatsApp connected successfully!')
+    navigateTo('/dashboard/integrations/whatsapp')
+  } catch (err: any) {
+    console.error('Manual activation error:', err)
+    notify.error(`WhatsApp connection failed: ${err.data?.statusMessage || err.message}`)
+  } finally {
+    isSubmittingManual.value = false
+  }
 }
+
+const requirements = [
+  'Verified Meta Business Account',
+  'WhatsApp Business API enabled',
+  'System user access token',
+  'Clean phone number ready for connection'
+]
 </script>
 
 <template>
   <WhatsAppUpgradeGate
     v-if="isLocked"
     title="Upgrade before connecting WhatsApp"
-    description="WhatsApp setup is only available on higher plans. Upgrade to unlock business number connection, templates, and AI reply automation."
+    description="Upgrade to connect WhatsApp business numbers and let your assistant reply from approved lines."
     back-to="/dashboard/integrations/website"
     back-label="Back to website integration"
   />
 
-  <div v-else class="w-full max-w-4xl mx-auto space-y-8 pb-20">
-    <NuxtLink to="/dashboard/integrations/whatsapp" class="dashboard-back-link group mb-2">
-        <ArrowLeft class="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-        Back to WhatsApp
+  <div v-else class="mx-auto w-full max-w-5xl space-y-5 pb-24 pt-3 lg:pb-7">
+    <NuxtLink to="/dashboard/integrations/whatsapp" class="dashboard-action-label inline-flex items-center gap-1.5 text-foreground/45 transition hover:text-primary">
+      <ArrowLeft class="h-3.5 w-3.5" />
+      Back to WhatsApp
     </NuxtLink>
 
-    <div class="grid md:grid-cols-3 gap-8">
-      <!-- Form Section -->
-      <div class="md:col-span-2 space-y-8">
-        <section class="glass-card p-10 bg-foreground/5 border-foreground/10 relative overflow-hidden group">
-          <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
-          
-          <div class="relative z-10 space-y-8">
-            <div class="grid gap-8">
-              <div class="space-y-2">
-                <label class="block text-[10px] font-black uppercase tracking-widest text-foreground/50 mb-2">WhatsApp Business Account ID (WABA)</label>
-                <input v-model="manualWabaId" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" placeholder="Found in WhatsApp Manager Settings" class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/50 transition-all" />
-              </div>
-              <div class="space-y-2">
-                <label class="block text-[10px] font-black uppercase tracking-widest text-foreground/50 mb-2">Phone Number ID</label>
-                <input v-model="manualPhoneId" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" placeholder="Found in API Setup tab" class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/50 transition-all" />
-              </div>
-              <div class="space-y-2">
-                <label class="block text-[10px] font-black uppercase tracking-widest text-foreground/50 mb-2">Display Phone Number</label>
-                <input v-model="manualPhone" @focus="setInteracting(true)" @blur="setInteracting(false)" type="text" placeholder="+250..." class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/50 transition-all" />
-              </div>
-              <div class="space-y-2">
-                <label class="block text-[10px] font-black uppercase tracking-widest text-foreground/50 mb-2">Permanent Access Token</label>
-                <input v-model="manualToken" @focus="setInteracting(true)" @blur="setInteracting(false)" type="password" placeholder="System User Token" class="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/50 transition-all" />
-              </div>
-            </div>
+    <section class="rounded-[0.39rem] border border-amber-400/20 bg-amber-400/10 p-4 shadow-sm shadow-black/5">
+      <div class="flex items-start gap-3">
+        <ShieldCheck class="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+        <div>
+          <p class="text-base font-bold text-foreground">Waiting for Meta verification</p>
+          <p class="mt-1 max-w-3xl text-sm leading-relaxed text-foreground/65">WhatsApp self-serve setup is still pending Meta verification. This advanced form is available for prepared connection details, but most users should wait until verification is complete and the guided setup is enabled.</p>
+        </div>
+      </div>
+    </section>
 
-            <div class="pt-8 border-t border-foreground/10 flex items-center justify-between">
-              <button 
-                @click="submitManualSetup"
-                :disabled="isSubmittingManual"
-                class="bg-primary text-black px-12 py-5 rounded-[2rem] text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-primary/20 disabled:opacity-50 flex items-center gap-3"
-              >
-                <Loader2 v-if="isSubmittingManual" class="w-4 h-4 animate-spin" />
-                Verify and Connect
-              </button>
-              
-              <a :href="manualGuideUrl" target="_blank" class="text-[10px] font-black uppercase tracking-widest text-foreground/50 hover:text-primary transition-all flex items-center gap-2">
-                <HelpCircle class="w-4 h-4" />
-                Help Guide
-              </a>
+    <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <section class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 sm:p-6">
+        <div class="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p class="dashboard-eyebrow text-primary/80">WhatsApp setup</p>
+            <h1 class="dashboard-section-title mt-2">Connect a business number</h1>
+            <p class="mt-1 max-w-2xl text-sm leading-relaxed text-foreground/65">Enter the approved WhatsApp connection details for this line. ReplySuite will save the connection and return you to the WhatsApp channel.</p>
+          </div>
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.39rem] bg-primary/10 text-primary ring-1 ring-primary/15">
+            <Smartphone class="h-5 w-5" />
+          </div>
+        </div>
+
+        <div class="grid gap-4">
+          <div>
+            <label class="mb-2 block text-sm font-bold text-foreground/75">WhatsApp Business Account ID</label>
+            <input
+              v-model="manualWabaId"
+              type="text"
+              placeholder="Paste the approved business account ID"
+              class="w-full rounded-[0.39rem] border border-foreground/10 bg-background/55 px-3.5 py-3 text-[15px] font-semibold text-foreground outline-none transition placeholder:text-foreground/35 focus:border-primary/40"
+              @focus="setInteracting(true)"
+              @blur="setInteracting(false)"
+            />
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-bold text-foreground/75">Phone number ID</label>
+            <input
+              v-model="manualPhoneId"
+              type="text"
+              placeholder="Paste the approved phone number ID"
+              class="w-full rounded-[0.39rem] border border-foreground/10 bg-background/55 px-3.5 py-3 text-[15px] font-semibold text-foreground outline-none transition placeholder:text-foreground/35 focus:border-primary/40"
+              @focus="setInteracting(true)"
+              @blur="setInteracting(false)"
+            />
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-bold text-foreground/75">Display phone number</label>
+            <input
+              v-model="manualPhone"
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
+              placeholder="+250 7xx xxx xxx"
+              class="w-full rounded-[0.39rem] border border-foreground/10 bg-background/55 px-3.5 py-3 text-[15px] font-semibold text-foreground outline-none transition placeholder:text-foreground/35 focus:border-primary/40"
+              @focus="setInteracting(true)"
+              @blur="setInteracting(false)"
+            />
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-bold text-foreground/75">Permanent access token</label>
+            <input
+              v-model="manualToken"
+              type="password"
+              autocomplete="off"
+              placeholder="Paste the system user token"
+              class="w-full rounded-[0.39rem] border border-foreground/10 bg-background/55 px-3.5 py-3 text-[15px] font-semibold text-foreground outline-none transition placeholder:text-foreground/35 focus:border-primary/40"
+              @focus="setInteracting(true)"
+              @blur="setInteracting(false)"
+              @keydown.enter.prevent="submitManualSetup"
+            />
+          </div>
+        </div>
+
+        <div class="mt-5 flex flex-col gap-3 border-t border-foreground/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            type="button"
+            class="inline-flex w-full items-center justify-center gap-1.5 rounded-[0.39rem] bg-primary px-4 py-3 text-sm font-bold text-black shadow-sm shadow-primary/10 transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            :disabled="isSubmittingManual"
+            @click="submitManualSetup"
+          >
+            <Loader2 v-if="isSubmittingManual" class="h-3.5 w-3.5 animate-spin" />
+            <MessageSquare v-else class="h-3.5 w-3.5" />
+            Verify and connect
+          </button>
+
+          <a :href="manualGuideUrl" target="_blank" rel="noopener noreferrer" class="dashboard-action-label inline-flex items-center justify-center gap-1.5 rounded-[0.39rem] border border-foreground/10 bg-background/55 px-3 py-2.5 text-foreground/55 transition hover:border-primary/20 hover:text-primary">
+            <HelpCircle class="h-3.5 w-3.5" />
+            Help guide
+          </a>
+        </div>
+      </section>
+
+      <aside class="space-y-3 rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 sm:p-6">
+        <div>
+          <p class="dashboard-eyebrow text-primary/80">Connection readiness</p>
+          <h2 class="dashboard-section-title mt-2">Before you connect</h2>
+          <p class="mt-1 text-sm leading-relaxed text-foreground/65">Use this form only when the required WhatsApp setup details are already prepared.</p>
+        </div>
+
+        <div class="space-y-2">
+          <div v-for="req in requirements" :key="req" class="rounded-[0.39rem] border border-foreground/10 bg-background/35 p-3">
+            <div class="flex items-start gap-2.5">
+              <div class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/70" />
+              <p class="text-sm font-semibold leading-relaxed text-foreground/65">{{ req }}</p>
             </div>
           </div>
-        </section>
-      </div>
-
-      <!-- Info Section -->
-      <div class="space-y-6">
-        <div class="glass-card p-8 border-foreground/10 bg-foreground/5">
-          <h4 class="text-[11px] font-black uppercase tracking-widest text-foreground mb-6 flex items-center gap-2">
-            <ShieldCheck class="w-4 h-4 text-primary" />
-            Before You Connect
-          </h4>
-          <ul class="space-y-4">
-            <li v-for="req in [
-              'Verified Meta Business Account',
-              'WhatsApp Business API Enabled',
-              'System User Access Token',
-              'Clean Phone Number (No active WhatsApp)'
-            ]" :key="req" class="flex items-start gap-3">
-              <div class="w-1.5 h-1.5 rounded-full bg-primary/40 mt-1"></div>
-              <span class="text-[10px] font-bold text-foreground/50 uppercase tracking-tighter">{{ req }}</span>
-            </li>
-          </ul>
         </div>
 
-        <div class="glass-card p-8 border-foreground/10 bg-primary/5">
-          <Zap class="w-8 h-8 text-primary mb-4" />
-          <h4 class="text-xs font-black uppercase tracking-widest text-foreground mb-2">WhatsApp AI Support</h4>
-          <p class="text-[10px] font-bold text-foreground/50 uppercase tracking-tight leading-relaxed">
-            Once connected, your business number can start using AI to answer common customer questions faster.
-          </p>
+        <div class="rounded-[0.39rem] border border-primary/15 bg-primary/5 p-3">
+          <div class="flex items-start gap-2.5">
+            <Zap class="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <div>
+              <p class="text-sm font-bold text-foreground">Guided setup coming next</p>
+              <p class="mt-1 text-sm leading-relaxed text-foreground/65">After Meta verification, ReplySuite will replace this advanced path with a cleaner guided connection flow.</p>
+            </div>
+          </div>
         </div>
-      </div>
+      </aside>
     </div>
   </div>
 </template>
-
-<style scoped>
-.glass-card {
-  @apply rounded-[24px];
-}
-</style>
