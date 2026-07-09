@@ -318,12 +318,18 @@ const userAvatarUrl = computed(
 );
 
 const handleLogout = async () => {
+  const isLoggingOut = useState<boolean>(
+    "auth-logout-in-progress",
+    () => false,
+  );
+  isLoggingOut.value = true;
   isUserMenuOpen.value = false;
   if (import.meta.client && user.value?.id) {
     sessionStorage.removeItem(membershipCardStorageKey.value);
   }
   await supabase.auth.signOut();
-  navigateTo("/login");
+  await navigateTo({ path: "/login", query: {} }, { replace: true });
+  isLoggingOut.value = false;
 };
 </script>
 
