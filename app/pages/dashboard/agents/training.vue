@@ -11,9 +11,9 @@ import {
   Zap as LucideZap,
   Sparkles as LucideSparkles,
 } from "lucide-vue-next";
-import HistoryTable from "~/components/agents/skills/HistoryTable.vue";
-import DashboardStats from "~/components/agents/skills/DashboardStats.vue";
-import ExtractionModal from "~/components/agents/skills/ExtractionModal.vue";
+import HistoryTable from "~/components/agents/training/HistoryTable.vue";
+import DashboardStats from "~/components/agents/training/DashboardStats.vue";
+import ExtractionModal from "~/components/agents/training/ExtractionModal.vue";
 import Skeleton from "~~/app/components/Skeleton.vue";
 import { marked } from "marked";
 import xss from "xss";
@@ -24,7 +24,14 @@ definePageMeta({
 });
 
 const route = useRoute();
-const chatbotId = route.query.id as string;
+const chatbotId = computed(() => String(route.query.id || ""));
+const trainingHeaderBotId = useState<string>(
+  "dashboard-training-selected-bot-id",
+  () => "",
+);
+const trainingHeaderBotOptions = useState<
+  Array<{ label: string; value: string }>
+>("dashboard-training-bot-options", () => []);
 const { userId, limits, planSlug, profile } = useAuth();
 const supabase = useSupabaseClient();
 const notify = useNotify();
@@ -68,8 +75,8 @@ const renderMarkdown = (text: string) => {
 useHead({
   title: computed(() =>
     chatbot.value?.name
-      ? `${chatbot.value.name} | Train Your AI`
-      : "Train Your AI | ReplySuite",
+      ? `${chatbot.value.name} training | ReplySuite`
+      : "Assistant training | ReplySuite",
   ),
 });
 
@@ -85,30 +92,48 @@ const rerunningJobId = ref<string | null>(null);
 
 // Fetch Data
 const fetchData = async () => {
-  if (!chatbotId || !userId.value) {
+  if (!chatbotId.value || !userId.value) {
     isLoading.value = false;
     return;
   }
 
   try {
-    const [chatbotRes, sourcesRes, jobsRes, usageRes, embeddingsRes] =
+    const [chatbotRes, sourcesRes, jobsRes, usageRes, embeddingsRes, botsRes] =
       await Promise.all([
-        supabase.from("chatbots").select("*").eq("id", chatbotId).single(),
-        supabase.from("data_sources").select("*").eq("chatbot_id", chatbotId),
+        supabase
+          .from("chatbots")
+          .select("*")
+          .eq("id", chatbotId.value)
+          .single(),
+        supabase
+          .from("data_sources")
+          .select("*")
+          .eq("chatbot_id", chatbotId.value),
         supabase
           .from("training_jobs")
           .select("*")
-          .eq("chatbot_id", chatbotId)
+          .eq("chatbot_id", chatbotId.value)
           .order("started_at", { ascending: false, nullsFirst: false }),
-        $fetch(`/api/agents/usage?chatbotId=${chatbotId}`),
+        $fetch(`/api/agents/usage?chatbotId=${chatbotId.value}`),
         supabase
           .from("embeddings")
           .select("*", { count: "exact", head: true })
-          .eq("chatbot_id", chatbotId),
+          .eq("chatbot_id", chatbotId.value),
+        supabase
+          .from("chatbots")
+          .select("id, name")
+          .eq("user_id", userId.value)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false }),
       ]);
 
     if (chatbotRes.error) throw chatbotRes.error;
     chatbot.value = chatbotRes.data;
+    trainingHeaderBotId.value = chatbotId.value;
+    trainingHeaderBotOptions.value = (botsRes.data || []).map((bot: any) => ({
+      label: bot.name || "Untitled assistant",
+      value: bot.id,
+    }));
     sources.value = (sourcesRes.data || []).reverse();
     trainingJobs.value = jobsRes.data || [];
     totalTrainings.value = trainingJobs.value.length;
@@ -141,6 +166,12 @@ watch(
 
 onUnmounted(() => {
   if (pollInterval) clearInterval(pollInterval);
+});
+
+watch(chatbotId, async (nextId, previousId) => {
+  if (!nextId || nextId === previousId) return;
+  isLoading.value = true;
+  await fetchData();
 });
 
 onMounted(async () => {
@@ -184,7 +215,7 @@ const handleUrlTrain = async () => {
   try {
     const trainPromise = $fetch("/api/agents/train/url", {
       method: "POST",
-      body: { chatbotId, url: urlForm.value.url },
+      body: { chatbotId: chatbotId.value, url: urlForm.value.url },
     });
 
     setTimeout(() => fetchData(), 1000);
@@ -211,7 +242,7 @@ const handleTextTrain = async () => {
   try {
     const trainPromise = $fetch("/api/agents/train/text", {
       method: "POST",
-      body: { chatbotId, ...textForm.value },
+      body: { chatbotId: chatbotId.value, ...textForm.value },
     });
 
     setTimeout(() => fetchData(), 1000);
@@ -245,7 +276,7 @@ const handleFileTrain = async () => {
   try {
     const formData = new FormData();
     formData.append("file", selectedFile.value);
-    formData.append("chatbotId", chatbotId);
+    formData.append("chatbotId", chatbotId.value);
 
     const trainPromise = $fetch("/api/agents/train/file", {
       method: "POST",
@@ -336,7 +367,7 @@ const handleTestChat = async () => {
     const res = await $fetch("/api/agents/chat/test", {
       method: "POST",
       body: {
-        chatbotId,
+        chatbotId: chatbotId.value,
         message: userMsg,
         sessionId: testSessionId.value || undefined,
       },
@@ -358,7 +389,7 @@ const handleTestChat = async () => {
 </script>
 
 <template>
-  <div class="relative mx-auto max-w-7xl space-y-5 pb-20 pt-3">
+  <div class="relative mx-auto max-w-7xl space-y-5 pb-24 pt-3 lg:pb-7">
     <section
       class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 sm:p-6"
     >
@@ -367,21 +398,23 @@ const handleTestChat = async () => {
       >
         <div class="min-w-0">
           <NuxtLink
-            to="/dashboard/agents"
+            to="/dashboard/agents/skills"
             class="dashboard-back-link group mb-3 inline-flex"
           >
             <ArrowLeft
               class="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1"
             />
-            Back to assistants
+            Back to skills
           </NuxtLink>
-          <p class="dashboard-eyebrow text-primary/80">Assistant training</p>
+          <p class="dashboard-eyebrow text-primary/80">
+            Training command center
+          </p>
           <h1 class="dashboard-section-title mt-2 truncate">
-            Train {{ chatbot?.name || "assistant" }}
+            {{ chatbot?.name || "Assistant" }} knowledge
           </h1>
-          <p class="mt-2 max-w-2xl text-sm leading-relaxed text-foreground/65">
-            Add website pages, PDFs, or custom text, then test replies before
-            connecting channels.
+          <p class="mt-2 max-w-2xl text-sm leading-relaxed text-foreground/60">
+            Add sources, watch indexing progress, and test answers before this
+            assistant replies across channels.
           </p>
         </div>
         <button
@@ -432,7 +465,7 @@ const handleTestChat = async () => {
 
     <div v-if="isLoading" class="space-y-6">
       <div
-        class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 shadow-sm shadow-black/5 !p-0 overflow-hidden"
+        class="overflow-hidden rounded-[0.39rem] border border-foreground/10 bg-background-card/45 shadow-sm shadow-black/5"
       >
         <div
           class="grid grid-cols-1 divide-y divide-foreground/5 md:grid-cols-2 md:divide-x md:divide-y-0"
@@ -440,9 +473,9 @@ const handleTestChat = async () => {
           <div v-for="item in 2" :key="item" class="space-y-5 p-5 sm:p-6">
             <div class="flex items-center justify-between gap-4">
               <Skeleton width="7rem" height="0.65rem" />
-              <Skeleton width="2rem" height="2rem" radius="0.75rem" />
+              <Skeleton width="2rem" height="2rem" radius="0.39rem" />
             </div>
-            <Skeleton width="45%" height="1.9rem" radius="0.85rem" />
+            <Skeleton width="45%" height="1.9rem" radius="0.39rem" />
             <Skeleton width="100%" height="0.5rem" radius="999px" />
             <Skeleton width="70%" height="0.65rem" />
           </div>
@@ -450,7 +483,7 @@ const handleTestChat = async () => {
       </div>
 
       <div
-        class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 shadow-sm shadow-black/5 space-y-4"
+        class="space-y-4 rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-3 shadow-sm shadow-black/5"
       >
         <div class="flex items-center justify-between gap-4">
           <Skeleton width="10rem" height="0.85rem" />
@@ -461,13 +494,13 @@ const handleTestChat = async () => {
             v-for="row in 4"
             :key="row"
             height="3.5rem"
-            radius="0.9rem"
+            radius="0.39rem"
           />
         </div>
       </div>
     </div>
 
-    <div v-else class="space-y-6">
+    <div v-else class="space-y-5">
       <DashboardStats
         :chatbot="chatbot"
         :monthly-usage="monthlyUsage"
@@ -480,7 +513,7 @@ const handleTestChat = async () => {
       />
 
       <!-- Training Registry -->
-      <div class="space-y-6 min-w-0">
+      <div class="min-w-0 space-y-5">
         <!-- Training Registry (Recorded History) -->
         <HistoryTable
           :jobs="trainingJobs"
@@ -505,17 +538,19 @@ const handleTestChat = async () => {
       ></div>
 
       <div
-        class="relative z-10 flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[0.39rem] border border-foreground/10 bg-background shadow-xl"
+        class="relative z-10 flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[0.39rem] border border-foreground/10 bg-background-card shadow-xl shadow-black/20"
       >
         <div
-          class="flex items-center justify-between gap-4 border-b border-foreground/5 p-5 sm:p-6"
+          class="flex items-center justify-between gap-4 border-b border-foreground/10 p-4 sm:p-5"
         >
           <div>
             <h3 class="text-sm font-bold text-foreground italic-none">
-              Train assistant
+              Add training source
             </h3>
-            <p class="mt-1 text-xs font-bold text-foreground/40 italic-none">
-              Add website, PDF, or custom knowledge in the background.
+            <p
+              class="mt-1 text-xs font-semibold text-foreground/45 italic-none"
+            >
+              Queue website, PDF, or custom text knowledge in the background.
             </p>
           </div>
           <button
@@ -526,13 +561,13 @@ const handleTestChat = async () => {
           </button>
         </div>
 
-        <div class="overflow-y-auto p-4 sm:p-5">
+        <div class="overflow-y-auto p-3 sm:p-4">
           <div
-            class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 shadow-sm shadow-black/5 !bg-foreground/[0.01]"
+            class="rounded-[0.39rem] border border-foreground/10 bg-background/45 p-3 shadow-sm shadow-black/5"
           >
             <!-- Tabs -->
             <div
-              class="mb-6 flex flex-col gap-1 rounded-[0.39rem] bg-foreground/5 p-1 sm:flex-row"
+              class="mb-4 flex flex-col gap-1 rounded-[0.39rem] bg-foreground/5 p-1 sm:flex-row"
             >
               <button
                 v-for="tab in [
@@ -543,7 +578,7 @@ const handleTestChat = async () => {
                 :key="tab.id"
                 @click="activeTab = tab.id"
                 :class="[
-                  'flex-1 flex items-center justify-center gap-2 rounded-[0.39rem] py-2.5 text-xs font-bold transition-all',
+                  'flex-1 flex items-center justify-center gap-2 rounded-[0.39rem] py-2 text-xs font-bold transition-all',
                   activeTab === tab.id
                     ? 'bg-primary text-black shadow-sm shadow-primary/10'
                     : 'text-foreground/40 hover:text-foreground hover:bg-foreground/5',
@@ -555,9 +590,9 @@ const handleTestChat = async () => {
             </div>
 
             <!-- Training Tabs Content -->
-            <div class="space-y-6">
+            <div class="space-y-4">
               <!-- URL Form -->
-              <div v-if="activeTab === 'url'" class="space-y-6">
+              <div v-if="activeTab === 'url'" class="space-y-4">
                 <div>
                   <label class="mb-3 block text-xs font-bold text-foreground/45"
                     >Website URL</label
@@ -566,14 +601,14 @@ const handleTestChat = async () => {
                     <input
                       v-model="urlForm.url"
                       placeholder="https://example.com/docs"
-                      class="flex-1 bg-foreground/5 border border-foreground/10 rounded-[0.39rem] px-4 py-3 text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors italic-none"
+                      class="h-10 flex-1 rounded-[0.39rem] border border-foreground/10 bg-background px-3 text-sm font-semibold text-foreground placeholder:text-foreground/25 transition-colors focus:border-primary/40 focus:outline-none italic-none"
                     />
                     <button
                       @click="handleUrlTrain"
                       :disabled="
                         isProcessing || !urlForm.url || isOverTrainingLimit
                       "
-                      class="flex items-center justify-center gap-2 rounded-[0.39rem] bg-primary px-6 py-3 text-xs font-bold text-black transition-all hover:bg-primary-accent disabled:opacity-50 sm:py-0 italic-none"
+                      class="flex h-10 items-center justify-center gap-2 rounded-[0.39rem] bg-primary px-4 text-xs font-bold text-black transition-all hover:bg-primary-accent disabled:opacity-50 italic-none"
                     >
                       <Loader2
                         v-if="isProcessing"
@@ -602,9 +637,9 @@ const handleTestChat = async () => {
               </div>
 
               <!-- File Form -->
-              <div v-if="activeTab === 'file'" class="space-y-6">
+              <div v-if="activeTab === 'file'" class="space-y-4">
                 <div
-                  class="cursor-pointer rounded-[0.39rem] border-2 border-dashed border-foreground/10 bg-foreground/[0.01] p-6 text-center transition-all hover:border-primary/30 sm:p-8"
+                  class="cursor-pointer rounded-[0.39rem] border border-dashed border-foreground/10 bg-background/45 p-6 text-center transition-all hover:border-primary/30 sm:p-8"
                   @click="$refs.fileInput.click()"
                 >
                   <input
@@ -616,7 +651,7 @@ const handleTestChat = async () => {
                   />
                   <div v-if="!selectedFile" class="space-y-4">
                     <div
-                      class="w-16 h-16 bg-foreground/5 rounded-[0.39rem] flex items-center justify-center mx-auto mb-4"
+                      class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[0.39rem] bg-foreground/5"
                     >
                       <FileText class="w-8 h-8 text-foreground/30" />
                     </div>
@@ -629,7 +664,7 @@ const handleTestChat = async () => {
                   </div>
                   <div v-else class="space-y-4">
                     <div
-                      class="w-16 h-16 bg-primary/10 rounded-[0.39rem] flex items-center justify-center mx-auto mb-4"
+                      class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[0.39rem] bg-primary/10"
                     >
                       <FileText class="w-8 h-8 text-primary" />
                     </div>
@@ -659,7 +694,7 @@ const handleTestChat = async () => {
               </div>
 
               <!-- Text Form -->
-              <div v-if="activeTab === 'text'" class="space-y-6">
+              <div v-if="activeTab === 'text'" class="space-y-4">
                 <div class="space-y-4">
                   <div>
                     <label
@@ -669,7 +704,7 @@ const handleTestChat = async () => {
                     <input
                       v-model="textForm.title"
                       placeholder="e.g. Return Policy"
-                      class="w-full bg-foreground/5 border border-foreground/10 rounded-[0.39rem] px-4 py-3 text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors italic-none"
+                      class="h-10 w-full rounded-[0.39rem] border border-foreground/10 bg-background px-3 text-sm font-semibold text-foreground placeholder:text-foreground/25 transition-colors focus:border-primary/40 focus:outline-none italic-none"
                     />
                   </div>
                   <div>
@@ -681,7 +716,7 @@ const handleTestChat = async () => {
                       v-model="textForm.content"
                       rows="8"
                       placeholder="Paste your knowledge content here..."
-                      class="w-full bg-foreground/5 border border-foreground/10 rounded-[0.39rem] px-4 py-3 text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors resize-none mb-2 italic-none"
+                      class="mb-2 w-full resize-none rounded-[0.39rem] border border-foreground/10 bg-background px-3 py-3 text-sm font-semibold text-foreground placeholder:text-foreground/25 transition-colors focus:border-primary/40 focus:outline-none italic-none"
                     ></textarea>
                   </div>
                   <button

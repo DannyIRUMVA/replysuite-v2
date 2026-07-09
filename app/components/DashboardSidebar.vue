@@ -17,6 +17,7 @@ import {
   CalendarDays,
   CreditCard,
   GraduationCap,
+  GitBranch,
 } from "lucide-vue-next";
 
 const { user, profile, membership, isLoading } = useAuth();
@@ -39,6 +40,7 @@ const iconMap: Record<string, any> = {
   CalendarDays,
   CreditCard,
   GraduationCap,
+  GitBranch,
 };
 
 const showLockedFeatureModal = ref(false);
@@ -169,6 +171,7 @@ const daysLeft = computed(() => {
 const mainLinks = computed(() => [
   { name: "Home", href: "/dashboard", icon: "LayoutDashboard", exact: true },
   { name: "Inbox", href: "/dashboard/conversations", icon: "MessageCircle" },
+  { name: "Flows", href: "/dashboard/flows", icon: "GitBranch" },
   { name: "Reports", href: "/dashboard/analytics", icon: "TrendingUp" },
 ]);
 
@@ -177,7 +180,15 @@ const navigationGroups = computed(() => [
     title: "Assistant",
     icon: "MessageSquare",
     links: [
-      { name: "Assistants", href: "/dashboard/agents", icon: "MessageSquare" },
+      {
+        name: "Assistants",
+        href: "/dashboard/agents",
+        icon: "MessageSquare",
+        excludePrefixes: [
+          "/dashboard/agents/skills",
+          "/dashboard/agents/tools",
+        ],
+      },
       { name: "Skills", href: "/dashboard/agents/skills", icon: "Database" },
       { name: "Tools", href: "/dashboard/agents/tools", icon: "CalendarDays" },
     ],
@@ -236,7 +247,25 @@ const navigationGroups = computed(() => [
 
 const isLinkActive = (link: any) => {
   if (!link?.href) return false;
+  if (
+    Array.isArray(link.excludePrefixes) &&
+    link.excludePrefixes.some(
+      (prefix: string) =>
+        route.path === prefix || route.path.startsWith(`${prefix}/`),
+    )
+  ) {
+    return false;
+  }
   if (link.exact) return route.path === link.href;
+  if (
+    Array.isArray(link.activePrefixes) &&
+    link.activePrefixes.some(
+      (prefix: string) =>
+        route.path === prefix || route.path.startsWith(`${prefix}/`),
+    )
+  ) {
+    return true;
+  }
   return route.path === link.href || route.path.startsWith(`${link.href}/`);
 };
 
