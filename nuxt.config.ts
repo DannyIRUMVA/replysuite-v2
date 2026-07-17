@@ -1,123 +1,136 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-07-15',
+  compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
   app: {
     head: {
       htmlAttrs: {
-        lang: 'en'
+        lang: "en",
       },
-      charset: 'utf-8',
-      viewport: 'width=device-width, initial-scale=1',
-      title: 'ReplySuite | AI Chatbots for Brand Growth',
-      titleTemplate: '%s | ReplySuite',
+      charset: "utf-8",
+      viewport: "width=device-width, initial-scale=1",
+      title: "ReplySuite | AI Chatbots for Brand Growth",
+      titleTemplate: "%s | ReplySuite",
       meta: [
-        { name: 'theme-color', content: '#D4AF37' },
-        { name: 'author', content: 'ReplySuite' },
-        { name: 'description', content: 'ReplySuite is an AI-powered live chat and automation platform. Build trainable chatbots that reply on Instagram, WhatsApp, and your website — 24/7.' },
-        { property: 'og:site_name', content: 'ReplySuite' },
-        { property: 'og:type', content: 'website' },
-        { property: 'og:locale', content: 'en_US' },
-        { property: 'og:image', content: 'https://replysuite.app/og-image.png' },
-        { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:site', content: '@replysuite' },
-        { name: 'twitter:image', content: 'https://replysuite.app/og-image.png' },
+        { name: "theme-color", content: "#D4AF37" },
+        { name: "author", content: "ReplySuite" },
+        {
+          name: "description",
+          content:
+            "ReplySuite is an AI-powered live chat and automation platform. Build trainable chatbots that reply on Instagram, WhatsApp, and your website — 24/7.",
+        },
+        { property: "og:site_name", content: "ReplySuite" },
+        { property: "og:type", content: "website" },
+        { property: "og:locale", content: "en_US" },
+        {
+          property: "og:image",
+          content: "https://replysuite.app/og-image.png",
+        },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:site", content: "@replysuite" },
+        {
+          name: "twitter:image",
+          content: "https://replysuite.app/og-image.png",
+        },
       ],
       link: [
-        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
-        { rel: 'alternate icon', type: 'image/x-icon', href: '/favicon.ico' },
-        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
-        { rel: 'canonical', href: 'https://replysuite.app/' },
-        { rel: 'preconnect', href: 'https://www.googletagmanager.com' },
-        { rel: 'preconnect', href: 'https://stats.g.doubleclick.net' },
-        { rel: 'preconnect', href: 'https://www.clarity.ms' }
+        { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+        { rel: "alternate icon", type: "image/x-icon", href: "/favicon.ico" },
+        { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+        { rel: "canonical", href: "https://replysuite.app/" },
+        { rel: "preconnect", href: "https://www.googletagmanager.com" },
+        { rel: "preconnect", href: "https://stats.g.doubleclick.net" },
+        { rel: "preconnect", href: "https://www.clarity.ms" },
       ],
       script: [
         {
-          type: 'application/ld+json',
+          type: "application/ld+json",
           children: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'WebSite',
-            name: 'ReplySuite',
-            description: 'AI-powered live chat and automation platform.',
-            url: 'https://replysuite.app/',
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "ReplySuite",
+            description: "AI-powered live chat and automation platform.",
+            url: "https://replysuite.app/",
             publisher: {
-              '@type': 'Organization',
-              name: 'ReplySuite',
-              url: 'https://replysuite.app',
+              "@type": "Organization",
+              name: "ReplySuite",
+              url: "https://replysuite.app",
               logo: {
-                '@type': 'ImageObject',
-                url: 'https://replysuite.app/icon-512.png'
-              }
+                "@type": "ImageObject",
+                url: "https://replysuite.app/icon-512.png",
+              },
             },
             potentialAction: {
-              '@type': 'SearchAction',
-              target: 'https://replysuite.app/search?q={search_term_string}',
-              'query-input': 'required name=search_term_string'
-            }
-          })
+              "@type": "SearchAction",
+              target: "https://replysuite.app/search?q={search_term_string}",
+              "query-input": "required name=search_term_string",
+            },
+          }),
         },
         {
-          type: 'application/ld+json',
+          type: "application/ld+json",
           children: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Organization',
-            name: 'ReplySuite',
-            url: 'https://replysuite.app',
-            logo: 'https://replysuite.app/icon-512.png',
-            description: 'AI-powered live chat and chatbot automation for Instagram, WhatsApp, and websites.',
-            sameAs: [
-              'https://twitter.com/replysuite'
-            ],
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "ReplySuite",
+            url: "https://replysuite.app",
+            logo: "https://replysuite.app/icon-512.png",
+            description:
+              "AI-powered live chat and chatbot automation for Instagram, WhatsApp, and websites.",
+            sameAs: ["https://twitter.com/replysuite"],
             contactPoint: {
-              '@type': 'ContactPoint',
-              contactType: 'customer support',
-              email: 'support@replysuite.app',
-              availableLanguage: ['English', 'French', 'Kinyarwanda']
-            }
-          })
+              "@type": "ContactPoint",
+              contactType: "customer support",
+              email: "support@replysuite.app",
+              availableLanguage: ["English", "French", "Kinyarwanda"],
+            },
+          }),
         },
         {
-          type: 'text/javascript',
+          type: "text/javascript",
           children: `(function(c,l,a,r,i,t,y){
             c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
             t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
             y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-          })(window, document, "clarity", "script", "wglphllrsx");`
-        }
-      ]
-    }
+          })(window, document, "clarity", "script", "wglphllrsx");`,
+        },
+      ],
+    },
   },
   ssr: true,
   hooks: {
-    'render:html'(html: any, { event }: any) {
+    "render:html"(html: any, { event }: any) {
       // If we are on a widget page, strip the devtools script to prevent SecurityError in iframes
-      if (event && event.path && event.path.startsWith('/widget/')) {
+      if (event && event.path && event.path.startsWith("/widget/")) {
         if (html.bodyAppend) {
-          html.bodyAppend = html.bodyAppend.filter((s: string) => !s.includes('nuxt-devtools'))
+          html.bodyAppend = html.bodyAppend.filter(
+            (s: string) => !s.includes("nuxt-devtools"),
+          );
         }
-        html.head = html.head.filter((s: string) => !s.includes('nuxt-devtools'))
+        html.head = html.head.filter(
+          (s: string) => !s.includes("nuxt-devtools"),
+        );
       }
-    }
+    },
   },
   modules: [
-    '@nuxtjs/tailwindcss',
-    '@nuxtjs/supabase',
-    '@polar-sh/nuxt',
-    '@nuxt/scripts',
-    '@nuxtjs/color-mode'
+    "@nuxtjs/tailwindcss",
+    "@nuxtjs/supabase",
+    "@polar-sh/nuxt",
+    "@nuxt/scripts",
+    "@nuxtjs/color-mode",
   ],
   colorMode: {
-    classSuffix: '',
-    preference: 'dark',
-    fallback: 'dark'
+    classSuffix: "",
+    preference: "dark",
+    fallback: "dark",
   },
   scripts: {
     registry: {
       googleTagManager: {
-        id: 'GTM-N5X7KRBD',
-      }
-    }
+        id: "GTM-N5X7KRBD",
+      },
+    },
   },
   supabase: {
     url: process.env.SUPABASE_URL,
@@ -125,18 +138,18 @@ export default defineNuxtConfig({
     redirect: false,
     cookieOptions: {
       maxAge: 604800,
-      sameSite: 'lax',
-      path: '/',
-      secure: false
+      sameSite: "lax",
+      path: "/",
+      secure: false,
     },
     clientOptions: {
       auth: {
-        flowType: 'pkce',
+        flowType: "pkce",
         detectSessionInUrl: true,
         persistSession: true,
-        autoRefreshToken: true
-      }
-    }
+        autoRefreshToken: true,
+      },
+    },
   },
   runtimeConfig: {
     instagramClientId: process.env.INSTAGRAM_APP_ID,
@@ -164,13 +177,18 @@ export default defineNuxtConfig({
     replySuiteHermesWebhookSecret: process.env.REPLYSUITE_HERMES_WEBHOOK_SECRET,
     replySuiteMediaWorkerUrl: process.env.REPLYSUITE_MEDIA_WORKER_URL,
     replySuiteMediaWorkerSecret: process.env.REPLYSUITE_MEDIA_WORKER_SECRET,
-    replySuiteMobilePaymentWorkerUrl: process.env.REPLYSUITE_MOBILE_PAYMENT_WORKER_URL || process.env.REPLYSUITE_SUBSCRIPTION_PAYMENT_WORKER_URL,
+    replySuiteMobilePaymentWorkerUrl:
+      process.env.REPLYSUITE_MOBILE_PAYMENT_WORKER_URL ||
+      process.env.REPLYSUITE_SUBSCRIPTION_PAYMENT_WORKER_URL,
+    replySuiteMobilePaymentWebhookSecret:
+      process.env.REPLYSUITE_MOBILE_PAYMENT_WEBHOOK_SECRET ||
+      process.env.REPLYSUITE_MOBILE_PAYMENT_WORKER_SECRET,
     replySuiteAvatarWorkerUrl: process.env.REPLYSUITE_AVATAR_WORKER_URL,
     replySuiteAvatarWorkerSecret: process.env.REPLYSUITE_AVATAR_WORKER_SECRET,
 
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL,
-      metaAppId: process.env.INSTAGRAM_APP_ID
+      metaAppId: process.env.INSTAGRAM_APP_ID,
     },
 
     polarAccessToken: process.env.POLAR_ACCESS_TOKEN,
@@ -185,14 +203,19 @@ export default defineNuxtConfig({
     azureOpenAiDeploymentName: process.env.AZURE_OPENAI_DEPLOYMENT_NAME,
     azureOpenAiChatKey: process.env.AZURE_OPENAI_CHAT_KEY,
     azureOpenAiChatEndpoint: process.env.AZURE_OPENAI_CHAT_ENDPOINT,
-    azureOpenAiChatDeploymentName: process.env.AZURE_OPENAI_CHAT_DEPLOYMENT_NAME,
+    azureOpenAiChatDeploymentName:
+      process.env.AZURE_OPENAI_CHAT_DEPLOYMENT_NAME,
     azureOpenAiChatAuthMode: process.env.AZURE_OPENAI_CHAT_AUTH_MODE,
-    azureOpenAiChatMaxCompletionTokens: process.env.AZURE_OPENAI_CHAT_MAX_COMPLETION_TOKENS,
-    azureOpenAiChatReasoningEffort: process.env.AZURE_OPENAI_CHAT_REASONING_EFFORT,
+    azureOpenAiChatMaxCompletionTokens:
+      process.env.AZURE_OPENAI_CHAT_MAX_COMPLETION_TOKENS,
+    azureOpenAiChatReasoningEffort:
+      process.env.AZURE_OPENAI_CHAT_REASONING_EFFORT,
     azureOpenAiEmbeddingKey: process.env.AZURE_OPENAI_EMBEDDING_KEY,
     azureOpenAiEmbeddingEndpoint: process.env.AZURE_OPENAI_EMBEDDING_ENDPOINT,
-    azureOpenAiEmbeddingDeploymentName: process.env.AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME,
-    azureOpenAiEmbeddingDimensions: process.env.AZURE_OPENAI_EMBEDDING_DIMENSIONS,
+    azureOpenAiEmbeddingDeploymentName:
+      process.env.AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME,
+    azureOpenAiEmbeddingDimensions:
+      process.env.AZURE_OPENAI_EMBEDDING_DIMENSIONS,
     azureOpenAiApiVersion: process.env.AZURE_OPENAI_API_VERSION,
     azureOpenAiApiStyle: process.env.AZURE_OPENAI_API_STYLE,
     openAiApiKey: process.env.OPENAI_API_KEY,
@@ -219,40 +242,38 @@ export default defineNuxtConfig({
       hmr: {
         // protocol: 'wss',
         // clientPort: 443
-      }
+      },
     },
     optimizeDeps: {
-      include: [
-        '@vue/devtools-core',
-        '@vue/devtools-kit',
-        'lucide-vue-next'
-      ]
-    }
+      include: ["@vue/devtools-core", "@vue/devtools-kit", "lucide-vue-next"],
+    },
   },
   nitro: {
-    preset: 'cloudflare-pages',
+    preset: "cloudflare-pages",
     compatibilityFlags: {
-      nodejs_compat: true
+      nodejs_compat: true,
     },
     commonJS: {
       dynamicRequireTargets: [
-        './node_modules/pdf-parse/lib/pdf.js/**/*.js',
-        './node_modules/pdf-parse/**/*.js',
-        './node_modules/pdf-parse-fork/lib/pdf.js/**/*.js',
-        './node_modules/pdf-parse-fork/**/*.js'
-      ]
+        "./node_modules/pdf-parse/lib/pdf.js/**/*.js",
+        "./node_modules/pdf-parse/**/*.js",
+        "./node_modules/pdf-parse-fork/lib/pdf.js/**/*.js",
+        "./node_modules/pdf-parse-fork/**/*.js",
+      ],
     },
     routeRules: {
-      '/widget/**': {
+      "/widget/**": {
         headers: {
-          'Content-Security-Policy': "frame-ancestors * http: https: localhost:* file:;"
-        }
+          "Content-Security-Policy":
+            "frame-ancestors * http: https: localhost:* file:;",
+        },
       },
-      '/**': {
+      "/**": {
         headers: {
-          'Content-Security-Policy': "frame-ancestors * http: https: localhost:* file:;"
-        }
-      }
-    }
-  }
-})
+          "Content-Security-Policy":
+            "frame-ancestors * http: https: localhost:* file:;",
+        },
+      },
+    },
+  },
+});

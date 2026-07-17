@@ -2,7 +2,9 @@
 import {
   Bot,
   BrainCircuit,
+  CreditCard,
   GitBranch,
+  GraduationCap,
   Instagram,
   Search,
   Smartphone,
@@ -16,6 +18,7 @@ interface ChatbotFlowMeta {
   name: string | null;
   enabled_tools?: string[] | null;
   tools_config?: Record<string, any> | null;
+  data_sources?: Array<{ count?: number | null }> | null;
 }
 
 definePageMeta({ middleware: "auth", layout: "dashboard" });
@@ -24,7 +27,9 @@ useHead({ title: "Flows | ReplySuite" });
 const supabase = useSupabaseClient();
 const { userId } = useAuth();
 const query = ref("");
-const channelFilter = ref<"all" | "instagram" | "whatsapp">("all");
+const channelFilter = ref<
+  "all" | "business" | "school" | "instagram" | "whatsapp"
+>("all");
 const rowsPerPageOptions = [5, 10, 20];
 const rowsPerPage = ref(5);
 const currentPage = ref(1);
@@ -70,7 +75,7 @@ const { data: chatbots, pending: loadingChatbots } = await useAsyncData(
     if (!userId.value) return [];
     const { data } = await supabase
       .from("chatbots")
-      .select("id, name, enabled_tools, tools_config")
+      .select("id, name, enabled_tools, tools_config, data_sources(count)")
       .eq("user_id", userId.value)
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
@@ -79,9 +84,66 @@ const { data: chatbots, pending: loadingChatbots } = await useAsyncData(
   { server: false, watch: [userId], default: () => [] },
 );
 
+const { data: catalogItems, pending: loadingCatalog } = await useAsyncData(
+  "dashboard-flows-product-catalog",
+  async () => {
+    if (!userId.value) return [];
+    const { data, error } = await supabase
+      .from("chatbot_catalog")
+      .select("chatbot_id")
+      .eq("is_available", true);
+    if (error) {
+      console.warn("Could not load legacy product catalog readiness:", error);
+      return [];
+    }
+    return data || [];
+  },
+  { server: false, watch: [userId], default: () => [] },
+);
+
+const { data: businessProducts, pending: loadingBusinessProducts } =
+  await useAsyncData(
+    "dashboard-flows-business-products",
+    async () => {
+      if (!userId.value) return [];
+      const { data, error } = await supabase
+        .from("business_products")
+        .select("chatbot_id")
+        .eq("is_active", true);
+      if (error) {
+        console.warn("Could not load business product readiness:", error);
+        return [];
+      }
+      return data || [];
+    },
+    { server: false, watch: [userId], default: () => [] },
+  );
+
+const { data: schoolPlans, pending: loadingSchoolPlans } = await useAsyncData(
+  "dashboard-flows-school-plans",
+  async () => {
+    if (!userId.value) return [];
+    const { data, error } = await supabase
+      .from("school_tutor_plans")
+      .select("chatbot_id")
+      .eq("is_active", true);
+    if (error) {
+      console.warn("Could not load school plan readiness:", error);
+      return [];
+    }
+    return data || [];
+  },
+  { server: false, watch: [userId], default: () => [] },
+);
+
 const isLoading = computed(
   () =>
-    loadingInstagram.value || loadingWhatsapp.value || loadingChatbots.value,
+    loadingInstagram.value ||
+    loadingWhatsapp.value ||
+    loadingChatbots.value ||
+    loadingCatalog.value ||
+    loadingBusinessProducts.value ||
+    loadingSchoolPlans.value,
 );
 
 const botById = computed(() => {
@@ -101,6 +163,106 @@ const botSkills = (bot?: ChatbotFlowMeta | null) =>
   Array.isArray(bot?.tools_config?.assistant_skills)
     ? bot.tools_config.assistant_skills.filter(Boolean)
     : [];
+const botTrainingCount = (bot?: ChatbotFlowMeta | null) =>
+  Array.isArray(bot?.data_sources)
+    ? Number(bot.data_sources[0]?.count || 0)
+    : 0;
+
+const paymentToolSet = new Set([
+  "payments",
+  "request_payment",
+  "check_payment_status",
+]);
+const productDeliveryToolSet = new Set([
+  "orders",
+  "products",
+  "catalog",
+  "product_delivery",
+  "deliver_product",
+]);
+const workspaceTextBlob = (...values: unknown[]) =>
+  values
+    .map((value) => {
+      try {
+        return typeof value === "string" ? value : JSON.stringify(value || "");
+      } catch {
+        return String(value || "");
+      }
+    })
+    .join(" ")
+    .toLowerCase();
+const schoolPattern =
+  /\b(school|student|students|class|classes|course|courses|module|modules|university|college|lesson|lessons|tutor|tutoring|teacher|revision|exam|exams|learn|learning|education|session|sessions)\b/;
+const buildCountByBotId = (items: any[] | null | undefined) => {
+  const map = new Map<string, number>();
+  for (const item of items || []) {
+    const chatbotId = String((item as any)?.chatbot_id || "");
+    if (!chatbotId) continue;
+    map.set(chatbotId, (map.get(chatbotId) || 0) + 1);
+  }
+  return map;
+};
+const catalogCountByBotId = computed(() =>
+  buildCountByBotId(catalogItems.value),
+);
+const businessProductCountByBotId = computed(() =>
+  buildCountByBotId(businessProducts.value),
+);
+const schoolPlanCountByBotId = computed(() =>
+  buildCountByBotId(schoolPlans.value),
+);
+const flowPaymentEnabled = (bot?: ChatbotFlowMeta | null) => {
+  const config = bot?.tools_config || {};
+  return Boolean(
+    botTools(bot).some((tool) => paymentToolSet.has(tool)) ||
+    config.website_payment?.enabled ||
+    config.business_flow?.payment_required ||
+    config.school_flow?.payment_enabled,
+  );
+};
+const flowProductDeliveryEnabled = (bot?: ChatbotFlowMeta | null) => {
+  const tools = botTools(bot);
+  const config = bot?.tools_config || {};
+  return Boolean(
+    (bot?.id
+      ? (businessProductCountByBotId.value.get(bot.id) || 0) +
+        (catalogCountByBotId.value.get(bot.id) || 0)
+      : 0) > 0 ||
+    tools.some((tool) => productDeliveryToolSet.has(tool)) ||
+    config.business_flow?.product_delivery_enabled ||
+    config.orders?.enabled ||
+    config.orders?.delivery_enabled ||
+    config.orders?.deliveryEnabled ||
+    config.products?.enabled ||
+    config.products?.delivery_enabled ||
+    config.product_delivery?.enabled,
+  );
+};
+const flowBusinessReady = (bot?: ChatbotFlowMeta | null, trigger?: any) =>
+  Boolean(
+    bot &&
+    flowPaymentEnabled(bot) &&
+    flowProductDeliveryEnabled(bot) &&
+    (!trigger || trigger.reply_in_dm),
+  );
+const flowSchoolReady = (bot?: ChatbotFlowMeta | null) =>
+  Boolean(
+    bot &&
+    ((bot.id ? (schoolPlanCountByBotId.value.get(bot.id) || 0) > 0 : false) ||
+      botTools(bot).some((tool) =>
+        ["school", "tutor", "school_tutor"].includes(tool),
+      ) ||
+      bot.tools_config?.school_flow?.enabled ||
+      schoolPattern.test(
+        workspaceTextBlob(bot.name, botSkills(bot), bot.tools_config),
+      )),
+  );
+const flowWorkspaceLabels = (flow: any) => {
+  const labels = [];
+  if (flow.businessReady) labels.push("Business");
+  if (flow.schoolReady) labels.push("School");
+  return labels;
+};
 
 const keywordsLabel = (trigger: any) => {
   const keywords = Array.isArray(trigger?.keywords)
@@ -144,6 +306,11 @@ const instagramFlows = computed(() =>
           assistant: bot?.name || trigger.chatbots?.name || "Assistant not set",
           tools: botTools(bot),
           skills: botSkills(bot),
+          trainingCount: botTrainingCount(bot),
+          paymentEnabled: flowPaymentEnabled(bot),
+          productDelivery: flowProductDeliveryEnabled(bot),
+          businessReady: flowBusinessReady(bot, trigger),
+          schoolReady: flowSchoolReady(bot),
           active: Boolean(trigger.is_active),
         };
       }),
@@ -170,6 +337,11 @@ const whatsappFlows = computed(() =>
         assistant: bot?.name || account.chatbots?.name || "Assistant not set",
         tools: botTools(bot),
         skills: botSkills(bot),
+        trainingCount: botTrainingCount(bot),
+        paymentEnabled: flowPaymentEnabled(bot),
+        productDelivery: flowProductDeliveryEnabled(bot),
+        businessReady: flowBusinessReady(bot),
+        schoolReady: flowSchoolReady(bot),
         active: account.status === "active" || account.status === "deployed",
       };
     }),
@@ -180,8 +352,25 @@ const allFlows = computed(() => [
   ...whatsappFlows.value,
 ]);
 
+const businessFlows = computed(() =>
+  allFlows.value.filter((flow: any) => flow.businessReady),
+);
+const schoolFlows = computed(() =>
+  allFlows.value.filter((flow: any) => flow.schoolReady),
+);
+
 const channelOptions = computed(() => [
   { label: "All", value: "all" as const, count: allFlows.value.length },
+  {
+    label: "Business",
+    value: "business" as const,
+    count: businessFlows.value.length,
+  },
+  {
+    label: "School",
+    value: "school" as const,
+    count: schoolFlows.value.length,
+  },
   {
     label: "Instagram",
     value: "instagram" as const,
@@ -198,7 +387,11 @@ const filteredFlows = computed(() => {
   const search = query.value.trim().toLowerCase();
   return allFlows.value.filter((flow: any) => {
     const matchesChannel =
-      channelFilter.value === "all" || flow.channelType === channelFilter.value;
+      channelFilter.value === "all" ||
+      (channelFilter.value === "business" && flow.businessReady) ||
+      (channelFilter.value === "school" && flow.schoolReady) ||
+      flow.channelType === channelFilter.value;
+    const workspaceLabels = flowWorkspaceLabels(flow);
     const matchesSearch =
       !search ||
       [
@@ -208,6 +401,9 @@ const filteredFlows = computed(() => {
         flow.trigger,
         flow.mode,
         flow.assistant,
+        workspaceLabels.join(" "),
+        flow.paymentEnabled ? "payment MTN Airtel mobile payment" : "",
+        flow.trainingCount ? `${flow.trainingCount} training sources` : "",
         flow.tools.map(formatConfigLabel).join(" "),
         flow.skills.map(formatConfigLabel).join(" "),
       ]
@@ -304,6 +500,14 @@ const visibleFlowSummary = computed(() =>
     ? `${paginationStart.value}-${paginationEnd.value} of ${filteredFlows.value.length}`
     : "0 flows",
 );
+
+const flowDetailRoute = (flow: any) => ({
+  path: `/dashboard/flows/${flow.routeId}`,
+  query: {
+    channel: flow.channelType,
+    ...(flow.channelType === "instagram" ? { flow: flow.id } : {}),
+  },
+});
 </script>
 
 <template>
@@ -446,7 +650,7 @@ const visibleFlowSummary = computed(() =>
 
       <div v-else>
         <div v-if="paginatedFlows.length" class="overflow-x-auto">
-          <table class="w-full min-w-[1040px] text-left">
+          <table class="w-full min-w-[1120px] text-left">
             <thead class="border-b border-foreground/10 bg-foreground/[0.025]">
               <tr>
                 <th
@@ -458,6 +662,11 @@ const visibleFlowSummary = computed(() =>
                   class="px-3 py-2.5 text-[11px] font-bold text-foreground/45"
                 >
                   Source
+                </th>
+                <th
+                  class="px-3 py-2.5 text-[11px] font-bold text-foreground/45"
+                >
+                  Workspace
                 </th>
                 <th
                   class="px-3 py-2.5 text-[11px] font-bold text-foreground/45"
@@ -519,6 +728,30 @@ const visibleFlowSummary = computed(() =>
                     >
                       {{ flow.source }} · {{ flow.trigger }}
                     </p>
+                  </div>
+                </td>
+                <td class="px-3 py-3 align-middle">
+                  <div class="flex max-w-[13rem] flex-wrap gap-1">
+                    <span
+                      v-if="flow.businessReady"
+                      class="inline-flex items-center gap-1 rounded-full bg-emerald-400/10 px-2 py-0.5 text-[10px] font-bold text-emerald-400"
+                    >
+                      <CreditCard class="h-3 w-3" />
+                      Business
+                    </span>
+                    <span
+                      v-if="flow.schoolReady"
+                      class="inline-flex items-center gap-1 rounded-full bg-sky-400/10 px-2 py-0.5 text-[10px] font-bold text-sky-400"
+                    >
+                      <GraduationCap class="h-3 w-3" />
+                      School
+                    </span>
+                    <span
+                      v-if="!flow.businessReady && !flow.schoolReady"
+                      class="rounded-full bg-foreground/5 px-2 py-0.5 text-[10px] font-bold text-foreground/40"
+                    >
+                      General
+                    </span>
                   </div>
                 </td>
                 <td class="px-3 py-3 align-middle">
@@ -589,20 +822,34 @@ const visibleFlowSummary = computed(() =>
                   </div>
                 </td>
                 <td class="px-3 py-3 align-middle">
-                  <span
-                    :class="[
-                      'rounded-full px-2 py-0.5 text-[10px] font-bold',
-                      flow.active
-                        ? 'bg-emerald-400/10 text-emerald-400'
-                        : 'bg-foreground/5 text-foreground/45',
-                    ]"
-                  >
-                    {{ flow.active ? "Active" : "Paused" }}
-                  </span>
+                  <div class="flex flex-wrap gap-1">
+                    <span
+                      :class="[
+                        'rounded-full px-2 py-0.5 text-[10px] font-bold',
+                        flow.active
+                          ? 'bg-emerald-400/10 text-emerald-400'
+                          : 'bg-foreground/5 text-foreground/45',
+                      ]"
+                    >
+                      {{ flow.active ? "Active" : "Paused" }}
+                    </span>
+                    <span
+                      v-if="flow.paymentEnabled"
+                      class="rounded-full bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold text-amber-400"
+                    >
+                      Payment
+                    </span>
+                    <span
+                      v-if="flow.trainingCount"
+                      class="rounded-full bg-sky-400/10 px-2 py-0.5 text-[10px] font-bold text-sky-400"
+                    >
+                      {{ flow.trainingCount }} sources
+                    </span>
+                  </div>
                 </td>
                 <td class="px-3 py-3 text-right align-middle">
                   <NuxtLink
-                    :to="`/dashboard/flows/${flow.routeId}?channel=${flow.channelType}`"
+                    :to="flowDetailRoute(flow)"
                     class="inline-flex h-8 items-center justify-center rounded-[0.39rem] border border-primary/20 bg-primary/10 px-3 text-[11px] font-bold text-primary transition hover:bg-primary/15"
                   >
                     Open

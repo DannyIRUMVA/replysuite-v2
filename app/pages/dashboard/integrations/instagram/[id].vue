@@ -3,9 +3,14 @@ import {
   ArrowLeft,
   Bot,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  GitBranch,
   Instagram,
   Loader2,
   MessageCircle,
+  MessageSquareText,
+  PlayCircle,
   RefreshCcw,
   Save,
   Send,
@@ -24,7 +29,12 @@ const isLocked = computed(() => !canUseInstagramWorkflow.value);
 const canPublicComment = canUseInstagramWorkflow;
 const isSaving = ref(false);
 const isTesting = ref(false);
+const isContinuingSessionId = ref("");
 const testResult = ref<any>(null);
+const messagesPage = ref(1);
+const messagesPerPage = ref(10);
+const commentsPage = ref(1);
+const commentsPerPage = ref(8);
 
 const instagramApiFetch = async <T,>(url: string, options: any = {}) => {
   const { data } = await supabase.auth.getSession();
@@ -50,6 +60,36 @@ const {
   { server: false, default: () => [] },
 );
 
+const {
+  data: messageFeed,
+  pending: isLoadingMessages,
+  refresh: refreshMessages,
+} = await useAsyncData(
+  `instagram-account-messages-${accountId}`,
+  async () => {
+    return await instagramApiFetch<any>(
+      `/api/instagram/${accountId}/messages`,
+      {
+        query: {
+          page: messagesPage.value,
+          perPage: messagesPerPage.value,
+        },
+      },
+    );
+  },
+  {
+    server: false,
+    default: () => ({
+      messages: [],
+      page: 1,
+      perPage: 10,
+      total: 0,
+      totalPages: 1,
+    }),
+    watch: [messagesPage, messagesPerPage],
+  },
+);
+
 const account = computed(
   () =>
     (accounts.value || []).find((item: any) => item.id === accountId) || null,
@@ -70,6 +110,7 @@ const form = reactive({
   keywords: "",
   replyInComment: false,
   replyInDm: true,
+  useBotForDm: true,
   dmTemplate: "",
   isActive: true,
 });
@@ -101,6 +142,7 @@ watch(
     );
     form.replyInDm = Boolean(trigger.value.reply_in_dm);
     form.dmTemplate = trigger.value.dm_template || "";
+    form.useBotForDm = !form.dmTemplate;
     form.isActive = Boolean(trigger.value.is_active);
   },
   { immediate: true },
@@ -108,6 +150,21 @@ watch(
 
 watch(canPublicComment, (allowed) => {
   if (!allowed) form.replyInComment = false;
+});
+
+watch(
+  () => form.useBotForDm,
+  (useBot) => {
+    if (useBot) form.dmTemplate = "";
+  },
+);
+
+watch(messagesPerPage, () => {
+  messagesPage.value = 1;
+});
+
+watch(commentsPerPage, () => {
+  commentsPage.value = 1;
 });
 
 const save = async () => {
@@ -131,7 +188,7 @@ const save = async () => {
         keywords: form.keywords,
         replyInComment: form.replyInComment,
         replyInDm: form.replyInDm,
-        dmTemplate: form.dmTemplate,
+        dmTemplate: form.useBotForDm ? "" : form.dmTemplate,
         isActive: form.isActive,
       },
     });
@@ -139,6 +196,7 @@ const save = async () => {
       "Instagram automation updated. Testing matching comments now.",
     );
     await refresh();
+    await refreshMessages();
     await testRule();
   } catch (error: any) {
     notify.error(
@@ -194,6 +252,7 @@ const testRule = async () => {
       `Checked ${response?.found || 0} comment${response?.found === 1 ? "" : "s"} on this post.`,
     );
     await refresh();
+    await refreshMessages();
   } catch (error: any) {
     notify.error(
       error?.data?.statusMessage ||
@@ -203,6 +262,91 @@ const testRule = async () => {
   } finally {
     isTesting.value = false;
   }
+};
+
+const paginatedComments = computed(() => {
+  const start = (commentsPage.value - 1) * commentsPerPage.value;
+  return comments.value.slice(start, start + commentsPerPage.value);
+});
+const commentsTotal = computed(() => comments.value.length);
+const commentsTotalPages = computed(() =>
+  Math.max(1, Math.ceil(commentsTotal.value / commentsPerPage.value)),
+);
+const commentsShowingStart = computed(() =>
+  commentsTotal.value
+    ? (commentsPage.value - 1) * commentsPerPage.value + 1
+    : 0,
+);
+const commentsShowingEnd = computed(() =>
+  Math.min(commentsPage.value * commentsPerPage.value, commentsTotal.value),
+);
+const setCommentsPage = (page: number) => {
+  commentsPage.value = Math.min(Math.max(1, page), commentsTotalPages.value);
+};
+
+const instagramMessages = computed(() => messageFeed.value?.messages || []);
+const messagesTotal = computed(() => Number(messageFeed.value?.total || 0));
+const messagesTotalPages = computed(() =>
+  Math.max(1, Number(messageFeed.value?.totalPages || 1)),
+);
+const messagesShowingStart = computed(() =>
+  messagesTotal.value
+    ? (messagesPage.value - 1) * messagesPerPage.value + 1
+    : 0,
+);
+const messagesShowingEnd = computed(() =>
+  Math.min(messagesPage.value * messagesPerPage.value, messagesTotal.value),
+);
+
+const setMessagesPage = (page: number) => {
+  messagesPage.value = Math.min(Math.max(1, page), messagesTotalPages.value);
+};
+
+const useBotInsteadOfDefaultMessage = () => {
+  form.useBotForDm = true;
+  form.dmTemplate = "";
+  notify.success("The selected assistant will write Instagram DMs now.");
+};
+
+const allowBotToContinue = async (sessionId: string) => {
+  if (!sessionId) return;
+  isContinuingSessionId.value = sessionId;
+  try {
+    await instagramApiFetch(`/api/conversations/${sessionId}/takeover`, {
+      method: "POST",
+      body: { enabled: false },
+    });
+    notify.success("Bot continuation enabled for this Instagram DM.");
+    await refreshMessages();
+  } catch (error: any) {
+    notify.error(
+      error?.data?.statusMessage ||
+        error?.message ||
+        "Failed to allow the bot to continue.",
+    );
+  } finally {
+    isContinuingSessionId.value = "";
+  }
+};
+
+const formatMessageTime = (value?: string) => {
+  if (!value) return "—";
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(value));
+  } catch {
+    return "—";
+  }
+};
+
+const messageRoleLabel = (role?: string) => {
+  if (role === "assistant") return "Bot";
+  if (role === "user") return "User";
+  return role || "Message";
 };
 
 const jobStats = computed(() => {
@@ -273,13 +417,20 @@ const deliveryActionLabel = (value?: string) => {
             <h1 class="dashboard-section-title mt-2">Configuration</h1>
           </div>
         </div>
-        <button
-          v-if="account"
-          @click="disconnect"
-          class="inline-flex items-center justify-center gap-2 rounded-[0.39rem] border border-red-400/20 bg-red-400/10 px-4 py-2.5 text-xs font-bold text-red-400 transition hover:bg-red-400 hover:text-white"
-        >
-          <Trash2 class="h-4 w-4" /> Disconnect
-        </button>
+        <div v-if="account" class="flex flex-wrap items-center gap-2">
+          <NuxtLink
+            :to="`/dashboard/flows/${account.id}?channel=instagram`"
+            class="inline-flex items-center justify-center gap-2 rounded-[0.39rem] bg-primary px-4 py-2.5 text-xs font-bold text-black shadow-sm shadow-primary/10 transition hover:bg-primary-accent"
+          >
+            <GitBranch class="h-4 w-4" /> Flow
+          </NuxtLink>
+          <button
+            @click="disconnect"
+            class="inline-flex items-center justify-center gap-2 rounded-[0.39rem] border border-red-400/20 bg-red-400/10 px-4 py-2.5 text-xs font-bold text-red-400 transition hover:bg-red-400 hover:text-white"
+          >
+            <Trash2 class="h-4 w-4" /> Disconnect
+          </button>
+        </div>
       </div>
     </section>
 
@@ -423,16 +574,60 @@ const deliveryActionLabel = (value?: string) => {
                 </label>
               </div>
 
-              <label class="block space-y-2">
+              <div
+                class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-4"
+              >
+                <div
+                  class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
+                >
+                  <label class="flex cursor-pointer items-start gap-3">
+                    <input
+                      v-model="form.useBotForDm"
+                      type="checkbox"
+                      class="mt-1 h-4 w-4 accent-primary"
+                    />
+                    <span>
+                      <span class="block text-xs font-bold text-foreground"
+                        >Bot continues in Instagram DMs</span
+                      >
+                      <span
+                        class="mt-1 block max-w-xl text-xs leading-5 text-foreground/50"
+                      >
+                        Use the selected assistant for comment-to-DM and future
+                        DM replies instead of a fixed default message.
+                      </span>
+                    </span>
+                  </label>
+                  <button
+                    v-if="form.dmTemplate"
+                    type="button"
+                    @click="useBotInsteadOfDefaultMessage"
+                    class="inline-flex items-center justify-center gap-2 rounded-[0.39rem] border border-primary/20 bg-primary/10 px-3 py-2 text-xs font-bold text-primary transition hover:bg-primary/15"
+                  >
+                    <PlayCircle class="h-3.5 w-3.5" />
+                    Use bot instead
+                  </button>
+                </div>
+              </div>
+
+              <label
+                class="block space-y-2"
+                :class="form.useBotForDm ? 'opacity-55' : ''"
+              >
                 <span class="text-xs font-bold text-foreground/50"
-                  >DM template</span
+                  >Default DM message</span
                 >
                 <textarea
                   v-model="form.dmTemplate"
+                  :disabled="form.useBotForDm"
                   rows="4"
-                  class="w-full rounded-[0.39rem] border border-foreground/10 bg-background-card/45 px-4 py-3 text-sm font-bold outline-none transition-all focus:border-primary/50"
-                  placeholder="Leave empty for AI-generated DMs. Use {{comment}} for the comment text."
+                  class="w-full rounded-[0.39rem] border border-foreground/10 bg-background-card/45 px-4 py-3 text-sm font-bold outline-none transition-all focus:border-primary/50 disabled:cursor-not-allowed disabled:opacity-70"
+                  placeholder="Only use this when you want a fixed message. Leave disabled for bot-generated DMs."
                 />
+                <span class="block text-xs leading-5 text-foreground/45">
+                  When bot continuation is enabled, ReplySuite ignores this
+                  default message and lets the selected assistant write replies.
+                </span>
               </label>
 
               <label
@@ -530,48 +725,173 @@ const deliveryActionLabel = (value?: string) => {
             >
               <div>
                 <h2 class="text-lg font-bold tracking-tight text-foreground">
-                  Post comments
+                  Instagram DM messages
                 </h2>
                 <p class="text-xs text-foreground/50">
-                  Comments saved for the selected post rule.
+                  Recent Instagram conversation messages for this account.
                 </p>
               </div>
               <button
-                @click="testRule"
-                :disabled="isTesting || !form.postId"
+                @click="refreshMessages()"
+                :disabled="isLoadingMessages"
                 class="inline-flex items-center justify-center gap-2 rounded-[0.39rem] border border-primary/20 bg-primary/10 px-4 py-2.5 text-xs font-bold text-primary transition-all hover:bg-primary/15 disabled:opacity-50"
               >
-                <Loader2 v-if="isTesting" class="h-4 w-4 animate-spin" />
+                <Loader2
+                  v-if="isLoadingMessages"
+                  class="h-4 w-4 animate-spin"
+                />
                 <RefreshCcw v-else class="h-4 w-4" />
-                Test / refresh
+                Refresh messages
               </button>
             </div>
 
-            <div v-if="comments.length" class="space-y-3">
-              <div
-                v-for="comment in comments"
-                :key="comment.id"
-                class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-4"
-              >
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="truncate text-xs font-bold text-foreground">
-                      {{
-                        comment.commenter_username
-                          ? `@${comment.commenter_username}`
-                          : "Instagram user"
-                      }}
-                    </p>
-                    <p
-                      class="mt-1 text-sm font-bold leading-6 text-foreground/75"
-                    >
-                      {{ comment.comment_text }}
-                    </p>
-                  </div>
-                  <span
-                    class="shrink-0 rounded-full bg-foreground/5 px-2.5 py-1 text-xs font-bold text-foreground/40"
-                    >Saved</span
+            <div
+              v-if="instagramMessages.length"
+              class="overflow-hidden rounded-[0.39rem] border border-foreground/10"
+            >
+              <div class="overflow-x-auto">
+                <table
+                  class="min-w-full divide-y divide-foreground/10 text-left"
+                >
+                  <thead class="bg-foreground/[0.03]">
+                    <tr>
+                      <th
+                        class="px-4 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/40"
+                      >
+                        Contact
+                      </th>
+                      <th
+                        class="px-4 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/40"
+                      >
+                        Message
+                      </th>
+                      <th
+                        class="px-4 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/40"
+                      >
+                        Assistant
+                      </th>
+                      <th
+                        class="px-4 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/40"
+                      >
+                        Time
+                      </th>
+                      <th
+                        class="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/40"
+                      >
+                        Bot control
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    class="divide-y divide-foreground/10 bg-background-card/20"
                   >
+                    <tr
+                      v-for="message in instagramMessages"
+                      :key="message.id"
+                      class="transition hover:bg-foreground/[0.025]"
+                    >
+                      <td class="whitespace-nowrap px-4 py-3 align-top">
+                        <p class="text-xs font-bold text-foreground">
+                          {{ message.contact }}
+                        </p>
+                        <span
+                          class="mt-1 inline-flex rounded-[0.39rem] px-2 py-0.5 text-[10px] font-bold"
+                          :class="
+                            message.role === 'assistant'
+                              ? 'bg-primary/10 text-primary'
+                              : 'bg-foreground/5 text-foreground/45'
+                          "
+                        >
+                          {{ messageRoleLabel(message.role) }}
+                        </span>
+                      </td>
+                      <td class="min-w-[260px] px-4 py-3 align-top">
+                        <p
+                          class="line-clamp-2 text-xs font-semibold leading-5 text-foreground/70"
+                        >
+                          {{ message.content || "—" }}
+                        </p>
+                      </td>
+                      <td class="whitespace-nowrap px-4 py-3 align-top">
+                        <p class="text-xs font-bold text-foreground/60">
+                          {{ message.assistantName }}
+                        </p>
+                        <p
+                          class="mt-1 text-[10px] font-bold text-foreground/35"
+                        >
+                          {{ message.source }}
+                        </p>
+                      </td>
+                      <td class="whitespace-nowrap px-4 py-3 align-top">
+                        <p class="text-xs font-bold text-foreground/45">
+                          {{ formatMessageTime(message.createdAt) }}
+                        </p>
+                      </td>
+                      <td
+                        class="whitespace-nowrap px-4 py-3 text-right align-top"
+                      >
+                        <button
+                          v-if="message.botPaused"
+                          @click="allowBotToContinue(message.sessionId)"
+                          :disabled="
+                            isContinuingSessionId === message.sessionId
+                          "
+                          class="inline-flex items-center justify-center gap-2 rounded-[0.39rem] border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs font-bold text-emerald-500 transition hover:bg-emerald-400/15 disabled:opacity-50"
+                        >
+                          <Loader2
+                            v-if="isContinuingSessionId === message.sessionId"
+                            class="h-3.5 w-3.5 animate-spin"
+                          />
+                          <PlayCircle v-else class="h-3.5 w-3.5" />
+                          Allow bot to continue
+                        </button>
+                        <span
+                          v-else
+                          class="inline-flex items-center gap-1.5 rounded-[0.39rem] bg-emerald-400/10 px-2.5 py-1 text-xs font-bold text-emerald-500"
+                        >
+                          <CheckCircle2 class="h-3.5 w-3.5" />
+                          Bot active
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                class="flex flex-col gap-3 border-t border-foreground/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <p class="text-xs font-bold text-foreground/45">
+                  Showing {{ messagesShowingStart }}-{{ messagesShowingEnd }} of
+                  {{ messagesTotal }}
+                </p>
+                <div class="flex items-center gap-2">
+                  <select
+                    v-model.number="messagesPerPage"
+                    class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 px-3 py-2 text-xs font-bold outline-none"
+                  >
+                    <option :value="5">5 / page</option>
+                    <option :value="10">10 / page</option>
+                    <option :value="20">20 / page</option>
+                  </select>
+                  <button
+                    @click="setMessagesPage(messagesPage - 1)"
+                    :disabled="messagesPage <= 1"
+                    class="inline-flex items-center gap-1 rounded-[0.39rem] border border-foreground/10 px-3 py-2 text-xs font-bold text-foreground/60 disabled:opacity-40"
+                  >
+                    <ChevronLeft class="h-3.5 w-3.5" />
+                    Previous
+                  </button>
+                  <span class="text-xs font-bold text-foreground/45">
+                    Page {{ messagesPage }} / {{ messagesTotalPages }}
+                  </span>
+                  <button
+                    @click="setMessagesPage(messagesPage + 1)"
+                    :disabled="messagesPage >= messagesTotalPages"
+                    class="inline-flex items-center gap-1 rounded-[0.39rem] border border-foreground/10 px-3 py-2 text-xs font-bold text-foreground/60 disabled:opacity-40"
+                  >
+                    Next
+                    <ChevronRight class="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -580,13 +900,13 @@ const deliveryActionLabel = (value?: string) => {
               v-else
               class="rounded-[0.39rem] border border-dashed border-foreground/10 bg-background-card/45 p-5 text-center"
             >
-              <MessageCircle class="mx-auto h-7 w-7 text-foreground/30" />
+              <MessageSquareText class="mx-auto h-7 w-7 text-foreground/30" />
               <p class="mt-3 text-sm font-bold text-foreground">
-                No comments saved yet
+                No Instagram DM messages yet
               </p>
               <p class="mt-1 text-xs leading-5 text-foreground/50">
-                Click test / refresh to pull comments from Instagram and run the
-                rule.
+                When people reply in DM, ReplySuite will show the conversation
+                messages here.
               </p>
             </div>
           </section>
@@ -628,6 +948,105 @@ const deliveryActionLabel = (value?: string) => {
                 <p class="text-xs font-bold text-foreground/40">Failed</p>
                 <p class="mt-1 text-xl font-bold">{{ jobStats.failed }}</p>
               </div>
+            </div>
+          </div>
+
+          <div
+            class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="text-xs font-bold text-foreground">Post comments</h3>
+                <p class="mt-1 text-xs leading-5 text-foreground/45">
+                  Saved comments for this post rule.
+                </p>
+              </div>
+              <button
+                @click="testRule"
+                :disabled="isTesting || !form.postId"
+                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.39rem] border border-primary/20 bg-primary/10 text-primary transition hover:bg-primary/15 disabled:opacity-50"
+                title="Test / refresh comments"
+              >
+                <Loader2 v-if="isTesting" class="h-3.5 w-3.5 animate-spin" />
+                <RefreshCcw v-else class="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            <div v-if="paginatedComments.length" class="mt-4 space-y-2">
+              <div
+                v-for="comment in paginatedComments"
+                :key="comment.id"
+                class="rounded-[0.39rem] border border-foreground/10 bg-background/70 p-3"
+              >
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <p class="truncate text-xs font-bold text-foreground">
+                      {{
+                        comment.commenter_username
+                          ? `@${comment.commenter_username}`
+                          : "Instagram user"
+                      }}
+                    </p>
+                    <p
+                      class="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-foreground/65"
+                    >
+                      {{ comment.comment_text }}
+                    </p>
+                  </div>
+                  <span
+                    class="shrink-0 rounded-[0.39rem] bg-foreground/5 px-2 py-0.5 text-[10px] font-bold text-foreground/40"
+                    >Saved</span
+                  >
+                </div>
+              </div>
+
+              <div class="border-t border-foreground/10 pt-3">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-[10px] font-bold text-foreground/40">
+                    {{ commentsShowingStart }}-{{ commentsShowingEnd }} of
+                    {{ commentsTotal }}
+                  </p>
+                  <select
+                    v-model.number="commentsPerPage"
+                    class="rounded-[0.39rem] border border-foreground/10 bg-background-card/45 px-2 py-1.5 text-[10px] font-bold outline-none"
+                  >
+                    <option :value="5">5</option>
+                    <option :value="8">8</option>
+                    <option :value="12">12</option>
+                  </select>
+                </div>
+                <div class="mt-2 flex items-center justify-between gap-2">
+                  <button
+                    @click="setCommentsPage(commentsPage - 1)"
+                    :disabled="commentsPage <= 1"
+                    class="inline-flex items-center gap-1 rounded-[0.39rem] border border-foreground/10 px-2 py-1.5 text-[10px] font-bold text-foreground/55 disabled:opacity-40"
+                  >
+                    <ChevronLeft class="h-3 w-3" />
+                    Prev
+                  </button>
+                  <span class="text-[10px] font-bold text-foreground/40">
+                    Page {{ commentsPage }} / {{ commentsTotalPages }}
+                  </span>
+                  <button
+                    @click="setCommentsPage(commentsPage + 1)"
+                    :disabled="commentsPage >= commentsTotalPages"
+                    class="inline-flex items-center gap-1 rounded-[0.39rem] border border-foreground/10 px-2 py-1.5 text-[10px] font-bold text-foreground/55 disabled:opacity-40"
+                  >
+                    Next
+                    <ChevronRight class="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-else
+              class="mt-4 rounded-[0.39rem] border border-dashed border-foreground/10 bg-background/70 p-4 text-center"
+            >
+              <MessageCircle class="mx-auto h-6 w-6 text-foreground/30" />
+              <p class="mt-2 text-xs font-bold text-foreground">
+                No comments saved yet
+              </p>
             </div>
           </div>
         </aside>

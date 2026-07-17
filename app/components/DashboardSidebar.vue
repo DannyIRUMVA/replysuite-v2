@@ -216,33 +216,11 @@ const navigationGroups = computed(() => [
       },
     ],
   },
-  {
-    title: "Business",
-    icon: "CalendarDays",
-    links: [
-      {
-        name: "Bookings",
-        href: "/dashboard/appointments",
-        icon: "CalendarDays",
-      },
-      {
-        name: "Selling",
-        href: "/dashboard/business/selling",
-        icon: "CreditCard",
-      },
-    ],
-  },
-  {
-    title: "School",
-    icon: "GraduationCap",
-    links: [
-      {
-        name: "AI Tutor",
-        href: "/dashboard/school/ai-tutor",
-        icon: "GraduationCap",
-      },
-    ],
-  },
+]);
+
+const workspaceLinks = computed(() => [
+  { name: "Business", href: "/dashboard/business", icon: "CalendarDays" },
+  { name: "School", href: "/dashboard/school", icon: "GraduationCap" },
 ]);
 
 const isLinkActive = (link: any) => {
@@ -432,16 +410,6 @@ const handleLogout = async () => {
         :key="group.title"
         class="space-y-1"
       >
-        <div
-          v-if="group.title === 'Business'"
-          :class="[
-            'pointer-events-none',
-            isSidebarCompact
-              ? 'mx-auto my-2 h-px w-8 bg-foreground/10'
-              : 'my-2 h-px bg-foreground/8 mx-2',
-          ]"
-          aria-hidden="true"
-        ></div>
         <button
           type="button"
           :title="isSidebarCompact ? group.title : undefined"
@@ -542,6 +510,44 @@ const handleLogout = async () => {
             </template>
           </div>
         </Transition>
+      </div>
+
+      <div
+        :class="[
+          'pointer-events-none',
+          isSidebarCompact
+            ? 'mx-auto my-2 h-px w-8 bg-foreground/10'
+            : 'my-2 h-px bg-foreground/8 mx-2',
+        ]"
+        aria-hidden="true"
+      ></div>
+
+      <div class="space-y-1.5">
+        <NuxtLink
+          v-for="link in workspaceLinks"
+          :key="link.name"
+          :to="link.href"
+          :title="isSidebarCompact ? link.name : undefined"
+          :class="[
+            'flex items-center rounded-[0.39rem] transition-all group',
+            isSidebarCompact ? 'h-9 justify-center px-0' : 'h-9 gap-2 px-2.5',
+            isLinkActive(link)
+              ? 'bg-primary/10 text-primary font-bold shadow-[0_0_20px_rgba(var(--primary),0.05)]'
+              : 'text-foreground/55 hover:text-foreground hover:bg-foreground/5',
+          ]"
+        >
+          <component
+            :is="iconMap[link.icon]"
+            class="w-4 h-4 shrink-0 group-hover:scale-110 transition-transform"
+          />
+          <span v-if="!isSidebarCompact" class="flex-1 text-xs font-semibold">{{
+            link.name
+          }}</span>
+          <ChevronRight
+            v-if="!isSidebarCompact && isLinkActive(link)"
+            class="w-3 h-3"
+          />
+        </NuxtLink>
       </div>
     </nav>
 

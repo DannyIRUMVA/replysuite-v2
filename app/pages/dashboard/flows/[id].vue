@@ -2,12 +2,15 @@
 import {
   Bot,
   BrainCircuit,
+  CreditCard,
   GitBranch,
+  GraduationCap,
   Instagram,
   Loader2,
   MessageCircle,
   MessageSquare,
   PlayCircle,
+  PackageCheck,
   Plus,
   Smartphone,
   RefreshCcw,
@@ -25,8 +28,11 @@ const FLOW_NODES = [
   "post",
   "trigger",
   "assistant",
+  "workspace",
   "skills",
   "tools",
+  "payment",
+  "fulfillment",
   "publicReply",
   "dmReply",
   "conversation",
@@ -38,6 +44,7 @@ definePageMeta({ middleware: "auth", layout: "dashboard" });
 useHead({ title: "Flow builder | ReplySuite" });
 
 const route = useRoute();
+const router = useRouter();
 const accountId = route.params.id as string;
 const flowChannelType = computed<"instagram" | "whatsapp">(() =>
   route.query.channel === "whatsapp" ? "whatsapp" : "instagram",
@@ -61,6 +68,7 @@ const canPublicComment = computed(
 const hasMounted = ref(false);
 const selectedRuleId = ref("");
 const selectedNode = ref<FlowNode>("trigger");
+const hasAutoSelectedProductNode = ref(false);
 const isInspectorOpen = ref(false);
 const isFlowPickerOpen = ref(false);
 const isTestConsoleOpen = ref(false);
@@ -113,6 +121,7 @@ const instagramApiFetch = async <T,>(url: string, options: any = {}) => {
 onMounted(() => {
   hasMounted.value = true;
   instagramFlowAccountId.value = accountId;
+  fetchConnectedProducts();
   if (!isSidebarCollapsed.value) isSidebarCollapsed.value = true;
   if (import.meta.client) {
     localStorage.setItem(sidebarCollapsedStorageKey, "true");
@@ -331,6 +340,178 @@ const assistantSkills = computed(() =>
     ? selectedAssistant.value.tools_config.assistant_skills.filter(Boolean)
     : [],
 );
+const catalogProducts = ref<any[]>([]);
+const isLoadingProducts = ref(false);
+const productMeta = (product: any) => {
+  try {
+    return product?.sku ? JSON.parse(product.sku) : {};
+  } catch {
+    return {};
+  }
+};
+const productDeliveryUrl = (product: any) =>
+  String(
+    product?.file_key ||
+      product?.delivery_url ||
+      productMeta(product).file_key ||
+      productMeta(product).delivery_url ||
+      "",
+  );
+const productIsPaid = (product: any) =>
+  product?.is_paid !== undefined
+    ? product.is_paid !== false
+    : productMeta(product).is_paid !== false && Number(product?.price || 0) > 0;
+const productSalesNotes = (product: any) =>
+  String(product?.sales_notes || productMeta(product).sales_notes || "");
+const productPriceLabel = (product: any) =>
+  !productIsPaid(product)
+    ? "Free"
+    : `${Number(product?.price || 0).toLocaleString()} ${product?.currency || "RWF"}`;
+const fetchConnectedProducts = async () => {
+  if (!import.meta.client || !form.chatbotId) {
+    catalogProducts.value = [];
+    return;
+  }
+  isLoadingProducts.value = true;
+  try {
+    const { data: businessProducts, error: businessError } = await supabase
+      .from("business_products")
+      .select(
+        "id, name, description, category, price, currency, file_key, is_paid, sales_notes, is_active, created_at",
+      )
+      .eq("chatbot_id", form.chatbotId)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+    if (businessError) throw businessError;
+    if (businessProducts?.length) {
+      catalogProducts.value = businessProducts;
+      return;
+    }
+
+    const { data } = await supabase
+      .from("chatbot_catalog")
+      .select("*")
+      .eq("chatbot_id", form.chatbotId)
+      .eq("is_available", true)
+      .order("created_at", { ascending: false });
+    catalogProducts.value = data || [];
+  } catch (error) {
+    console.warn("[Flow Builder] Failed to load connected products", error);
+    catalogProducts.value = [];
+  } finally {
+    isLoadingProducts.value = false;
+  }
+};
+const primaryProductId = computed(() => {
+  const config = selectedAssistant.value?.tools_config || {};
+  return String(
+    config.business_flow?.primary_business_product_id ||
+      config.business_flow?.primary_product_id ||
+      config.products?.primary_product_id ||
+      "",
+  );
+});
+const connectedProducts = computed(() => {
+  const products = [...catalogProducts.value];
+  if (!primaryProductId.value) return products;
+  return products.sort((a: any, b: any) => {
+    if (a.id === primaryProductId.value) return -1;
+    if (b.id === primaryProductId.value) return 1;
+    return 0;
+  });
+});
+const primaryConnectedProduct = computed(
+  () => connectedProducts.value[0] || null,
+);
+watch(
+  () => form.chatbotId,
+  () => fetchConnectedProducts(),
+);
+watch(primaryConnectedProduct, (product) => {
+  if (!product || hasAutoSelectedProductNode.value) return;
+  selectedNode.value = "fulfillment";
+  hasAutoSelectedProductNode.value = true;
+});
+const paymentToolSet = new Set([
+  "payments",
+  "request_payment",
+  "check_payment_status",
+]);
+const productDeliveryToolSet = new Set([
+  "orders",
+  "products",
+  "catalog",
+  "product_delivery",
+  "deliver_product",
+]);
+const workspaceTextBlob = (...values: unknown[]) =>
+  values
+    .map((value) => {
+      try {
+        return typeof value === "string" ? value : JSON.stringify(value || "");
+      } catch {
+        return String(value || "");
+      }
+    })
+    .join(" ")
+    .toLowerCase();
+const schoolPattern =
+  /\b(school|student|students|class|classes|course|courses|module|modules|university|college|lesson|lessons|tutor|tutoring|teacher|revision|exam|exams|learn|learning|education|session|sessions)\b/;
+const assistantPaymentEnabled = computed(() => {
+  const config = selectedAssistant.value?.tools_config || {};
+  return Boolean(
+    assistantTools.value.some((tool: string) => paymentToolSet.has(tool)) ||
+    config.website_payment?.enabled ||
+    config.business_flow?.payment_required ||
+    config.school_flow?.payment_enabled,
+  );
+});
+const assistantProductDeliveryEnabled = computed(() => {
+  const config = selectedAssistant.value?.tools_config || {};
+  return Boolean(
+    assistantTools.value.some((tool: string) =>
+      productDeliveryToolSet.has(tool),
+    ) ||
+    connectedProducts.value.length > 0 ||
+    config.business_flow?.product_delivery_enabled ||
+    config.orders?.enabled ||
+    config.orders?.delivery_enabled ||
+    config.orders?.deliveryEnabled ||
+    config.products?.enabled ||
+    config.products?.delivery_enabled ||
+    config.product_delivery?.enabled,
+  );
+});
+const isBusinessFlow = computed(() =>
+  Boolean(
+    selectedAssistant.value &&
+    assistantPaymentEnabled.value &&
+    assistantProductDeliveryEnabled.value &&
+    (flowChannelType.value === "whatsapp" || form.replyInDm),
+  ),
+);
+const isSchoolFlow = computed(() =>
+  Boolean(
+    selectedAssistant.value &&
+    (assistantTools.value.some((tool: string) =>
+      ["school", "tutor", "school_tutor"].includes(tool),
+    ) ||
+      selectedAssistant.value?.tools_config?.school_flow?.enabled ||
+      schoolPattern.test(
+        workspaceTextBlob(
+          selectedAssistant.value?.name,
+          assistantSkills.value,
+          selectedAssistant.value?.tools_config,
+        ),
+      )),
+  ),
+);
+const workspaceLabel = computed(() => {
+  if (isBusinessFlow.value && isSchoolFlow.value) return "Business + School";
+  if (isBusinessFlow.value) return "Business selling";
+  if (isSchoolFlow.value) return "School tutor";
+  return "General conversation";
+});
 const formatConfigLabel = (value: string) =>
   String(value || "")
     .replace(/[_-]+/g, " ")
@@ -355,8 +536,19 @@ const nodeSummary = computed<Record<FlowNode, string>>(() => ({
       ? "WhatsApp message or keyword"
       : "Instagram comment or comment-to-DM",
   assistant: assistantName.value,
+  workspace: workspaceLabel.value,
   skills: configListSummary(assistantSkills.value, "No skills connected"),
   tools: configListSummary(assistantTools.value, "No tools connected"),
+  payment: assistantPaymentEnabled.value
+    ? "MTN/Airtel mobile payment is connected"
+    : "Connect payment tool when checkout is needed",
+  fulfillment: isBusinessFlow.value
+    ? primaryConnectedProduct.value
+      ? `Product: ${primaryConnectedProduct.value.name}`
+      : "Deliver PDF, link, product, or next customer step after payment"
+    : isSchoolFlow.value
+      ? "Continue the paid learning session after payment"
+      : "Conversation outcome or handoff",
   publicReply: form.replyInComment
     ? "Public comment is on"
     : "Public comment is off",
@@ -407,6 +599,14 @@ const flowNodes = computed(() =>
       enabled: Boolean(form.chatbotId),
     },
     {
+      id: "workspace" as FlowNode,
+      label: "Workspace",
+      description: workspaceLabel.value,
+      icon: isSchoolFlow.value ? GraduationCap : GitBranch,
+      tone: isSchoolFlow.value ? "sky" : "violet",
+      enabled: Boolean(isBusinessFlow.value || isSchoolFlow.value),
+    },
+    {
       id: "skills" as FlowNode,
       label: "Skills",
       description: "Assistant behavior skills available in this path",
@@ -421,6 +621,28 @@ const flowNodes = computed(() =>
       icon: Wrench,
       tone: "amber",
       enabled: assistantTools.value.length > 0,
+    },
+    {
+      id: "payment" as FlowNode,
+      label: "Payment",
+      description: assistantPaymentEnabled.value
+        ? "MTN/Airtel mobile payment can be requested"
+        : "Payment step needs a connected tool",
+      icon: CreditCard,
+      tone: "amber",
+      enabled: Boolean(isBusinessFlow.value || isSchoolFlow.value),
+    },
+    {
+      id: "fulfillment" as FlowNode,
+      label: isSchoolFlow.value ? "Paid session" : "Connected product",
+      description: isSchoolFlow.value
+        ? "Continue tutoring after the paid session is confirmed"
+        : primaryConnectedProduct.value
+          ? `${primaryConnectedProduct.value.name} · ${productPriceLabel(primaryConnectedProduct.value)}`
+          : "Deliver the PDF, access link, or final product step",
+      icon: PackageCheck,
+      tone: "emerald",
+      enabled: Boolean(isBusinessFlow.value || isSchoolFlow.value),
     },
     {
       id: "publicReply" as FlowNode,
@@ -463,8 +685,13 @@ const flowNodes = computed(() =>
     },
   ].filter(
     (node) =>
+      (node.id !== "workspace" || isBusinessFlow.value || isSchoolFlow.value) &&
       (node.id !== "skills" || assistantSkills.value.length > 0) &&
       (node.id !== "tools" || assistantTools.value.length > 0) &&
+      (node.id !== "payment" || isBusinessFlow.value || isSchoolFlow.value) &&
+      (node.id !== "fulfillment" ||
+        isBusinessFlow.value ||
+        isSchoolFlow.value) &&
       (node.id !== "publicReply" || flowChannelType.value === "instagram"),
   ),
 );
@@ -559,17 +786,81 @@ const activeDrag = ref<{
   originY: number;
 } | null>(null);
 
-const nodePositions = reactive<Record<FlowNode, { x: number; y: number }>>({
+const defaultNodePositions: Record<FlowNode, { x: number; y: number }> = {
   post: { x: 80, y: 145 },
   trigger: { x: 255, y: 145 },
   assistant: { x: 430, y: 145 },
-  skills: { x: 605, y: 65 },
-  tools: { x: 605, y: 225 },
-  publicReply: { x: 780, y: 75 },
-  dmReply: { x: 780, y: 215 },
-  conversation: { x: 955, y: 215 },
-  delivery: { x: 1130, y: 145 },
-});
+  workspace: { x: 605, y: 145 },
+  skills: { x: 780, y: 65 },
+  tools: { x: 780, y: 225 },
+  payment: { x: 955, y: 65 },
+  fulfillment: { x: 955, y: 225 },
+  publicReply: { x: 1130, y: 75 },
+  dmReply: { x: 1130, y: 215 },
+  conversation: { x: 1305, y: 215 },
+  delivery: { x: 1480, y: 145 },
+};
+
+const nodePositions = reactive<Record<FlowNode, { x: number; y: number }>>(
+  Object.fromEntries(
+    FLOW_NODES.map((id) => [id, { ...defaultNodePositions[id] }]),
+  ) as Record<FlowNode, { x: number; y: number }>,
+);
+
+const canvasDesignStorageKey = computed(
+  () =>
+    `replysuite:flow-canvas-design:${flowChannelType.value}:${accountId}:${selectedRuleId.value || "default"}`,
+);
+const applyCanvasDesign = (design: any) => {
+  if (!design || typeof design !== "object") return;
+  FLOW_NODES.forEach((id) => {
+    const position = design.nodePositions?.[id];
+    nodePositions[id].x = Number.isFinite(position?.x)
+      ? Math.max(12, Math.round(position.x))
+      : defaultNodePositions[id].x;
+    nodePositions[id].y = Number.isFinite(position?.y)
+      ? Math.max(12, Math.round(position.y))
+      : defaultNodePositions[id].y;
+  });
+  canvasPan.x = Number.isFinite(design.canvasPan?.x)
+    ? Math.round(design.canvasPan.x)
+    : 0;
+  canvasPan.y = Number.isFinite(design.canvasPan?.y)
+    ? Math.round(design.canvasPan.y)
+    : 0;
+};
+const loadCanvasDesign = () => {
+  if (!import.meta.client) return;
+  const raw = localStorage.getItem(canvasDesignStorageKey.value);
+  if (!raw) {
+    applyCanvasDesign({});
+    return;
+  }
+  try {
+    applyCanvasDesign(JSON.parse(raw));
+  } catch {
+    applyCanvasDesign({});
+  }
+};
+const saveCanvasDesign = () => {
+  if (!import.meta.client) return;
+  const positions = FLOW_NODES.reduce(
+    (result, id) => ({
+      ...result,
+      [id]: { x: nodePositions[id].x, y: nodePositions[id].y },
+    }),
+    {} as Record<FlowNode, { x: number; y: number }>,
+  );
+  localStorage.setItem(
+    canvasDesignStorageKey.value,
+    JSON.stringify({
+      version: 1,
+      savedAt: new Date().toISOString(),
+      nodePositions: positions,
+      canvasPan: { x: canvasPan.x, y: canvasPan.y },
+    }),
+  );
+};
 
 const canvasWidth = computed(
   () =>
@@ -753,6 +1044,9 @@ const selectAutomation = (id: string) => {
   selectedNode.value = "trigger";
   isFlowPickerOpen.value = false;
   testResult.value = null;
+  if (flowChannelType.value === "instagram" && route.query.flow !== id) {
+    router.replace({ query: { ...route.query, flow: id } });
+  }
 };
 
 watch(
@@ -777,15 +1071,34 @@ watch(
 );
 
 watch(
-  automations,
-  (items: any[]) => {
+  [automations, () => route.query.flow],
+  ([items, requestedFlowId]: [any[], any]) => {
     if (!items.length) return;
+    const requestedId = Array.isArray(requestedFlowId)
+      ? requestedFlowId[0]
+      : requestedFlowId;
+    if (
+      requestedId &&
+      items.some((item: any) => item.id === requestedId) &&
+      selectedRuleId.value !== requestedId
+    ) {
+      selectedRuleId.value = requestedId;
+      return;
+    }
     if (
       !selectedRuleId.value ||
       !items.some((item: any) => item.id === selectedRuleId.value)
     ) {
       selectedRuleId.value = items[0].id;
     }
+  },
+  { immediate: true },
+);
+
+watch(
+  selectedRuleId,
+  () => {
+    loadCanvasDesign();
   },
   { immediate: true },
 );
@@ -807,12 +1120,21 @@ watch(
 );
 
 const saveFlow = async () => {
+  saveCanvasDesign();
+
+  if (flowChannelType.value === "whatsapp") {
+    notify.success("Canvas design saved.");
+    return;
+  }
+
   if (!form.triggerId || !form.postId || !form.chatbotId) {
-    notify.warn("This flow needs a post, trigger, and assistant.");
+    notify.warn(
+      "Canvas design saved. This flow still needs a post, trigger, and assistant.",
+    );
     return;
   }
   if (!form.replyInComment && !form.replyInDm) {
-    notify.warn("Enable public reply, DM reply, or both.");
+    notify.warn("Canvas design saved. Enable public reply, DM reply, or both.");
     return;
   }
 
@@ -831,7 +1153,7 @@ const saveFlow = async () => {
         isActive: form.isActive,
       },
     });
-    notify.success("Instagram flow saved.");
+    notify.success("Flow and canvas design saved.");
     await refresh();
   } catch (error: any) {
     notify.error(
@@ -914,12 +1236,12 @@ const deliveryActionLabel = (value?: string) => {
 
   <div
     v-else
-    class="-mx-3 -mt-2 min-h-[calc(100vh-4.5rem)] bg-[radial-gradient(circle_at_1px_1px,rgba(120,120,120,0.16)_1px,transparent_0)] bg-[length:18px_18px] px-3 pb-24 pt-3 sm:-mx-5 sm:px-5 md:-mx-6 md:px-6 xl:-mx-8 xl:px-8 2xl:-mx-10 2xl:px-10 lg:pb-12"
+    class="-mx-3 -mt-2 min-h-[calc(100vh-4.5rem)] bg-[radial-gradient(circle_at_1px_1px,rgba(120,120,120,0.16)_1px,transparent_0)] bg-[length:18px_18px] px-0 pb-24 pt-3 sm:-mx-5 sm:px-0 md:-mx-6 md:px-0 xl:-mx-8 xl:px-0 2xl:-mx-10 2xl:px-0 lg:pb-12"
   >
     <div v-if="!hasMounted || isLoading" class="space-y-3">
       <section class="overflow-hidden rounded-[0.39rem] bg-transparent">
         <div
-          class="relative min-h-[42rem] overflow-hidden p-3 [-ms-overflow-style:none] [scrollbar-width:none] sm:p-5 [&::-webkit-scrollbar]:hidden"
+          class="relative min-h-[42rem] overflow-hidden py-3 [-ms-overflow-style:none] [scrollbar-width:none] sm:py-5 [&::-webkit-scrollbar]:hidden"
         >
           <div class="absolute left-3 top-3 z-20 flex flex-col gap-2">
             <Skeleton height="2.25rem" width="2.25rem" radius="0.39rem" />
@@ -967,7 +1289,7 @@ const deliveryActionLabel = (value?: string) => {
       <main class="grid gap-3 xl:grid-cols-[minmax(0,1fr)]">
         <section class="overflow-hidden rounded-[0.39rem] bg-transparent">
           <div
-            class="relative min-h-[42rem] overflow-hidden p-3 [-ms-overflow-style:none] [scrollbar-width:none] sm:p-5 [&::-webkit-scrollbar]:hidden"
+            class="relative min-h-[42rem] overflow-hidden py-3 [-ms-overflow-style:none] [scrollbar-width:none] sm:py-5 [&::-webkit-scrollbar]:hidden"
           >
             <div class="absolute left-3 top-3 z-20 flex flex-col gap-2">
               <div class="relative">
@@ -1119,6 +1441,32 @@ const deliveryActionLabel = (value?: string) => {
                   </span>
                 </button>
               </div>
+
+              <button
+                v-if="primaryConnectedProduct"
+                type="button"
+                class="mt-2 flex w-full items-center gap-2 rounded-[0.39rem] border border-emerald-400/15 bg-emerald-400/[0.06] p-2 text-left transition hover:border-emerald-400/25"
+                @click="handleNodeClick('fulfillment')"
+              >
+                <span
+                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.35rem] bg-emerald-400/10 text-emerald-400 ring-1 ring-emerald-400/15"
+                >
+                  <PackageCheck class="h-4 w-4" />
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span
+                    class="block truncate text-xs font-bold text-foreground"
+                  >
+                    {{ primaryConnectedProduct.name }}
+                  </span>
+                  <span
+                    class="mt-0.5 block truncate text-[10px] font-semibold text-foreground/45"
+                  >
+                    Connected product ·
+                    {{ productPriceLabel(primaryConnectedProduct) }}
+                  </span>
+                </span>
+              </button>
             </div>
 
             <button
@@ -1140,7 +1488,7 @@ const deliveryActionLabel = (value?: string) => {
               v-if="selectedAutomation"
               ref="canvasRef"
               :class="[
-                'relative w-full touch-none overflow-visible px-3 pt-12 transition-[box-shadow] sm:pt-0',
+                'relative w-full touch-none overflow-visible px-0 pt-12 transition-[box-shadow] sm:pt-0',
                 activeCanvasPan ? 'cursor-grabbing' : 'cursor-grab',
               ]"
               :style="canvasStyle"
@@ -1507,6 +1855,153 @@ const deliveryActionLabel = (value?: string) => {
                   <p class="mt-1 text-xs leading-5 text-foreground/45">
                     Enable tools from Assistant Tools to show them on this
                     canvas.
+                  </p>
+                </div>
+              </div>
+
+              <div v-else-if="selectedNode === 'workspace'" class="space-y-3">
+                <div
+                  class="rounded-[0.39rem] border border-primary/15 bg-primary/5 p-3"
+                >
+                  <p class="text-xs font-bold text-foreground">
+                    {{ workspaceLabel }}
+                  </p>
+                  <p
+                    class="mt-2 text-xs font-medium leading-5 text-foreground/55"
+                  >
+                    This flow is visible in Business only when product delivery
+                    and MTN/Airtel mobile payment are both active. It appears in
+                    School when the assistant is configured as a tutor or course
+                    helper.
+                  </p>
+                </div>
+              </div>
+
+              <div v-else-if="selectedNode === 'payment'" class="space-y-3">
+                <div
+                  class="rounded-[0.39rem] border border-foreground/10 bg-background/45 p-3"
+                >
+                  <p class="text-xs font-bold text-foreground">
+                    Payment readiness
+                  </p>
+                  <p
+                    class="mt-2 text-xs font-medium leading-5 text-foreground/55"
+                  >
+                    {{
+                      assistantPaymentEnabled
+                        ? "This assistant has MTN/Airtel mobile payment tooling connected."
+                        : "Enable the payment tool for this assistant before collecting paid product or session payments."
+                    }}
+                  </p>
+                </div>
+              </div>
+
+              <div v-else-if="selectedNode === 'fulfillment'" class="space-y-3">
+                <div
+                  class="rounded-[0.39rem] border border-foreground/10 bg-background/45 p-3"
+                >
+                  <p class="text-xs font-bold text-foreground">
+                    {{
+                      isSchoolFlow
+                        ? "Paid learning session"
+                        : "Connected product"
+                    }}
+                  </p>
+                  <p
+                    class="mt-2 text-xs font-medium leading-5 text-foreground/55"
+                  >
+                    {{ nodeSummary.fulfillment }}
+                  </p>
+                </div>
+
+                <div
+                  v-if="isLoadingProducts"
+                  class="flex items-center gap-2 rounded-[0.39rem] border border-foreground/10 bg-background/45 p-3 text-xs font-bold text-foreground/50"
+                >
+                  <Loader2 class="h-3.5 w-3.5 animate-spin" /> Loading product
+                </div>
+                <div
+                  v-else-if="primaryConnectedProduct"
+                  class="rounded-[0.39rem] border border-emerald-400/15 bg-emerald-400/[0.06] p-3"
+                >
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <p
+                        class="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-400"
+                      >
+                        Product connected
+                      </p>
+                      <h3
+                        class="mt-1 truncate text-sm font-bold text-foreground"
+                      >
+                        {{ primaryConnectedProduct.name }}
+                      </h3>
+                      <p
+                        class="mt-1 text-xs font-medium leading-5 text-foreground/55"
+                      >
+                        {{
+                          primaryConnectedProduct.description ||
+                          "Digital product delivery is ready."
+                        }}
+                      </p>
+                    </div>
+                    <span
+                      class="shrink-0 rounded-[0.35rem] bg-background/70 px-2 py-1 text-[10px] font-bold text-foreground"
+                    >
+                      {{ productPriceLabel(primaryConnectedProduct) }}
+                    </span>
+                  </div>
+                  <div class="mt-3 grid grid-cols-2 gap-2">
+                    <div
+                      class="rounded-[0.35rem] border border-foreground/10 bg-background/45 p-2"
+                    >
+                      <p
+                        class="text-[8px] font-bold uppercase tracking-widest text-foreground/40"
+                      >
+                        Delivery
+                      </p>
+                      <p class="mt-1 text-[11px] font-bold text-foreground">
+                        {{
+                          productDeliveryUrl(primaryConnectedProduct)
+                            ? "Link ready"
+                            : "No link"
+                        }}
+                      </p>
+                    </div>
+                    <div
+                      class="rounded-[0.35rem] border border-foreground/10 bg-background/45 p-2"
+                    >
+                      <p
+                        class="text-[8px] font-bold uppercase tracking-widest text-foreground/40"
+                      >
+                        Payment
+                      </p>
+                      <p class="mt-1 text-[11px] font-bold text-foreground">
+                        {{
+                          productIsPaid(primaryConnectedProduct)
+                            ? "Required"
+                            : "Free"
+                        }}
+                      </p>
+                    </div>
+                  </div>
+                  <p
+                    v-if="productSalesNotes(primaryConnectedProduct)"
+                    class="mt-3 rounded-[0.35rem] border border-foreground/10 bg-background/35 p-2 text-[11px] font-medium leading-5 text-foreground/55"
+                  >
+                    {{ productSalesNotes(primaryConnectedProduct) }}
+                  </p>
+                </div>
+                <div
+                  v-else
+                  class="rounded-[0.39rem] border border-dashed border-foreground/10 bg-background/45 p-4 text-center"
+                >
+                  <PackageCheck class="mx-auto h-7 w-7 text-foreground/30" />
+                  <p class="mt-3 text-xs font-bold text-foreground">
+                    No product connected
+                  </p>
+                  <p class="mt-1 text-xs leading-5 text-foreground/45">
+                    Add a product in Business setup to show it in this flow.
                   </p>
                 </div>
               </div>
