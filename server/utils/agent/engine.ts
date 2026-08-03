@@ -56,6 +56,33 @@ const FEATURE_TOOL_MAP: Record<string, string[]> = {
     "request_school_tutor_payment",
     "check_school_tutor_payment",
   ],
+  school_registration: [
+    "get_school_registration_form",
+    "start_school_registration",
+    "update_school_registration",
+    "submit_school_registration",
+    "request_school_registration_payment",
+    "check_school_registration_payment",
+    "get_school_registration_status",
+  ],
+  student_registration: [
+    "get_school_registration_form",
+    "start_school_registration",
+    "update_school_registration",
+    "submit_school_registration",
+    "request_school_registration_payment",
+    "check_school_registration_payment",
+    "get_school_registration_status",
+  ],
+  admissions: [
+    "get_school_registration_form",
+    "start_school_registration",
+    "update_school_registration",
+    "submit_school_registration",
+    "request_school_registration_payment",
+    "check_school_registration_payment",
+    "get_school_registration_status",
+  ],
 };
 
 export const runAgentCycle = async (messages: any[], options: AgentOptions) => {
@@ -212,9 +239,10 @@ CRITICAL RULES FOR TOOLS:
 5. For digital-product sales, act like a calm professional salesperson: understand the customer need, recommend the best product from get_products, explain benefits naturally, then create_order only after the customer chooses.
 6. Never reveal paid product delivery links before payment is confirmed. Free product links may be shared after create_order returns them.
 7. For appointments/bookings, collect service/date/time/name/phone before request_appointment. Use availability tools before promising a slot.
-8. Payments only attach to existing verified appointment/booking or order records. Paid school sessions should use a verified booking/session amount before payment. Never invent payment amounts.
-9. Do not provide long explanations unless explicitly asked. Keep it snappy and natural.
-10. Never show internal IDs to customers, including appointment IDs, booking IDs, calendar IDs, event IDs, payment IDs, tool IDs, UUIDs, or database references. Use a plain confirmation message instead.`;
+8. Payments only attach to existing verified appointment/booking, order, school session, or school registration records. Paid school sessions and registrations should use a verified configured amount before payment. Never invent payment amounts.
+9. For school registration/admissions, collect only the required missing fields, save progress with the registration tools, request MTN/Airtel payment only when the form requires it, and if approval is required tell the parent/student it is waiting for school review.
+10. Do not provide long explanations unless explicitly asked. Keep it snappy and natural.
+11. Never show internal IDs to customers, including appointment IDs, booking IDs, calendar IDs, event IDs, payment IDs, tool IDs, UUIDs, or database references. Use a plain confirmation message instead.`;
   }
 
   const gptMessages = [

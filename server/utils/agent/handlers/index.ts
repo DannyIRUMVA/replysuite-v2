@@ -2805,6 +2805,970 @@ export const checkSchoolTutorPaymentHandler = async (
   return result;
 };
 
+const DEFAULT_SCHOOL_REGISTRATION_FIELDS = [
+  {
+    field_key: "student_name",
+    label: "Student full name",
+    field_type: "text",
+    required: true,
+    enabled: true,
+    sort_order: 10,
+  },
+  {
+    field_key: "date_of_birth",
+    label: "Date of birth / age",
+    field_type: "text",
+    required: false,
+    enabled: true,
+    sort_order: 20,
+  },
+  {
+    field_key: "gender",
+    label: "Gender",
+    field_type: "select",
+    required: false,
+    enabled: true,
+    sort_order: 30,
+  },
+  {
+    field_key: "class_applying_for",
+    label: "Class / grade applying for",
+    field_type: "text",
+    required: true,
+    enabled: true,
+    sort_order: 40,
+  },
+  {
+    field_key: "previous_school",
+    label: "Previous school",
+    field_type: "text",
+    required: false,
+    enabled: true,
+    sort_order: 50,
+  },
+  {
+    field_key: "parent_name",
+    label: "Parent / guardian full name",
+    field_type: "text",
+    required: true,
+    enabled: true,
+    sort_order: 60,
+  },
+  {
+    field_key: "parent_phone",
+    label: "Parent / guardian phone",
+    field_type: "phone",
+    required: true,
+    enabled: true,
+    sort_order: 70,
+  },
+  {
+    field_key: "parent_email",
+    label: "Parent / guardian email",
+    field_type: "email",
+    required: false,
+    enabled: true,
+    sort_order: 80,
+  },
+  {
+    field_key: "home_address",
+    label: "Home address",
+    field_type: "textarea",
+    required: false,
+    enabled: true,
+    sort_order: 90,
+  },
+  {
+    field_key: "emergency_contact",
+    label: "Emergency contact",
+    field_type: "phone",
+    required: false,
+    enabled: true,
+    sort_order: 100,
+  },
+  {
+    field_key: "notes",
+    label: "Notes",
+    field_type: "textarea",
+    required: false,
+    enabled: true,
+    sort_order: 110,
+  },
+];
+
+const registrationTopLevelFields: Record<string, string> = {
+  student_name: "student_name",
+  student_phone: "student_phone",
+  student_email: "student_email",
+  parent_name: "parent_name",
+  parent_phone: "parent_phone",
+  parent_email: "parent_email",
+  class_applying_for: "class_applying_for",
+};
+
+const sanitizeRegistrationAnswers = (answers: any) => {
+  if (!answers || typeof answers !== "object" || Array.isArray(answers)) {
+    return {};
+  }
+  return Object.entries(answers).reduce<Record<string, string>>(
+    (acc, [key, value]) => {
+      const normalizedKey = normalizeText(key, 80)
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_|_$/g, "");
+      const normalizedValue = normalizeText(value, 1000);
+      if (normalizedKey && normalizedValue)
+        acc[normalizedKey] = normalizedValue;
+      return acc;
+    },
+    {},
+  );
+};
+
+const getSchoolRegistrationDefaults = async (event: any, chatbotId: string) => {
+  const config = await getChatbotToolConfig(event, chatbotId);
+  const registration = config?.school_registration || {};
+  return {
+    name: registration.name || "Student Registration",
+    description:
+      registration.description ||
+      "Collect student admissions information inside WhatsApp/chat.",
+    payment_required: Boolean(registration.payment_required),
+    registration_fee: Math.max(0, toNumber(registration.registration_fee, 0)),
+    currency: registration.currency || "RWF",
+    requires_approval: registration.requires_approval !== false,
+    academic_year: registration.academic_year || null,
+    intake_label: registration.intake_label || null,
+    confirmation_message:
+      registration.confirmation_message ||
+      "Registration submitted. The school team will follow up.",
+    pending_approval_message:
+      registration.pending_approval_message ||
+      "Registration received and is waiting for school approval.",
+    approval_message: registration.approval_message || "Registration approved.",
+    rejection_message:
+      registration.rejection_message ||
+      "Registration was not approved at this time.",
+  };
+};
+
+const seedRegistrationFields = async (supabase: any, formId: string) => {
+  try {
+    const { error } = await supabase.rpc(
+      "seed_school_registration_default_fields",
+      { target_form_id: formId },
+    );
+    if (!error) return;
+  } catch {}
+  await supabase.from("school_registration_fields").upsert(
+    DEFAULT_SCHOOL_REGISTRATION_FIELDS.map((field) => ({
+      form_id: formId,
+      ...field,
+    })),
+    { onConflict: "form_id,field_key" },
+  );
+};
+
+const getOrCreateSchoolRegistrationForm = async (
+  event: any,
+  chatbotId: string,
+) => {
+  const supabase = getAdmin(event);
+  const { data: existing } = await supabase
+    .from("school_registration_forms")
+    .select("*")
+    .eq("chatbot_id", chatbotId)
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existing) {
+    await seedRegistrationFields(supabase, existing.id);
+    return existing;
+  }
+
+  const defaults = await getSchoolRegistrationDefaults(event, chatbotId);
+  const { data: bot } = await supabase
+    .from("chatbots")
+    .select("user_id")
+    .eq("id", chatbotId)
+    .maybeSingle();
+  const { data: created, error } = await supabase
+    .from("school_registration_forms")
+    .insert({
+      chatbot_id: chatbotId,
+      owner_id: bot?.user_id || null,
+      ...defaults,
+      metadata: { created_by: "agent_tool_default" },
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  await seedRegistrationFields(supabase, created.id);
+  return created;
+};
+
+const loadRegistrationFields = async (supabase: any, formId: string) => {
+  const { data } = await supabase
+    .from("school_registration_fields")
+    .select(
+      "id, field_key, label, field_type, required, enabled, sort_order, options",
+    )
+    .eq("form_id", formId)
+    .eq("enabled", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+  return data?.length ? data : DEFAULT_SCHOOL_REGISTRATION_FIELDS;
+};
+
+const missingRegistrationFields = (fields: any[], answers: any) =>
+  fields
+    .filter((field) => field.enabled !== false && field.required !== false)
+    .filter((field) => !normalizeText(answers?.[field.field_key]))
+    .map((field) => ({ key: field.field_key, label: field.label }));
+
+const findRegistration = async (
+  supabase: any,
+  chatbotId: string,
+  args: any,
+  context?: ToolContext,
+) => {
+  const registrationId = normalizeText(
+    args?.registration_id || args?.student_registration_id,
+    120,
+  );
+  if (registrationId) {
+    const { data } = await supabase
+      .from("school_student_registrations")
+      .select("*")
+      .eq("id", registrationId)
+      .eq("chatbot_id", chatbotId)
+      .maybeSingle();
+    if (data) return data;
+  }
+
+  if (context?.sessionId) {
+    const { data } = await supabase
+      .from("school_student_registrations")
+      .select("*")
+      .eq("chatbot_id", chatbotId)
+      .eq("chat_session_id", context.sessionId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data) return data;
+  }
+
+  const phone = normalizeText(
+    args?.phone ||
+      args?.parent_phone ||
+      args?.student_phone ||
+      context?.customerPhone,
+    80,
+  );
+  if (phone) {
+    const { data } = await supabase
+      .from("school_student_registrations")
+      .select("*")
+      .eq("chatbot_id", chatbotId)
+      .or(`parent_phone.eq.${phone},student_phone.eq.${phone}`)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data) return data;
+  }
+
+  return null;
+};
+
+const insertRegistrationEvent = async (
+  supabase: any,
+  registration: any,
+  eventType: string,
+  metadata: any = {},
+) => {
+  if (!registration?.id) return;
+  await supabase.from("school_registration_events").insert({
+    registration_id: registration.id,
+    chatbot_id: registration.chatbot_id,
+    event_type: eventType,
+    metadata,
+  });
+};
+
+const registrationResponse = (registration: any, form: any, fields: any[]) => {
+  const answers = registration?.answers || {};
+  return {
+    registration_id: registration.id,
+    status: registration.status,
+    payment_status: registration.payment_status,
+    approval_status: registration.approval_status,
+    student_name: registration.student_name || answers.student_name || null,
+    parent_phone: registration.parent_phone || answers.parent_phone || null,
+    class_applying_for:
+      registration.class_applying_for || answers.class_applying_for || null,
+    missing_fields: missingRegistrationFields(fields, answers),
+    payment_required: Boolean(form.payment_required),
+    registration_fee: Number(form.registration_fee || 0),
+    currency: form.currency || "RWF",
+    requires_approval: Boolean(form.requires_approval),
+  };
+};
+
+export const getSchoolRegistrationFormHandler = async (
+  event: any,
+  chatbotId: string,
+  args: any,
+  context?: ToolContext,
+) => {
+  const supabase = getAdmin(event);
+  try {
+    const form = await getOrCreateSchoolRegistrationForm(event, chatbotId);
+    const fields = await loadRegistrationFields(supabase, form.id);
+    const result = {
+      form: {
+        id: form.id,
+        name: form.name,
+        description: form.description,
+        payment_required: form.payment_required,
+        registration_fee: Number(form.registration_fee || 0),
+        currency: form.currency || "RWF",
+        requires_approval: form.requires_approval,
+        academic_year: form.academic_year,
+        intake_label: form.intake_label,
+      },
+      fields,
+      message:
+        "Use these fields to collect school registration details. Ask only for missing required fields.",
+    };
+    await logToolEvent(
+      event,
+      chatbotId,
+      "get_school_registration_form",
+      args,
+      result,
+      context,
+    );
+    return result;
+  } catch (error: any) {
+    return {
+      error: error?.message || "School registration is not configured.",
+    };
+  }
+};
+
+export const startSchoolRegistrationHandler = async (
+  event: any,
+  chatbotId: string,
+  args: any,
+  context?: ToolContext,
+) => {
+  const supabase = getAdmin(event);
+  const form = await getOrCreateSchoolRegistrationForm(event, chatbotId);
+  const fields = await loadRegistrationFields(supabase, form.id);
+  const existing = await findRegistration(supabase, chatbotId, args, context);
+  const initialAnswers = sanitizeRegistrationAnswers({
+    student_name: args?.student_name,
+    parent_name: args?.parent_name,
+    parent_phone: args?.parent_phone || context?.customerPhone,
+    class_applying_for: args?.class_applying_for,
+  });
+
+  if (existing) {
+    const mergedAnswers = { ...(existing.answers || {}), ...initialAnswers };
+    const topLevel = Object.entries(initialAnswers).reduce<Record<string, any>>(
+      (acc, [key, value]) => {
+        const column = registrationTopLevelFields[key];
+        if (column) acc[column] = value;
+        return acc;
+      },
+      {},
+    );
+    const { data: updated } = await supabase
+      .from("school_student_registrations")
+      .update({ answers: mergedAnswers, ...topLevel })
+      .eq("id", existing.id)
+      .select("*")
+      .single();
+    const result = {
+      success: true,
+      registration: registrationResponse(updated || existing, form, fields),
+      message: "Registration resumed. Continue collecting missing fields.",
+    };
+    await logToolEvent(
+      event,
+      chatbotId,
+      "start_school_registration",
+      args,
+      result,
+      context,
+      { type: "school_registration", id: existing.id },
+    );
+    return result;
+  }
+
+  const { data: bot } = await supabase
+    .from("chatbots")
+    .select("user_id")
+    .eq("id", chatbotId)
+    .maybeSingle();
+  const { data: created, error } = await supabase
+    .from("school_student_registrations")
+    .insert({
+      chatbot_id: chatbotId,
+      owner_id: bot?.user_id || null,
+      form_id: form.id,
+      chat_session_id: context?.sessionId || null,
+      student_name: initialAnswers.student_name || null,
+      parent_name: initialAnswers.parent_name || null,
+      parent_phone:
+        initialAnswers.parent_phone || context?.customerPhone || null,
+      class_applying_for: initialAnswers.class_applying_for || null,
+      status: "collecting_info",
+      payment_status: form.payment_required ? "unpaid" : "not_required",
+      approval_status: form.requires_approval ? "pending" : "not_required",
+      answers: initialAnswers,
+      metadata: { source_channel: normalizeChannel(context) },
+    })
+    .select("*")
+    .single();
+  if (error) return { error: error.message };
+  await insertRegistrationEvent(supabase, created, "created", {
+    source_channel: normalizeChannel(context),
+  });
+  const result = {
+    success: true,
+    registration: registrationResponse(created, form, fields),
+    message: "Registration started. Ask for the missing required fields next.",
+  };
+  await logToolEvent(
+    event,
+    chatbotId,
+    "start_school_registration",
+    args,
+    result,
+    context,
+    { type: "school_registration", id: created.id },
+  );
+  return result;
+};
+
+export const updateSchoolRegistrationHandler = async (
+  event: any,
+  chatbotId: string,
+  args: any,
+  context?: ToolContext,
+) => {
+  const supabase = getAdmin(event);
+  const registration = await findRegistration(
+    supabase,
+    chatbotId,
+    args,
+    context,
+  );
+  if (!registration) return { error: "Start a school registration first." };
+
+  const form = registration.form_id
+    ? await supabase
+        .from("school_registration_forms")
+        .select("*")
+        .eq("id", registration.form_id)
+        .maybeSingle()
+        .then((res: any) => res.data)
+    : await getOrCreateSchoolRegistrationForm(event, chatbotId);
+  const fields = await loadRegistrationFields(supabase, form.id);
+  const nextAnswers = {
+    ...(registration.answers || {}),
+    ...sanitizeRegistrationAnswers(args?.answers || args),
+  };
+  const topLevel = Object.entries(nextAnswers).reduce<Record<string, any>>(
+    (acc, [key, value]) => {
+      const column = registrationTopLevelFields[key];
+      if (column && value) acc[column] = value;
+      return acc;
+    },
+    {},
+  );
+
+  const { data: updated, error } = await supabase
+    .from("school_student_registrations")
+    .update({ answers: nextAnswers, ...topLevel })
+    .eq("id", registration.id)
+    .eq("chatbot_id", chatbotId)
+    .select("*")
+    .single();
+  if (error) return { error: error.message };
+  await insertRegistrationEvent(supabase, updated, "field_collected", {
+    keys: Object.keys(nextAnswers),
+  });
+  const missing = missingRegistrationFields(fields, nextAnswers);
+  const result = {
+    success: true,
+    registration: registrationResponse(updated, form, fields),
+    message: missing.length
+      ? "Saved. Continue asking for the missing required fields."
+      : "Saved. Required details are complete; submit the registration next.",
+  };
+  await logToolEvent(
+    event,
+    chatbotId,
+    "update_school_registration",
+    args,
+    result,
+    context,
+    { type: "school_registration", id: updated.id },
+  );
+  return result;
+};
+
+export const submitSchoolRegistrationHandler = async (
+  event: any,
+  chatbotId: string,
+  args: any,
+  context?: ToolContext,
+) => {
+  const supabase = getAdmin(event);
+  const registration = await findRegistration(
+    supabase,
+    chatbotId,
+    args,
+    context,
+  );
+  if (!registration) return { error: "School registration not found." };
+  const { data: form } = await supabase
+    .from("school_registration_forms")
+    .select("*")
+    .eq("id", registration.form_id)
+    .maybeSingle();
+  const activeForm =
+    form || (await getOrCreateSchoolRegistrationForm(event, chatbotId));
+  const fields = await loadRegistrationFields(supabase, activeForm.id);
+  const missing = missingRegistrationFields(fields, registration.answers || {});
+  if (missing.length) {
+    const result = {
+      error: "Required registration fields are still missing.",
+      missing_fields: missing,
+      registration: registrationResponse(registration, activeForm, fields),
+    };
+    await logToolEvent(
+      event,
+      chatbotId,
+      "submit_school_registration",
+      args,
+      result,
+      context,
+      { type: "school_registration", id: registration.id },
+    );
+    return result;
+  }
+
+  const paymentRequired =
+    Boolean(activeForm.payment_required) &&
+    Number(activeForm.registration_fee || 0) > 0;
+  const requiresApproval = Boolean(activeForm.requires_approval);
+  const alreadyPaid = registration.payment_status === "paid";
+  const update: any = {
+    submitted_at: registration.submitted_at || new Date().toISOString(),
+  };
+  if (paymentRequired && !alreadyPaid) {
+    update.status = "pending_payment";
+    update.payment_status =
+      registration.payment_status === "pending" ? "pending" : "unpaid";
+    update.approval_status = requiresApproval ? "pending" : "not_required";
+  } else if (requiresApproval) {
+    update.status =
+      alreadyPaid && paymentRequired
+        ? "paid_pending_approval"
+        : "pending_approval";
+    update.payment_status = paymentRequired ? "paid" : "not_required";
+    update.approval_status = "pending";
+  } else {
+    update.status = "submitted";
+    update.payment_status = paymentRequired ? "paid" : "not_required";
+    update.approval_status = "not_required";
+  }
+
+  const { data: updated, error } = await supabase
+    .from("school_student_registrations")
+    .update(update)
+    .eq("id", registration.id)
+    .eq("chatbot_id", chatbotId)
+    .select("*")
+    .single();
+  if (error) return { error: error.message };
+  await insertRegistrationEvent(supabase, updated, update.status, {
+    payment_required: paymentRequired,
+    requires_approval: requiresApproval,
+  });
+  const result = {
+    success: true,
+    registration: registrationResponse(updated, activeForm, fields),
+    next_action:
+      paymentRequired && !alreadyPaid
+        ? "request_payment"
+        : requiresApproval
+          ? "wait_for_approval"
+          : "submitted",
+    message:
+      paymentRequired && !alreadyPaid
+        ? "Registration details are complete. Request MTN/Airtel mobile payment for the configured registration fee."
+        : requiresApproval
+          ? "Registration received and is waiting for school approval. Do not say it is approved yet."
+          : "Registration submitted successfully.",
+  };
+  await logToolEvent(
+    event,
+    chatbotId,
+    "submit_school_registration",
+    args,
+    result,
+    context,
+    { type: "school_registration", id: updated.id },
+  );
+  return result;
+};
+
+export const requestSchoolRegistrationPaymentHandler = async (
+  event: any,
+  chatbotId: string,
+  args: any,
+  context?: ToolContext,
+) => {
+  const phone = normalizeText(
+    args?.phone || args?.parent_phone || context?.customerPhone,
+  );
+  const registrationId = normalizeText(
+    args?.registration_id || args?.student_registration_id,
+  );
+  if (!phone || !registrationId)
+    return { error: "Registration ID and phone number are required." };
+  const supabase = getAdmin(event);
+  const { data: registration } = await supabase
+    .from("school_student_registrations")
+    .select("*")
+    .eq("id", registrationId)
+    .eq("chatbot_id", chatbotId)
+    .maybeSingle();
+  if (!registration) return { error: "School registration not found." };
+  if (registration.payment_status === "paid")
+    return { error: "This school registration is already paid." };
+
+  const { data: form } = await supabase
+    .from("school_registration_forms")
+    .select("*")
+    .eq("id", registration.form_id)
+    .maybeSingle();
+  if (!form?.payment_required || Number(form.registration_fee || 0) <= 0) {
+    return { error: "This school registration does not require payment." };
+  }
+
+  const { data: existingPayment } = await supabase
+    .from("school_registration_payments")
+    .select("id, status")
+    .eq("chatbot_id", chatbotId)
+    .eq("registration_id", registrationId)
+    .in("status", ["pending", "paid"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (existingPayment?.status === "pending")
+    return {
+      error: "A payment request is already pending for this registration.",
+      payment_id: existingPayment.id,
+    };
+  if (existingPayment?.status === "paid")
+    return {
+      error: "This school registration is already paid.",
+      payment_id: existingPayment.id,
+    };
+
+  const sharedWorkerBaseUrl = await getSharedPaymentWorkerBaseUrl(
+    event,
+    chatbotId,
+  );
+  if (!sharedWorkerBaseUrl)
+    return { error: "MTN/Airtel mobile payment is not configured." };
+  const amount = Number(form.registration_fee || 0);
+  const currency = form.currency || "RWF";
+  const transactionRef = makePaymentTransactionRef(chatbotId, {
+    targetType: "school_registration",
+    targetId: registrationId,
+    amount,
+    currency,
+  });
+  const workerRes = await fetch(`${sharedWorkerBaseUrl}/pay`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "User-Agent": "ReplySuite School Registration Payment/1.0",
+    },
+    body: JSON.stringify({
+      amount,
+      phone: normalizePhoneForPaypack(phone),
+      transactionRef,
+    }),
+  });
+  const workerText = await workerRes.text();
+  let workerData: any = workerText;
+  try {
+    workerData = JSON.parse(workerText);
+  } catch {}
+  if (!workerRes.ok)
+    return {
+      error: "MTN/Airtel mobile payment request failed.",
+      details: workerData,
+    };
+
+  const providerRef = extractProviderRef(workerData, transactionRef);
+  const { data: payment, error } = await supabase
+    .from("school_registration_payments")
+    .insert({
+      chatbot_id: chatbotId,
+      registration_id: registrationId,
+      provider_ref: providerRef,
+      amount,
+      currency,
+      customer_phone: phone,
+      status: "pending",
+      raw_response: {
+        provider: "replysuite_mobile_payment_worker",
+        transaction_ref: transactionRef,
+        response: workerData,
+      },
+    })
+    .select("id")
+    .single();
+  if (error) return { error: error.message };
+  await supabase
+    .from("school_student_registrations")
+    .update({
+      payment_status: "pending",
+      status: "pending_payment",
+      parent_phone: registration.parent_phone || phone,
+    })
+    .eq("id", registrationId);
+  await insertRegistrationEvent(supabase, registration, "payment_requested", {
+    amount,
+    currency,
+  });
+  const result = {
+    success: true,
+    payment_id: payment?.id,
+    registration_id: registrationId,
+    amount,
+    currency,
+    message: "MTN/Airtel mobile payment prompt sent for the registration fee.",
+  };
+  await logToolEvent(
+    event,
+    chatbotId,
+    "request_school_registration_payment",
+    args,
+    result,
+    context,
+    { type: "school_registration", id: registrationId },
+  );
+  return result;
+};
+
+export const checkSchoolRegistrationPaymentHandler = async (
+  event: any,
+  chatbotId: string,
+  args: any,
+  context?: ToolContext,
+) => {
+  const supabase = getAdmin(event);
+  let query = supabase
+    .from("school_registration_payments")
+    .select("*")
+    .eq("chatbot_id", chatbotId);
+  if (args?.payment_id) query = query.eq("id", args.payment_id);
+  else if (args?.registration_id || args?.student_registration_id)
+    query = query
+      .eq(
+        "registration_id",
+        args.registration_id || args.student_registration_id,
+      )
+      .order("created_at", { ascending: false });
+  else return { error: "payment_id or registration_id is required." };
+
+  const { data, error } = await query.limit(1).maybeSingle();
+  if (error) return { error: error.message };
+  if (!data) return { error: "School registration payment not found." };
+
+  let paymentRecord = data;
+  if (paymentRecord.status === "pending") {
+    const verified = await verifySharedWorkerPayment(
+      event,
+      chatbotId,
+      paymentRecord,
+    );
+    if (verified?.status) {
+      const updatePayload: any = {
+        raw_response: {
+          ...(paymentRecord.raw_response || {}),
+          latest_verify: verified.response,
+          latest_verify_at: verified.verified_at,
+        },
+      };
+      if (
+        ["paid", "failed", "cancelled", "expired", "refunded"].includes(
+          verified.status,
+        )
+      ) {
+        updatePayload.status = verified.status;
+        if (verified.status === "paid")
+          updatePayload.paid_at = verified.verified_at;
+      }
+      const { data: updatedPayment } = await supabase
+        .from("school_registration_payments")
+        .update(updatePayload)
+        .eq("id", paymentRecord.id)
+        .select("*")
+        .maybeSingle();
+      if (updatedPayment) paymentRecord = updatedPayment;
+    }
+  }
+
+  const { data: registration } = await supabase
+    .from("school_student_registrations")
+    .select("*")
+    .eq("id", paymentRecord.registration_id)
+    .eq("chatbot_id", chatbotId)
+    .maybeSingle();
+  const { data: form } = registration?.form_id
+    ? await supabase
+        .from("school_registration_forms")
+        .select("*")
+        .eq("id", registration.form_id)
+        .maybeSingle()
+    : { data: null };
+  let registrationUpdate: any = registration;
+  if (registration && paymentRecord.status === "paid") {
+    const nextStatus = form?.requires_approval
+      ? "paid_pending_approval"
+      : "submitted";
+    const approvalStatus = form?.requires_approval ? "pending" : "not_required";
+    const { data: updatedRegistration } = await supabase
+      .from("school_student_registrations")
+      .update({
+        payment_status: "paid",
+        status: nextStatus,
+        approval_status: approvalStatus,
+        submitted_at: registration.submitted_at || new Date().toISOString(),
+      })
+      .eq("id", registration.id)
+      .select("*")
+      .single();
+    registrationUpdate = updatedRegistration;
+    await insertRegistrationEvent(
+      supabase,
+      updatedRegistration,
+      "payment_paid",
+      {
+        payment_id: paymentRecord.id,
+      },
+    );
+  } else if (
+    registration &&
+    ["failed", "cancelled", "expired", "refunded"].includes(
+      paymentRecord.status,
+    )
+  ) {
+    await supabase
+      .from("school_student_registrations")
+      .update({
+        payment_status:
+          paymentRecord.status === "refunded" ? "refunded" : "failed",
+        status: "payment_failed",
+      })
+      .eq("id", registration.id)
+      .eq("chatbot_id", chatbotId);
+  }
+
+  const result = {
+    payment: paymentRecord,
+    status: paymentRecord.status,
+    registration: registrationUpdate,
+    message:
+      paymentRecord.status === "paid"
+        ? form?.requires_approval
+          ? "Registration fee is confirmed. Tell the parent/student the registration is waiting for school approval. Do not say it is approved yet."
+          : "Registration fee is confirmed and the registration is submitted."
+        : undefined,
+  };
+  await logToolEvent(
+    event,
+    chatbotId,
+    "check_school_registration_payment",
+    args,
+    result,
+    context,
+    { type: "school_registration", id: paymentRecord.registration_id },
+  );
+  return result;
+};
+
+export const getSchoolRegistrationStatusHandler = async (
+  event: any,
+  chatbotId: string,
+  args: any,
+  context?: ToolContext,
+) => {
+  const supabase = getAdmin(event);
+  const registration = await findRegistration(
+    supabase,
+    chatbotId,
+    args,
+    context,
+  );
+  if (!registration)
+    return {
+      error: "No school registration was found for this conversation or phone.",
+    };
+  const { data: form } = await supabase
+    .from("school_registration_forms")
+    .select("*")
+    .eq("id", registration.form_id)
+    .maybeSingle();
+  const activeForm =
+    form || (await getOrCreateSchoolRegistrationForm(event, chatbotId));
+  const fields = await loadRegistrationFields(supabase, activeForm.id);
+  const result = {
+    registration: registrationResponse(registration, activeForm, fields),
+    status: registration.status,
+    payment_status: registration.payment_status,
+    approval_status: registration.approval_status,
+    message:
+      registration.status === "approved"
+        ? "Registration is approved."
+        : registration.status === "rejected"
+          ? "Registration was not approved."
+          : registration.status === "pending_payment"
+            ? "Registration is waiting for MTN/Airtel mobile payment."
+            : ["pending_approval", "paid_pending_approval"].includes(
+                  registration.status,
+                )
+              ? "Registration is waiting for school approval. Do not say it is approved yet."
+              : registration.status === "collecting_info"
+                ? "Registration is still missing required information."
+                : "Registration is submitted.",
+  };
+  await logToolEvent(
+    event,
+    chatbotId,
+    "get_school_registration_status",
+    args,
+    result,
+    context,
+    { type: "school_registration", id: registration.id },
+  );
+  return result;
+};
+
 export const sendWhatsAppMenuHandler = async (
   event: any,
   chatbotId: string,

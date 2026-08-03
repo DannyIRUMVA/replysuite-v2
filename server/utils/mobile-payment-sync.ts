@@ -234,6 +234,130 @@ const updateBusinessPayment = async (
   };
 };
 
+const findSchoolRegistrationPayment = async (
+  supabase: any,
+  refs: string[],
+  payload: any,
+) => {
+  for (const ref of refs) {
+    const found = await firstMaybeSingle([
+      supabase
+        .from("school_registration_payments")
+        .select("*")
+        .eq("provider_ref", ref)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("school_registration_payments")
+        .select("*")
+        .contains("raw_response", { transaction_ref: ref })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    if (found) return found;
+  }
+
+  const registrationId = normalizeText(
+    payload?.registration_id ||
+      payload?.registrationId ||
+      payload?.student_registration_id ||
+      payload?.studentRegistrationId ||
+      payload?.target_id ||
+      payload?.targetId,
+    120,
+  );
+  const targetType = normalizeText(
+    payload?.target_type || payload?.targetType,
+    80,
+  ).toLowerCase();
+  if (
+    registrationId &&
+    [
+      "school_registration",
+      "student_registration",
+      "registration",
+      "admission",
+    ].includes(targetType)
+  ) {
+    const { data } = await supabase
+      .from("school_registration_payments")
+      .select("*")
+      .eq("registration_id", registrationId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data) return data;
+  }
+
+  return null;
+};
+
+const updateSchoolRegistrationPayment = async (
+  supabase: any,
+  payment: any,
+  status: string,
+  payload: any,
+) => {
+  const update: any = {
+    status,
+    raw_response: {
+      ...(payment.raw_response || {}),
+      latest_webhook: payload,
+      latest_webhook_at: new Date().toISOString(),
+    },
+  };
+  if (status === "paid") update.paid_at = new Date().toISOString();
+
+  await supabase
+    .from("school_registration_payments")
+    .update(update)
+    .eq("id", payment.id);
+
+  let registration: any = null;
+  if (status === "paid") {
+    const { data: current } = await supabase
+      .from("school_student_registrations")
+      .select("*, school_registration_forms(requires_approval)")
+      .eq("id", payment.registration_id)
+      .eq("chatbot_id", payment.chatbot_id)
+      .maybeSingle();
+    const requiresApproval =
+      current?.school_registration_forms?.requires_approval !== false;
+    const { data: updated } = await supabase
+      .from("school_student_registrations")
+      .update({
+        payment_status: "paid",
+        status: requiresApproval ? "paid_pending_approval" : "submitted",
+        approval_status: requiresApproval ? "pending" : "not_required",
+        submitted_at: current?.submitted_at || new Date().toISOString(),
+      })
+      .eq("id", payment.registration_id)
+      .eq("chatbot_id", payment.chatbot_id)
+      .select("id, status, payment_status, approval_status, submitted_at")
+      .maybeSingle();
+    registration = updated;
+  } else if (["failed", "cancelled", "expired", "refunded"].includes(status)) {
+    await supabase
+      .from("school_student_registrations")
+      .update({
+        payment_status: status === "refunded" ? "refunded" : "failed",
+        status: "payment_failed",
+      })
+      .eq("id", payment.registration_id)
+      .eq("chatbot_id", payment.chatbot_id);
+  }
+
+  return {
+    type: "school_registration",
+    payment_id: payment.id,
+    registration_id: payment.registration_id,
+    status,
+    registration,
+  };
+};
+
 const updateSchoolPayment = async (
   supabase: any,
   payment: any,
@@ -325,6 +449,22 @@ export const syncMobilePaymentWebhook = async (
   if (schoolPayment) {
     results.push(
       await updateSchoolPayment(supabase, schoolPayment, status, payload),
+    );
+  }
+
+  const registrationPayment = await findSchoolRegistrationPayment(
+    supabase,
+    refs,
+    payload,
+  );
+  if (registrationPayment) {
+    results.push(
+      await updateSchoolRegistrationPayment(
+        supabase,
+        registrationPayment,
+        status,
+        payload,
+      ),
     );
   }
 

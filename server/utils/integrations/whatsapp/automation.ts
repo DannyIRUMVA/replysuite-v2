@@ -233,6 +233,38 @@ School tutor rules:
 `;
 };
 
+const buildSchoolRegistrationPrompt = (toolsConfig: any) => {
+  const registration = toolsConfig?.school_registration || {};
+  const fee = Number(registration.registration_fee || 0).toLocaleString(
+    "en-US",
+  );
+  const currency = registration.currency || "RWF";
+  const paymentLine = registration.payment_required
+    ? `Registration fee is ${fee} ${currency}. Request MTN/Airtel mobile payment only after required information is complete.`
+    : "Registration fee is not required unless dashboard settings say otherwise.";
+  const approvalLine =
+    registration.requires_approval === false
+      ? "Admin approval is not required after submission."
+      : "Admin approval is required. Never tell the parent/student the registration is approved until dashboard approval status is approved.";
+
+  return `
+[SCHOOL REGISTRATION MODE]
+You can register new students/admissions inside this chat using the school registration tools.
+${paymentLine}
+${approvalLine}
+
+School registration rules:
+1. If the user asks to register, enroll, apply, join school, admission, kwiyandikisha, inscrire, or register a child/student, use get_school_registration_form then start_school_registration.
+2. Collect only missing required fields, one or two at a time. Save each answer with update_school_registration.
+3. After all required fields are present, call submit_school_registration.
+4. If payment is required, request_school_registration_payment using the configured fee; never invent the amount.
+5. When the parent/student says they paid, asks for registration status, or asks if it is done, use check_school_registration_payment or get_school_registration_status.
+6. If approval is required, tell them it is waiting for school review. Do not say approved until status/approval_status is approved.
+7. Keep School Tutor separate: learning/quiz requests use tutor flow; registration/admission requests use registration flow.
+8. Keep Kinyarwanda-first when the customer writes Kinyarwanda.
+`;
+};
+
 const buildProductOnlyGreeting = (
   products: any[],
   activeLanguageName: string | null,
@@ -580,6 +612,14 @@ export const processWhatsappMessage = async (
         ["school", "tutor", "school_tutor"].includes(tool),
       ),
     );
+    const schoolRegistrationMode = Boolean(
+      chatbot?.tools_config?.school_registration?.enabled ||
+      enabledTools.some((tool: string) =>
+        ["school_registration", "student_registration", "admissions"].includes(
+          tool,
+        ),
+      ),
+    );
     let activeSchoolSession: any = null;
     let expiredSchoolSession: any = null;
 
@@ -792,6 +832,8 @@ ${productSalesMode ? buildDigitalProductSalesPrompt(connectedProducts, (chatbot 
 
 ${schoolTutorMode ? buildSchoolTutorPrompt((chatbot as any)?.tools_config, activeSchoolSession) : ""}
 
+${schoolRegistrationMode ? buildSchoolRegistrationPrompt((chatbot as any)?.tools_config) : ""}
+
 ${recentCommercePrompt}
 
 [ADDITIONAL CONTEXT FROM KNOWLEDGE BASE]
@@ -926,6 +968,9 @@ IMPORTANT INSTRUCTIONS:
             ...(chatbot?.enabled_tools || []),
             ...(productSalesMode ? ["products", "payments"] : []),
             ...(schoolTutorMode ? ["school", "tutor", "payments"] : []),
+            ...(schoolRegistrationMode
+              ? ["school_registration", "payments"]
+              : []),
           ]),
         ),
         event: (messageData as any)._event,

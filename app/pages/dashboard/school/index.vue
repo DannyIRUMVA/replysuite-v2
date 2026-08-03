@@ -376,13 +376,22 @@ const manageRoute = (flow: any) => {
             flow.
           </p>
         </div>
-        <NuxtLink
-          to="/dashboard/agents/training"
-          class="inline-flex h-9 items-center justify-center gap-2 rounded-[0.39rem] bg-primary px-3 text-xs font-bold text-black transition hover:bg-primary-accent"
-        >
-          <GraduationCap class="h-3.5 w-3.5" />
-          Train tutor assistant
-        </NuxtLink>
+        <div class="flex flex-wrap gap-2">
+          <NuxtLink
+            to="/dashboard/school/registration"
+            class="inline-flex h-9 items-center justify-center gap-2 rounded-[0.39rem] border border-foreground/10 bg-background/55 px-3 text-xs font-bold text-foreground/70 transition hover:border-primary/25 hover:text-primary"
+          >
+            <ClipboardList class="h-3.5 w-3.5" />
+            Student registration
+          </NuxtLink>
+          <NuxtLink
+            to="/dashboard/agents/training"
+            class="inline-flex h-9 items-center justify-center gap-2 rounded-[0.39rem] bg-primary px-3 text-xs font-bold text-black transition hover:bg-primary-accent"
+          >
+            <GraduationCap class="h-3.5 w-3.5" />
+            Train tutor assistant
+          </NuxtLink>
+        </div>
       </div>
     </section>
 

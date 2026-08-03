@@ -236,6 +236,91 @@ export const TOOLS = [
         },
       },
       {
+        name: "get_school_registration_form",
+        description:
+          "Get the active school registration/admissions form, fee rules, approval rules, and required fields for this assistant.",
+        parameters: { type: "OBJECT", properties: {} },
+      },
+      {
+        name: "start_school_registration",
+        description:
+          "Start or resume a student registration/admissions record for the current conversation before collecting details.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            student_name: { type: "STRING" },
+            parent_name: { type: "STRING" },
+            parent_phone: { type: "STRING" },
+            class_applying_for: { type: "STRING" },
+          },
+        },
+      },
+      {
+        name: "update_school_registration",
+        description:
+          "Save collected school registration details such as student name, parent phone, class, previous school, address, and notes.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            registration_id: { type: "STRING" },
+            answers: {
+              type: "OBJECT",
+              description:
+                "Key/value answers keyed by field_key, for example student_name, parent_phone, class_applying_for.",
+            },
+          },
+          required: ["answers"],
+        },
+      },
+      {
+        name: "submit_school_registration",
+        description:
+          "Validate and submit a school registration after required information is collected. It may move to payment or admin approval depending on settings.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            registration_id: { type: "STRING" },
+          },
+        },
+      },
+      {
+        name: "request_school_registration_payment",
+        description:
+          "Initiate MTN/Airtel mobile payment for a school registration fee. Server validates the configured registration amount.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            registration_id: { type: "STRING" },
+            phone: { type: "STRING" },
+          },
+          required: ["registration_id", "phone"],
+        },
+      },
+      {
+        name: "check_school_registration_payment",
+        description:
+          "Check school registration payment. If paid, mark registration paid and either submit it or put it in pending approval.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            payment_id: { type: "STRING" },
+            registration_id: { type: "STRING" },
+          },
+        },
+      },
+      {
+        name: "get_school_registration_status",
+        description:
+          "Check a student's registration status so the bot can tell if it is missing info, pending payment, waiting approval, approved, or rejected.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            registration_id: { type: "STRING" },
+            phone: { type: "STRING" },
+          },
+        },
+      },
+      {
         name: "request_payment",
         description:
           "Initiate an MTN/Airtel mobile payment prompt for an existing appointment/booking or legacy order record. Server validates the target and amount; do not invent payment amounts.",
@@ -347,6 +432,15 @@ export const TOOL_HANDLERS: Record<string, any> = {
   create_school_tutor_session: handlers.createSchoolTutorSessionHandler,
   request_school_tutor_payment: handlers.requestSchoolTutorPaymentHandler,
   check_school_tutor_payment: handlers.checkSchoolTutorPaymentHandler,
+  get_school_registration_form: handlers.getSchoolRegistrationFormHandler,
+  start_school_registration: handlers.startSchoolRegistrationHandler,
+  update_school_registration: handlers.updateSchoolRegistrationHandler,
+  submit_school_registration: handlers.submitSchoolRegistrationHandler,
+  request_school_registration_payment:
+    handlers.requestSchoolRegistrationPaymentHandler,
+  check_school_registration_payment:
+    handlers.checkSchoolRegistrationPaymentHandler,
+  get_school_registration_status: handlers.getSchoolRegistrationStatusHandler,
   request_payment: handlers.paypackHandler,
   check_payment_status: handlers.checkPaymentStatusHandler,
   send_whatsapp_menu: handlers.sendWhatsAppMenuHandler,
