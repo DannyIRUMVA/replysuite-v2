@@ -51,9 +51,9 @@ const principles = [
     <section id="principles">
       <h2>Core principles</h2>
       <div class="grid md:grid-cols-2 gap-5 not-prose my-10">
-        <div v-for="item in principles" :key="item.title" class="rounded-[28px] border border-foreground/10 bg-foreground/[0.02] p-6">
-          <h3 class="text-xl font-bold text-foreground mb-3 tracking-tight">{{ item.title }}</h3>
-          <p class="text-sm text-foreground/65 font-medium leading-relaxed">{{ item.desc }}</p>
+        <div v-for="item in principles" :key="item.title" class="rounded-[1rem] border border-foreground/10 bg-background/45 p-4 shadow-sm shadow-black/5">
+          <h3 class="mb-2 text-base font-bold tracking-tight text-foreground">{{ item.title }}</h3>
+          <p class="text-sm font-medium leading-6 text-foreground/65">{{ item.desc }}</p>
         </div>
       </div>
     </section>

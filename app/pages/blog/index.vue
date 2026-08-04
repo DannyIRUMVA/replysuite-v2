@@ -27,23 +27,23 @@ const otherPosts = computed(() => (posts.value || []).filter((post) => post.slug
 </script>
 
 <template>
-  <div class="relative min-h-screen">
-    <section class="max-w-7xl mx-auto px-6 pt-32 pb-20 relative overflow-hidden">
-      <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10"></div>
-      <div class="text-center max-w-3xl mx-auto">
-        <span class="badge-gradient mb-10">Blog</span>
-        <h1 class="text-5xl sm:text-7xl md:text-8xl font-extrabold mb-8 tracking-tight leading-[0.9] text-foreground">
+  <div class="blog-compact relative min-h-screen overflow-x-hidden">
+    <section class="relative mx-auto max-w-[72rem] overflow-hidden px-4 py-10 sm:px-6 md:py-12">
+      <div class="absolute inset-x-0 top-8 mx-auto h-56 w-[58%] rounded-full bg-primary/[0.08] blur-[110px] -z-10"></div>
+      <div class="mx-auto max-w-4xl text-center">
+        <span class="badge-gradient mb-4">Blog</span>
+        <h1 class="text-3xl font-extrabold leading-[1.02] tracking-[-0.045em] text-foreground md:text-4xl lg:text-[3.15rem]">
           Practical guides for AI chatbots, support, pricing, and growth.
         </h1>
-        <p class="text-lg text-foreground/50 font-medium leading-relaxed">
+        <p class="mx-auto mt-4 max-w-3xl text-sm font-semibold leading-6 text-foreground/60 md:text-[0.95rem]">
           Long-form articles about website chatbots, WhatsApp workflows, AI pricing, and support automation.
         </p>
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-20">
-      <div v-if="pending" class="glass-card p-8 border-foreground/10 bg-foreground/[0.01] hidden lg:block">
-        <div class="grid lg:grid-cols-2 gap-16 items-center">
+    <section class="mx-auto max-w-[72rem] px-4 py-10 sm:px-6 md:py-12">
+      <div v-if="pending" class="glass-card hidden border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 lg:block">
+        <div class="grid gap-6 lg:grid-cols-2 lg:items-center">
           <Skeleton width="100%" height="320px" radius="2rem" />
           <div>
             <Skeleton width="120px" height="12px" class="mb-6" />
@@ -62,25 +62,25 @@ const otherPosts = computed(() => (posts.value || []).filter((post) => post.slug
         </div>
       </div>
 
-      <NuxtLink v-else-if="featuredPost" :to="featuredPost.to" class="glass-card p-1 items-center gap-16 border-foreground/10 bg-foreground/[0.01] overflow-hidden hidden lg:flex group">
-        <div class="w-1/2">
+      <NuxtLink v-else-if="featuredPost" :to="featuredPost.to" class="glass-card group flex flex-col gap-4 overflow-hidden border-foreground/10 bg-background-card/45 p-1 shadow-sm shadow-black/5 lg:flex-row lg:items-center lg:gap-6">
+        <div class="w-full lg:w-1/2">
           <ArticleThumbnail :article="featuredPost" featured />
         </div>
-        <div class="w-1/2 pr-16 py-12">
-          <span class="text-xs font-bold text-primary uppercase tracking-widest mb-6 block">Featured</span>
-          <h2 class="text-4xl font-extrabold text-foreground mb-6 tracking-tight leading-tight group-hover:text-primary transition-colors">
+        <div class="w-full p-5 lg:w-1/2 lg:py-6 lg:pl-0 lg:pr-6">
+          <span class="mb-3 block text-[10px] font-bold uppercase tracking-[0.14em] text-primary">Featured</span>
+          <h2 class="mb-3 text-2xl font-extrabold tracking-[-0.035em] text-foreground transition-colors group-hover:text-primary md:text-3xl">
             {{ featuredPost.title }}
           </h2>
-          <p class="text-foreground/40 mb-10 leading-relaxed font-medium">
+          <p class="mb-5 text-sm font-medium leading-6 text-foreground/55">
             {{ featuredPost.excerpt }}
           </p>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-4 text-xs text-foreground/30 font-bold uppercase tracking-widest">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-foreground/30">
               <span>{{ featuredPost.date }}</span>
               <span class="w-1 h-1 rounded-full bg-foreground/20"></span>
               <span>{{ featuredPost.readTime }}</span>
             </div>
-            <div class="flex items-center gap-2 text-foreground font-bold group-hover:text-primary transition-colors">
+            <div class="flex items-center gap-2 text-sm font-bold text-foreground transition-colors group-hover:text-primary">
               Read article
               <ArrowRight class="w-5 h-5 group-hover:translate-x-2 transition-transform" />
             </div>
@@ -88,11 +88,11 @@ const otherPosts = computed(() => (posts.value || []).filter((post) => post.slug
         </div>
       </NuxtLink>
 
-      <div v-if="pending" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mt-20">
-        <div v-for="i in 5" :key="i" class="glass-card flex flex-col border-foreground/10 overflow-hidden bg-foreground/[0.01] p-0">
+      <div v-if="pending" class="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div v-for="i in 5" :key="i" class="glass-card flex flex-col overflow-hidden border-foreground/10 bg-background-card/45 p-0 shadow-sm shadow-black/5">
           <Skeleton width="100%" height="180px" radius="0" />
-          <div class="p-10 flex-1 flex flex-col">
-            <div class="flex items-center justify-between mb-6">
+          <div class="flex flex-1 flex-col p-5">
+            <div class="mb-4 flex items-center justify-between">
               <Skeleton width="90px" height="22px" radius="9999px" />
               <Skeleton width="70px" height="12px" />
             </div>
@@ -108,20 +108,20 @@ const otherPosts = computed(() => (posts.value || []).filter((post) => post.slug
         </div>
       </div>
 
-      <div v-else class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mt-20">
-        <NuxtLink v-for="post in otherPosts" :key="post.title" :to="post.to" class="glass-card flex flex-col border-foreground/10 hover:border-primary/20 transition-all group cursor-pointer overflow-hidden">
+      <div v-else class="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <NuxtLink v-for="post in otherPosts" :key="post.title" :to="post.to" class="glass-card group flex cursor-pointer flex-col overflow-hidden border-foreground/10 bg-background-card/45 shadow-sm shadow-black/5 transition-all hover:border-primary/20">
           <ArticleThumbnail :article="post" compact />
-          <div class="p-10 flex-1 flex flex-col">
-            <div class="flex items-center justify-between mb-6">
-              <span class="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-full border border-primary/10">{{ post.category }}</span>
+          <div class="flex flex-1 flex-col p-5">
+            <div class="mb-4 flex items-center justify-between">
+              <span class="rounded-[0.6rem] border border-primary/10 bg-primary/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">{{ post.category }}</span>
               <div class="flex items-center gap-2 text-[10px] text-foreground/30 font-bold uppercase tracking-widest">
                 <Clock class="w-3 h-3" />
                 {{ post.readTime }}
               </div>
             </div>
-            <h3 class="text-xl font-bold text-foreground mb-4 tracking-tight leading-snug group-hover:text-primary transition-colors">{{ post.title }}</h3>
-            <p class="text-sm text-foreground/40 leading-relaxed font-medium mb-8 flex-1">{{ post.excerpt }}</p>
-            <div class="flex items-center justify-between pt-6 border-t border-foreground/10 mt-auto">
+            <h3 class="mb-2 text-base font-bold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary">{{ post.title }}</h3>
+            <p class="mb-5 flex-1 text-sm font-medium leading-6 text-foreground/55">{{ post.excerpt }}</p>
+            <div class="mt-auto flex items-center justify-between border-t border-foreground/10 pt-4">
               <span class="text-xs text-foreground/30 font-medium">{{ post.date }}</span>
               <ArrowRight class="w-5 h-5 text-foreground/40 group-hover:text-primary group-hover:translate-x-2 transition-all" />
             </div>
@@ -133,5 +133,5 @@ const otherPosts = computed(() => (posts.value || []).filter((post) => post.slug
 </template>
 
 <style scoped>
-.glass-card { @apply rounded-[32px] bg-foreground/[0.01]; }
+.glass-card { @apply rounded-[1rem] border bg-background-card/45; }
 </style>

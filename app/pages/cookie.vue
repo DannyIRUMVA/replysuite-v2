@@ -60,12 +60,12 @@ const cookieTypes = [
     <section id="types">
       <h2>Cookie categories</h2>
       <div class="grid gap-5 not-prose my-10">
-        <div v-for="item in cookieTypes" :key="item.title" class="rounded-[28px] border border-foreground/10 bg-foreground/[0.02] p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+        <div v-for="item in cookieTypes" :key="item.title" class="flex flex-col gap-4 rounded-[1rem] border border-foreground/10 bg-background/45 p-4 shadow-sm shadow-black/5 md:flex-row md:items-center md:justify-between">
           <div>
-            <h3 class="text-xl font-bold text-foreground mb-2 tracking-tight">{{ item.title }}</h3>
-            <p class="text-sm text-foreground/65 font-medium leading-relaxed max-w-2xl">{{ item.desc }}</p>
+            <h3 class="mb-2 text-base font-bold tracking-tight text-foreground">{{ item.title }}</h3>
+            <p class="max-w-2xl text-sm font-medium leading-6 text-foreground/65">{{ item.desc }}</p>
           </div>
-          <div :class="item.required ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-foreground/[0.03] border-foreground/10 text-foreground/55'" class="px-4 py-2 rounded-full border text-[10px] font-black uppercase tracking-[0.22em] self-start">
+          <div :class="item.required ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-foreground/[0.03] border-foreground/10 text-foreground/55'" class="self-start rounded-[0.7rem] border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em]">
             {{ item.required ? 'Required' : 'Optional' }}
           </div>
         </div>
@@ -88,7 +88,7 @@ const cookieTypes = [
         You can reopen the cookie settings modal and update your choices at any time.
       </p>
       <div class="not-prose mt-6">
-        <button class="btn-gradient px-8 py-4" @click="openSettings">
+        <button class="btn-gradient rounded-[0.78rem] px-5 py-3 text-sm font-bold" @click="openSettings">
           Open cookie settings
         </button>
       </div>

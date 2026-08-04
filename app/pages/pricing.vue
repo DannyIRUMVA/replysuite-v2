@@ -193,45 +193,45 @@ const faqs = [
 </script>
 
 <template>
-  <div class="relative min-h-screen overflow-x-hidden">
-    <div class="max-w-7xl mx-auto px-6 py-20 md:py-24">
-      <div class="text-center max-w-3xl mx-auto mb-16 border-b border-foreground/5 pb-12">
-        <span class="badge-gradient mb-6">Pricing</span>
-        <h1 class="text-4xl md:text-6xl font-extrabold mb-6 tracking-tight leading-[0.98] text-foreground">
+  <div class="pricing-compact relative min-h-screen overflow-x-hidden">
+    <div class="max-w-[72rem] mx-auto px-4 sm:px-6 py-10 md:py-12">
+      <div class="text-center max-w-3xl mx-auto mb-8 border-b border-foreground/5 pb-8">
+        <span class="badge-gradient mb-5 inline-flex">Pricing</span>
+        <h1 class="text-3xl md:text-4xl lg:text-[3.15rem] font-extrabold mb-4 tracking-[-0.045em] leading-[1.02] text-foreground">
           Simple pricing for supported customer channels.
           <span class="text-gradient">Clear upgrade path.</span>
         </h1>
-        <p class="text-lg text-foreground/50 font-medium leading-relaxed">
+        <p class="text-sm md:text-[0.95rem] text-foreground/55 font-semibold leading-6">
           Start with one trained website assistant. Silver adds WhatsApp, Gold adds Instagram comment replies and comment-to-DM, and Enterprise unlocks AI business tools for appointments, bookings, Google Calendar, and MTN/Airtel mobile checkout.
         </p>
       </div>
 
-      <div class="mb-24">
-        <div class="grid lg:grid-cols-3 gap-8 mb-8">
+      <div class="mb-12">
+        <div class="grid lg:grid-cols-3 gap-4 mb-4">
           <div
             v-for="plan in paidPlans"
             :key="plan.name"
-            class="glass-card p-8 md:p-10 flex flex-col relative transition-all duration-500 hover:-translate-y-3 border-foreground/10"
+            class="glass-card p-5 md:p-6 flex flex-col relative transition-all duration-300 border-foreground/10 shadow-sm shadow-black/5"
             :class="plan.popular ? 'border-primary/40 !bg-primary/[0.03]' : 'bg-foreground/[0.02]'"
           >
-            <div v-if="plan.popular" class="absolute -top-5 left-1/2 -translate-x-1/2 px-6 py-2 bg-primary text-black text-[11px] font-bold tracking-[0.2em] rounded-full shadow-2xl shadow-primary/30 uppercase">
+            <div v-if="plan.popular" class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-primary text-black text-[10px] font-bold tracking-[0.14em] rounded-[0.65rem] shadow-sm shadow-primary/20 uppercase">
               Best Value
             </div>
 
-            <div class="mb-10">
-              <h3 class="text-3xl font-bold mb-3 tracking-tight text-foreground">{{ plan.name }}</h3>
-              <p class="text-sm text-foreground/50 font-medium">{{ plan.desc }}</p>
+            <div class="mb-5">
+              <h3 class="text-xl font-bold mb-2 tracking-tight text-foreground">{{ plan.name }}</h3>
+              <p class="text-sm leading-6 text-foreground/55 font-medium">{{ plan.desc }}</p>
             </div>
 
-            <div class="mb-10 flex items-baseline gap-2">
-              <span class="text-5xl md:text-6xl font-extrabold tracking-tighter text-foreground">${{ plan.price }}</span>
+            <div class="mb-5 flex items-baseline gap-2">
+              <span class="text-3xl md:text-4xl font-extrabold tracking-tighter text-foreground">${{ plan.price }}</span>
               <span class="text-foreground/50 font-bold tracking-[0.1em] text-[10px] uppercase">/month</span>
             </div>
 
             <button
               @click="handleSelect(plan)"
               :disabled="isProcessing === plan.id"
-              class="w-full py-5 rounded-full font-bold text-center mb-10 transition-all tracking-[0.1em] text-sm flex items-center justify-center gap-2"
+              class="w-full py-3 rounded-[0.78rem] font-bold text-center mb-5 transition-all tracking-[0.08em] text-sm flex items-center justify-center gap-2"
               :class="plan.popular ? 'btn-gradient' : 'bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10 hover:border-foreground/20'"
             >
               <template v-if="isProcessing === plan.id">
@@ -243,9 +243,9 @@ const faqs = [
               </template>
             </button>
 
-            <div class="space-y-5 flex-grow">
-              <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-4 text-sm font-medium text-foreground/50">
-                <div class="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <div class="space-y-3 flex-grow">
+              <div v-for="feat in plan.features" :key="feat" class="flex items-center gap-3 text-sm font-medium text-foreground/55">
+                <div class="w-4 h-4 rounded-[0.35rem] bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <Check class="w-3 h-3 text-primary" />
                 </div>
                 {{ feat }}
@@ -254,18 +254,18 @@ const faqs = [
           </div>
         </div>
 
-        <div v-if="freeStarterPlan" class="glass-card p-6 md:p-8 border border-foreground/10 bg-foreground/[0.02]">
-          <div class="grid lg:grid-cols-[0.85fr_1.35fr_auto] gap-6 items-center">
+        <div v-if="freeStarterPlan" class="glass-card p-5 md:p-6 border border-foreground/10 bg-background-card/45 shadow-sm shadow-black/5">
+          <div class="grid lg:grid-cols-[0.85fr_1.35fr_auto] gap-4 items-center">
             <div>
-              <span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary mb-4">
+              <span class="mb-4 inline-flex rounded-[0.65rem] border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
                 Free Starter subscription
               </span>
-              <h3 class="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{{ freeStarterPlan.name }}</h3>
-              <p class="mt-2 text-sm text-foreground/50 font-medium leading-relaxed">{{ freeStarterPlan.desc }}</p>
+              <h3 class="text-xl md:text-2xl font-bold tracking-tight text-foreground">{{ freeStarterPlan.name }}</h3>
+              <p class="mt-2 text-sm text-foreground/55 font-medium leading-6">{{ freeStarterPlan.desc }}</p>
             </div>
 
-            <div class="grid sm:grid-cols-2 gap-3">
-              <div v-for="feat in freeStarterPlan.features" :key="feat" class="rounded-2xl border border-foreground/10 bg-background/40 px-4 py-3 flex items-center gap-3 text-xs font-medium text-foreground/55">
+            <div class="grid sm:grid-cols-2 gap-2.5">
+              <div v-for="feat in freeStarterPlan.features" :key="feat" class="rounded-[0.72rem] border border-foreground/10 bg-background/40 px-3 py-2.5 flex items-center gap-2.5 text-xs font-medium text-foreground/55">
                 <div class="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <Check class="w-2.5 h-2.5 text-primary" />
                 </div>
@@ -275,13 +275,13 @@ const faqs = [
 
             <div class="lg:text-right">
               <div class="mb-4 flex lg:justify-end items-baseline gap-2">
-                <span class="text-4xl font-extrabold tracking-tighter text-foreground">${{ freeStarterPlan.price }}</span>
+                <span class="text-3xl font-extrabold tracking-tighter text-foreground">${{ freeStarterPlan.price }}</span>
                 <span class="text-foreground/50 font-bold tracking-[0.1em] text-[10px] uppercase">/month</span>
               </div>
               <button
                 @click="handleSelect(freeStarterPlan)"
                 :disabled="isProcessing === freeStarterPlan.id"
-                class="w-full lg:w-auto px-8 py-4 rounded-full font-bold text-center transition-all tracking-[0.1em] text-sm flex items-center justify-center gap-2 bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10 hover:border-foreground/20"
+                class="w-full lg:w-auto px-5 py-3 rounded-[0.78rem] font-bold text-center transition-all tracking-[0.08em] text-sm flex items-center justify-center gap-2 bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10 hover:border-foreground/20"
               >
                 <template v-if="isProcessing === freeStarterPlan.id">
                   <Loader2 class="w-4 h-4 animate-spin" />
@@ -296,31 +296,31 @@ const faqs = [
         </div>
       </div>
 
-      <section class="max-w-6xl mx-auto mb-24">
-        <div class="text-center mb-10">
-          <span class="badge-gradient mb-5">Compare price</span>
-          <h2 class="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground">
+      <section class="max-w-[72rem] mx-auto mb-12">
+        <div class="text-center mb-6">
+          <span class="badge-gradient mb-4 inline-flex">Compare price</span>
+          <h2 class="text-2xl md:text-3xl font-extrabold tracking-[-0.035em] text-foreground">
             Compare <span class="text-gradient">plans in one table</span>
           </h2>
-          <p class="mt-4 text-foreground/50 font-medium max-w-2xl mx-auto">
+          <p class="mt-3 text-sm leading-6 text-foreground/55 font-semibold max-w-2xl mx-auto">
             See price, usage limits, website, WhatsApp, Instagram, AI business tools, training capacity, and support level side by side.
           </p>
         </div>
 
-        <div class="relative overflow-hidden rounded-[36px] border border-foreground/10 bg-foreground/[0.025] p-3 md:p-4 shadow-2xl shadow-black/5">
+        <div class="relative overflow-hidden rounded-[1rem] border border-foreground/10 bg-background-card/45 p-2.5 shadow-sm shadow-black/5">
           <div class="absolute -top-24 left-10 h-56 w-56 rounded-full bg-primary/20 blur-[90px]"></div>
           <div class="absolute -bottom-28 right-6 h-64 w-64 rounded-full bg-sky-400/10 blur-[100px]"></div>
           <div class="absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-primary/[0.04]"></div>
 
-          <div class="relative overflow-x-auto rounded-[28px] border border-foreground/10 bg-background/60 backdrop-blur-xl">
-            <table class="w-full min-w-[800px] text-sm" aria-label="ReplySuite pricing plan comparison">
+          <div class="relative overflow-x-auto rounded-[0.82rem] border border-foreground/10 bg-background/60 backdrop-blur-xl">
+            <table class="w-full min-w-[800px] text-[0.82rem]" aria-label="ReplySuite pricing plan comparison">
               <thead>
                 <tr class="border-b border-foreground/10 bg-foreground/[0.03]">
-                  <th class="px-5 py-5 text-left text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Feature</th>
-                  <th class="px-5 py-5 text-center font-black text-foreground">Free Starter</th>
-                  <th class="px-5 py-5 text-center font-black text-primary bg-primary/[0.07]">Silver</th>
-                  <th class="px-5 py-5 text-center font-black text-foreground">Gold</th>
-                  <th class="px-5 py-5 text-center font-black text-foreground">Enterprise Ready</th>
+                  <th class="px-4 py-3.5 text-left text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Feature</th>
+                  <th class="px-4 py-3.5 text-center font-black text-foreground">Free Starter</th>
+                  <th class="px-4 py-3.5 text-center font-black text-primary bg-primary/[0.07]">Silver</th>
+                  <th class="px-4 py-3.5 text-center font-black text-foreground">Gold</th>
+                  <th class="px-4 py-3.5 text-center font-black text-foreground">Enterprise Ready</th>
                 </tr>
               </thead>
               <tbody>
@@ -328,11 +328,11 @@ const faqs = [
                   :class="i % 2 === 0 ? 'bg-foreground/[0.015]' : ''"
                   class="border-b border-foreground/5 last:border-b-0 transition-colors hover:bg-foreground/[0.03]"
                 >
-                  <td class="px-5 py-4 font-bold text-foreground/65">{{ row.label }}</td>
-                  <td class="px-5 py-4 text-center font-semibold text-foreground/65">{{ row.starter }}</td>
-                  <td class="px-5 py-4 text-center font-black text-foreground bg-primary/[0.045]">{{ row.silver }}</td>
-                  <td class="px-5 py-4 text-center font-semibold text-foreground/70">{{ row.gold }}</td>
-                  <td class="px-5 py-4 text-center font-semibold text-foreground/70">{{ row.enterprise }}</td>
+                  <td class="px-4 py-3 font-bold text-foreground/65">{{ row.label }}</td>
+                  <td class="px-4 py-3 text-center font-semibold text-foreground/65">{{ row.starter }}</td>
+                  <td class="px-4 py-3 text-center font-black text-foreground bg-primary/[0.045]">{{ row.silver }}</td>
+                  <td class="px-4 py-3 text-center font-semibold text-foreground/70">{{ row.gold }}</td>
+                  <td class="px-4 py-3 text-center font-semibold text-foreground/70">{{ row.enterprise }}</td>
                 </tr>
               </tbody>
             </table>
@@ -340,53 +340,53 @@ const faqs = [
         </div>
       </section>
 
-      <section class="max-w-6xl mx-auto py-20 md:py-24 border-t border-foreground/5">
-        <div class="relative overflow-hidden rounded-[40px] border border-foreground/10 bg-foreground/[0.025] p-6 md:p-8 lg:p-10">
+      <section class="max-w-[72rem] mx-auto py-10 md:py-12 border-t border-foreground/5">
+        <div class="relative overflow-hidden rounded-[1rem] border border-foreground/10 bg-background-card/45 p-5 md:p-6 shadow-sm shadow-black/5">
           <div class="absolute -top-24 -left-14 h-64 w-64 rounded-full bg-primary/15 blur-[100px]"></div>
           <div class="absolute -bottom-28 right-0 h-72 w-72 rounded-full bg-sky-400/10 blur-[110px]"></div>
           <div class="absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-primary/[0.035]"></div>
 
-          <div class="relative grid lg:grid-cols-[0.85fr_1.25fr] gap-8 lg:gap-12 items-start">
+          <div class="relative grid lg:grid-cols-[0.85fr_1.25fr] gap-6 lg:gap-8 items-start">
             <div class="lg:sticky lg:top-28">
-              <span class="badge-gradient mb-6">FAQ</span>
-              <h2 class="text-3xl md:text-5xl font-extrabold mb-5 tracking-tight leading-tight text-foreground">
+              <span class="badge-gradient mb-4 inline-flex">FAQ</span>
+              <h2 class="text-2xl md:text-3xl font-extrabold mb-3 tracking-[-0.035em] leading-tight text-foreground">
                 Common questions about
                 <span class="text-gradient">pricing.</span>
               </h2>
-              <p class="text-foreground/55 font-medium leading-relaxed max-w-xl">
+              <p class="text-sm text-foreground/55 font-semibold leading-6 max-w-xl">
                 Clear answers before you choose a plan. Start free, upgrade when your reply volume grows, and cancel when needed.
               </p>
 
-              <div class="mt-8 grid sm:grid-cols-3 lg:grid-cols-1 gap-3">
-                <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+              <div class="mt-5 grid sm:grid-cols-3 lg:grid-cols-1 gap-2.5">
+                <div class="rounded-[0.72rem] border border-foreground/10 bg-background/50 px-3 py-2.5 backdrop-blur-xl">
                   <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Start</p>
                   <p class="mt-1 text-sm font-bold text-foreground">Free Starter</p>
                 </div>
-                <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+                <div class="rounded-[0.72rem] border border-foreground/10 bg-background/50 px-3 py-2.5 backdrop-blur-xl">
                   <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Upgrade</p>
                   <p class="mt-1 text-sm font-bold text-foreground">Any time</p>
                 </div>
-                <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+                <div class="rounded-[0.72rem] border border-foreground/10 bg-background/50 px-3 py-2.5 backdrop-blur-xl">
                   <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40">Billing</p>
                   <p class="mt-1 text-sm font-bold text-foreground">Monthly</p>
                 </div>
               </div>
             </div>
 
-            <div class="space-y-4">
-              <details v-for="(faq, index) in faqs" :key="faq.q" class="group rounded-3xl border border-foreground/10 bg-background/55 p-5 md:p-6 backdrop-blur-xl transition-all open:border-primary/25 open:bg-primary/[0.035]">
+            <div class="space-y-3">
+              <details v-for="(faq, index) in faqs" :key="faq.q" class="group rounded-[0.9rem] border border-foreground/10 bg-background/55 p-4 md:p-5 backdrop-blur-xl transition-all open:border-primary/25 open:bg-primary/[0.035]">
                 <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-left">
                   <span class="flex items-start gap-4">
-                    <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.7rem] bg-primary/10 text-primary">
                       <HelpCircle class="h-4 w-4" />
                     </span>
-                    <span class="text-base md:text-lg font-black tracking-tight text-foreground">{{ faq.q }}</span>
+                    <span class="text-sm md:text-base font-black tracking-tight text-foreground">{{ faq.q }}</span>
                   </span>
-                  <span class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.03] text-foreground/60 transition-transform group-open:rotate-45 group-open:text-primary">
+                  <span class="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.6rem] border border-foreground/10 bg-foreground/[0.03] text-foreground/60 transition-transform group-open:rotate-45 group-open:text-primary">
                     +
                   </span>
                 </summary>
-                <p class="mt-4 pl-0 md:pl-[52px] text-sm md:text-base text-foreground/55 leading-relaxed font-medium">
+                <p class="mt-3 pl-0 md:pl-[44px] text-sm text-foreground/55 leading-6 font-medium">
                   {{ faq.a }}
                 </p>
               </details>
@@ -395,11 +395,11 @@ const faqs = [
         </div>
       </section>
 
-      <section class="mt-24 bg-foreground/[0.02] p-16 rounded-[48px] border border-foreground/10 text-center relative overflow-hidden group">
+      <section class="mt-12 bg-background-card/45 p-5 md:p-6 rounded-[1rem] border border-foreground/10 text-center relative overflow-hidden group shadow-sm shadow-black/5">
         <div class="absolute inset-0 bg-primary/5 blur-[120px] group-hover:bg-primary/10 transition-all duration-1000"></div>
-        <h2 class="text-3xl md:text-5xl font-extrabold mb-6 relative z-10 tracking-tight text-foreground">Need a custom business-action rollout?</h2>
-        <p class="text-foreground/50 mb-9 max-w-xl mx-auto font-medium text-base md:text-lg relative z-10">Talk to us if you want help with onboarding, training, Instagram comment replies, comment-to-DM, Enterprise AI business tools, Mobile payment setup, or a larger rollout.</p>
-        <NuxtLink to="mailto:support@replysuite.com" class="btn-gradient px-8 py-4 text-base inline-flex items-center gap-4 group/btn relative z-10">
+        <h2 class="text-2xl md:text-3xl font-extrabold mb-3 relative z-10 tracking-[-0.035em] text-foreground">Need a custom business-action rollout?</h2>
+        <p class="text-sm leading-6 text-foreground/55 mb-5 max-w-xl mx-auto font-semibold relative z-10">Talk to us if you want help with onboarding, training, Instagram comment replies, comment-to-DM, Enterprise AI business tools, Mobile payment setup, or a larger rollout.</p>
+        <NuxtLink to="mailto:support@replysuite.app" class="btn-gradient px-5 py-3 text-sm inline-flex items-center gap-2 group/btn relative z-10 rounded-[0.78rem]">
           Contact Us
           <ArrowRight class="w-5 h-5 group-hover/btn:translate-x-2 transition-transform" />
         </NuxtLink>
@@ -410,7 +410,7 @@ const faqs = [
 
 <style scoped>
 .glass-card {
-  @apply rounded-[40px];
+  @apply rounded-[1rem] border border-foreground/10 bg-background-card/45;
 }
 
 @media (prefers-reduced-motion: reduce) {

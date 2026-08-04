@@ -68,40 +68,40 @@ const paymentRules = [
 </script>
 
 <template>
-  <div class="relative overflow-x-hidden">
-    <section class="relative mx-auto max-w-7xl px-4 pb-12 pt-20 text-center sm:px-6 md:pb-16 md:pt-24">
-      <div class="pointer-events-none absolute inset-x-0 top-10 mx-auto h-72 w-[72%] rounded-full bg-primary/10 blur-[140px]" />
-      <span class="badge-gradient mb-5">Features</span>
-      <h1 class="relative mx-auto max-w-5xl text-4xl font-black leading-[1.02] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+  <div class="features-compact relative overflow-x-hidden">
+    <section class="relative mx-auto max-w-[72rem] px-4 py-10 text-center sm:px-6 md:py-12">
+      <div class="pointer-events-none absolute inset-x-0 top-8 mx-auto h-56 w-[58%] rounded-full bg-primary/[0.08] blur-[110px]" />
+      <span class="badge-gradient mb-4">Features</span>
+      <h1 class="relative mx-auto max-w-4xl text-3xl font-extrabold leading-[1.02] tracking-[-0.045em] text-foreground md:text-4xl lg:text-[3.15rem]">
         Everything needed to reply, book, sell, and review from one calm dashboard.
       </h1>
-      <p class="relative mx-auto mt-6 max-w-3xl text-base font-medium leading-relaxed text-foreground/58 md:text-lg">
+      <p class="relative mx-auto mt-4 max-w-3xl text-sm font-semibold leading-6 text-foreground/60 md:text-[0.95rem]">
         ReplySuite combines trained AI replies with practical business tools. Your assistant can answer questions, request appointments, manage bookings, and trigger verified MTN/Airtel mobile checkout.
       </p>
-      <div class="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-        <NuxtLink to="/register" class="btn-gradient inline-flex h-12 items-center justify-center gap-3 px-6 text-sm">
+      <div class="relative mt-6 flex flex-col justify-center gap-2.5 sm:flex-row">
+        <NuxtLink to="/register" class="btn-gradient inline-flex items-center justify-center gap-2 rounded-[0.78rem] px-5 py-3 text-sm font-bold">
           Start free
           <ArrowRight class="h-4 w-4" />
         </NuxtLink>
-        <NuxtLink to="/product" class="inline-flex h-12 items-center justify-center rounded-full border border-foreground/10 px-6 text-sm font-black text-foreground/70 transition hover:border-primary/25 hover:text-foreground">
+        <NuxtLink to="/product" class="inline-flex items-center justify-center rounded-[0.78rem] border border-foreground/10 bg-foreground/[0.02] px-5 py-3 text-sm font-bold text-foreground/70 transition hover:border-primary/25 hover:bg-foreground/[0.05] hover:text-foreground">
           See product flow
         </NuxtLink>
       </div>
     </section>
 
-    <section class="mx-auto max-w-7xl px-4 pb-14 sm:px-6 md:pb-18">
+    <section class="mx-auto max-w-[72rem] px-4 pb-10 sm:px-6 md:pb-12">
       <div class="grid gap-4 lg:grid-cols-3">
-        <article v-for="group in featureGroups" :key="group.label" class="rounded-[1.75rem] border border-foreground/10 bg-background-card/65 p-5 backdrop-blur-2xl md:p-6">
-          <div class="mb-5 flex items-center justify-between gap-4">
-            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <component :is="group.icon" class="h-6 w-6" />
+        <article v-for="group in featureGroups" :key="group.label" class="rounded-[1rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 backdrop-blur-xl md:p-6">
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <div class="flex h-9 w-9 items-center justify-center rounded-[0.7rem] bg-primary/10 text-primary">
+              <component :is="group.icon" class="h-4 w-4" />
             </div>
-            <span class="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">{{ group.label }}</span>
+            <span class="rounded-[0.6rem] border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">{{ group.label }}</span>
           </div>
-          <h2 class="text-xl font-black tracking-tight text-foreground">{{ group.title }}</h2>
-          <p class="mt-3 text-sm font-medium leading-relaxed text-foreground/55">{{ group.desc }}</p>
-          <div class="mt-5 space-y-2">
-            <div v-for="item in group.items" :key="item" class="flex items-center gap-3 rounded-2xl border border-foreground/10 bg-background/45 px-4 py-3 text-xs font-bold text-foreground/60">
+          <h2 class="text-lg font-bold tracking-tight text-foreground">{{ group.title }}</h2>
+          <p class="mt-2 text-sm font-medium leading-6 text-foreground/55">{{ group.desc }}</p>
+          <div class="mt-4 space-y-2">
+            <div v-for="item in group.items" :key="item" class="flex items-center gap-2.5 rounded-[0.72rem] border border-foreground/10 bg-background/45 px-3 py-2.5 text-xs font-bold text-foreground/60">
               <CheckCircle2 class="h-4 w-4 shrink-0 text-primary" />
               {{ item }}
             </div>
@@ -110,48 +110,48 @@ const paymentRules = [
       </div>
     </section>
 
-    <section class="mx-auto max-w-7xl border-t border-foreground/5 px-4 py-14 sm:px-6 md:py-18">
-      <div class="mx-auto mb-10 max-w-3xl text-center">
-        <span class="badge-gradient mb-4">Capability map</span>
-        <h2 class="text-3xl font-black tracking-tight text-foreground md:text-5xl">A practical feature set for live businesses.</h2>
-        <p class="mt-4 text-sm font-medium leading-relaxed text-foreground/55 md:text-base">The product stays focused: conversations, training, connected channels, appointments, bookings, Google Calendar, and contextual payment checkout.</p>
+    <section class="mx-auto max-w-[72rem] border-t border-foreground/5 px-4 py-10 sm:px-6 md:py-12">
+      <div class="mx-auto mb-6 max-w-3xl text-center md:mb-8">
+        <span class="badge-gradient mb-3">Capability map</span>
+        <h2 class="text-2xl font-extrabold tracking-[-0.035em] text-foreground md:text-3xl">A practical feature set for live businesses.</h2>
+        <p class="mt-3 text-sm font-semibold leading-6 text-foreground/55">The product stays focused: conversations, training, connected channels, appointments, bookings, Google Calendar, and contextual payment checkout.</p>
       </div>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <article v-for="feat in features" :key="feat.title" class="group rounded-[1.5rem] border border-foreground/10 bg-background-card/55 p-5 backdrop-blur-xl transition hover:border-primary/25 hover:bg-primary/[0.025]">
-          <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary transition group-hover:scale-105">
-            <component :is="feat.icon" class="h-5 w-5" />
+        <article v-for="feat in features" :key="feat.title" class="group rounded-[1rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 backdrop-blur-xl transition hover:border-primary/25 hover:bg-background-card/60">
+          <div class="mb-4 flex h-9 w-9 items-center justify-center rounded-[0.7rem] bg-primary/10 text-primary transition group-hover:scale-105">
+            <component :is="feat.icon" class="h-4 w-4" />
           </div>
-          <h3 class="text-base font-black tracking-tight text-foreground">{{ feat.title }}</h3>
-          <p class="mt-2 text-sm font-medium leading-relaxed text-foreground/55">{{ feat.desc }}</p>
+          <h3 class="text-base font-bold tracking-tight text-foreground">{{ feat.title }}</h3>
+          <p class="mt-2 text-sm font-medium leading-6 text-foreground/55">{{ feat.desc }}</p>
         </article>
       </div>
     </section>
 
-    <section class="mx-auto max-w-7xl border-t border-foreground/5 px-4 py-14 sm:px-6 md:py-18">
-      <div class="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+    <section class="mx-auto max-w-[72rem] border-t border-foreground/5 px-4 py-10 sm:px-6 md:py-12">
+      <div class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
         <div>
-          <span class="badge-gradient mb-4">Payments without risk drift</span>
-          <h2 class="text-3xl font-black tracking-tight text-foreground md:text-5xl">MTN/Airtel mobile payment is checkout, not an invoice bot.</h2>
-          <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">
+          <span class="badge-gradient mb-3">Payments without risk drift</span>
+          <h2 class="text-2xl font-extrabold tracking-[-0.035em] text-foreground md:text-3xl">MTN/Airtel mobile payment is checkout, not an invoice bot.</h2>
+          <p class="mt-3 max-w-2xl text-sm font-semibold leading-6 text-foreground/55">
             Payment requests attach to existing appointment or booking deposits. The server verifies the target, amount, ownership, and duplicate state before a mobile payment prompt is created.
           </p>
-          <NuxtLink to="/pricing" class="mt-7 inline-flex h-12 items-center justify-center gap-3 rounded-full border border-foreground/10 px-6 text-sm font-black text-foreground/70 transition hover:border-primary/25 hover:text-foreground">
+          <NuxtLink to="/pricing" class="mt-5 inline-flex items-center justify-center gap-2 rounded-[0.78rem] border border-foreground/10 bg-foreground/[0.02] px-5 py-3 text-sm font-bold text-foreground/70 transition hover:border-primary/25 hover:bg-foreground/[0.05] hover:text-foreground">
             View pricing
             <ArrowRight class="h-4 w-4" />
           </NuxtLink>
         </div>
-        <div class="rounded-[2rem] border border-foreground/10 bg-background-card/70 p-5 backdrop-blur-2xl md:p-6">
-          <div class="mb-5 flex items-center gap-3">
-            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <ShieldCheck class="h-6 w-6" />
+        <div class="rounded-[1rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 backdrop-blur-xl md:p-6">
+          <div class="mb-4 flex items-center gap-3">
+            <div class="flex h-9 w-9 items-center justify-center rounded-[0.7rem] bg-primary/10 text-primary">
+              <ShieldCheck class="h-4 w-4" />
             </div>
             <div>
-              <p class="text-sm font-black text-foreground">Payment guardrails</p>
-              <p class="text-xs font-medium text-foreground/45">Designed for real customer operations</p>
+              <p class="text-sm font-bold text-foreground">Payment guardrails</p>
+              <p class="text-[11px] font-medium text-foreground/45">Designed for real customer operations</p>
             </div>
           </div>
           <div class="grid gap-3">
-            <div v-for="rule in paymentRules" :key="rule" class="flex items-center gap-3 rounded-2xl border border-foreground/10 bg-background/45 p-4 text-sm font-bold text-foreground/65">
+            <div v-for="rule in paymentRules" :key="rule" class="flex items-center gap-2.5 rounded-[0.72rem] border border-foreground/10 bg-background/45 p-3 text-sm font-bold text-foreground/65">
               <CheckCircle2 class="h-4 w-4 shrink-0 text-emerald-500" />
               {{ rule }}
             </div>
@@ -160,12 +160,12 @@ const paymentRules = [
       </div>
     </section>
 
-    <section class="mx-auto max-w-5xl px-4 py-14 text-center sm:px-6 md:py-20">
-      <div class="relative overflow-hidden rounded-[2rem] border border-foreground/10 bg-foreground/[0.025] p-8 backdrop-blur-xl md:p-12">
+    <section class="mx-auto max-w-[64rem] px-4 py-10 text-center sm:px-6 md:py-12">
+      <div class="relative overflow-hidden rounded-[1rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 backdrop-blur-xl md:p-6">
         <div class="absolute inset-x-0 -top-20 mx-auto h-56 w-56 rounded-full bg-primary/15 blur-[90px]" />
-        <h2 class="relative z-10 text-3xl font-black tracking-tight text-foreground md:text-5xl">Build your first assistant, then add actions when ready.</h2>
-        <p class="relative z-10 mx-auto mt-4 max-w-2xl text-sm font-medium leading-relaxed text-foreground/55 md:text-base">Start with trained replies on your website. Expand into appointments, bookings, WhatsApp, Instagram, and MTN/Airtel mobile checkout as your business needs grow.</p>
-        <NuxtLink to="/register" class="btn-gradient relative z-10 mt-7 inline-flex h-12 items-center justify-center gap-3 px-7 text-sm">
+        <h2 class="relative z-10 text-2xl font-extrabold tracking-[-0.035em] text-foreground md:text-3xl">Build your first assistant, then add actions when ready.</h2>
+        <p class="relative z-10 mx-auto mt-3 max-w-2xl text-sm font-semibold leading-6 text-foreground/55">Start with trained replies on your website. Expand into appointments, bookings, WhatsApp, Instagram, and MTN/Airtel mobile checkout as your business needs grow.</p>
+        <NuxtLink to="/register" class="btn-gradient relative z-10 mt-5 inline-flex items-center justify-center gap-2 rounded-[0.78rem] px-5 py-3 text-sm font-bold">
           Start free
           <ArrowRight class="h-4 w-4" />
         </NuxtLink>

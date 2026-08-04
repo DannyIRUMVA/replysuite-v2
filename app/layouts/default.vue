@@ -2,6 +2,10 @@
 const { showFeedback, feedbackSource, closeFeedback } = useFeedback()
 const config = useRuntimeConfig()
 const siteUrl = config.public.siteUrl || 'https://replysuite.com'
+const route = useRoute()
+const user = useSupabaseUser()
+
+const useGuestPublicDensity = computed(() => !user.value)
 
 useSeoMeta({
   ogSiteName: 'ReplySuite',
@@ -32,14 +36,16 @@ useHead({
 </script>
 
 <template>
-  <div class="public-page-shell">
+  <div class="public-page-shell overflow-x-hidden">
     <div class="public-page-pattern"></div>
 
     <div class="relative z-10">
       <GuestNavbar />
       <!-- Spacer for fixed navbar -->
-      <div class="h-20 sm:h-24"></div>
-      <slot />
+      <div :class="useGuestPublicDensity ? 'h-[70px] sm:h-[80px]' : 'h-[72px] sm:h-[82px]'"></div>
+      <main class="public-main">
+        <slot />
+      </main>
       <GuestFooter />
     </div>
 

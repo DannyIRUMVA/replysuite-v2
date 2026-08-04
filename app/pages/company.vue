@@ -88,54 +88,54 @@ const teamAreas = [
 </script>
 
 <template>
-  <div class="relative overflow-hidden">
-    <section class="max-w-7xl mx-auto px-6 py-20 md:py-24 relative">
-      <div class="absolute inset-x-0 top-10 mx-auto w-[70%] h-72 bg-primary/10 blur-[140px] rounded-full -z-10"></div>
+  <div class="company-compact relative overflow-hidden">
+    <section class="relative mx-auto max-w-[72rem] px-4 py-10 sm:px-6 md:py-12">
+      <div class="absolute inset-x-0 top-8 mx-auto h-56 w-[58%] rounded-full bg-primary/[0.08] blur-[110px] -z-10"></div>
 
-      <div class="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-12 items-center">
+      <div class="grid items-center gap-6 lg:grid-cols-[0.92fr_0.78fr] lg:gap-8">
         <div>
-          <span class="badge-gradient mb-5">Company</span>
-          <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 tracking-tight leading-[1.02] text-foreground">
+          <span class="badge-gradient mb-5 inline-flex">Company</span>
+          <h1 class="mb-4 text-3xl font-extrabold leading-[1.02] tracking-[-0.045em] text-foreground md:text-4xl lg:text-[3.15rem]">
             AI support tools for modern businesses.
           </h1>
-          <p class="text-base md:text-lg text-foreground/55 max-w-3xl leading-relaxed font-medium mb-8">
+          <p class="mb-6 max-w-xl text-sm font-semibold leading-6 text-foreground/60 md:text-[0.95rem]">
             ReplySuite Limited helps businesses launch trained AI chatbots on websites and WhatsApp.
           </p>
-          <div class="flex flex-col sm:flex-row gap-4">
-            <NuxtLink to="/register" class="btn-gradient px-8 py-4 text-sm inline-flex items-center justify-center gap-3">
+          <div class="flex flex-col gap-2.5 sm:flex-row">
+            <NuxtLink to="/register" class="btn-gradient inline-flex items-center justify-center gap-2 rounded-[0.78rem] px-5 py-3 text-sm font-bold">
               Start Free
               <ArrowRight class="w-4 h-4" />
             </NuxtLink>
-            <NuxtLink to="/contact" class="px-8 py-4 rounded-full border border-foreground/10 text-sm font-bold text-foreground/70 hover:text-foreground hover:bg-foreground/[0.04] transition-all inline-flex items-center justify-center gap-3">
+            <NuxtLink to="/contact" class="inline-flex items-center justify-center gap-2 rounded-[0.78rem] border border-foreground/10 bg-foreground/[0.02] px-5 py-3 text-sm font-bold text-foreground/70 transition-all hover:bg-foreground/[0.05] hover:text-foreground">
               Contact us
               <Mail class="w-4 h-4" />
             </NuxtLink>
           </div>
         </div>
 
-        <div class="liquid-glass p-5 md:p-6 rounded-[30px] relative overflow-hidden">
-          <div class="absolute -right-20 -top-20 w-56 h-56 bg-primary/10 blur-[80px] rounded-full"></div>
-          <div class="relative z-10 space-y-4">
+        <div class="liquid-glass relative overflow-hidden rounded-[1rem] p-4 md:p-5">
+          <div class="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-primary/[0.08] blur-[80px]"></div>
+          <div class="relative z-10 space-y-3">
             <div
               v-for="fact in companyFacts"
               :key="fact.label"
-              class="liquid-glass-soft rounded-[20px] p-4 md:p-5 flex items-start gap-4"
+              class="liquid-glass-soft flex items-start gap-3 rounded-[0.82rem] p-3.5"
             >
-              <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <component :is="fact.icon" class="w-5 h-5 text-primary" />
+              <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[0.7rem] bg-primary/10">
+                <component :is="fact.icon" class="h-4 w-4 text-primary" />
               </div>
               <div>
-                <p class="text-[10px] uppercase tracking-[0.2em] text-foreground/40 font-bold mb-2">{{ fact.label }}</p>
-                <p class="text-base font-black text-foreground leading-snug">{{ fact.value }}</p>
+                <p class="mb-1 text-[10px] font-black uppercase tracking-[0.16em] text-foreground/40">{{ fact.label }}</p>
+                <p class="text-sm font-bold leading-snug text-foreground/80">{{ fact.value }}</p>
               </div>
             </div>
 
-            <div class="liquid-glass-gold rounded-[20px] p-5">
-              <div class="flex items-center gap-3 mb-3">
-                <MapPin class="w-5 h-5 text-primary" />
-                <p class="text-[10px] uppercase tracking-[0.2em] text-primary font-bold">Built for local and global support</p>
+            <div class="liquid-glass-gold rounded-[0.82rem] p-4">
+              <div class="mb-2 flex items-center gap-2.5">
+                <MapPin class="h-4 w-4 text-primary" />
+                <p class="text-[10px] font-black uppercase tracking-[0.14em] text-primary">Built for local and global support</p>
               </div>
-              <p class="text-sm text-foreground/60 leading-relaxed font-medium">
+              <p class="text-sm font-medium leading-6 text-foreground/60">
                 Fast answers, multilingual support, and simple deployment.
               </p>
             </div>
@@ -144,72 +144,72 @@ const teamAreas = [
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-16 md:py-20 border-t border-foreground/10">
-      <div class="grid lg:grid-cols-[0.8fr_1.2fr] gap-8 lg:gap-10 items-start">
+    <section class="mx-auto max-w-[72rem] border-t border-foreground/10 px-4 py-10 sm:px-6 md:py-12">
+      <div class="grid items-start gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:gap-8">
         <div>
-          <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">What we do</span>
-          <h2 class="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground mt-4 mb-4">
+          <span class="inline-flex text-[10px] font-black uppercase tracking-[0.16em] text-primary">What we do</span>
+          <h2 class="mb-3 mt-4 text-2xl font-extrabold tracking-[-0.035em] text-foreground md:text-3xl">
             Business knowledge into instant answers.
           </h2>
-          <p class="text-foreground/55 leading-relaxed font-medium">
+          <p class="text-sm font-semibold leading-6 text-foreground/55">
             Upload website content, PDFs, FAQs, and custom text. ReplySuite turns them into useful customer replies.
           </p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-5">
+        <div class="grid gap-4 md:grid-cols-3">
           <div
             v-for="principle in principles"
             :key="principle.title"
-            class="liquid-glass p-5 md:p-6 rounded-[24px]"
+            class="liquid-glass rounded-[1rem] p-5"
           >
-            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-5">
-              <component :is="principle.icon" class="w-5 h-5 text-primary" />
+            <div class="mb-4 flex h-9 w-9 items-center justify-center rounded-[0.7rem] bg-primary/10">
+              <component :is="principle.icon" class="h-4 w-4 text-primary" />
             </div>
-            <h3 class="text-base font-black text-foreground mb-2">{{ principle.title }}</h3>
-            <p class="text-sm text-foreground/50 leading-relaxed font-medium">{{ principle.desc }}</p>
+            <h3 class="mb-2 text-base font-bold text-foreground">{{ principle.title }}</h3>
+            <p class="text-sm font-medium leading-6 text-foreground/55">{{ principle.desc }}</p>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="team" class="max-w-7xl mx-auto px-6 py-16 md:py-20 border-t border-foreground/10">
-      <div class="text-center max-w-3xl mx-auto mb-10 md:mb-12">
-        <span class="badge-gradient mb-5">Team</span>
-        <h2 class="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
+    <section id="team" class="mx-auto max-w-[72rem] border-t border-foreground/10 px-4 py-10 sm:px-6 md:py-12">
+      <div class="mx-auto mb-6 max-w-3xl text-center md:mb-8">
+        <span class="badge-gradient mb-4 inline-flex">Team</span>
+        <h2 class="mb-3 text-2xl font-extrabold tracking-[-0.035em] text-foreground md:text-3xl">
           The team behind ReplySuite.
         </h2>
-        <p class="text-foreground/55 leading-relaxed font-medium">
+        <p class="text-sm font-semibold leading-6 text-foreground/55">
           Product, engineering, AI automation, and customer support working together.
         </p>
       </div>
 
-      <div class="grid md:grid-cols-3 gap-8">
+      <div class="grid gap-4 md:grid-cols-3">
         <article
           v-for="area in teamAreas"
           :key="area.title"
-          class="liquid-glass group rounded-[26px] p-6 hover:border-primary/25 transition-all"
+          class="liquid-glass group rounded-[1rem] p-5 transition-all hover:border-primary/25"
         >
-          <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
-            <component :is="area.icon" class="w-6 h-6 text-primary" />
+          <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-[0.75rem] bg-primary/10 transition-transform group-hover:scale-105">
+            <component :is="area.icon" class="h-5 w-5 text-primary" />
           </div>
-          <h3 class="text-xl font-black text-foreground mb-3 tracking-tight">{{ area.title }}</h3>
-          <p class="text-sm text-foreground/50 leading-relaxed font-medium">{{ area.desc }}</p>
+          <h3 class="mb-2 text-lg font-bold tracking-tight text-foreground">{{ area.title }}</h3>
+          <p class="text-sm font-medium leading-6 text-foreground/55">{{ area.desc }}</p>
         </article>
       </div>
 
-      <div class="liquid-glass-gold mt-8 md:mt-10 rounded-[26px] p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-        <div class="flex items-start gap-5">
-          <div class="w-12 h-12 rounded-xl bg-background/50 border border-primary/20 flex items-center justify-center flex-shrink-0">
-            <Users class="w-6 h-6 text-primary" />
+      <div class="liquid-glass-gold mt-5 flex flex-col items-start justify-between gap-4 rounded-[1rem] p-5 md:mt-6 md:flex-row md:items-center md:p-6">
+        <div class="flex items-start gap-3">
+          <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[0.75rem] border border-primary/20 bg-background/50">
+            <Users class="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h3 class="text-xl md:text-2xl font-black text-foreground mb-2">Work with ReplySuite Limited?</h3>
-            <p class="text-sm text-foreground/55 leading-relaxed font-medium max-w-2xl">
+            <h3 class="mb-2 text-lg font-bold text-foreground md:text-xl">Work with ReplySuite Limited?</h3>
+            <p class="max-w-2xl text-sm font-medium leading-6 text-foreground/55">
               Partner, integrate, request a demo, or ask how ReplySuite can help.
             </p>
           </div>
         </div>
-        <NuxtLink to="/contact" class="btn-gradient px-8 py-4 text-sm whitespace-nowrap inline-flex items-center gap-3">
+        <NuxtLink to="/contact" class="btn-gradient inline-flex items-center gap-2 whitespace-nowrap rounded-[0.78rem] px-5 py-3 text-sm font-bold">
           Contact us
           <ArrowRight class="w-4 h-4" />
         </NuxtLink>
@@ -219,22 +219,21 @@ const teamAreas = [
 </template>
 
 <style scoped>
+.company-compact :deep(.badge-gradient) {
+  border-radius: 0.7rem;
+  padding: 0.42rem 0.7rem;
+  font-size: 0.68rem;
+}
+
 .liquid-glass {
-  @apply border border-foreground/10 bg-background-card/55 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur-2xl dark:bg-white/[0.035] dark:shadow-[0_24px_90px_-42px_rgba(0,0,0,0.85)];
-  background-image:
-    linear-gradient(135deg, rgb(var(--surface) / 0.62), rgb(var(--surface) / 0.24)),
-    radial-gradient(circle at 12% 0%, rgb(var(--primary) / 0.10), transparent 34%);
+  @apply border border-foreground/10 bg-background-card/45 shadow-sm shadow-black/5 backdrop-blur-xl dark:bg-white/[0.03];
 }
 
 .liquid-glass-soft {
-  @apply border border-foreground/10 bg-background/35 shadow-sm backdrop-blur-xl dark:bg-white/[0.025];
-  background-image: linear-gradient(135deg, rgb(var(--surface) / 0.44), rgb(var(--surface) / 0.16));
+  @apply border border-foreground/10 bg-background/40 shadow-sm shadow-black/5 backdrop-blur-xl dark:bg-white/[0.025];
 }
 
 .liquid-glass-gold {
-  @apply border border-primary/20 bg-primary/10 shadow-[0_20px_70px_-45px_rgb(var(--primary))] backdrop-blur-2xl;
-  background-image:
-    linear-gradient(135deg, rgb(var(--primary) / 0.14), rgb(var(--surface) / 0.28)),
-    radial-gradient(circle at top right, rgb(var(--primary-accent) / 0.16), transparent 42%);
+  @apply border border-primary/15 bg-primary/[0.08] shadow-sm shadow-black/5 backdrop-blur-xl;
 }
 </style>

@@ -46,7 +46,8 @@ useHead({
 })
 
 definePageMeta({
-  layout: 'default'
+  layout: 'default',
+  publicDensity: 'guest-home-90'
 })
 
 const user = useSupabaseUser()
@@ -532,51 +533,43 @@ const handleSelect = async (plan: any) => {
 </script>
 
 <template>
-  <div class="relative overflow-x-hidden">
-    <section class="relative pt-14 pb-20 md:pt-24 md:pb-24 overflow-hidden">
-      <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-start">
-        <div>
-          <div class="flex items-center gap-3 mb-8 opacity-80 group cursor-default">
-            <div class="h-[1px] w-10 bg-primary/40 group-hover:w-14 transition-all duration-500"></div>
-            <span class="text-[11px] font-bold tracking-[0.3em] text-primary uppercase">AI command center for customer conversations</span>
+  <div class="home-radius-compact relative overflow-x-hidden">
+    <section class="relative overflow-hidden pt-8 pb-12 md:pt-12 md:pb-14 lg:min-h-[calc(100vh-78px)] lg:py-10 xl:py-12 flex items-center">
+      <div class="max-w-[72rem] mx-auto px-4 sm:px-6 grid lg:grid-cols-[0.96fr_0.9fr] gap-9 xl:gap-11 items-center w-full">
+        <div class="lg:pt-1">
+          <div class="flex items-center gap-2.5 mb-5 opacity-80 group cursor-default">
+            <div class="h-[1px] w-8 bg-primary/40 group-hover:w-12 transition-all duration-500"></div>
+            <span class="text-[10px] font-bold tracking-[0.24em] text-primary uppercase">AI command center for customer conversations</span>
           </div>
 
-          <h1 class="text-4xl md:text-6xl font-black mb-8 leading-[0.92] text-foreground max-w-3xl">
+          <h1 class="text-[2.55rem] sm:text-5xl lg:text-[3.28rem] xl:text-[3.55rem] font-black mb-5 leading-[0.94] text-foreground max-w-3xl tracking-[-0.045em]">
             Train once.
             <span class="text-gradient"> Reply across every supported channel.</span>
           </h1>
 
-          <p class="text-lg md:text-xl text-foreground/60 mb-10 max-w-2xl leading-relaxed font-semibold">
+          <p class="text-base md:text-[1.05rem] text-foreground/60 mb-6 max-w-xl leading-[1.58] font-semibold">
             Train one AI assistant on your website, FAQs, files, and business notes, then use it for website chat, WhatsApp, Instagram comments and DMs, plus appointment booking workflows as your plan grows.
           </p>
 
-          <div class="grid sm:grid-cols-1 gap-2.5 mb-10 max-w-xl">
-            <div v-for="point in outcomePoints" :key="point"
-              class="flex items-start gap-2.5 rounded-xl border border-foreground/10 bg-foreground/[0.02] px-3 py-2">
-              <CheckCircle2 class="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-              <span class="text-xs md:text-sm text-foreground/75 font-semibold leading-snug">{{ point }}</span>
-            </div>
-          </div>
-
-          <div class="flex flex-col sm:flex-row gap-4 relative z-10 items-center">
+          <div class="flex flex-col sm:flex-row gap-3 relative z-10 items-center">
             <NuxtLink :to="user ? '/dashboard' : '/register'"
-              class="btn-gradient px-10 py-5 text-lg flex items-center justify-center gap-3 group w-full sm:w-auto">
+              class="btn-gradient px-7 py-3.5 text-base flex items-center justify-center gap-2.5 group w-full sm:w-auto">
               {{ user ? 'Go to Dashboard' : 'Start Free' }}
-              <ArrowRight class="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </NuxtLink>
 
             <button @click="openDemoVideo"
-              class="px-8 py-5 text-foreground/70 hover:text-foreground transition-all text-base font-bold flex items-center justify-center gap-3 group border border-foreground/10 rounded-full hover:bg-foreground/[0.02] w-full sm:w-auto">
+              class="px-5 py-3.5 text-foreground/70 hover:text-foreground transition-all text-sm font-bold flex items-center justify-center gap-2.5 group border border-foreground/10 rounded-[0.9rem] hover:bg-foreground/[0.02] w-full sm:w-auto">
               <div
-                class="w-8 h-8 rounded-full bg-foreground/5 flex items-center justify-center group-hover:bg-primary group-hover:text-black transition-all">
-                <Play class="w-3 h-3 fill-current ml-0.5" />
+                class="w-7 h-7 rounded-full bg-foreground/5 flex items-center justify-center group-hover:bg-primary group-hover:text-black transition-all">
+                <Play class="w-2.5 h-2.5 fill-current ml-0.5" />
               </div>
               Watch Demo
             </button>
           </div>
 
           <div
-            class="mt-10 flex flex-wrap items-center gap-4 text-[11px] font-black uppercase tracking-widest text-foreground/60">
+            class="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 text-[10px] font-black uppercase tracking-[0.14em] text-foreground/60">
             <span class="inline-flex items-center gap-2">
               <ShieldCheck class="w-4 h-4 text-primary" /> Train on your own content
             </span>
@@ -601,16 +594,16 @@ const handleSelect = async (plan: any) => {
         <div id="demo" class="relative hidden lg:block">
           <div class="relative transition-all duration-1000">
             <div
-              class="bg-background-card dark:bg-zinc-900 rounded-[28px] overflow-hidden h-[700px] flex flex-col relative border border-foreground/6 dark:border-white/5 shadow-[0_32px_90px_-28px_rgba(15,23,42,0.22)] dark:shadow-[0_32px_90px_-28px_rgba(0,0,0,0.62)]">
+              class="bg-background-card dark:bg-zinc-900 rounded-[18px] overflow-hidden h-[590px] xl:h-[620px] flex flex-col relative border border-foreground/6 dark:border-white/5 shadow-[0_28px_74px_-30px_rgba(15,23,42,0.24)] dark:shadow-[0_28px_74px_-30px_rgba(0,0,0,0.62)]">
               <div
-                class="px-5 pt-5 pb-4 border-b border-foreground/6 dark:border-white/5 bg-background-card dark:bg-zinc-900">
+                class="px-4 pt-4 pb-3 border-b border-foreground/6 dark:border-white/5 bg-background-card dark:bg-zinc-900">
                 <div class="flex items-center justify-between gap-4">
                   <div class="flex items-center gap-3 min-w-0">
                     <div class="relative flex-shrink-0">
                       <div
-                        class="w-11 h-11 rounded-2xl flex items-center justify-center text-foreground shadow-sm border border-primary/10"
+                        class="w-10 h-10 rounded-[0.8rem] flex items-center justify-center text-foreground shadow-sm border border-primary/10"
                         :style="{ background: demoAccentSoft }">
-                        <component :is="demoChatIcon" class="w-5 h-5"
+                        <component :is="demoChatIcon" class="w-4 h-4"
                           :style="chatbot?.chat_icon_color ? { color: chatbot.chat_icon_color } : {}" />
                       </div>
                       <div
@@ -632,7 +625,7 @@ const handleSelect = async (plan: any) => {
 
                   <button type="button"
                     aria-label="Close demo chat preview"
-                    class="w-9 h-9 rounded-xl bg-foreground/[0.03] border border-foreground/8 flex items-center justify-center text-foreground/70 hover:bg-foreground/[0.05] transition-colors">
+                    class="w-8 h-8 rounded-[0.65rem] bg-foreground/[0.03] border border-foreground/8 flex items-center justify-center text-foreground/70 hover:bg-foreground/[0.05] transition-colors">
                     <X class="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
@@ -644,10 +637,10 @@ const handleSelect = async (plan: any) => {
                   class="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-background-card via-background-card/92 to-transparent dark:from-zinc-900 dark:via-zinc-900/92 z-10 pointer-events-none">
                 </div>
                 <div ref="scrollRef"
-                  class="h-full p-4 space-y-3.5 overflow-y-hidden flex flex-col scroll-smooth select-none"
+                  class="h-full p-3.5 space-y-3 overflow-y-hidden flex flex-col scroll-smooth select-none"
                   @wheel.prevent="forwardDemoWheel">
                   <template v-if="isChatbotLoading">
-                    <div class="self-start max-w-[84%] rounded-2xl border border-foreground/8 dark:border-white/5 bg-background dark:bg-zinc-900 px-4 py-3 shadow-sm dark:shadow-none animate-pulse">
+                    <div class="self-start max-w-[84%] rounded-[0.9rem] border border-foreground/8 dark:border-white/5 bg-background dark:bg-zinc-900 px-4 py-3 shadow-sm dark:shadow-none animate-pulse">
                       <div class="flex items-center gap-2 mb-3">
                         <div class="w-7 h-7 rounded-xl bg-foreground/10"></div>
                         <div class="space-y-2">
@@ -667,7 +660,7 @@ const handleSelect = async (plan: any) => {
                         <div class="w-7 h-7 rounded-full bg-foreground/10"></div>
                         <div class="h-2.5 w-28 rounded-full bg-foreground/8"></div>
                       </div>
-                      <div class="w-[78%] rounded-2xl rounded-bl-md border border-foreground/6 dark:border-white/5 bg-background dark:bg-zinc-900 px-4 py-3 space-y-2">
+                      <div class="w-[78%] rounded-[0.9rem] rounded-bl-md border border-foreground/6 dark:border-white/5 bg-background dark:bg-zinc-900 px-4 py-3 space-y-2">
                         <div class="h-2.5 w-[88%] rounded-full bg-foreground/8"></div>
                         <div class="h-2.5 w-[70%] rounded-full bg-foreground/8"></div>
                       </div>
@@ -678,7 +671,7 @@ const handleSelect = async (plan: any) => {
                         <div class="w-7 h-7 rounded-full bg-sky-500/20"></div>
                         <div class="h-2.5 w-16 rounded-full bg-foreground/8"></div>
                       </div>
-                      <div class="w-[62%] rounded-2xl rounded-br-md bg-sky-500/75 px-4 py-3 space-y-2">
+                      <div class="w-[62%] rounded-[0.9rem] rounded-br-md bg-sky-500/75 px-4 py-3 space-y-2">
                         <div class="h-2.5 w-[80%] rounded-full bg-white/40"></div>
                         <div class="h-2.5 w-[58%] rounded-full bg-white/35"></div>
                       </div>
@@ -689,7 +682,7 @@ const handleSelect = async (plan: any) => {
                         <div class="w-7 h-7 rounded-full bg-foreground/10"></div>
                         <div class="h-2.5 w-28 rounded-full bg-foreground/8"></div>
                       </div>
-                      <div class="w-[82%] rounded-2xl rounded-bl-md border border-foreground/6 dark:border-white/5 bg-background dark:bg-zinc-900 px-4 py-3 space-y-2">
+                      <div class="w-[82%] rounded-[0.9rem] rounded-bl-md border border-foreground/6 dark:border-white/5 bg-background dark:bg-zinc-900 px-4 py-3 space-y-2">
                         <div class="h-2.5 w-[84%] rounded-full bg-foreground/8"></div>
                         <div class="h-2.5 w-[76%] rounded-full bg-foreground/8"></div>
                         <div class="h-2.5 w-[52%] rounded-full bg-foreground/8"></div>
@@ -699,7 +692,7 @@ const handleSelect = async (plan: any) => {
 
                   <template v-else>
                     <div
-                      class="self-start max-w-[84%] rounded-2xl border border-foreground/8 dark:border-white/5 bg-background dark:bg-zinc-900 px-4 py-3 shadow-sm dark:shadow-none">
+                      class="self-start max-w-[84%] rounded-[0.9rem] border border-foreground/8 dark:border-white/5 bg-background dark:bg-zinc-900 px-4 py-3 shadow-sm dark:shadow-none">
                       <div class="flex items-center gap-2 mb-2">
                         <div class="w-7 h-7 rounded-xl flex items-center justify-center border border-primary/10"
                           :style="{ background: demoAccentSoft }">
@@ -744,7 +737,7 @@ const handleSelect = async (plan: any) => {
                     </div>
 
                     <div :class="[
-                      'px-4 py-3 rounded-2xl text-[12px] transition-all animate-in fade-in slide-in-from-bottom-3 duration-500 prose-sm prose-p:my-1 prose-strong:text-inherit leading-relaxed shadow-sm',
+                      'px-4 py-3 rounded-[0.9rem] text-[12px] transition-all animate-in fade-in slide-in-from-bottom-3 duration-500 prose-sm prose-p:my-1 prose-strong:text-inherit leading-relaxed shadow-sm',
                       msg.role === 'user'
                         ? 'bg-sky-500 rounded-br-md max-w-[76%] text-white font-semibold border border-sky-600/70 shadow-[0_10px_24px_rgba(14,165,233,0.22)]'
                         : 'bg-background dark:bg-zinc-900 border border-foreground/6 dark:border-white/5 rounded-bl-md max-w-[84%] text-foreground'
@@ -772,7 +765,7 @@ const handleSelect = async (plan: any) => {
                         <span class="text-[10px] font-bold tracking-wide text-foreground/65">ReplySuite assistant</span>
                       </div>
                       <div
-                        class="border border-foreground/6 dark:border-white/5 px-4 py-3 rounded-2xl rounded-bl-md shadow-sm dark:shadow-none bg-background dark:bg-zinc-900">
+                        class="border border-foreground/6 dark:border-white/5 px-4 py-3 rounded-[0.9rem] rounded-bl-md shadow-sm dark:shadow-none bg-background dark:bg-zinc-900">
                         <div class="flex gap-1.5">
                           <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
                           <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
@@ -785,30 +778,30 @@ const handleSelect = async (plan: any) => {
               </div>
 
               <div
-                class="p-4 pt-3 mt-auto border-t border-foreground/6 dark:border-white/5 bg-background-card dark:bg-zinc-900">
-                <div class="flex items-center gap-2 mb-3 text-foreground/60">
+                class="p-3.5 pt-3 mt-auto border-t border-foreground/6 dark:border-white/5 bg-background-card dark:bg-zinc-900">
+                <div class="flex items-center gap-2 mb-2.5 text-foreground/60">
                   <button type="button"
                     aria-label="Attach a file in the demo chat"
-                    class="w-9 h-9 rounded-xl border border-foreground/8 dark:border-white/5 bg-foreground/[0.02] dark:bg-white/[0.02] flex items-center justify-center hover:bg-foreground/[0.04] dark:hover:bg-white/[0.05] transition-colors">
+                    class="w-8 h-8 rounded-xl border border-foreground/8 dark:border-white/5 bg-foreground/[0.02] dark:bg-white/[0.02] flex items-center justify-center hover:bg-foreground/[0.04] dark:hover:bg-white/[0.05] transition-colors">
                     <Paperclip class="w-4 h-4" aria-hidden="true" />
                   </button>
                   <button type="button"
                     aria-label="Open emoji picker in the demo chat"
-                    class="w-9 h-9 rounded-xl border border-foreground/8 dark:border-white/5 bg-foreground/[0.02] dark:bg-white/[0.02] flex items-center justify-center hover:bg-foreground/[0.04] dark:hover:bg-white/[0.05] transition-colors">
+                    class="w-8 h-8 rounded-xl border border-foreground/8 dark:border-white/5 bg-foreground/[0.02] dark:bg-white/[0.02] flex items-center justify-center hover:bg-foreground/[0.04] dark:hover:bg-white/[0.05] transition-colors">
                     <SmilePlus class="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
                 <form @submit.prevent="sendDemoMessage" class="relative flex items-center group/form">
                   <input v-model="chatInput" :disabled="isChatbotLoading" :placeholder="isChatbotLoading ? 'Loading chatbot…' : 'Send us a message...'"
-                    class="w-full bg-background dark:bg-zinc-900 rounded-2xl pl-4 pr-14 py-4 border border-foreground/8 dark:border-white/5 text-sm text-foreground placeholder:text-foreground/55 focus:outline-none focus:border-primary/20 focus:bg-background-card dark:focus:bg-zinc-900 transition-all font-semibold shadow-[0_4px_18px_rgba(15,23,42,0.04)] dark:shadow-none disabled:opacity-70 disabled:cursor-not-allowed" />
+                    class="w-full bg-background dark:bg-zinc-900 rounded-[0.9rem] pl-4 pr-12 py-3.5 border border-foreground/8 dark:border-white/5 text-[13px] text-foreground placeholder:text-foreground/55 focus:outline-none focus:border-primary/20 focus:bg-background-card dark:focus:bg-zinc-900 transition-all font-semibold shadow-[0_4px_18px_rgba(15,23,42,0.04)] dark:shadow-none disabled:opacity-70 disabled:cursor-not-allowed" />
                   <button type="submit" :disabled="isChatbotLoading || !chatInput.trim() || isChatLoading"
-                    class="absolute right-2 w-10 h-10 text-foreground rounded-xl flex items-center justify-center shadow-lg shadow-primary/10 hover:scale-105 active:scale-95 transition-all disabled:opacity-20 disabled:cursor-not-allowed border border-primary/8"
+                    class="absolute right-2 w-9 h-9 text-foreground rounded-[0.7rem] flex items-center justify-center shadow-lg shadow-primary/10 hover:scale-105 active:scale-95 transition-all disabled:opacity-20 disabled:cursor-not-allowed border border-primary/8"
                     :style="{ background: demoAssistantBubble }">
                     <Send class="w-4 h-4" />
                   </button>
                 </form>
 
-                <div class="mt-3 flex items-center justify-between gap-3 text-[10px] font-semibold text-foreground/60">
+                <div class="mt-2.5 flex items-center justify-between gap-3 text-[10px] font-semibold text-foreground/60">
                   <span>Usually replies in a few seconds</span>
                   <span class="text-primary/60">ReplySuite</span>
                 </div>
@@ -821,7 +814,7 @@ const handleSelect = async (plan: any) => {
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-8 md:py-12">
+    <section class="max-w-[72rem] mx-auto px-4 sm:px-6 py-6 md:py-8">
       <div class="text-center mb-12 max-w-3xl mx-auto">
         <span class="badge-gradient mb-6">The problem</span>
         <h2 class="text-4xl md:text-5xl font-extrabold text-foreground mb-5">
@@ -834,7 +827,7 @@ const handleSelect = async (plan: any) => {
 
       <div class="grid md:grid-cols-3 gap-6">
         <div v-for="card in proofCards" :key="card.title"
-          class="glass-card p-8 border-foreground/10 bg-foreground/[0.02]">
+          class="glass-card p-5 border-foreground/10 bg-foreground/[0.02]">
           <div
             class="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
             <component :is="card.icon" class="w-7 h-7 text-primary" />
@@ -845,7 +838,7 @@ const handleSelect = async (plan: any) => {
       </div>
     </section>
 
-    <section id="how-it-works" class="max-w-7xl mx-auto px-6 py-20 md:py-24 border-t border-foreground/5">
+    <section id="how-it-works" class="max-w-[72rem] mx-auto px-4 sm:px-6 py-14 md:py-16 border-t border-foreground/5">
       <div class="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
         <div class="max-w-2xl">
           <span class="badge-gradient mb-6">The solution</span>
@@ -861,7 +854,7 @@ const handleSelect = async (plan: any) => {
 
       <div class="grid md:grid-cols-3 gap-8">
         <div v-for="step in steps" :key="step.num"
-          class="glass-card p-10 border-foreground/10 relative overflow-hidden group hover:border-primary/20 transition-all duration-500">
+          class="glass-card p-7 border-foreground/10 relative overflow-hidden group hover:border-primary/20 transition-all duration-500">
           <div class="text-[11px] font-black tracking-[0.35em] text-primary uppercase mb-6">Step {{ step.num }}</div>
           <h3 class="text-2xl font-black mb-4 text-foreground tracking-tight">{{ step.title }}</h3>
           <p class="text-foreground/55 text-sm leading-relaxed font-semibold">{{ step.desc }}</p>
@@ -872,7 +865,7 @@ const handleSelect = async (plan: any) => {
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-20 md:py-24 border-t border-foreground/5">
+    <section class="max-w-[72rem] mx-auto px-4 sm:px-6 py-14 md:py-16 border-t border-foreground/5">
       <div class="text-center mb-16 max-w-3xl mx-auto">
         <span class="badge-gradient mb-6">Use cases</span>
         <h2 class="text-4xl md:text-6xl font-extrabold text-foreground mb-6">
@@ -890,14 +883,14 @@ const handleSelect = async (plan: any) => {
         <span>Slide to explore more</span>
       </div>
 
-      <div class="-mx-6 overflow-x-auto px-6 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div class="-mx-4 sm:-mx-6 overflow-x-auto px-4 sm:px-6 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div class="flex gap-5 w-max snap-x snap-mandatory">
           <button
             v-for="(item, index) in useCases"
             :key="item.title"
             :ref="(el) => setUseCaseCardRef(el, index)"
             @click="focusUseCase(index)"
-            class="glass-card snap-start p-8 text-left border-foreground/10 bg-foreground/[0.02] transition-all duration-500 shrink-0 basis-[86vw] sm:basis-[68vw] lg:basis-[42vw] xl:basis-[38vw] 2xl:basis-[34vw]"
+            class="glass-card snap-start p-5 md:p-6 text-left border-foreground/10 bg-foreground/[0.02] transition-all duration-500 shrink-0 basis-[86vw] sm:basis-[68vw] lg:basis-[42vw] xl:basis-[38vw] 2xl:basis-[34vw]"
             :class="activeUseCase === index ? 'border-primary/15 bg-primary/[0.025] shadow-[0_18px_50px_rgba(212,175,55,0.05)] dark:border-primary/20 dark:bg-primary/[0.05] dark:shadow-[0_18px_50px_rgba(212,175,55,0.10)]' : 'hover:border-primary/15'"
           >
             <div class="flex items-start justify-between gap-4 mb-6">
@@ -922,7 +915,7 @@ const handleSelect = async (plan: any) => {
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-24 border-t border-foreground/5 overflow-hidden">
+    <section class="max-w-[72rem] mx-auto px-4 sm:px-6 py-16 border-t border-foreground/5 overflow-hidden">
       <div class="text-center mb-12 max-w-4xl mx-auto relative">
         <div class="absolute inset-0 bg-primary/5 blur-[90px] -z-10"></div>
         <span class="badge-gradient mb-6">Before vs after</span>
@@ -969,7 +962,7 @@ const handleSelect = async (plan: any) => {
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-20 md:py-24 border-t border-foreground/5">
+    <section class="max-w-[72rem] mx-auto px-4 sm:px-6 py-14 md:py-16 border-t border-foreground/5">
       <div class="grid lg:grid-cols-2 gap-10 items-start">
         <div>
           <span class="badge-gradient mb-6">Why businesses buy</span>
@@ -985,7 +978,7 @@ const handleSelect = async (plan: any) => {
 
         <div class="space-y-6">
           <div v-for="item in reasonsToBuy" :key="item.title"
-            class="glass-card p-8 border-foreground/10 bg-foreground/[0.02] flex gap-5 items-start">
+            class="glass-card p-5 border-foreground/10 bg-foreground/[0.02] flex gap-5 items-start">
             <div
               class="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
               <component :is="item.icon" class="w-6 h-6 text-primary" />
@@ -999,7 +992,7 @@ const handleSelect = async (plan: any) => {
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-24 border-t border-foreground/5">
+    <section class="max-w-[72rem] mx-auto px-4 sm:px-6 py-16 border-t border-foreground/5">
       <div class="text-center mb-12 max-w-3xl mx-auto">
         <span class="badge-gradient mb-6">Plan data</span>
         <h2 class="text-4xl md:text-6xl font-extrabold text-foreground mb-6">
@@ -1012,7 +1005,7 @@ const handleSelect = async (plan: any) => {
       </div>
 
       <div class="grid md:grid-cols-3 gap-4 mb-8">
-        <div v-for="metric in socialProofMetrics" :key="metric.label" class="glass-card p-6 border-foreground/10 bg-foreground/[0.02] text-center">
+        <div v-for="metric in socialProofMetrics" :key="metric.label" class="glass-card p-5 border-foreground/10 bg-foreground/[0.02] text-center">
           <p class="text-3xl font-black text-foreground tracking-tight">{{ metric.value }}</p>
           <p class="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">{{ metric.label }}</p>
         </div>
@@ -1047,9 +1040,9 @@ const handleSelect = async (plan: any) => {
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-20 md:py-24 border-t border-foreground/5 relative overflow-hidden">
+    <section class="max-w-[72rem] mx-auto px-4 sm:px-6 py-14 md:py-16 border-t border-foreground/5 relative overflow-hidden">
       <div class="absolute left-1/2 top-16 h-72 w-[70%] -translate-x-1/2 rounded-full bg-primary/10 blur-[130px] -z-10"></div>
-      <div class="grid lg:grid-cols-[0.82fr_1.18fr] gap-8 lg:gap-12 items-start">
+      <div class="grid lg:grid-cols-[0.82fr_1.18fr] gap-8 lg:gap-8 items-start">
         <div class="lg:sticky lg:top-28">
           <span class="badge-gradient mb-6">Customer feedback</span>
           <h2 class="text-3xl md:text-5xl font-extrabold text-foreground mb-5 leading-tight">
@@ -1061,15 +1054,15 @@ const handleSelect = async (plan: any) => {
           </p>
 
           <div class="mt-8 grid sm:grid-cols-3 lg:grid-cols-1 gap-3">
-            <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+            <div class="rounded-2xl border border-foreground/10 bg-background/50 px-3.5 py-2.5 backdrop-blur-xl">
               <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60">Customer goal</p>
               <p class="mt-1 text-sm font-bold text-foreground">Faster first replies</p>
             </div>
-            <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+            <div class="rounded-2xl border border-foreground/10 bg-background/50 px-3.5 py-2.5 backdrop-blur-xl">
               <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60">Best for</p>
               <p class="mt-1 text-sm font-bold text-foreground">Support + sales teams</p>
             </div>
-            <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+            <div class="rounded-2xl border border-foreground/10 bg-background/50 px-3.5 py-2.5 backdrop-blur-xl">
               <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60">Common win</p>
               <p class="mt-1 text-sm font-bold text-foreground">Less repeated work</p>
             </div>
@@ -1077,7 +1070,7 @@ const handleSelect = async (plan: any) => {
         </div>
 
         <div class="grid md:grid-cols-2 gap-5 lg:gap-6">
-          <article v-for="(item, index) in testimonialSamples" :key="item.name" class="glass-card border border-foreground/10 bg-foreground/[0.02] p-6 md:p-7 relative overflow-hidden" :class="index === 0 ? 'md:col-span-2' : ''">
+          <article v-for="(item, index) in testimonialSamples" :key="item.name" class="glass-card border border-foreground/10 bg-foreground/[0.02] p-5 md:p-7 relative overflow-hidden" :class="index === 0 ? 'md:col-span-2' : ''">
             <div class="absolute -right-14 -top-14 h-40 w-40 rounded-full bg-primary/10 blur-[70px]"></div>
             <div class="relative flex items-center justify-between gap-4 mb-6">
               <div class="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/10 px-3 py-1.5" role="img" aria-label="Five star rating">
@@ -1107,13 +1100,13 @@ const handleSelect = async (plan: any) => {
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-20 md:py-24 border-t border-foreground/5">
-      <div class="relative overflow-hidden rounded-[40px] border border-foreground/10 bg-foreground/[0.025] p-6 md:p-8 lg:p-10">
+    <section class="max-w-[72rem] mx-auto px-4 sm:px-6 py-14 md:py-16 border-t border-foreground/5">
+      <div class="relative overflow-hidden rounded-[1.25rem] border border-foreground/10 bg-foreground/[0.025] p-5 md:p-6 lg:p-7">
         <div class="absolute -top-24 -left-16 h-64 w-64 rounded-full bg-primary/15 blur-[100px]"></div>
         <div class="absolute -bottom-28 right-0 h-72 w-72 rounded-full bg-sky-400/10 blur-[110px]"></div>
         <div class="absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-primary/[0.035]"></div>
 
-        <div class="relative grid lg:grid-cols-[0.85fr_1.35fr] gap-8 lg:gap-12 items-start">
+        <div class="relative grid lg:grid-cols-[0.85fr_1.35fr] gap-8 lg:gap-8 items-start">
           <div class="lg:sticky lg:top-28">
             <span class="badge-gradient mb-6">FAQ</span>
             <h2 class="text-3xl md:text-5xl font-extrabold text-foreground mb-5 leading-tight">
@@ -1124,15 +1117,15 @@ const handleSelect = async (plan: any) => {
               Quick answers about setup, WhatsApp, languages, training sources, and how ReplySuite fits into your customer support workflow.
             </p>
             <div class="mt-8 grid sm:grid-cols-3 lg:grid-cols-1 gap-3">
-              <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+              <div class="rounded-2xl border border-foreground/10 bg-background/50 px-3.5 py-2.5 backdrop-blur-xl">
                 <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60">Setup</p>
                 <p class="mt-1 text-sm font-bold text-foreground">Website first</p>
               </div>
-              <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+              <div class="rounded-2xl border border-foreground/10 bg-background/50 px-3.5 py-2.5 backdrop-blur-xl">
                 <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60">Channels</p>
                 <p class="mt-1 text-sm font-bold text-foreground">Web + WhatsApp</p>
               </div>
-              <div class="rounded-2xl border border-foreground/10 bg-background/50 px-4 py-3 backdrop-blur-xl">
+              <div class="rounded-2xl border border-foreground/10 bg-background/50 px-3.5 py-2.5 backdrop-blur-xl">
                 <p class="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/60">Languages</p>
                 <p class="mt-1 text-sm font-bold text-foreground">10+ supported</p>
               </div>
@@ -1161,7 +1154,7 @@ const handleSelect = async (plan: any) => {
       </div>
     </section>
 
-    <section id="pricing" class="max-w-7xl mx-auto px-6 py-24 border-t border-foreground/5">
+    <section id="pricing" class="max-w-[72rem] mx-auto px-4 sm:px-6 py-16 border-t border-foreground/5">
       <div class="text-center mb-14 max-w-3xl mx-auto">
         <span class="badge-gradient mb-6">Pricing</span>
         <h2 class="text-4xl md:text-6xl font-extrabold text-foreground">
@@ -1175,7 +1168,7 @@ const handleSelect = async (plan: any) => {
 
       <div class="grid lg:grid-cols-3 gap-8 mb-8">
         <div v-for="plan in paidPlans" :key="plan.name"
-          class="glass-card p-8 md:p-10 flex flex-col relative transition-all duration-500 hover:-translate-y-3 border-foreground/10"
+          class="glass-card p-5 md:p-7 flex flex-col relative transition-all duration-500 hover:-translate-y-3 border-foreground/10"
           :class="plan.popular ? 'border-primary/40 !bg-primary/[0.03]' : 'bg-foreground/[0.02]'">
           <div v-if="plan.popular"
             class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-black text-[10px] font-bold tracking-widest rounded-full uppercase">
@@ -1216,7 +1209,7 @@ const handleSelect = async (plan: any) => {
         </div>
       </div>
 
-      <div v-if="freeStarterPlan" class="glass-card border border-foreground/10 bg-foreground/[0.02] p-6 md:p-8 mb-8">
+      <div v-if="freeStarterPlan" class="glass-card border border-foreground/10 bg-foreground/[0.02] p-5 md:p-6 mb-8">
         <div class="grid lg:grid-cols-[0.85fr_1.35fr_auto] gap-6 items-center">
           <div>
             <span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary mb-4">
@@ -1257,41 +1250,40 @@ const handleSelect = async (plan: any) => {
 
     </section>
 
-    <section class="max-w-5xl mx-auto px-6 py-20 md:py-24">
+    <section class="max-w-[72rem] mx-auto px-4 sm:px-6 py-10 md:py-12">
       <div
-        class="bg-foreground/[0.03] p-12 md:p-20 rounded-[40px] border border-foreground/10 text-center relative overflow-hidden backdrop-blur-sm">
-        <div class="absolute inset-0 bg-primary/5 blur-[120px]"></div>
+        class="relative overflow-hidden rounded-[1rem] border border-foreground/10 bg-background-card/45 p-5 md:p-6 shadow-sm shadow-black/5 backdrop-blur-sm">
+        <div class="absolute inset-y-0 right-0 w-1/2 bg-primary/[0.04] blur-[90px]"></div>
 
-        <h2 class="text-4xl md:text-6xl font-extrabold mb-8 relative z-10 leading-tight text-foreground">
-          Launch your first AI customer support assistant
-          <span class="text-foreground/55">today.</span>
-        </h2>
+        <div class="relative z-10 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div class="max-w-2xl">
+            <p class="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+              Ready when you are
+            </p>
+            <h2 class="mb-3 text-2xl font-extrabold leading-tight tracking-[-0.035em] text-foreground md:text-3xl">
+              Launch your first AI customer support assistant today.
+            </h2>
+            <p class="text-sm font-semibold leading-6 text-foreground/60">
+              Start with your website, expand to WhatsApp on Silver, add Instagram on Gold, and unlock Enterprise tools for bookings, Google Calendar, and MTN/Airtel mobile checkout when you are ready.
+            </p>
+            <p class="mt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-foreground/55">
+              No credit card required • One assistant to start • Upgrade when needed
+            </p>
+          </div>
 
-        <p class="text-foreground/55 max-w-2xl mx-auto mb-10 relative z-10 font-semibold leading-relaxed">
-          Start with your website, expand to WhatsApp on Silver, add Instagram comment replies and comment-to-DM on Gold, and unlock Enterprise AI tools for appointments, bookings, Google Calendar, and MTN/Airtel mobile checkout when you are ready.
-        </p>
-
-        <div class="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
-          <NuxtLink to="/register"
-            class="bg-foreground text-background px-10 py-5 rounded-full font-bold text-lg inline-flex items-center justify-center gap-3 hover:bg-foreground/90 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-foreground/10">
-            Start Free
-            <ArrowRight class="w-5 h-5" />
-          </NuxtLink>
-          <NuxtLink to="/contact"
-            class="px-10 py-5 rounded-full font-bold text-lg inline-flex items-center justify-center gap-3 border border-foreground/10 text-foreground hover:bg-foreground/[0.04] transition-all">
-            Talk to Founder
-            <MessageCircle class="w-5 h-5" />
-          </NuxtLink>
-          <button @click="scrollToSection('pricing')"
-            class="px-10 py-5 rounded-full font-bold text-lg inline-flex items-center justify-center gap-3 border border-foreground/10 text-foreground hover:bg-foreground/[0.04] transition-all">
-            View Pricing
-            <FileText class="w-5 h-5" />
-          </button>
+          <div class="flex flex-col gap-2.5 sm:flex-row lg:flex-col xl:flex-row">
+            <NuxtLink to="/register"
+              class="inline-flex items-center justify-center gap-2 rounded-[0.78rem] bg-foreground px-5 py-3 text-sm font-bold text-background shadow-sm shadow-foreground/10 transition-all hover:bg-foreground/90 active:scale-[0.98]">
+              Start Free
+              <ArrowRight class="h-4 w-4" />
+            </NuxtLink>
+            <NuxtLink to="/contact"
+              class="inline-flex items-center justify-center gap-2 rounded-[0.78rem] border border-foreground/10 bg-foreground/[0.02] px-5 py-3 text-sm font-bold text-foreground transition-all hover:bg-foreground/[0.05]">
+              Talk to Founder
+              <MessageCircle class="h-4 w-4" />
+            </NuxtLink>
+          </div>
         </div>
-
-        <p class="text-foreground/65 mt-10 text-xs relative z-10 tracking-[0.2em] font-bold uppercase">
-          No credit card required • Start with one assistant • Upgrade when you need more
-        </p>
       </div>
     </section>
 

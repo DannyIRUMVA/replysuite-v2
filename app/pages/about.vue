@@ -40,38 +40,38 @@ const values = [
 </script>
 
 <template>
-  <div class="relative">
-    <section class="max-w-7xl mx-auto px-6 py-32 text-center relative">
-      <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10 animate-pulse"></div>
-      <span class="badge-gradient mb-10">About</span>
-      <h1 class="text-5xl md:text-7xl font-extrabold mb-10 tracking-tight leading-[0.95] text-foreground">
+  <div class="about-compact relative overflow-x-hidden">
+    <section class="relative mx-auto max-w-[72rem] px-4 py-10 text-center sm:px-6 md:py-12">
+      <div class="absolute inset-x-0 top-8 mx-auto h-56 w-[58%] rounded-full bg-primary/[0.08] blur-[110px] -z-10"></div>
+      <span class="badge-gradient mb-4">About</span>
+      <h1 class="mx-auto max-w-4xl text-3xl font-extrabold leading-[1.02] tracking-[-0.045em] text-foreground md:text-4xl lg:text-[3.15rem]">
         We build AI chatbots that businesses can actually use.
       </h1>
-      <p class="text-lg text-foreground/50 max-w-3xl mx-auto leading-relaxed font-medium">
+      <p class="mx-auto mt-4 max-w-3xl text-sm font-semibold leading-6 text-foreground/60 md:text-[0.95rem]">
         ReplySuite helps businesses train a chatbot on their own content and deploy it on their website and WhatsApp. The goal is simple: answer faster, support better, and miss fewer leads.
       </p>
     </section>
 
-    <section id="mission" class="max-w-7xl mx-auto px-6 py-24 border-t border-foreground/10">
-      <div class="bg-foreground/[0.02] p-12 md:p-20 rounded-[40px] border border-foreground/10 relative overflow-hidden group">
-        <div class="absolute top-0 right-0 w-1/3 h-full bg-primary/5 blur-[100px] group-hover:bg-primary/10 transition-all duration-1000"></div>
-        <div class="grid lg:grid-cols-2 gap-16 items-center relative z-10">
+    <section id="mission" class="mx-auto max-w-[72rem] border-t border-foreground/5 px-4 py-10 sm:px-6 md:py-12">
+      <div class="group relative overflow-hidden rounded-[1rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 backdrop-blur-xl md:p-6">
+        <div class="absolute right-0 top-0 h-full w-1/3 bg-primary/[0.05] blur-[90px] transition-all duration-1000 group-hover:bg-primary/[0.08]"></div>
+        <div class="relative z-10 grid gap-6 lg:grid-cols-2 lg:items-center">
           <div>
-            <h2 class="text-4xl md:text-6xl font-extrabold mb-8 tracking-tight leading-tight text-foreground">
+            <h2 class="text-2xl font-extrabold tracking-[-0.035em] text-foreground md:text-3xl">
               Built for clear business value.
             </h2>
-            <p class="text-lg text-foreground/50 leading-relaxed font-medium mb-8">
+            <p class="mt-3 text-sm font-semibold leading-6 text-foreground/55">
               We care about practical results. Better replies. Faster support. More consistent answers. Less time wasted repeating the same information.
             </p>
-            <NuxtLink to="/product" class="inline-flex items-center gap-3 text-primary font-bold uppercase tracking-[0.2em] text-[10px]">
+            <NuxtLink to="/product" class="mt-5 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
               See the product
               <ArrowRight class="w-4 h-4" />
             </NuxtLink>
           </div>
           <div class="relative flex justify-center lg:justify-end">
-            <div class="w-64 h-64 rounded-[48px] bg-gradient-to-br from-primary/30 to-transparent p-1">
-              <div class="w-full h-full rounded-[47px] bg-background flex items-center justify-center p-12">
-                <Users class="w-20 h-20 text-primary shadow-2xl shadow-primary/20" />
+            <div class="h-40 w-40 rounded-[1rem] bg-gradient-to-br from-primary/25 to-transparent p-1 sm:h-48 sm:w-48">
+              <div class="flex h-full w-full items-center justify-center rounded-[0.95rem] bg-background p-8">
+                <Users class="h-12 w-12 text-primary" />
               </div>
             </div>
           </div>
@@ -79,28 +79,28 @@ const values = [
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-24 border-t border-foreground/10">
-      <div class="text-center mb-16">
-        <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground">What matters to us</h2>
+    <section class="mx-auto max-w-[72rem] border-t border-foreground/5 px-4 py-10 sm:px-6 md:py-12">
+      <div class="mb-6 text-center md:mb-8">
+        <h2 class="text-2xl font-extrabold tracking-[-0.035em] text-foreground md:text-3xl">What matters to us</h2>
       </div>
-      <div class="grid md:grid-cols-3 gap-8">
-        <div v-for="value in values" :key="value.title" class="glass-card p-10 border-foreground/10 text-center">
-          <div class="w-16 h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-8">
-            <component :is="value.icon" class="w-8 h-8 text-primary" />
+      <div class="grid gap-4 md:grid-cols-3">
+        <div v-for="value in values" :key="value.title" class="rounded-[1rem] border border-foreground/10 bg-background-card/45 p-5 text-center shadow-sm shadow-black/5 backdrop-blur-xl">
+          <div class="mx-auto mb-4 flex h-9 w-9 items-center justify-center rounded-[0.7rem] bg-primary/10">
+            <component :is="value.icon" class="h-4 w-4 text-primary" />
           </div>
-          <h4 class="text-xl font-bold mb-4 tracking-tight text-foreground">{{ value.title }}</h4>
-          <p class="text-sm text-foreground/50 font-medium leading-relaxed">{{ value.desc }}</p>
+          <h4 class="mb-2 text-base font-bold tracking-tight text-foreground">{{ value.title }}</h4>
+          <p class="text-sm font-medium leading-6 text-foreground/55">{{ value.desc }}</p>
         </div>
       </div>
     </section>
 
-    <section class="max-w-5xl mx-auto px-6 py-24 text-center">
-      <h2 class="text-4xl md:text-6xl font-extrabold mb-10 tracking-tight leading-none text-foreground">
+    <section class="mx-auto max-w-[64rem] px-4 py-10 text-center sm:px-6 md:py-12">
+      <h2 class="text-2xl font-extrabold tracking-[-0.035em] text-foreground md:text-3xl">
         Want to try ReplySuite?
       </h2>
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
-        <NuxtLink to="/register" class="w-full sm:w-auto btn-gradient px-12 py-5 text-xl">Start Free</NuxtLink>
-        <NuxtLink to="/pricing" class="w-full sm:w-auto border border-foreground/10 px-12 py-5 rounded-full hover:bg-foreground/5 transition-colors text-xl font-bold">
+      <div class="mt-5 flex flex-col items-center justify-center gap-2.5 sm:flex-row">
+        <NuxtLink to="/register" class="btn-gradient w-full rounded-[0.78rem] px-5 py-3 text-sm font-bold sm:w-auto">Start Free</NuxtLink>
+        <NuxtLink to="/pricing" class="w-full rounded-[0.78rem] border border-foreground/10 bg-foreground/[0.02] px-5 py-3 text-sm font-bold text-foreground/70 transition-colors hover:bg-foreground/5 sm:w-auto">
           View Pricing
         </NuxtLink>
       </div>
@@ -110,6 +110,6 @@ const values = [
 
 <style scoped>
 .glass-card {
-  @apply rounded-[32px] bg-foreground/[0.02];
+  @apply rounded-[1rem] bg-background-card/45;
 }
 </style>

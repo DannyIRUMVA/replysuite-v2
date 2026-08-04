@@ -18,30 +18,30 @@ const platforms = [
 </script>
 
 <template>
-  <div class="relative min-h-screen">
+  <div class="community-compact relative min-h-screen overflow-x-hidden">
     <!-- Hero -->
-    <section class="max-w-7xl mx-auto px-6 pt-32 pb-20 text-center relative overflow-hidden">
-      <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10"></div>
-      <span class="badge-gradient mb-10">Collective</span>
-      <h1 class="text-5xl sm:text-7xl md:text-8xl font-extrabold mb-8 tracking-tighter leading-[0.85] text-foreground">
+    <section class="relative mx-auto max-w-[72rem] overflow-hidden px-4 py-10 text-center sm:px-6 md:py-12">
+      <div class="absolute inset-x-0 top-8 mx-auto h-56 w-[58%] rounded-full bg-primary/[0.08] blur-[110px] -z-10"></div>
+      <span class="badge-gradient mb-4">Collective</span>
+      <h1 class="mx-auto max-w-4xl text-3xl font-extrabold leading-[1.02] tracking-[-0.045em] text-foreground md:text-4xl lg:text-[3.15rem]">
         Built for <br />
         <span class="text-gradient">Builders.</span>
       </h1>
-      <p class="text-xl text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium">
+      <p class="mx-auto mt-4 max-w-3xl text-sm font-semibold leading-6 text-foreground/60 md:text-[0.95rem]">
         Join the ecosystem of forward-thinking brands, agencies, and developers scaling human connection with AI.
       </p>
     </section>
 
     <!-- Platforms -->
-    <section class="max-w-7xl mx-auto px-6 py-20">
-      <div class="grid md:grid-cols-3 gap-8">
-        <div v-for="p in platforms" :key="p.name" class="glass-card p-12 border-foreground/10 hover:border-primary/20 transition-all group text-center">
-          <div :class="['w-16 h-16 mx-auto rounded-[24px] bg-foreground/5 flex items-center justify-center mb-10 group-hover:scale-110 transition-transform duration-500', p.color]">
-            <component :is="p.icon" class="w-8 h-8" />
+    <section class="mx-auto max-w-[72rem] px-4 py-10 sm:px-6 md:py-12">
+      <div class="grid gap-4 md:grid-cols-3">
+        <div v-for="p in platforms" :key="p.name" class="group rounded-[1rem] border border-foreground/10 bg-background-card/45 p-5 text-center shadow-sm shadow-black/5 backdrop-blur-xl transition-all hover:border-primary/20">
+          <div :class="['mx-auto mb-4 flex h-9 w-9 items-center justify-center rounded-[0.7rem] bg-foreground/5 transition-transform duration-500 group-hover:scale-105', p.color]">
+            <component :is="p.icon" class="h-4 w-4" />
           </div>
-          <h3 class="text-2xl font-bold text-foreground mb-4 tracking-tight">{{ p.name }}</h3>
-          <p class="text-sm text-foreground/40 leading-relaxed font-medium mb-10">{{ p.desc }}</p>
-          <a href="#" class="btn-gradient-outline px-8 py-4 inline-flex items-center gap-3">
+          <h3 class="mb-2 text-lg font-bold tracking-tight text-foreground">{{ p.name }}</h3>
+          <p class="mb-5 text-sm font-medium leading-6 text-foreground/55">{{ p.desc }}</p>
+          <a href="#" class="btn-gradient-outline inline-flex items-center gap-2 rounded-[0.78rem] px-5 py-3 text-sm font-bold">
             Join {{ p.name }}
             <ArrowRight class="w-4 h-4" />
           </a>
@@ -50,37 +50,37 @@ const platforms = [
     </section>
 
     <!-- Stats / Community Love -->
-    <section class="max-w-7xl mx-auto px-6 py-40 border-t border-foreground/10 relative overflow-hidden">
-      <div class="absolute bottom-0 left-0 w-1/3 h-full bg-primary/5 blur-[100px]"></div>
-      <div class="grid lg:grid-cols-2 gap-24 items-center">
+    <section class="relative mx-auto max-w-[72rem] overflow-hidden border-t border-foreground/5 px-4 py-10 sm:px-6 md:py-12">
+      <div class="absolute bottom-0 left-0 h-full w-1/3 bg-primary/[0.05] blur-[90px]"></div>
+      <div class="grid gap-6 lg:grid-cols-2 lg:items-center">
         <div>
-          <h2 class="text-4xl md:text-6xl font-extrabold text-foreground mb-8 tracking-tighter leading-tight">
+          <h2 class="text-2xl font-extrabold tracking-[-0.035em] text-foreground md:text-3xl">
             A Growing <br />
             <span class="text-gradient leading-none">Network.</span>
           </h2>
-          <div class="grid grid-cols-2 gap-12 mt-16">
+          <div class="mt-6 grid grid-cols-2 gap-4">
             <div v-for="s in [
               { label: 'Community Members', value: '12k+' },
               { label: 'Conversations / Mo', value: '2.5M+' },
               { label: 'Integrations Built', value: '450+' },
               { label: 'Developer Stars', value: '1.2k+' }
             ]" :key="s.label">
-              <div class="text-4xl font-extrabold text-foreground mb-2 tracking-tighter">{{ s.value }}</div>
+              <div class="mb-1 text-2xl font-extrabold tracking-[-0.035em] text-foreground">{{ s.value }}</div>
               <div class="text-[10px] font-bold text-foreground/30 uppercase tracking-widest">{{ s.label }}</div>
             </div>
           </div>
         </div>
         
-        <div class="grid md:grid-cols-2 gap-8">
-          <div class="glass-card p-12 border-foreground/10 bg-foreground/[0.02]">
-             <div class="flex items-center gap-4 mb-10">
-                <div class="w-12 h-12 rounded-full bg-foreground/10 flex items-center justify-center font-bold text-xs">AI</div>
+        <div class="grid gap-4 md:grid-cols-2">
+          <div class="rounded-[1rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 backdrop-blur-xl">
+             <div class="mb-4 flex items-center gap-3">
+                <div class="flex h-9 w-9 items-center justify-center rounded-[0.7rem] bg-foreground/10 text-xs font-bold">AI</div>
                 <div>
                    <div class="text-foreground font-bold tracking-tight">Alex Rivera</div>
                    <div class="text-xs text-foreground/40 font-medium">Head of Growth @ TechScale</div>
                 </div>
              </div>
-             <p class="text-lg text-foreground/40 italic leading-relaxed font-medium mb-10">
+             <p class="mb-5 text-sm italic font-medium leading-6 text-foreground/55">
               "The ReplySuite community is hands-down the best place to learn about RAG and AI customer support. The weekly office hours have been a game changer for our bot's performance."
              </p>
              <div class="flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest">
@@ -89,15 +89,15 @@ const platforms = [
              </div>
           </div>
 
-          <div class="glass-card p-12 border-foreground/10 bg-foreground/[0.02]">
-             <div class="flex items-center gap-4 mb-10">
-                <div class="w-12 h-12 rounded-full bg-foreground/10 flex items-center justify-center font-bold text-xs">SM</div>
+          <div class="rounded-[1rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 backdrop-blur-xl">
+             <div class="mb-4 flex items-center gap-3">
+                <div class="flex h-9 w-9 items-center justify-center rounded-[0.7rem] bg-foreground/10 text-xs font-bold">SM</div>
                 <div>
                    <div class="text-foreground font-bold tracking-tight">Sarah Miller</div>
                    <div class="text-xs text-foreground/40 font-medium">CEO @ ModeLuxury</div>
                 </div>
              </div>
-             <p class="text-lg text-foreground/40 italic leading-relaxed font-medium mb-10">
+             <p class="mb-5 text-sm italic font-medium leading-6 text-foreground/55">
               "Switching from ManyChat to ReplySuite felt like moving from a toy to a professional instrument. The level of AI precision and the supportive developer community is unmatched."
              </p>
              <div class="flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest">
@@ -110,15 +110,15 @@ const platforms = [
     </section>
 
     <!-- Final CTA -->
-    <section class="max-w-5xl mx-auto px-6 py-40 text-center">
-       <div class="p-20 rounded-[64px] bg-primary/[0.03] border border-primary/10 relative group overflow-hidden">
-          <div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity blur-[100px]"></div>
-          <Zap class="w-16 h-16 text-primary mx-auto mb-10 group-hover:scale-110 transition-transform" />
-          <h2 class="text-4xl md:text-6xl font-extrabold text-foreground mb-8 tracking-tighter">Ready to Scale?</h2>
-          <p class="text-foreground/40 max-w-xl mx-auto mb-12 text-lg font-medium leading-relaxed">Join thousands of brands who have already automated their growth with ReplySuite.</p>
-          <NuxtLink to="/register" class="btn-gradient px-12 py-6 text-xl inline-flex items-center gap-4">
+    <section class="mx-auto max-w-[64rem] px-4 py-10 text-center sm:px-6 md:py-12">
+       <div class="group relative overflow-hidden rounded-[1rem] border border-primary/10 bg-primary/[0.03] p-5 shadow-sm shadow-black/5 md:p-6">
+          <div class="absolute inset-0 bg-primary/[0.05] opacity-0 blur-[90px] transition-opacity group-hover:opacity-100"></div>
+          <Zap class="relative z-10 mx-auto mb-4 h-8 w-8 text-primary transition-transform group-hover:scale-105" />
+          <h2 class="relative z-10 text-2xl font-extrabold tracking-[-0.035em] text-foreground md:text-3xl">Ready to Scale?</h2>
+          <p class="relative z-10 mx-auto mt-3 max-w-xl text-sm font-semibold leading-6 text-foreground/55">Join thousands of brands who have already automated their growth with ReplySuite.</p>
+          <NuxtLink to="/register" class="btn-gradient relative z-10 mt-5 inline-flex items-center gap-2 rounded-[0.78rem] px-5 py-3 text-sm font-bold">
              Join the Collective
-             <ArrowRight class="w-6 h-6" />
+             <ArrowRight class="h-4 w-4" />
           </NuxtLink>
        </div>
     </section>
@@ -126,8 +126,8 @@ const platforms = [
 </template>
 
 <style scoped>
-.glass-card { @apply rounded-[48px]; }
+.glass-card { @apply rounded-[1rem]; }
 .btn-gradient-outline {
-  @apply rounded-full border border-foreground/10 hover:border-primary/50 transition-all font-bold text-foreground;
+  @apply rounded-[0.78rem] border border-foreground/10 font-bold text-foreground transition-all hover:border-primary/50;
 }
 </style>

@@ -14,41 +14,41 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div class="relative min-h-screen">
-    <section class="max-w-7xl mx-auto px-6 pt-32 pb-16 relative overflow-hidden">
-      <div class="absolute inset-0 bg-primary/5 blur-[120px] rounded-full -z-10"></div>
-      <div class="max-w-4xl">
-        <span class="badge-gradient mb-8">{{ props.badge }}</span>
-        <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight leading-[0.94] text-foreground text-balance">
+  <div class="legal-compact relative min-h-screen overflow-x-hidden">
+    <section class="relative mx-auto max-w-[72rem] overflow-hidden px-4 py-10 sm:px-6 md:py-12">
+      <div class="absolute inset-x-0 top-8 mx-auto h-56 w-[58%] rounded-full bg-primary/[0.08] blur-[110px] -z-10"></div>
+      <div class="max-w-3xl">
+        <span class="badge-gradient mb-4">{{ props.badge }}</span>
+        <h1 class="text-3xl font-extrabold leading-[1.02] tracking-[-0.045em] text-foreground text-balance md:text-4xl lg:text-[3.15rem]">
           {{ props.title }}
         </h1>
-        <p class="text-lg md:text-xl text-foreground/55 font-medium leading-relaxed max-w-3xl">
+        <p class="mt-4 max-w-3xl text-sm font-semibold leading-6 text-foreground/60 md:text-[0.95rem]">
           {{ props.description }}
         </p>
-        <div class="mt-8 inline-flex items-center gap-3 rounded-full border border-foreground/10 bg-foreground/[0.03] px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-foreground/45">
+        <div class="mt-5 inline-flex items-center gap-2.5 rounded-[0.7rem] border border-foreground/10 bg-foreground/[0.03] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-foreground/45">
           Last updated
           <span class="text-foreground/75">{{ props.lastUpdated }}</span>
         </div>
       </div>
     </section>
 
-    <div class="max-w-7xl mx-auto px-6 py-16 grid lg:grid-cols-[260px_minmax(0,1fr)] gap-12 lg:gap-16">
+    <div class="mx-auto grid max-w-[72rem] gap-6 px-4 py-10 sm:px-6 md:py-12 lg:grid-cols-[220px_minmax(0,1fr)]">
       <aside class="hidden lg:block">
-        <div class="sticky top-32 rounded-[28px] border border-foreground/10 bg-foreground/[0.02] p-4 backdrop-blur-sm">
-          <div class="text-[10px] font-black uppercase tracking-[0.22em] text-foreground/35 px-3 py-2">On this page</div>
+        <div class="sticky top-28 rounded-[1rem] border border-foreground/10 bg-background-card/45 p-3 shadow-sm shadow-black/5 backdrop-blur-xl">
+          <div class="px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-foreground/35">On this page</div>
           <a
             v-for="item in props.sections"
             :key="item.id"
             :href="`#${item.id}`"
-            class="block px-3 py-3 rounded-2xl text-sm font-semibold text-foreground/55 hover:text-foreground hover:bg-foreground/[0.03] transition-colors"
+            class="block rounded-[0.7rem] px-3 py-2.5 text-sm font-semibold text-foreground/55 transition-colors hover:bg-foreground/[0.03] hover:text-foreground"
           >
             {{ item.title }}
           </a>
         </div>
       </aside>
 
-      <main class="rounded-[40px] border border-foreground/10 bg-foreground/[0.02] backdrop-blur-sm shadow-[0_20px_80px_rgba(0,0,0,0.12)] p-8 md:p-10 lg:p-12">
-        <div class="legal-prose prose dark:prose-invert prose-primary prose-lg max-w-none">
+      <main class="rounded-[1rem] border border-foreground/10 bg-background-card/45 p-5 shadow-sm shadow-black/5 backdrop-blur-xl md:p-6">
+        <div class="legal-prose prose dark:prose-invert prose-primary max-w-none">
           <slot />
         </div>
       </main>
@@ -58,15 +58,15 @@ const props = defineProps<{
 
 <style scoped>
 .legal-prose :deep(h2) {
-  @apply text-3xl md:text-4xl font-black tracking-tight text-foreground mt-16 mb-6;
+  @apply mt-10 mb-4 text-2xl font-extrabold tracking-[-0.035em] text-foreground md:text-3xl;
 }
 
 .legal-prose :deep(h3) {
-  @apply text-xl md:text-2xl font-bold tracking-tight text-foreground mt-10 mb-4;
+  @apply mt-8 mb-3 text-lg font-bold tracking-tight text-foreground;
 }
 
 .legal-prose :deep(p) {
-  @apply text-foreground/70 leading-8 font-medium;
+  @apply text-sm font-medium leading-6 text-foreground/70;
 }
 
 .legal-prose :deep(ul),
@@ -75,7 +75,7 @@ const props = defineProps<{
 }
 
 .legal-prose :deep(li) {
-  @apply my-3;
+  @apply my-2 text-sm leading-6;
 }
 
 .legal-prose :deep(strong) {
@@ -83,6 +83,6 @@ const props = defineProps<{
 }
 
 .legal-prose :deep(blockquote) {
-  @apply rounded-r-[28px] border-l-4 border-primary bg-primary/5 px-8 py-6 text-foreground/75 italic;
+  @apply rounded-r-[0.9rem] border-l-4 border-primary bg-primary/5 px-5 py-4 text-sm italic text-foreground/75;
 }
 </style>
