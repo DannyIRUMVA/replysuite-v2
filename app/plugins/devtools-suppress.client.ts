@@ -15,8 +15,7 @@ export default defineNuxtPlugin(() => {
       } catch (e) {
         // Fallback if property is already defined
       }
-      
-      console.log('📦 ReplySuite Widget: DevTools suppressed in iframe mode to prevent cross-origin noise.')
+
     }
   }
 })

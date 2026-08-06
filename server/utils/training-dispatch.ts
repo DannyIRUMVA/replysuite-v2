@@ -1,12 +1,33 @@
 import { H3Event } from 'h3'
 
+const cleanEnvValue = (value: unknown) =>
+  String(value || '').trim().replace(/^(["'])(.*)\1$/, '$2')
+
+const getCloudflareEnv = (event: H3Event) =>
+  ((event.context as any)?.cloudflare?.env || {}) as Record<string, unknown>
+
 export async function dispatchTrainingJob(event: H3Event, jobId: string) {
   const config = useRuntimeConfig(event)
-  const workerUrl = config.trainingWorkerUrl
-  const workerSecret = config.trainingWorkerSecret
+  const cloudflareEnv = getCloudflareEnv(event)
+  const workerUrl = cleanEnvValue(
+    config.trainingWorkerUrl ||
+      cloudflareEnv.TRAINING_WORKER_URL ||
+      cloudflareEnv.NUXT_TRAINING_WORKER_URL,
+  )
+  const workerSecret = cleanEnvValue(
+    config.trainingWorkerSecret ||
+      cloudflareEnv.TRAINING_WORKER_SECRET ||
+      cloudflareEnv.NUXT_TRAINING_WORKER_SECRET,
+  )
 
   if (!workerUrl || !workerSecret) {
-    console.warn('[Training Dispatch] TRAINING_WORKER_URL or TRAINING_WORKER_SECRET is not configured. Job remains queued.', { jobId })
+    console.warn('[Training Dispatch] TRAINING_WORKER_URL or TRAINING_WORKER_SECRET is not configured. Job remains queued.', {
+      jobId,
+      hasRuntimeWorkerUrl: Boolean(config.trainingWorkerUrl),
+      hasRuntimeWorkerSecret: Boolean(config.trainingWorkerSecret),
+      hasCloudflareWorkerUrl: Boolean(cloudflareEnv.TRAINING_WORKER_URL || cloudflareEnv.NUXT_TRAINING_WORKER_URL),
+      hasCloudflareWorkerSecret: Boolean(cloudflareEnv.TRAINING_WORKER_SECRET || cloudflareEnv.NUXT_TRAINING_WORKER_SECRET),
+    })
     return { dispatched: false, reason: 'missing_worker_config' }
   }
 

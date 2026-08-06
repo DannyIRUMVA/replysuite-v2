@@ -3,6 +3,9 @@ import { syncMobilePaymentWebhook } from "~~/server/utils/mobile-payment-sync";
 
 const normalizeSecret = (value: unknown) => String(value || "").trim();
 
+const cloudflareEnv = (event: any) =>
+  ((event?.context as any)?.cloudflare?.env || {}) as Record<string, unknown>;
+
 const constantTimeEqual = (a: string, b: string) => {
   if (!a || !b || a.length !== b.length) return false;
   let result = 0;
@@ -13,8 +16,12 @@ const constantTimeEqual = (a: string, b: string) => {
 
 const configuredWebhookSecret = (event: any) => {
   const config = useRuntimeConfig(event);
+  const env = cloudflareEnv(event);
   return normalizeSecret(
     (config as any).replySuiteMobilePaymentWebhookSecret ||
+      env.REPLYSUITE_MOBILE_PAYMENT_WEBHOOK_SECRET ||
+      env.REPLYSUITE_MOBILE_PAYMENT_WORKER_SECRET ||
+      env.NUXT_REPLYSUITE_MOBILE_PAYMENT_WEBHOOK_SECRET ||
       process.env.REPLYSUITE_MOBILE_PAYMENT_WEBHOOK_SECRET ||
       process.env.REPLYSUITE_MOBILE_PAYMENT_WORKER_SECRET ||
       "",

@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== "production" },
   app: {
     head: {
       htmlAttrs: {
@@ -38,11 +38,69 @@ export default defineNuxtConfig({
         { rel: "alternate icon", type: "image/x-icon", href: "/favicon.ico" },
         { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
         { rel: "canonical", href: "https://replysuite.app/" },
-        { rel: "preconnect", href: "https://www.googletagmanager.com" },
-        { rel: "preconnect", href: "https://stats.g.doubleclick.net" },
-        { rel: "preconnect", href: "https://www.clarity.ms" },
       ],
       script: [
+        {
+          type: "text/javascript",
+          children: `(() => {
+            const blockedHosts = [
+              'stats.g.doubleclick.net',
+              'googleads.g.doubleclick.net',
+              'www.googletagmanager.com',
+              'www.google-analytics.com',
+              'www.googleadservices.com'
+            ];
+            const isBlocked = (input) => {
+              try {
+                const value = typeof input === 'string' ? input : (input && (input.url || input.src)) || '';
+                if (!value) return false;
+                const url = new URL(value, window.location.href);
+                return blockedHosts.some((host) => url.hostname === host || url.hostname.endsWith('.' + host));
+              } catch (_) {
+                return false;
+              }
+            };
+            const originalFetch = window.fetch;
+            if (originalFetch) {
+              window.fetch = function(input, init) {
+                if (isBlocked(input)) return Promise.resolve(new Response(null, { status: 204 }));
+                return originalFetch.apply(this, arguments);
+              };
+            }
+            const originalBeacon = navigator.sendBeacon && navigator.sendBeacon.bind(navigator);
+            if (originalBeacon) {
+              navigator.sendBeacon = function(url, data) {
+                if (isBlocked(url)) return true;
+                return originalBeacon(url, data);
+              };
+            }
+            const originalOpen = XMLHttpRequest && XMLHttpRequest.prototype.open;
+            const originalSend = XMLHttpRequest && XMLHttpRequest.prototype.send;
+            if (originalOpen && originalSend) {
+              XMLHttpRequest.prototype.open = function(method, url) {
+                this.__replysuiteBlockedRequest = isBlocked(url);
+                return originalOpen.apply(this, this.__replysuiteBlockedRequest ? ['GET', 'data:text/plain,', true] : arguments);
+              };
+              XMLHttpRequest.prototype.send = function(body) {
+                return originalSend.call(this, this.__replysuiteBlockedRequest ? null : body);
+              };
+            }
+            try {
+              const imageSrc = Object.getOwnPropertyDescriptor(Image.prototype, 'src');
+              if (imageSrc && imageSrc.set) {
+                Object.defineProperty(Image.prototype, 'src', {
+                  configurable: true,
+                  enumerable: imageSrc.enumerable,
+                  get: imageSrc.get,
+                  set(value) {
+                    if (isBlocked(value)) return;
+                    return imageSrc.set.call(this, value);
+                  }
+                });
+              }
+            } catch (_) {}
+          })();`,
+        },
         {
           type: "application/ld+json",
           children: JSON.stringify({
@@ -86,14 +144,6 @@ export default defineNuxtConfig({
             },
           }),
         },
-        {
-          type: "text/javascript",
-          children: `(function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-          })(window, document, "clarity", "script", "wglphllrsx");`,
-        },
       ],
     },
   },
@@ -117,20 +167,12 @@ export default defineNuxtConfig({
     "@nuxtjs/tailwindcss",
     "@nuxtjs/supabase",
     "@polar-sh/nuxt",
-    "@nuxt/scripts",
     "@nuxtjs/color-mode",
   ],
   colorMode: {
     classSuffix: "",
     preference: "dark",
     fallback: "dark",
-  },
-  scripts: {
-    registry: {
-      googleTagManager: {
-        id: "GTM-N5X7KRBD",
-      },
-    },
   },
   supabase: {
     url: process.env.SUPABASE_URL,

@@ -91,7 +91,7 @@ useHead({
           'flex-1 pt-0 relative',
           isFlushDashboardPage
             ? 'flex flex-col overflow-hidden p-0'
-            : 'overflow-y-auto px-3 sm:px-5 md:px-6 xl:px-8 2xl:px-10 pb-28 md:pb-7',
+            : 'overflow-y-auto px-2 sm:px-3 md:px-4 xl:px-5 2xl:px-6 pb-28 md:pb-7',
         ]"
       >
         <div
@@ -99,7 +99,7 @@ useHead({
             'dashboard-header-bar sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-foreground/5',
             isFlushDashboardPage
               ? 'm-0 px-4 py-2.5'
-              : '-mx-3 px-3 sm:-mx-4 sm:px-4 md:-mx-5 md:px-5 xl:-mx-6 xl:px-6 2xl:-mx-8 2xl:px-8 pt-2 pb-2 mb-2',
+              : '-mx-2 px-2 sm:-mx-3 sm:px-3 md:-mx-4 md:px-4 xl:-mx-5 xl:px-5 2xl:-mx-6 2xl:px-6 pt-2 pb-2 mb-2',
           ]"
         >
           <DashboardHeader />

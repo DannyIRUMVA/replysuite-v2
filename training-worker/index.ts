@@ -107,6 +107,23 @@ function describeError(error: unknown) {
   }
 }
 
+function pdfParseFailureMessage(error: unknown) {
+  const reason = describeError(error)
+  if (/InvalidPDFException|Invalid PDF structure|FormatError|Unknown compression method|Maximum call stack size exceeded/i.test(reason)) {
+    return 'PDF extraction failed because the uploaded file appears to be malformed or not a valid text-readable PDF. Please export the document again as a standard PDF, or paste the text directly.'
+  }
+  return `PDF extraction failed: ${reason}`
+}
+
+async function cleanupTrainingAsset(supabase: ReturnType<typeof getSupabase>, storagePath?: string | null) {
+  const path = cleanEnvValue(storagePath)
+  if (!path) return
+  const { error } = await supabase.storage.from('training-assets').remove([path])
+  if (error) {
+    console.warn('[Training Worker] Failed to remove temporary training asset', { storagePath: path, error: error.message })
+  }
+}
+
 function isFreeMode(env: Env) {
   return cleanEnvValue(env.TRAINING_RUNTIME_PROFILE || 'free') !== 'scaled'
 }
@@ -449,6 +466,10 @@ async function processTrainingJob(env: Env, job: TrainingJob) {
     await updateSource(env, source.id, { status: 'failed' }).catch((sourceError) => {
       console.error('[Training Worker] Failed to mark source as failed', { sourceId: source.id, error: describeError(sourceError) })
     })
+
+    if (job.job_type === 'pdf' || source.metadata?.upload_kind === 'pdf') {
+      await cleanupTrainingAsset(supabase, source.metadata?.storage_path || job.meta?.storage_path || null)
+    }
   }
 }
 
@@ -593,9 +614,15 @@ async function processPdfJob(env: Env, supabase: ReturnType<typeof getSupabase>,
     progress_label: 'Extracting PDF text',
   })
 
-  const pdfData = await pdf(Buffer.from(bytes))
+  let pdfData: any
+  try {
+    pdfData = await pdf(Buffer.from(bytes))
+  } catch (error) {
+    throw new Error(pdfParseFailureMessage(error))
+  }
+
   const rawText = normalizeText(pdfData.text).slice(0, getMaxTextContent(env))
-  if (!rawText) throw new Error('The PDF did not produce usable text.')
+  if (!rawText) throw new Error('The PDF did not produce usable text. Please upload a text-readable PDF or paste the content as text.')
 
   const chunks = chunkText(rawText).map((content, index) => ({
     content,
@@ -885,7 +912,7 @@ async function finalizeTrainingJob(
   })
 
   if (options.cleanupStoragePath) {
-    await supabase.storage.from('training-assets').remove([options.cleanupStoragePath]).catch(() => null)
+    await cleanupTrainingAsset(supabase, options.cleanupStoragePath)
   }
 }
 

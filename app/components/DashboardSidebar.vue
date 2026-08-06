@@ -18,7 +18,6 @@ import {
   CreditCard,
   GraduationCap,
   GitBranch,
-  ClipboardList,
 } from "lucide-vue-next";
 
 const { user, profile, membership, isLoading } = useAuth();
@@ -42,7 +41,6 @@ const iconMap: Record<string, any> = {
   CreditCard,
   GraduationCap,
   GitBranch,
-  ClipboardList,
 };
 
 const showLockedFeatureModal = ref(false);
@@ -222,11 +220,11 @@ const navigationGroups = computed(() => [
 
 const workspaceLinks = computed(() => [
   { name: "Business", href: "/dashboard/business", icon: "CalendarDays" },
-  { name: "School", href: "/dashboard/school", icon: "GraduationCap" },
   {
-    name: "Registration",
-    href: "/dashboard/school/registration",
-    icon: "ClipboardList",
+    name: "School",
+    href: "/dashboard/school",
+    icon: "GraduationCap",
+    activePrefixes: ["/dashboard/school"],
   },
 ]);
 
